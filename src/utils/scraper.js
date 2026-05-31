@@ -65,9 +65,20 @@ export async function fetchHtml(url, timeoutSeconds = 30) {
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'CaddisflyBot/1.0 (+https://caddisfly.ai/bot)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"macOS"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       },
       signal: controller.signal,
       redirect: 'follow',
@@ -77,13 +88,15 @@ export async function fetchHtml(url, timeoutSeconds = 30) {
 
     if (!response.ok) {
       if (response.status === 403) {
-        throw new Error('Website blocks automated access (403 Forbidden)');
+        throw new Error('This website has security measures that prevent automated access. Try a different website or contact support.');
       } else if (response.status === 404) {
-        throw new Error('Page not found (404)');
+        throw new Error('Page not found (404). Please check the URL and try again.');
+      } else if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
       } else if (response.status >= 500) {
-        throw new Error('Website is experiencing issues (server error)');
+        throw new Error('The website is experiencing technical issues. Please try again later.');
       } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`Unable to access website (Error ${response.status}). Please try a different URL.`);
       }
     }
 
