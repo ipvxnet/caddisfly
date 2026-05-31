@@ -151,22 +151,44 @@ export async function handleAIBuilderCustomize(ctx) {
       background: #f7fafc;
     }
 
+    .section-item.section-hidden {
+      opacity: 0.6;
+      border-style: dashed;
+    }
+
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 0.5rem;
+      gap: 0.5rem;
     }
 
     .section-type {
       font-weight: 600;
       color: #1a202c;
       text-transform: capitalize;
+      flex: 1;
     }
 
-    .section-toggle {
-      font-size: 0.875rem;
-      color: #718096;
+    .visibility-toggle {
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      transition: all 0.2s;
+      border-radius: 4px;
+      line-height: 1;
+    }
+
+    .visibility-toggle:hover {
+      background: #f7fafc;
+      transform: scale(1.1);
+    }
+
+    .visibility-toggle.hidden {
+      opacity: 0.5;
     }
 
     .preview-frame {
@@ -215,10 +237,16 @@ export async function handleAIBuilderCustomize(ctx) {
         ${sections
           .map(
             (section, index) => `
-          <div class="section-item" onclick="editSection(${section.id})">
+          <div class="section-item ${!section.is_visible ? 'section-hidden' : ''}" data-section-id="${section.id}">
             <div class="section-header">
-              <span class="section-type">${section.section_type}</span>
-              <span class="section-toggle">${section.is_visible ? '👁️ Visible' : '👁️‍🗨️ Hidden'}</span>
+              <span class="section-type" onclick="editSection(${section.id})" style="cursor: pointer;">${section.section_type}</span>
+              <button
+                class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
+                onclick="toggleVisibility(event, ${section.id}, ${section.is_visible})"
+                title="${section.is_visible ? 'Hide section' : 'Show section'}"
+              >
+                ${section.is_visible ? '👁️' : '👁️‍🗨️'}
+              </button>
             </div>
             <div style="font-size: 0.875rem; color: #718096;">Order: ${section.section_order + 1}</div>
           </div>
@@ -235,6 +263,54 @@ export async function handleAIBuilderCustomize(ctx) {
 
   <script>
     const projectId = '${project.project_id}';
+
+    async function toggleVisibility(event, sectionId, currentlyVisible) {
+      event.stopPropagation(); // Prevent triggering editSection
+
+      const newVisibility = !currentlyVisible;
+      const button = event.target;
+      const sectionItem = button.closest('.section-item');
+
+      // Optimistic UI update
+      button.textContent = newVisibility ? '👁️' : '👁️‍🗨️';
+      button.title = newVisibility ? 'Hide section' : 'Show section';
+      button.classList.toggle('hidden', !newVisibility);
+      sectionItem.classList.toggle('section-hidden', !newVisibility);
+
+      try {
+        const response = await fetch(\`/api/ai-builder/\${projectId}/sections/\${sectionId}\`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_visible: newVisibility })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Reload preview iframe
+          const previewIframe = document.getElementById('preview-iframe');
+          if (previewIframe) {
+            previewIframe.contentWindow.location.reload();
+          }
+
+          // Show notification
+          showNotification(
+            newVisibility ? 'Section shown' : 'Section hidden',
+            'success'
+          );
+        } else {
+          throw new Error(data.error || 'Failed to toggle visibility');
+        }
+      } catch (error) {
+        // Revert UI on error
+        button.textContent = currentlyVisible ? '👁️' : '👁️‍🗨️';
+        button.title = currentlyVisible ? 'Hide section' : 'Show section';
+        button.classList.toggle('hidden', !currentlyVisible);
+        sectionItem.classList.toggle('section-hidden', currentlyVisible);
+
+        alert('Failed to toggle visibility: ' + error.message);
+      }
+    }
 
     async function editSection(sectionId) {
       try {
@@ -279,6 +355,29 @@ export async function handleAIBuilderCustomize(ctx) {
       } catch (error) {
         alert('Deployment failed: ' + error.message);
       }
+    }
+
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = \`
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: \${type === 'success' ? '#48bb78' : '#667eea'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10001;
+        animation: slideInRight 0.3s ease-out;
+      \`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
     }
   </script>
 </body>
