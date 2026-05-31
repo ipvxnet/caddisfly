@@ -1,14 +1,41 @@
 // Template Registry
 // Maps section types to their template functions
 
+// Hero templates
 import { heroCenteredTemplate } from './heroes/centered.js';
 import { heroSplitTemplate } from './heroes/split.js';
+import { heroMinimalTemplate } from './heroes/minimal.js';
+import { heroVideoTemplate } from './heroes/video.js';
+import { heroFullscreenTemplate } from './heroes/fullscreen.js';
+
+// About templates
 import { aboutTextImageTemplate } from './about/text-image.js';
+import { aboutTimelineTemplate } from './about/timeline.js';
+import { aboutTeamTemplate } from './about/team.js';
+
+// Service templates
 import { servicesIconGridTemplate } from './services/icon-grid.js';
+import { servicesCardsTemplate } from './services/cards.js';
+
+// Testimonials templates
 import { testimonialsCardsTemplate } from './testimonials/cards.js';
-import { contactFormTemplate } from './contact/form.js';
-import { footerMultiColumnTemplate } from './footer/multi-column.js';
+import { testimonialsQuotesTemplate } from './testimonials/quotes.js';
+
+// Gallery templates
 import { galleryMasonryTemplate } from './gallery/masonry.js';
+import { galleryCarouselTemplate } from './gallery/carousel.js';
+
+// Contact templates
+import { contactFormTemplate } from './contact/form.js';
+
+// Footer templates
+import { footerMultiColumnTemplate } from './footer/multi-column.js';
+
+// New section types
+import { pricingTablesTemplate } from './pricing/tables.js';
+import { featuresGridTemplate } from './features/grid.js';
+import { ctaBannerTemplate } from './cta/banner.js';
+import { statsNumbersTemplate } from './stats/numbers.js';
 
 /**
  * Template registry
@@ -18,19 +45,31 @@ export const TEMPLATE_REGISTRY = {
   hero: {
     centered: heroCenteredTemplate,
     split: heroSplitTemplate,
+    minimal: heroMinimalTemplate,
+    video: heroVideoTemplate,
+    fullscreen: heroFullscreenTemplate,
     default: heroCenteredTemplate,
   },
   about: {
     'text-image': aboutTextImageTemplate,
+    timeline: aboutTimelineTemplate,
+    team: aboutTeamTemplate,
     default: aboutTextImageTemplate,
   },
   services: {
     'icon-grid': servicesIconGridTemplate,
+    cards: servicesCardsTemplate,
     default: servicesIconGridTemplate,
   },
   testimonials: {
     cards: testimonialsCardsTemplate,
+    quotes: testimonialsQuotesTemplate,
     default: testimonialsCardsTemplate,
+  },
+  gallery: {
+    masonry: galleryMasonryTemplate,
+    carousel: galleryCarouselTemplate,
+    default: galleryMasonryTemplate,
   },
   contact: {
     form: contactFormTemplate,
@@ -40,9 +79,21 @@ export const TEMPLATE_REGISTRY = {
     'multi-column': footerMultiColumnTemplate,
     default: footerMultiColumnTemplate,
   },
-  gallery: {
-    masonry: galleryMasonryTemplate,
-    default: galleryMasonryTemplate,
+  pricing: {
+    tables: pricingTablesTemplate,
+    default: pricingTablesTemplate,
+  },
+  features: {
+    grid: featuresGridTemplate,
+    default: featuresGridTemplate,
+  },
+  cta: {
+    banner: ctaBannerTemplate,
+    default: ctaBannerTemplate,
+  },
+  stats: {
+    numbers: statsNumbersTemplate,
+    default: statsNumbersTemplate,
   },
 };
 
