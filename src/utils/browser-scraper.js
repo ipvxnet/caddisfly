@@ -36,10 +36,22 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
       timeout: 30000,
     });
 
-    // Wait a bit for any lazy-loaded content
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for React/JavaScript to render content
+    // Many modern sites use React/Vue/Angular that need time to hydrate
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Get HTML content
+    // Scroll to trigger lazy loading
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight / 2);
+    });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Get HTML content after rendering
     const homepageHtml = await page.content();
 
     scrapedPages.push({
@@ -91,8 +103,19 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
             timeout: 30000,
           });
 
-          // Wait for lazy-loaded content
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Wait for React/JavaScript to render content
+          await new Promise(resolve => setTimeout(resolve, 5000));
+
+          // Scroll to trigger lazy loading
+          await page.evaluate(() => {
+            window.scrollTo(0, document.body.scrollHeight / 2);
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          await page.evaluate(() => {
+            window.scrollTo(0, 0);
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
           const pageHtml = await page.content();
 
@@ -126,6 +149,7 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
 export function shouldUseBrowser(url) {
   const knownBlockers = [
     'totalwine.com',
+    'mavis.com',
     'amazon.com',
     'walmart.com',
     'target.com',
