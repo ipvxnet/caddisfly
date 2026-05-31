@@ -1,0 +1,8 @@
+name = "caddisfly"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Workers configuration
+# Adjust these settings as needed
+[env.production]
+name = "caddisfly"
