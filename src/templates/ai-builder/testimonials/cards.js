@@ -34,13 +34,13 @@ export function testimonialsCardsTemplate(data, config) {
         .map(
           (testimonial) => `
         <div class="testimonial-card">
-          <div class="testimonial-rating">${renderStars(testimonial.rating)}</div>
-          <p class="testimonial-text">"${testimonial.text}"</p>
+          <div class="testimonial-rating">${renderStars(testimonial.rating || 5)}</div>
+          <p class="testimonial-text">"${testimonial.text || testimonial.quote || ''}"</p>
           <div class="testimonial-author">
-            <div class="author-avatar">${testimonial.name.charAt(0)}</div>
+            <div class="author-avatar">${(testimonial.name || testimonial.author || 'A').charAt(0)}</div>
             <div class="author-info">
-              <div class="author-name">${testimonial.name}</div>
-              <div class="author-role">${testimonial.role}</div>
+              <div class="author-name">${testimonial.name || testimonial.author || 'Anonymous'}</div>
+              <div class="author-role">${testimonial.role || 'Customer'}</div>
             </div>
           </div>
         </div>
