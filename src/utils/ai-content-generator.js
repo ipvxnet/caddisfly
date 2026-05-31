@@ -44,7 +44,7 @@ export async function callWorkersAI(env, prompt, options = {}) {
 /**
  * Extract JSON from AI response (handles markdown code blocks)
  * @param {string} aiResponse - Raw AI response
- * @returns {object} Parsed JSON object
+ * @returns {object|array} Parsed JSON object or array
  */
 export function extractJSON(aiResponse) {
   let jsonText = aiResponse.trim();
@@ -52,13 +52,24 @@ export function extractJSON(aiResponse) {
   // Remove markdown code blocks if present
   const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (codeBlockMatch) {
-    jsonText = codeBlockMatch[1];
+    jsonText = codeBlockMatch[1].trim();
   }
 
-  // Remove any leading/trailing text that's not JSON
-  const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    jsonText = jsonMatch[0];
+  // Try to find array first [...], then object {...}
+  const arrayMatch = jsonText.match(/\[[\s\S]*\]/);
+  const objectMatch = jsonText.match(/\{[\s\S]*\}/);
+
+  if (arrayMatch) {
+    jsonText = arrayMatch[0];
+  } else if (objectMatch) {
+    // Check if there are multiple objects (AI forgot array brackets)
+    const multipleObjects = jsonText.match(/\}\s*,\s*\{/);
+    if (multipleObjects) {
+      // Wrap multiple objects in array brackets
+      jsonText = '[' + jsonText + ']';
+    } else {
+      jsonText = objectMatch[0];
+    }
   }
 
   try {
