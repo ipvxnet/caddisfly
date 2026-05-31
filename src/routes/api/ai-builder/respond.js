@@ -103,6 +103,7 @@ export async function handleAIBuilderRespond(ctx) {
     // Determine next step
     const nextStepName = getNextStep(currentQuestion.step_name);
 
+    // Check if conversation is complete (no next step or next step is null)
     if (!nextStepName || isConversationComplete(currentQuestion.step_name)) {
       // Conversation is complete
       await updateAIProject(env.DB, project.id, {
@@ -124,8 +125,31 @@ export async function handleAIBuilderRespond(ctx) {
       );
     }
 
+    // Check if next step is an info-type step (doesn't need answer) - treat as complete
+    const nextStepConfig = formatStepForResponse(nextStepName);
+    if (nextStepConfig && nextStepConfig.type === 'info') {
+      // Don't create conversation entry for info steps, just mark complete
+      await updateAIProject(env.DB, project.id, {
+        status: 'content_generation',
+        conversation_step: nextStepName,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          conversation_complete: true,
+          message: 'Conversation complete! Generating your website...',
+          project_id: project.project_id,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Create next conversation entry
-    const nextQuestion = formatStepForResponse(nextStepName);
+    const nextQuestion = nextStepConfig;
 
     await createConversationEntry(env.DB, {
       ai_project_id: project.id,
