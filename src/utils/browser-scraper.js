@@ -36,8 +36,8 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
       timeout: 30000,
     });
 
-    // Wait for page to be fully loaded
-    await page.waitForTimeout(2000);
+    // Wait a bit for any lazy-loaded content
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Get HTML content
     const homepageHtml = await page.content();
@@ -91,7 +91,8 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
             timeout: 30000,
           });
 
-          await page.waitForTimeout(2000);
+          // Wait for lazy-loaded content
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
           const pageHtml = await page.content();
 
