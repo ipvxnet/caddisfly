@@ -286,7 +286,9 @@ export async function handleAIBuilderCustomize(ctx) {
                 <span class="section-type" onclick="editSection(${section.id})" style="cursor: pointer;">${section.section_type}</span>
                 <button
                   class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
-                  onclick="toggleVisibility(event, ${section.id}, ${section.is_visible})"
+                  data-section-id="${section.id}"
+                  data-visible="${section.is_visible ? '1' : '0'}"
+                  onclick="toggleVisibility(event)"
                   title="${section.is_visible ? 'Hide section' : 'Show section'}"
                 >
                   ${section.is_visible ? '👁️' : '👁️‍🗨️'}
@@ -414,14 +416,17 @@ export async function handleAIBuilderCustomize(ctx) {
       }
     }
 
-    async function toggleVisibility(event, sectionId, currentlyVisible) {
+    async function toggleVisibility(event) {
       event.stopPropagation(); // Prevent triggering editSection
 
-      const newVisibility = !currentlyVisible;
       const button = event.target;
+      const sectionId = button.dataset.sectionId;
+      const currentlyVisible = button.dataset.visible === '1';
+      const newVisibility = !currentlyVisible;
       const sectionItem = button.closest('.section-item');
 
       // Optimistic UI update
+      button.dataset.visible = newVisibility ? '1' : '0';
       button.textContent = newVisibility ? '👁️' : '👁️‍🗨️';
       button.title = newVisibility ? 'Hide section' : 'Show section';
       button.classList.toggle('hidden', !newVisibility);
@@ -453,6 +458,7 @@ export async function handleAIBuilderCustomize(ctx) {
         }
       } catch (error) {
         // Revert UI on error
+        button.dataset.visible = currentlyVisible ? '1' : '0';
         button.textContent = currentlyVisible ? '👁️' : '👁️‍🗨️';
         button.title = currentlyVisible ? 'Hide section' : 'Show section';
         button.classList.toggle('hidden', !currentlyVisible);
