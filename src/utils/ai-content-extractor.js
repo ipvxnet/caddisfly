@@ -122,7 +122,8 @@ Return ONLY a JSON array with actual extracted content, no placeholders, no expl
     console.log(`AI returned ${sections.length} sections:`, sections.map(s => ({
       type: s.type,
       hasContent: !!s.content,
-      contentKeys: s.content ? Object.keys(s.content) : []
+      contentKeys: s.content ? Object.keys(s.content) : [],
+      rawContent: s.content // Log the actual content to see what AI returned
     })));
 
     // Process each section to extract type-specific content
