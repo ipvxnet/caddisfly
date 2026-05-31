@@ -142,8 +142,9 @@ export async function handleAIBuilderCustomize(ctx) {
       border: 2px solid #e2e8f0;
       border-radius: 8px;
       margin-bottom: 1rem;
-      cursor: pointer;
+      cursor: move;
       transition: all 0.2s;
+      user-select: none;
     }
 
     .section-item:hover {
@@ -156,6 +157,19 @@ export async function handleAIBuilderCustomize(ctx) {
       border-style: dashed;
     }
 
+    .section-item.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+      cursor: grabbing;
+    }
+
+    .section-item.drag-over {
+      border-color: #667eea;
+      border-style: dashed;
+      background: #eef2ff;
+      transform: translateY(-4px);
+    }
+
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -164,11 +178,29 @@ export async function handleAIBuilderCustomize(ctx) {
       gap: 0.5rem;
     }
 
+    .drag-handle {
+      color: #cbd5e0;
+      cursor: grab;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0 0.25rem;
+      user-select: none;
+    }
+
+    .drag-handle:hover {
+      color: #667eea;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
     .section-type {
       font-weight: 600;
       color: #1a202c;
       text-transform: capitalize;
       flex: 1;
+      cursor: pointer;
     }
 
     .visibility-toggle {
@@ -234,25 +266,38 @@ export async function handleAIBuilderCustomize(ctx) {
         <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1.5rem;">
           Click on a section to edit its content
         </p>
-        ${sections
-          .map(
-            (section, index) => `
-          <div class="section-item ${!section.is_visible ? 'section-hidden' : ''}" data-section-id="${section.id}">
-            <div class="section-header">
-              <span class="section-type" onclick="editSection(${section.id})" style="cursor: pointer;">${section.section_type}</span>
-              <button
-                class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
-                onclick="toggleVisibility(event, ${section.id}, ${section.is_visible})"
-                title="${section.is_visible ? 'Hide section' : 'Show section'}"
-              >
-                ${section.is_visible ? '👁️' : '👁️‍🗨️'}
-              </button>
+        <div id="sections-list">
+          ${sections
+            .map(
+              (section, index) => `
+            <div
+              class="section-item ${!section.is_visible ? 'section-hidden' : ''}"
+              data-section-id="${section.id}"
+              draggable="true"
+              ondragstart="handleDragStart(event)"
+              ondragover="handleDragOver(event)"
+              ondragenter="handleDragEnter(event)"
+              ondragleave="handleDragLeave(event)"
+              ondrop="handleDrop(event)"
+              ondragend="handleDragEnd(event)"
+            >
+              <div class="section-header">
+                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                <span class="section-type" onclick="editSection(${section.id})" style="cursor: pointer;">${section.section_type}</span>
+                <button
+                  class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
+                  onclick="toggleVisibility(event, ${section.id}, ${section.is_visible})"
+                  title="${section.is_visible ? 'Hide section' : 'Show section'}"
+                >
+                  ${section.is_visible ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              <div style="font-size: 0.875rem; color: #718096;">Order: ${section.section_order + 1}</div>
             </div>
-            <div style="font-size: 0.875rem; color: #718096;">Order: ${section.section_order + 1}</div>
-          </div>
-        `
-          )
-          .join('')}
+          `
+            )
+            .join('')}
+        </div>
       </div>
 
       <div class="preview-frame">
@@ -263,6 +308,111 @@ export async function handleAIBuilderCustomize(ctx) {
 
   <script>
     const projectId = '${project.project_id}';
+    let draggedElement = null;
+
+    function handleDragStart(e) {
+      draggedElement = e.target;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', e.target.innerHTML);
+    }
+
+    function handleDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function handleDragEnter(e) {
+      if (e.target.classList.contains('section-item') && e.target !== draggedElement) {
+        e.target.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave(e) {
+      if (e.target.classList.contains('section-item')) {
+        e.target.classList.remove('drag-over');
+      }
+    }
+
+    function handleDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+
+      e.target.classList.remove('drag-over');
+
+      if (draggedElement !== e.target && e.target.classList.contains('section-item')) {
+        const container = document.getElementById('sections-list');
+        const allItems = Array.from(container.children);
+        const draggedIndex = allItems.indexOf(draggedElement);
+        const targetIndex = allItems.indexOf(e.target);
+
+        if (draggedIndex < targetIndex) {
+          container.insertBefore(draggedElement, e.target.nextSibling);
+        } else {
+          container.insertBefore(draggedElement, e.target);
+        }
+
+        // Update section order in database
+        updateSectionOrder();
+      }
+
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+
+      // Remove drag-over class from all items
+      document.querySelectorAll('.section-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+
+      draggedElement = null;
+    }
+
+    async function updateSectionOrder() {
+      const container = document.getElementById('sections-list');
+      const items = Array.from(container.children);
+      const sectionIds = items.map(item => item.dataset.sectionId);
+
+      try {
+        const response = await fetch(\`/api/ai-builder/\${projectId}/sections/reorder\`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_ids: sectionIds })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update order numbers in UI
+          items.forEach((item, index) => {
+            const orderText = item.querySelector('div:last-child');
+            if (orderText) {
+              orderText.textContent = \`Order: \${index + 1}\`;
+            }
+          });
+
+          // Reload preview
+          const previewIframe = document.getElementById('preview-iframe');
+          if (previewIframe) {
+            previewIframe.contentWindow.location.reload();
+          }
+
+          showNotification('Section order updated', 'success');
+        } else {
+          throw new Error(data.error || 'Failed to update order');
+        }
+      } catch (error) {
+        alert('Failed to update section order: ' + error.message);
+        // Reload page to restore correct order
+        location.reload();
+      }
+    }
 
     async function toggleVisibility(event, sectionId, currentlyVisible) {
       event.stopPropagation(); // Prevent triggering editSection

@@ -28,6 +28,7 @@ import { handleAIBuilderRespond } from './routes/api/ai-builder/respond.js';
 import { handleAIBuilderGenerate } from './routes/api/ai-builder/generate.js';
 import { handleAIBuilderUpload } from './routes/api/ai-builder/upload.js';
 import { handleAIBuilderSectionUpdate } from './routes/api/ai-builder/sections.js';
+import { handleSectionsReorder } from './routes/api/ai-builder/sections-reorder.js';
 import { handleGetSectionEditor } from './routes/api/ai-builder/section-editor.js';
 import { handleUpdateColors } from './routes/api/ai-builder/config-colors.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
@@ -59,6 +60,7 @@ router.post('/api/ai-builder/:project_id/generate-preview', handleAIBuilderGener
 router.post('/api/ai-builder/:project_id/upload', handleAIBuilderUpload);
 router.get('/api/ai-builder/:project_id/sections/:section_id/editor', handleGetSectionEditor);
 router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate);
+router.put('/api/ai-builder/:project_id/sections/reorder', handleSectionsReorder);
 router.put('/api/ai-builder/:project_id/config/colors', handleUpdateColors);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
 
