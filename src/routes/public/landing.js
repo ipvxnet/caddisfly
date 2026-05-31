@@ -447,7 +447,7 @@ export async function handleLanding(ctx) {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ email, website }),
+              body: JSON.stringify({ email, website, use_templates: 1 }),
             });
 
             const data = await response.json();
