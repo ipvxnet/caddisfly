@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   preview_id TEXT NOT NULL UNIQUE,
   customer_email TEXT NOT NULL,
-  original_url TEXT NOT NULL,
+  website_url TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'preview_pending',
   pricing_tier TEXT,
   portfolio_included INTEGER NOT NULL DEFAULT 0,
@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS projects (
   github_repo_url TEXT,
   github_username TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   purchased_at INTEGER,
   activated_at INTEGER
 );
@@ -57,9 +58,11 @@ CREATE TABLE IF NOT EXISTS scraped_pages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   project_id INTEGER NOT NULL,
   page_url TEXT NOT NULL,
-  r2_original_path TEXT,
-  r2_refactored_path TEXT,
-  scraped_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  page_index INTEGER NOT NULL DEFAULT 0,
+  original_r2_path TEXT,
+  refactored_r2_path TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
 

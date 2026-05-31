@@ -10,26 +10,27 @@ import { generateToken } from '../utils/crypto.js';
  */
 export async function createProject(db, data) {
   const {
-    customerEmail,
-    originalUrl,
+    preview_id,
+    customer_email,
+    website_url,
     status = 'preview_pending',
-    pricingTier = null,
-    portfolioIncluded = 0,
+    pricing_tier = null,
+    portfolio_included = 0,
   } = data;
 
-  // Generate unique preview ID
-  const previewId = generateToken(16);
+  // Use provided preview_id or generate one
+  const previewId = preview_id || generateToken(16);
 
   const result = await db
     .prepare(
       `INSERT INTO projects (
-         preview_id, customer_email, original_url, status,
+         preview_id, customer_email, website_url, original_url, status,
          pricing_tier, portfolio_included
        )
-       VALUES (?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(previewId, customerEmail, originalUrl, status, pricingTier, portfolioIncluded)
+    .bind(previewId, customer_email, website_url, website_url, status, pricing_tier, portfolio_included)
     .first();
 
   return result;

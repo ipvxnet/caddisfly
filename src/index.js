@@ -13,6 +13,8 @@ import { handleLogin } from './routes/admin/login.js';
 import { handleGoogleCallback } from './routes/api/auth/google-callback.js';
 import { handleLogout } from './routes/admin/logout.js';
 import { handleAdminDashboard } from './routes/admin/dashboard.js';
+import { handlePreviewCreate } from './routes/api/preview/create.js';
+import { handlePreviewView } from './routes/public/preview.js';
 
 // Initialize router
 const router = new Router();
@@ -21,6 +23,10 @@ const router = new Router();
 router.get('/', handleLanding);
 router.get('/login', handleLogin);
 router.get('/auth/google/callback', handleGoogleCallback);
+router.get('/preview/:preview_id', handlePreviewView);
+
+// API routes
+router.post('/api/preview/create', handlePreviewCreate);
 
 // Protected admin routes
 router.get('/logout', handleLogout, [authMiddleware]);

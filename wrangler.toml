@@ -13,17 +13,29 @@ database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
 binding = "STORAGE"
 bucket_name = "caddisfly-storage"
 
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Email Workers binding (configure for production)
+# [[send_email]]
+# name = "SEND_EMAIL"
+
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
 APP_URL = "http://localhost:8787"
 GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/google/callback"
 SESSION_DURATION_HOURS = "168"
+PREVIEW_PAGE_LIMIT = "2"
+EMAIL_FROM = "noreply@caddisfly.ai"
+MAX_HTML_SIZE_MB = "5"
+SCRAPE_TIMEOUT_SECONDS = "30"
 
 # Preview environment (dev branch)
 [env.preview]
 name = "caddisfly-preview"
-vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30" }
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -34,10 +46,16 @@ database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
 binding = "STORAGE"
 bucket_name = "caddisfly-storage"
 
+[env.preview.ai]
+binding = "AI"
+
+# [[env.preview.send_email]]
+# name = "SEND_EMAIL"
+
 # Production environment (main branch)
 [env.production]
 name = "caddisfly"
-vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30" }
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -47,6 +65,12 @@ database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
 [[env.production.r2_buckets]]
 binding = "STORAGE"
 bucket_name = "caddisfly-storage"
+
+[env.production.ai]
+binding = "AI"
+
+# [[env.production.send_email]]
+# name = "SEND_EMAIL"
 
 # Secrets (set via CLI):
 # Preview: npx wrangler secret put GOOGLE_CLIENT_ID --env preview

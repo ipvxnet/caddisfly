@@ -31,5 +31,8 @@
   "license": "ISC",
   "devDependencies": {
     "wrangler": "^4.95.0"
+  },
+  "dependencies": {
+    "uuid": "^14.0.0"
   }
 }
