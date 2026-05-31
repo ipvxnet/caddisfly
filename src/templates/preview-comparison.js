@@ -12,7 +12,7 @@
  * @returns {string} Complete HTML page
  */
 export function buildPreviewComparisonHtml(data) {
-  const { previewId, pages, websiteUrl } = data;
+  const { previewId, pages, websiteUrl, useTemplates = false } = data;
 
   // Build page tabs
   const pageTabs = pages.map((page, index) => {
@@ -34,6 +34,15 @@ export function buildPreviewComparisonHtml(data) {
         <div class="preview-info">
           <h2>Your Modernized Website</h2>
           <div class="preview-actions">
+            ${useTemplates ? `
+            <a href="/ai-builder/customize/${previewId}" class="btn-customize">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+              </svg>
+              Customize Templates
+            </a>
+            ` : ''}
             <a href="/preview/${previewId}/html/${index}/original" target="_blank" class="btn-compare">
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
@@ -244,7 +253,8 @@ export function buildPreviewComparisonHtml(data) {
     }
 
     .btn-compare,
-    .btn-live {
+    .btn-live,
+    .btn-customize {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -257,6 +267,17 @@ export function buildPreviewComparisonHtml(data) {
       border: 1px solid #e0e0e0;
       background: white;
       color: #333;
+    }
+
+    .btn-customize {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+    }
+
+    .btn-customize:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
     .btn-compare {

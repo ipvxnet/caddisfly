@@ -2,6 +2,7 @@
 // Returns HTML for section editor modal
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById } from '../../../db/ai-sections.js';
 import { generateSectionEditorModal } from '../../../components/section-editor-modal.js';
 
@@ -16,22 +17,31 @@ export async function handleGetSectionEditor(ctx) {
   try {
     const { project_id, section_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
+    // Try to load from ai_projects first, then regular projects
+    let aiProject = await getAIProjectByProjectId(env.DB, project_id);
+    let projectPreviewId = project_id;
 
-    if (!project) {
-      return new Response('Project not found', { status: 404 });
+    if (!aiProject) {
+      const regularProject = await getProjectByPreviewId(env.DB, project_id);
+      if (!regularProject) {
+        return new Response('Project not found', { status: 404 });
+      }
     }
 
     // Get section
     const section = await getSectionById(env.DB, parseInt(section_id));
 
-    if (!section || section.ai_project_id !== project.id) {
+    if (!section) {
       return new Response('Section not found', { status: 404 });
     }
 
+    // Verify ownership
+    if (aiProject && section.ai_project_id !== aiProject.id) {
+      return new Response('Section does not belong to this project', { status: 403 });
+    }
+
     // Generate modal HTML
-    const html = generateSectionEditorModal(section, project.project_id);
+    const html = generateSectionEditorModal(section, projectPreviewId);
 
     return new Response(html, {
       status: 200,

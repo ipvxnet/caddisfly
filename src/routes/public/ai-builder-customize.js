@@ -2,9 +2,11 @@
 // Section customization interface
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
-import { getSectionsByProjectId } from '../../db/ai-sections.js';
-import { getWebsiteConfigByProjectId } from '../../db/ai-config.js';
+import { getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../db/ai-sections.js';
+import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
+import { getProjectByPreviewId } from '../../db/projects.js';
 import { generateColorPicker } from '../../components/color-picker.js';
+import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 
 /**
  * Handle customization interface
@@ -17,19 +19,43 @@ export async function handleAIBuilderCustomize(ctx) {
   try {
     const { project_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
+    // Try to load from ai_projects first, then regular projects
+    let project = await getAIProjectByProjectId(env.DB, project_id);
+    let sections, config, isAIBuilder = true;
 
-    if (!project) {
-      return new Response('Project not found', {
+    if (project) {
+      // AI Builder project
+      sections = await getSectionsByAIProjectId(env.DB, project.id, false);
+      config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
+    } else {
+      // Regular refactoring project
+      const regularProject = await getProjectByPreviewId(env.DB, project_id);
+
+      if (!regularProject || !regularProject.use_templates) {
+        return new Response('Project not found or does not use templates', {
+          status: 404,
+          headers: { 'Content-Type': 'text/html' },
+        });
+      }
+
+      // Convert regular project to AI project format for rendering
+      project = {
+        project_id: regularProject.preview_id,
+        project_name: regularProject.website_url,
+        id: regularProject.id,
+      };
+
+      sections = await getSectionsByRegularProjectId(env.DB, regularProject.id, false);
+      config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
+      isAIBuilder = false;
+    }
+
+    if (!config) {
+      return new Response('Configuration not found', {
         status: 404,
         headers: { 'Content-Type': 'text/html' },
       });
     }
-
-    // Get sections and config
-    const sections = await getSectionsByProjectId(env.DB, project.id, false);
-    const config = await getWebsiteConfigByProjectId(env.DB, project.id);
 
     const html = `
 <!DOCTYPE html>
@@ -294,7 +320,27 @@ export async function handleAIBuilderCustomize(ctx) {
                   ${section.is_visible ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
-              <div style="font-size: 0.875rem; color: #718096;">Order: ${section.section_order + 1}</div>
+              <div style="font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem;">Order: ${section.section_order + 1}</div>
+              <div style="margin-top: 0.5rem;">
+                <label style="font-size: 0.75rem; color: #718096; display: block; margin-bottom: 0.25rem;">Template:</label>
+                <select
+                  class="template-variant-select"
+                  data-section-id="${section.id}"
+                  onchange="switchTemplate(event)"
+                  onclick="event.stopPropagation()"
+                  style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; background: white; cursor: pointer;"
+                >
+                  ${getAvailableVariants(section.section_type)
+                    .map(
+                      (variant) => `
+                    <option value="${variant}" ${section.html_template === variant ? 'selected' : ''}>
+                      ${variant.replace('-', ' ')}
+                    </option>
+                  `
+                    )
+                    .join('')}
+                </select>
+              </div>
             </div>
           `
             )
@@ -488,6 +534,44 @@ export async function handleAIBuilderCustomize(ctx) {
       }
     }
 
+    async function switchTemplate(event) {
+      event.stopPropagation();
+
+      const select = event.target;
+      const sectionId = select.dataset.sectionId;
+      const newVariant = select.value;
+
+      // Store previous value for rollback
+      const previousValue = select.dataset.previousValue || select.value;
+      select.dataset.previousValue = newVariant;
+
+      try {
+        const response = await fetch(\`/api/ai-builder/\${projectId}/sections/\${sectionId}\`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ html_template: newVariant })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Reload preview iframe
+          const previewIframe = document.getElementById('preview-iframe');
+          if (previewIframe) {
+            previewIframe.contentWindow.location.reload();
+          }
+
+          showNotification('Template updated', 'success');
+        } else {
+          throw new Error(data.error || 'Failed to switch template');
+        }
+      } catch (error) {
+        // Revert to previous value on error
+        select.value = previousValue;
+        select.dataset.previousValue = previousValue;
+        alert('Failed to switch template: ' + error.message);
+      }
+    }
 
     async function deployWebsite() {
       if (!confirm('Deploy your website now? This will make it publicly accessible.')) {

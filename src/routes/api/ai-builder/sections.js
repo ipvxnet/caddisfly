@@ -2,6 +2,7 @@
 // Update a section's content
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
 
 /**
@@ -15,26 +16,31 @@ export async function handleAIBuilderSectionUpdate(ctx) {
   try {
     const { project_id, section_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
+    // Try to load from ai_projects first, then regular projects
+    let aiProject = await getAIProjectByProjectId(env.DB, project_id);
+    let regularProject = null;
 
-    if (!project) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Project not found',
-        }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+    if (!aiProject) {
+      regularProject = await getProjectByPreviewId(env.DB, project_id);
+      if (!regularProject) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Project not found',
+          }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
     }
 
     // Get section
     const section = await getSectionById(env.DB, parseInt(section_id));
 
-    if (!section || section.ai_project_id !== project.id) {
+    // Verify ownership
+    if (!section) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -47,9 +53,36 @@ export async function handleAIBuilderSectionUpdate(ctx) {
       );
     }
 
+    // Check ownership based on project type
+    if (aiProject && section.ai_project_id !== aiProject.id) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Section does not belong to this project',
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (regularProject && section.project_id !== regularProject.id) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Section does not belong to this project',
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
-    const { content, is_visible, section_order } = body;
+    const { content, is_visible, section_order, html_template } = body;
 
     // Update content if provided
     if (content !== undefined) {
@@ -63,6 +96,9 @@ export async function handleAIBuilderSectionUpdate(ctx) {
     }
     if (section_order !== undefined) {
       updates.section_order = parseInt(section_order);
+    }
+    if (html_template !== undefined) {
+      updates.html_template = html_template;
     }
 
     if (Object.keys(updates).length > 0) {

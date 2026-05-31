@@ -9,6 +9,7 @@
 export async function createWebsiteConfig(db, data) {
   const {
     ai_project_id,
+    project_id,
     primary_color = '#667eea',
     secondary_color = '#764ba2',
     font_heading = 'Inter',
@@ -19,25 +20,33 @@ export async function createWebsiteConfig(db, data) {
   const result = await db
     .prepare(
       `INSERT INTO ai_website_configs (
-         ai_project_id, primary_color, secondary_color,
+         ai_project_id, project_id, primary_color, secondary_color,
          font_heading, font_body, style_theme
        )
-       VALUES (?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(ai_project_id, primary_color, secondary_color, font_heading, font_body, style_theme)
+    .bind(
+      ai_project_id ?? null,
+      project_id ?? null,
+      primary_color,
+      secondary_color,
+      font_heading,
+      font_body,
+      style_theme
+    )
     .first();
 
   return result;
 }
 
 /**
- * Get website configuration by project ID
+ * Get website configuration by AI project ID
  * @param {object} db - D1 database instance
  * @param {number} aiProjectId - AI project ID
  * @returns {object|null} Configuration or null
  */
-export async function getWebsiteConfigByProjectId(db, aiProjectId) {
+export async function getWebsiteConfigByAIProjectId(db, aiProjectId) {
   const config = await db
     .prepare('SELECT * FROM ai_website_configs WHERE ai_project_id = ?')
     .bind(aiProjectId)
@@ -47,7 +56,65 @@ export async function getWebsiteConfigByProjectId(db, aiProjectId) {
 }
 
 /**
- * Update website configuration
+ * Get website configuration by regular project ID
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Regular project ID
+ * @returns {object|null} Configuration or null
+ */
+export async function getWebsiteConfigByRegularProjectId(db, projectId) {
+  const config = await db
+    .prepare('SELECT * FROM ai_website_configs WHERE project_id = ?')
+    .bind(projectId)
+    .first();
+
+  return config;
+}
+
+/**
+ * Backward compatible alias - tries AI project first
+ * @deprecated Use getWebsiteConfigByAIProjectId or getWebsiteConfigByRegularProjectId instead
+ */
+export async function getWebsiteConfigByProjectId(db, aiProjectId) {
+  return getWebsiteConfigByAIProjectId(db, aiProjectId);
+}
+
+/**
+ * Update website configuration by ID
+ * @param {object} db - D1 database instance
+ * @param {number} configId - Config ID
+ * @param {object} data - Fields to update
+ * @returns {object} Updated configuration
+ */
+export async function updateWebsiteConfigById(db, configId, data) {
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme'];
+
+  const updates = [];
+  const values = [];
+
+  Object.keys(data).forEach((key) => {
+    if (allowedFields.includes(key)) {
+      updates.push(`${key} = ?`);
+      values.push(data[key]);
+    }
+  });
+
+  if (updates.length === 0) {
+    throw new Error('No valid fields to update');
+  }
+
+  // Always update updated_at
+  updates.push('updated_at = unixepoch()');
+  values.push(configId);
+
+  const sql = `UPDATE ai_website_configs SET ${updates.join(', ')} WHERE id = ? RETURNING *`;
+
+  const result = await db.prepare(sql).bind(...values).first();
+
+  return result;
+}
+
+/**
+ * Update website configuration (legacy - uses ai_project_id)
  * @param {object} db - D1 database instance
  * @param {number} aiProjectId - AI project ID
  * @param {object} data - Fields to update

@@ -2,9 +2,10 @@
 // Display preview of AI-generated website
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
-import { getSectionsByProjectId } from '../../db/ai-sections.js';
-import { getWebsiteConfigByProjectId } from '../../db/ai-config.js';
-import { generatePreview } from '../../utils/ai-page-assembler.js';
+import { getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../db/ai-sections.js';
+import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
+import { getProjectByPreviewId } from '../../db/projects.js';
+import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js';
 
 /**
  * Handle AI preview page
@@ -17,18 +18,13 @@ export async function handleAIPreview(ctx) {
   try {
     const { project_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
+    // Try to load from ai_projects first, then regular projects
+    let project = await getAIProjectByProjectId(env.DB, project_id);
+    let sections, config, isAIBuilder = true;
 
-    if (!project) {
-      return new Response('Project not found', {
-        status: 404,
-        headers: { 'Content-Type': 'text/html' },
-      });
-    }
-
-    // Check if preview is ready
-    if (project.status === 'conversation' || project.status === 'content_generation') {
+    if (project) {
+      // AI Builder project - check if preview is ready
+      if (project.status === 'conversation' || project.status === 'content_generation') {
       return new Response(
         `
 <!DOCTYPE html>
@@ -94,11 +90,39 @@ export async function handleAIPreview(ctx) {
           headers: { 'Content-Type': 'text/html' },
         }
       );
-    }
+      }
 
-    // Get sections and config
-    const sections = await getSectionsByProjectId(env.DB, project.id, true);
-    const config = await getWebsiteConfigByProjectId(env.DB, project.id);
+      // Get sections and config for AI Builder project
+      sections = await getSectionsByAIProjectId(env.DB, project.id, true);
+      config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
+    } else {
+      // Try regular refactoring project
+      const regularProject = await getProjectByPreviewId(env.DB, project_id);
+
+      if (!regularProject) {
+        return new Response('Project not found', {
+          status: 404,
+          headers: { 'Content-Type': 'text/html' },
+        });
+      }
+
+      // Check if it uses templates
+      if (!regularProject.use_templates) {
+        // Redirect to old preview route for CSS-only projects
+        return Response.redirect(`/preview/${project_id}`, 302);
+      }
+
+      // Convert regular project to AI project format for rendering
+      project = {
+        project_id: regularProject.preview_id,
+        project_name: regularProject.website_url,
+        id: regularProject.id,
+      };
+
+      sections = await getSectionsByRegularProjectId(env.DB, regularProject.id, true);
+      config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
+      isAIBuilder = false;
+    }
 
     if (sections.length === 0 || !config) {
       return new Response('Preview not ready yet', {
@@ -108,7 +132,7 @@ export async function handleAIPreview(ctx) {
     }
 
     // Generate preview HTML
-    const html = generatePreview(sections, config, project);
+    const html = isAIBuilder ? generatePreview(sections, config, project) : assemblePage(sections, config, project);
 
     return new Response(html, {
       status: 200,

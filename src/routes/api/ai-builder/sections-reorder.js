@@ -2,6 +2,7 @@
 // Reorder sections
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { getProjectByPreviewId } from '../../../db/projects.js';
 import { reorderSections } from '../../../db/ai-sections.js';
 
 /**
@@ -15,20 +16,28 @@ export async function handleSectionsReorder(ctx) {
   try {
     const { project_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
+    // Try to load from ai_projects first, then regular projects
+    let aiProject = await getAIProjectByProjectId(env.DB, project_id);
+    let regularProject = null;
+    let projectDbId = null;
 
-    if (!project) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Project not found',
-        }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+    if (aiProject) {
+      projectDbId = aiProject.id;
+    } else {
+      regularProject = await getProjectByPreviewId(env.DB, project_id);
+      if (!regularProject) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Project not found',
+          }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      projectDbId = regularProject.id;
     }
 
     // Parse request body
@@ -51,8 +60,8 @@ export async function handleSectionsReorder(ctx) {
     // Convert to integers
     const sectionIdsInt = section_ids.map((id) => parseInt(id));
 
-    // Reorder sections
-    await reorderSections(env.DB, project.id, sectionIdsInt);
+    // Reorder sections (note: this function uses ai_project_id but also works by updating individual sections)
+    await reorderSections(env.DB, projectDbId, sectionIdsInt);
 
     return new Response(
       JSON.stringify({

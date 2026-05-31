@@ -12,6 +12,10 @@ import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
 import { createProject, updateProject } from '../../../db/projects.js';
 import { createScrapedPage, updateScrapedPagePaths } from '../../../db/scraped-pages.js';
 import { fixResourceUrls, addCSPForResources } from '../../../utils/html-processor.js';
+import { extractSectionsFromHTML, getDefaultVariant } from '../../../utils/ai-content-extractor.js';
+import { createSection } from '../../../db/ai-sections.js';
+import { createWebsiteConfig } from '../../../db/ai-config.js';
+import { assemblePage } from '../../../utils/ai-page-assembler.js';
 
 /**
  * Handles preview creation requests
@@ -25,7 +29,7 @@ export async function handlePreviewCreate(ctx) {
   try {
     // Parse and validate request body
     const body = await request.json();
-    const { email, website } = body;
+    const { email, website, use_templates } = body;
 
     // Validate inputs
     const errors = validatePreviewRequest(email, website);
@@ -45,6 +49,7 @@ export async function handlePreviewCreate(ctx) {
 
     const sanitizedEmail = sanitizeEmail(email);
     const normalizedWebsite = normalizeWebsiteUrl(website);
+    const useTemplates = use_templates === '1' || use_templates === true || use_templates === 1;
 
     // Get page limit from environment
     const pageLimit = parseInt(env.PREVIEW_PAGE_LIMIT || '2');
@@ -101,7 +106,13 @@ export async function handlePreviewCreate(ctx) {
       throw new Error('No pages could be scraped');
     }
 
-    // Step 3: Process each page (refactor + upload to R2)
+    // Check if user wants template-based generation
+    if (useTemplates) {
+      console.log('Using template-based generation');
+      return await handleTemplateBasedGeneration(env, project, scrapedPages, request);
+    }
+
+    // Step 3: Process each page (refactor + upload to R2) - CSS-only mode
     const processedPages = [];
 
     for (let i = 0; i < scrapedPages.length; i++) {
@@ -300,4 +311,133 @@ function normalizeWebsiteUrl(url) {
 function getBaseUrl(request) {
   const url = new URL(request.url);
   return `${url.protocol}//${url.host}`;
+}
+
+/**
+ * Handle template-based generation workflow
+ * @param {object} env - Environment bindings
+ * @param {object} project - Project record
+ * @param {array} scrapedPages - Scraped pages
+ * @param {Request} request - HTTP request
+ * @returns {Response} HTTP response
+ */
+async function handleTemplateBasedGeneration(env, project, scrapedPages, request) {
+  try {
+    // Update project to use templates
+    await updateProject(env.DB, project.id, {
+      use_templates: 1,
+      template_generation_status: 'analyzing',
+    });
+
+    // Step 1: Extract sections from first scraped page
+    const firstPage = scrapedPages[0];
+    console.log('Extracting sections from HTML using AI...');
+
+    let sections;
+    try {
+      sections = await extractSectionsFromHTML(firstPage.html, env);
+      console.log(`Extracted ${sections.length} sections:`, sections.map(s => s.type).join(', '));
+    } catch (error) {
+      console.error('AI section extraction failed:', error);
+      // Fall back to CSS-only mode
+      await updateProject(env.DB, project.id, {
+        use_templates: 0,
+        template_generation_status: 'failed',
+      });
+      throw new Error('Template extraction failed, please try again or use CSS-only mode');
+    }
+
+    // Step 2: Create website config
+    console.log('Creating website config...');
+    const config = await createWebsiteConfig(env.DB, {
+      project_id: project.id,
+      primary_color: '#667eea',
+      secondary_color: '#764ba2',
+      font_heading: 'Inter',
+      font_body: 'Inter',
+      style_theme: 'modern',
+    });
+
+    // Step 3: Create sections in database
+    console.log('Creating sections in database...');
+    for (const section of sections) {
+      const variant = getDefaultVariant(section.type);
+      await createSection(env.DB, {
+        project_id: project.id,
+        section_type: section.type,
+        section_order: section.order,
+        html_template: variant,
+        content_json: JSON.stringify(section.content),
+        is_visible: 1,
+      });
+    }
+
+    // Step 4: Generate preview HTML using templates
+    console.log('Generating template-based HTML...');
+    const projectData = {
+      project_name: new URL(firstPage.url).hostname,
+      project_id: project.preview_id,
+    };
+
+    const previewHtml = assemblePage(sections.map((s, i) => ({
+      section_type: s.type,
+      section_order: s.order,
+      html_template: getDefaultVariant(s.type),
+      content_json: JSON.stringify(s.content),
+      is_visible: 1,
+    })), config, projectData);
+
+    // Step 5: Upload to R2 (use custom path for template-based previews)
+    console.log('Uploading to R2...');
+    const previewPath = `projects/${project.id}/template-preview.html`;
+    await uploadToR2(env.STORAGE, previewPath, previewHtml, 'text/html');
+
+    // Step 6: Update project status
+    await updateProject(env.DB, project.id, {
+      status: 'preview_ready',
+      template_generation_status: 'complete',
+    });
+
+    console.log(`Template-based preview ready for project ${project.id}`);
+
+    // Step 7: Send email
+    const baseUrl = getBaseUrl(request);
+    const previewUrl = `${baseUrl}/ai-preview/${project.preview_id}`;
+
+    let emailSent = false;
+    try {
+      emailSent = await sendPreviewEmail(env, project.customer_email, project.preview_id, previewUrl);
+    } catch (error) {
+      console.error('Email sending failed:', error);
+    }
+
+    // Step 8: Return success response
+    return new Response(
+      JSON.stringify({
+        success: true,
+        previewId: project.preview_id,
+        previewUrl: previewUrl,
+        customizeUrl: `${baseUrl}/ai-builder/customize/${project.preview_id}`,
+        message: emailSent
+          ? 'Template preview created! Check your email.'
+          : 'Template preview created! Email pending - save this link.',
+        sectionsExtracted: sections.length,
+        useTemplates: true,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    console.error('Template-based generation error:', error);
+
+    // Update project status
+    await updateProject(env.DB, project.id, {
+      status: 'failed',
+      template_generation_status: 'failed',
+    });
+
+    throw error;
+  }
 }

@@ -19,7 +19,8 @@ export function assemblePage(sections, config, project) {
     .filter((section) => section.is_visible)
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
-      const variant = contentData._variant || 'default';
+      // Use html_template field if available, otherwise check contentData._variant
+      const variant = section.html_template || contentData._variant || 'default';
 
       return renderSection(section.section_type, contentData, config, variant);
     })

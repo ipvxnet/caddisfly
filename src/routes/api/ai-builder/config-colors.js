@@ -2,7 +2,8 @@
 // Update website color configuration
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
-import { updateWebsiteConfig } from '../../../db/ai-config.js';
+import { getProjectByPreviewId } from '../../../db/projects.js';
+import { updateWebsiteConfig, getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId, updateWebsiteConfigById } from '../../../db/ai-config.js';
 
 /**
  * Update website colors
@@ -15,14 +16,34 @@ export async function handleUpdateColors(ctx) {
   try {
     const { project_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
+    // Try to load from ai_projects first, then regular projects
+    let aiProject = await getAIProjectByProjectId(env.DB, project_id);
+    let config = null;
 
-    if (!project) {
+    if (aiProject) {
+      config = await getWebsiteConfigByAIProjectId(env.DB, aiProject.id);
+    } else {
+      const regularProject = await getProjectByPreviewId(env.DB, project_id);
+      if (!regularProject) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Project not found',
+          }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
+    }
+
+    if (!config) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Project not found',
+          error: 'Configuration not found',
         }),
         {
           status: 404,
@@ -64,8 +85,8 @@ export async function handleUpdateColors(ctx) {
       );
     }
 
-    // Update colors
-    await updateWebsiteConfig(env.DB, project.id, {
+    // Update colors using config ID
+    await updateWebsiteConfigById(env.DB, config.id, {
       primary_color,
       secondary_color,
     });

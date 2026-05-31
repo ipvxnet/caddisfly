@@ -65,6 +65,7 @@ export async function handlePreviewView(ctx) {
       previewId: preview_id,
       pages: pages,
       websiteUrl: project.website_url,
+      useTemplates: project.use_templates === 1,
     });
 
     return new Response(html, {

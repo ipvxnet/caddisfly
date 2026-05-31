@@ -9,6 +9,7 @@
 export async function createSection(db, data) {
   const {
     ai_project_id,
+    project_id,
     section_type,
     section_order = 0,
     html_template,
@@ -19,13 +20,21 @@ export async function createSection(db, data) {
   const result = await db
     .prepare(
       `INSERT INTO ai_sections (
-         ai_project_id, section_type, section_order, html_template,
+         ai_project_id, project_id, section_type, section_order, html_template,
          content_json, is_visible
        )
-       VALUES (?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(ai_project_id, section_type, section_order, html_template, content_json, is_visible)
+    .bind(
+      ai_project_id ?? null,
+      project_id ?? null,
+      section_type,
+      section_order,
+      html_template,
+      content_json,
+      is_visible
+    )
     .first();
 
   return result;
@@ -44,13 +53,13 @@ export async function getSectionById(db, id) {
 }
 
 /**
- * Get all sections for a project
+ * Get all sections for an AI builder project
  * @param {object} db - D1 database instance
  * @param {number} aiProjectId - AI project ID
  * @param {boolean} visibleOnly - Only return visible sections
  * @returns {array} Array of sections
  */
-export async function getSectionsByProjectId(db, aiProjectId, visibleOnly = false) {
+export async function getSectionsByAIProjectId(db, aiProjectId, visibleOnly = false) {
   let sql = 'SELECT * FROM ai_sections WHERE ai_project_id = ?';
   if (visibleOnly) {
     sql += ' AND is_visible = 1';
@@ -60,6 +69,33 @@ export async function getSectionsByProjectId(db, aiProjectId, visibleOnly = fals
   const sections = await db.prepare(sql).bind(aiProjectId).all();
 
   return sections.results || [];
+}
+
+/**
+ * Get all sections for a regular refactoring project
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Regular project ID
+ * @param {boolean} visibleOnly - Only return visible sections
+ * @returns {array} Array of sections
+ */
+export async function getSectionsByRegularProjectId(db, projectId, visibleOnly = false) {
+  let sql = 'SELECT * FROM ai_sections WHERE project_id = ?';
+  if (visibleOnly) {
+    sql += ' AND is_visible = 1';
+  }
+  sql += ' ORDER BY section_order ASC';
+
+  const sections = await db.prepare(sql).bind(projectId).all();
+
+  return sections.results || [];
+}
+
+/**
+ * Backward compatible alias - tries AI project first
+ * @deprecated Use getSectionsByAIProjectId or getSectionsByRegularProjectId instead
+ */
+export async function getSectionsByProjectId(db, aiProjectId, visibleOnly = false) {
+  return getSectionsByAIProjectId(db, aiProjectId, visibleOnly);
 }
 
 /**
