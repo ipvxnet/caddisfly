@@ -308,8 +308,14 @@ function combineChunks(chunks, url) {
  * @returns {string} HTML with modern CSS injected
  */
 function applyCSSModernization(originalHtml, pageUrl) {
-  // Remove existing style tags and inline styles for clean slate
   let html = originalHtml;
+
+  // Remove inline event handlers that might cause errors in iframe
+  html = html.replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '');
+
+  // Remove script tags that might cause errors (keep them in original, strip from refactored)
+  html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  html = html.replace(/<script[^>]*>/gi, '');
 
   // Extract title
   let title = 'Modernized Page';

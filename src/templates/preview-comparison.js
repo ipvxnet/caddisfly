@@ -53,9 +53,10 @@ export function buildPreviewComparisonHtml(data) {
 
       <div class="preview-main">
         <iframe
-          sandbox="allow-scripts allow-same-origin allow-forms"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           src="/preview/${previewId}/html/${index}/refactored"
           title="Refactored Page ${index}"
+          onerror="handleIframeError(this)"
         ></iframe>
       </div>
     </div>
@@ -425,6 +426,35 @@ export function buildPreviewComparisonHtml(data) {
         });
       }
     }
+
+    // Handle iframe errors
+    function handleIframeError(iframe) {
+      console.error('Iframe failed to load:', iframe.src);
+      iframe.style.display = 'none';
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = 'padding: 40px; text-align: center; color: #666;';
+      errorDiv.innerHTML = \`
+        <h3>Preview Unavailable</h3>
+        <p>This page contains JavaScript that prevents preview rendering.</p>
+        <a href="\${iframe.src}" target="_blank" style="color: #667eea;">Open in new tab</a>
+      \`;
+      iframe.parentElement.appendChild(errorDiv);
+    }
+
+    // Catch iframe console errors
+    window.addEventListener('error', function(e) {
+      // Ignore iframe errors that bubble up
+      if (e.target && e.target.tagName === 'IFRAME') {
+        e.preventDefault();
+        console.log('Iframe error caught and suppressed');
+      }
+    }, true);
+
+    // Prevent unhandled promise rejections from breaking the page
+    window.addEventListener('unhandledrejection', function(e) {
+      console.log('Unhandled rejection caught:', e.reason);
+      e.preventDefault();
+    });
   </script>
 </body>
 </html>
