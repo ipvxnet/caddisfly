@@ -4,6 +4,7 @@
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getSectionsByProjectId } from '../../db/ai-sections.js';
 import { getWebsiteConfigByProjectId } from '../../db/ai-config.js';
+import { generateColorPicker } from '../../components/color-picker.js';
 
 /**
  * Handle customization interface
@@ -205,7 +206,9 @@ export async function handleAIBuilderCustomize(ctx) {
   <div class="container">
     <div class="split-view">
       <div class="sections-panel">
-        <h2>Sections</h2>
+        ${generateColorPicker(config, project.project_id)}
+
+        <h2 style="margin-bottom: 0.5rem;">Sections</h2>
         <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1.5rem;">
           Click on a section to edit its content
         </p>
