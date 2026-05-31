@@ -165,3 +165,31 @@ export function shouldUseBrowser(url) {
     return false;
   }
 }
+
+/**
+ * Detect if scraped HTML has thin content (likely a JS-rendered SPA)
+ * When static fetch only returns an app shell, the real content is loaded
+ * via JavaScript and won't appear in the static HTML.
+ * @param {string} html - Scraped HTML
+ * @returns {boolean} True if content appears thin/JS-rendered
+ */
+export function isContentThin(html) {
+  if (!html) return true;
+
+  // Extract visible text by removing scripts, styles, and all tags
+  const textContent = html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Count meaningful words (length > 1 to skip stray characters)
+  const wordCount = textContent.split(/\s+/).filter((w) => w.length > 1).length;
+
+  console.log(`Content quality check: ${wordCount} words of visible text`);
+
+  // Real content pages typically have 100+ words; JS app shells have very few
+  return wordCount < 100;
+}

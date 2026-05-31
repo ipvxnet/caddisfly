@@ -6,7 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { isValidEmail, sanitizeEmail, sendPreviewEmail } from '../../../utils/email.js';
 import { isValidUrl, scrapeWebsite } from '../../../utils/scraper.js';
-import { scrapeWithBrowser, shouldUseBrowser } from '../../../utils/browser-scraper.js';
+import { scrapeWithBrowser, shouldUseBrowser, isContentThin } from '../../../utils/browser-scraper.js';
 import { refactorHtml } from '../../../utils/ai-refactor.js';
 import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
 import { createProject, updateProject } from '../../../db/projects.js';
@@ -83,6 +83,24 @@ export async function handlePreviewCreate(ctx) {
         try {
           scrapedPages = await scrapeWebsite(normalizedWebsite, pageLimit);
           console.log(`Scraped ${scrapedPages.length} pages with regular fetch`);
+
+          // Detect JS-rendered sites: if static content is thin, the real
+          // content is loaded via JavaScript and needs browser rendering
+          if (scrapedPages.length > 0 && isContentThin(scrapedPages[0].html)) {
+            console.log('Static content is thin (likely JS-rendered), trying browser rendering...');
+            try {
+              const browserPages = await scrapeWithBrowser(env, normalizedWebsite, pageLimit);
+              if (browserPages.length > 0 && !isContentThin(browserPages[0].html)) {
+                scrapedPages = browserPages;
+                usedBrowser = true;
+                console.log('Browser rendering provided richer content');
+              } else {
+                console.log('Browser rendering did not improve content, using static');
+              }
+            } catch (browserError) {
+              console.log('Browser fallback failed, using static content:', browserError.message);
+            }
+          }
         } catch (fetchError) {
           // If we get a 403 or bot detection error, fall back to browser
           if (fetchError.message.includes('403') || fetchError.message.includes('blocks') || fetchError.message.includes('automated')) {
