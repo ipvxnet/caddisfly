@@ -233,10 +233,26 @@ export async function handleAIBuilderCustomize(ctx) {
   <script>
     const projectId = '${project.project_id}';
 
-    function editSection(sectionId) {
-      alert('Section editing coming soon! For now, you can deploy your website as-is.');
-      // TODO: Open modal with section content editor
+    async function editSection(sectionId) {
+      try {
+        // Fetch modal HTML from API
+        const response = await fetch(\`/api/ai-builder/\${projectId}/sections/\${sectionId}/editor\`);
+
+        if (!response.ok) {
+          throw new Error('Failed to load editor');
+        }
+
+        const html = await response.text();
+
+        // Inject modal into page
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = html;
+        document.body.appendChild(modalContainer.firstChild);
+      } catch (error) {
+        alert('Failed to load editor: ' + error.message);
+      }
     }
+
 
     async function deployWebsite() {
       if (!confirm('Deploy your website now? This will make it publicly accessible.')) {
