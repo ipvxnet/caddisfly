@@ -14,6 +14,7 @@ import {
   isConversationComplete,
 } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
+import { checkRequestRateLimit, getUserTier, formatRateLimitError } from '../../../utils/rate-limiter.js';
 
 /**
  * Handle conversation response
@@ -41,6 +42,20 @@ export async function handleAIBuilderRespond(ctx) {
         }),
         {
           status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Check rate limits
+    const tier = await getUserTier(env.DB, project.customer_email);
+    const limitCheck = await checkRequestRateLimit(env.DB, project.customer_email, tier);
+
+    if (!limitCheck.allowed) {
+      return new Response(
+        JSON.stringify(formatRateLimitError(limitCheck, 'requests')),
+        {
+          status: 429,
           headers: { 'Content-Type': 'application/json' },
         }
       );

@@ -7,6 +7,7 @@ import { createSection } from '../../../db/ai-sections.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
 import { buildContext, generateSectionContent, generateColorScheme } from '../../../utils/ai-content-generator.js';
 import { getFontPairing } from '../../../utils/ai-prompts.js';
+import { checkAIGenerationLimit, getUserTier, formatRateLimitError } from '../../../utils/rate-limiter.js';
 
 /**
  * Handle preview generation
@@ -30,6 +31,20 @@ export async function handleAIBuilderGenerate(ctx) {
         }),
         {
           status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Check AI generation rate limits (most important for cost control)
+    const tier = await getUserTier(env.DB, project.customer_email);
+    const limitCheck = await checkAIGenerationLimit(env.DB, project.customer_email, tier);
+
+    if (!limitCheck.allowed) {
+      return new Response(
+        JSON.stringify(formatRateLimitError(limitCheck, 'generations')),
+        {
+          status: 429,
           headers: { 'Content-Type': 'application/json' },
         }
       );
