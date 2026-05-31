@@ -67,7 +67,7 @@ export async function handleGoogleCallback(ctx) {
     const profile = await profileResponse.json();
 
     // Check if user exists
-    let user = await getUserByGoogleId(env.DB, profile.id);
+    let user = await getUserByGoogleId(env.DB, profile.sub);
 
     if (!user) {
       // Create new user
