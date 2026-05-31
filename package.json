@@ -33,6 +33,7 @@
     "wrangler": "^4.95.0"
   },
   "dependencies": {
+    "@cloudflare/puppeteer": "^1.1.0",
     "uuid": "^14.0.0"
   }
 }

@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { isValidEmail, sanitizeEmail, sendPreviewEmail } from '../../../utils/email.js';
 import { isValidUrl, scrapeWebsite } from '../../../utils/scraper.js';
+import { scrapeWithBrowser, shouldUseBrowser } from '../../../utils/browser-scraper.js';
 import { refactorHtml } from '../../../utils/ai-refactor.js';
 import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
 import { createProject, updateProject } from '../../../db/projects.js';
@@ -64,9 +65,31 @@ export async function handlePreviewCreate(ctx) {
 
     // Step 2: Scrape website
     let scrapedPages;
+    let usedBrowser = false;
+
     try {
-      scrapedPages = await scrapeWebsite(normalizedWebsite, pageLimit);
-      console.log(`Scraped ${scrapedPages.length} pages`);
+      // Check if we should use browser rendering for known blockers
+      if (shouldUseBrowser(normalizedWebsite)) {
+        console.log('Using browser rendering for known blocker site');
+        scrapedPages = await scrapeWithBrowser(env, normalizedWebsite, pageLimit);
+        usedBrowser = true;
+      } else {
+        // Try regular scraping first
+        try {
+          scrapedPages = await scrapeWebsite(normalizedWebsite, pageLimit);
+          console.log(`Scraped ${scrapedPages.length} pages with regular fetch`);
+        } catch (fetchError) {
+          // If we get a 403 or bot detection error, fall back to browser
+          if (fetchError.message.includes('403') || fetchError.message.includes('blocks') || fetchError.message.includes('automated')) {
+            console.log('Regular scraping failed, trying browser rendering...');
+            scrapedPages = await scrapeWithBrowser(env, normalizedWebsite, pageLimit);
+            usedBrowser = true;
+            console.log(`Scraped ${scrapedPages.length} pages with browser`);
+          } else {
+            throw fetchError;
+          }
+        }
+      }
     } catch (error) {
       // Clean up project on scraping failure
       await updateProject(env.DB, projectId, { status: 'failed' });

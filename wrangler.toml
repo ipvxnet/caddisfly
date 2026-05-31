@@ -17,6 +17,9 @@ bucket_name = "caddisfly-storage"
 [ai]
 binding = "AI"
 
+# Browser Rendering binding
+browser = { binding = "BROWSER" }
+
 # Email Workers binding (configure for production)
 # [[send_email]]
 # name = "SEND_EMAIL"
@@ -49,6 +52,8 @@ bucket_name = "caddisfly-storage"
 [env.preview.ai]
 binding = "AI"
 
+env.preview.browser = { binding = "BROWSER" }
+
 # [[env.preview.send_email]]
 # name = "SEND_EMAIL"
 
@@ -68,6 +73,8 @@ bucket_name = "caddisfly-storage"
 
 [env.production.ai]
 binding = "AI"
+
+env.production.browser = { binding = "BROWSER" }
 
 # [[env.production.send_email]]
 # name = "SEND_EMAIL"
