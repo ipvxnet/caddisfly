@@ -74,13 +74,23 @@ export function fixResourceUrls(html, originalUrl) {
 
     // Add base tag if not present to help with relative URLs
     if (!fixedHtml.includes('<base')) {
-      const baseTag = `<base href="${origin}/">`;
+      const baseTag = `<base href="${origin}/" target="_blank">`;
       if (fixedHtml.includes('</head>')) {
         fixedHtml = fixedHtml.replace('</head>', `${baseTag}\n</head>`);
       } else if (fixedHtml.includes('<head>')) {
         fixedHtml = fixedHtml.replace('<head>', `<head>\n${baseTag}`);
       }
     }
+
+    // Make all internal links open in new tab to avoid breaking iframe
+    // This ensures clicking links goes to the real site instead of loading in iframe
+    fixedHtml = fixedHtml.replace(/<a\s+([^>]*href=["'][^"']*["'][^>]*)>/gi, (match, attrs) => {
+      // Only add target if not already present and not a tel: or mailto: link
+      if (!attrs.includes('target=') && !attrs.includes('href="tel:') && !attrs.includes('href="mailto:')) {
+        return `<a ${attrs} target="_blank" rel="noopener noreferrer">`;
+      }
+      return match;
+    });
 
     return fixedHtml;
   } catch (error) {
