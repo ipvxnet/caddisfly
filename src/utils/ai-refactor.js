@@ -121,22 +121,23 @@ export async function refactorHtml(env, originalHtml, pageUrl) {
  * @returns {string} Formatted prompt
  */
 export function buildRefactorPrompt(html, url) {
-  return `You are an expert web developer. Refactor this HTML to use modern best practices:
+  // Extract just the body content to reduce size
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : html;
 
-REQUIREMENTS:
-- Use HTML5 semantic elements (header, nav, main, article, section, footer)
-- Mobile-first responsive design with flexbox/grid
-- Remove inline styles, use clean CSS in <style> tag
-- Ensure accessibility (ARIA labels, alt text)
-- Preserve all content exactly as-is
-- Return ONLY the complete HTML, no explanations
+  return `Refactor this HTML into modern, clean code. Output ONLY valid HTML, no explanations.
 
-ORIGINAL URL: ${url}
+Rules:
+1. Use semantic HTML5 tags: <header>, <nav>, <main>, <section>, <article>, <footer>
+2. Add responsive CSS using flexbox/grid in a <style> tag
+3. Make it mobile-first with proper viewport meta tag
+4. Keep ALL original text content unchanged
+5. Start with <!DOCTYPE html>
 
-ORIGINAL HTML:
-${html}
+Input:
+${bodyContent.substring(0, 8000)}
 
-REFACTORED HTML:`;
+Output (valid HTML only):`;
 }
 
 /**
@@ -154,19 +155,41 @@ export async function callWorkersAI(env, prompt) {
     const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
       messages: [
         {
+          role: 'system',
+          content: 'You are an HTML code generator. You ONLY output valid HTML code, never explanations or comments.'
+        },
+        {
           role: 'user',
           content: prompt
         }
       ],
       max_tokens: 4096,
-      temperature: 0.3, // Lower temperature for more consistent output
+      temperature: 0.1, // Very low temperature for consistent, predictable output
     });
 
     if (!response || !response.response) {
       throw new Error('Invalid AI response');
     }
 
-    return response.response.trim();
+    // Extract HTML from response (AI might add explanations)
+    let html = response.response.trim();
+
+    // Try to extract HTML if AI added explanations
+    const htmlMatch = html.match(/<!DOCTYPE html>[\s\S]*<\/html>/i);
+    if (htmlMatch) {
+      html = htmlMatch[0];
+    } else {
+      // Look for just html tags
+      const htmlTagMatch = html.match(/<html[\s\S]*<\/html>/i);
+      if (htmlTagMatch) {
+        html = '<!DOCTYPE html>\n' + htmlTagMatch[0];
+      }
+    }
+
+    console.log('AI response length:', html.length);
+    console.log('AI response preview:', html.substring(0, 200));
+
+    return html;
   } catch (error) {
     console.error('Workers AI error:', error);
     throw error;
@@ -297,21 +320,140 @@ function applyFallbackTemplate(originalHtml) {
     title = titleMatch[1];
   }
 
+  // Basic semantic restructuring
+  // Wrap first heading in header if it exists
+  let restructured = bodyContent;
+
+  // Find first h1 and wrap in header
+  restructured = restructured.replace(/(<h1[^>]*>[\s\S]*?<\/h1>)/i, '<header>$1</header>');
+
+  // Wrap remaining content in main if not already wrapped
+  if (!restructured.includes('<main')) {
+    const headerMatch = restructured.match(/(<header>[\s\S]*?<\/header>)/i);
+    if (headerMatch) {
+      const afterHeader = restructured.substring(restructured.indexOf('</header>') + 9);
+      restructured = headerMatch[0] + '\n<main>\n' + afterHeader + '\n</main>';
+    } else {
+      restructured = '<main>\n' + restructured + '\n</main>';
+    }
+  }
+
+  // Better CSS for fallback
+  const enhancedCSS = `
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+  }
+
+  header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  main {
+    margin-bottom: 40px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 20px 0 10px 0;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #222;
+  }
+
+  h1 { font-size: 2.5em; }
+  h2 { font-size: 2em; }
+  h3 { font-size: 1.75em; }
+
+  p {
+    margin-bottom: 15px;
+  }
+
+  a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  ul, ol {
+    margin: 15px 0 15px 20px;
+  }
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+
+  th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background: #f8f9fa;
+    font-weight: 600;
+  }
+
+  blockquote {
+    border-left: 4px solid #007bff;
+    padding-left: 20px;
+    margin: 20px 0;
+    color: #666;
+    font-style: italic;
+  }
+
+  @media (max-width: 768px) {
+    body {
+      padding: 15px;
+    }
+
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.25em; }
+  }
+</style>
+  `;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
-  ${FALLBACK_CSS}
+  ${enhancedCSS}
 </head>
 <body>
-  <main>
-    ${bodyContent}
-  </main>
-  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 0.9em;">
-    <p>Refactored by Caddisfly</p>
-  </footer>
+  ${restructured}
 </body>
 </html>`;
 }
