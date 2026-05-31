@@ -9,8 +9,9 @@ import { callWorkersAI, extractJSON } from './ai-content-generator.js';
  * @returns {Promise<array>} Array of sections with type and content
  */
 export async function extractSectionsFromHTML(html, env) {
-  // Truncate HTML to avoid token limits (keep first 8000 chars which is ~2000 tokens)
-  const truncatedHTML = html.substring(0, 8000);
+  // Truncate HTML to avoid token limits (keep first 16000 chars which is ~4000 tokens)
+  const truncatedHTML = html.substring(0, 16000);
+  console.log(`AI extraction: Processing ${truncatedHTML.length} chars (original: ${html.length} chars)`);
 
   const prompt = `
 Extract content from this website HTML and organize it into sections.
@@ -104,6 +105,12 @@ Return ONLY a JSON array with actual extracted content, no placeholders, no expl
         throw new Error('AI did not return an array of sections');
       }
     }
+
+    console.log(`AI returned ${sections.length} sections:`, sections.map(s => ({
+      type: s.type,
+      hasContent: !!s.content,
+      contentKeys: s.content ? Object.keys(s.content) : []
+    })));
 
     // Process each section to extract type-specific content
     return sections.map((section, index) => ({
