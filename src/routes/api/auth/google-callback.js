@@ -72,8 +72,8 @@ export async function handleGoogleCallback(ctx) {
 
     console.log('[OAuth] Got access token, fetching profile');
 
-    // Fetch user profile from Google
-    const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    // Fetch user profile from Google (v3 endpoint uses 'sub' field)
+    const profileResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
