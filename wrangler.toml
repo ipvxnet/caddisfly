@@ -2,7 +2,36 @@ name = "caddisfly"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-# Workers configuration
-# Adjust these settings as needed
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "caddisfly-db"
+database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
+
+# R2 Storage binding
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "caddisfly-storage"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+APP_URL = "http://localhost:8787"
+GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/google/callback"
+SESSION_DURATION_HOURS = "168"
+
+# Preview environment (dev branch)
+[env.preview]
+name = "caddisfly-preview"
+vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fernandooliveira2.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fernandooliveira2.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+
+# Production environment (main branch)
 [env.production]
 name = "caddisfly"
+vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+
+# Secrets (set via CLI):
+# Preview: npx wrangler secret put GOOGLE_CLIENT_ID --env preview
+# Preview: npx wrangler secret put GOOGLE_CLIENT_SECRET --env preview
+# Production: npx wrangler secret put GOOGLE_CLIENT_ID --env production
+# Production: npx wrangler secret put GOOGLE_CLIENT_SECRET --env production
