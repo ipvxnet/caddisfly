@@ -361,4 +361,99 @@ If something breaks in production:
 
 ---
 
-**Last Updated:** Phase 2 Implementation (2026-05-30)
+---
+
+## AI Website Builder Deployment (Phase 3)
+
+### Pre-Deployment Steps
+
+1. **Run Database Migration**
+   ```bash
+   # Apply to preview/production database
+   npx wrangler d1 execute caddisfly-db --remote --file=./migrations/003_ai_builder.sql
+   ```
+
+2. **Verify AI Binding**
+   - Ensure Workers AI is enabled in your Cloudflare account
+   - Verify `AI` binding exists in wrangler.toml
+   - Model used: `@cf/meta/llama-3.1-8b-instruct`
+
+3. **Test Locally First**
+   ```bash
+   npm run dev
+   # Visit http://localhost:8787/ai-builder
+   # Complete a test conversation flow
+   ```
+
+### Deploy to Preview
+
+```bash
+# Commit AI Builder changes
+git add .
+git commit -m "Add AI Website Builder feature (Phase 3)"
+
+# Push to dev branch (auto-deploys via GitHub Actions)
+git push origin dev
+
+# Or manual deploy
+npm run deploy:preview
+```
+
+### Post-Deployment Verification
+
+```bash
+# 1. Visit preview URL
+open https://caddisfly-preview.fabianodevtools.workers.dev/ai-builder
+
+# 2. Test conversation flow
+# - Fill out landing page form
+# - Complete 7-question conversation
+# - Generate preview
+# - View generated website
+
+# 3. Check database
+npx wrangler d1 execute caddisfly-db --remote --command="SELECT * FROM ai_projects LIMIT 5;"
+
+# 4. Monitor logs
+npx wrangler tail --env preview
+```
+
+### New Routes Added
+
+- `GET /ai-builder` - Landing page
+- `GET /ai-builder/chat/:project_id` - Conversation interface
+- `GET /ai-builder/generating/:project_id` - Generation progress
+- `GET /ai-builder/customize/:project_id` - Customization interface
+- `GET /ai-preview/:project_id` - Preview generated site
+- `POST /api/ai-builder/create` - Create AI project
+- `POST /api/ai-builder/:project_id/respond` - Submit conversation answer
+- `POST /api/ai-builder/:project_id/generate-preview` - Generate website
+- `POST /api/ai-builder/:project_id/upload` - Upload assets
+- `PUT /api/ai-builder/:project_id/sections/:section_id` - Edit section
+- `POST /api/ai-builder/:project_id/deploy` - Deploy website
+
+### Troubleshooting AI Builder
+
+**AI Generation Fails**
+- Check Workers AI binding is configured
+- Verify model name is correct
+- Check AI usage limits in Cloudflare dashboard
+- Review error logs: `npx wrangler tail --env preview`
+
+**Preview Not Generating**
+- Verify conversation completed all 7 steps
+- Check database has conversation entries
+- Ensure sections were created in ai_sections table
+- Review browser console for API errors
+
+**Database Migration Issues**
+```bash
+# Verify tables exist
+npx wrangler d1 execute caddisfly-db --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'ai_%';"
+
+# Should return: ai_projects, ai_conversations, ai_sections, ai_assets, ai_website_configs
+```
+
+---
+
+**Last Updated:** Phase 3 - AI Builder Implementation (2024-12-XX)

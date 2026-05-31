@@ -17,6 +17,19 @@ import { handlePreviewCreate } from './routes/api/preview/create.js';
 import { handlePreviewView } from './routes/public/preview.js';
 import { handlePreviewHtml } from './routes/public/preview-html.js';
 
+// AI Builder route handlers
+import { handleAIBuilderLanding } from './routes/public/ai-builder-landing.js';
+import { handleAIBuilderChat } from './routes/public/ai-builder-chat.js';
+import { handleAIBuilderGenerating } from './routes/public/ai-builder-generating.js';
+import { handleAIBuilderCustomize } from './routes/public/ai-builder-customize.js';
+import { handleAIPreview } from './routes/public/ai-preview.js';
+import { handleAIBuilderCreate } from './routes/api/ai-builder/create.js';
+import { handleAIBuilderRespond } from './routes/api/ai-builder/respond.js';
+import { handleAIBuilderGenerate } from './routes/api/ai-builder/generate.js';
+import { handleAIBuilderUpload } from './routes/api/ai-builder/upload.js';
+import { handleAIBuilderSectionUpdate } from './routes/api/ai-builder/sections.js';
+import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
+
 // Initialize router
 const router = new Router();
 
@@ -27,8 +40,23 @@ router.get('/auth/google/callback', handleGoogleCallback);
 router.get('/preview/:preview_id', handlePreviewView);
 router.get('/preview/:preview_id/html/:page_index/:type', handlePreviewHtml);
 
+// AI Builder public routes
+router.get('/ai-builder', handleAIBuilderLanding);
+router.get('/ai-builder/chat/:project_id', handleAIBuilderChat);
+router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating);
+router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize);
+router.get('/ai-preview/:project_id', handleAIPreview);
+
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
+
+// AI Builder API routes
+router.post('/api/ai-builder/create', handleAIBuilderCreate);
+router.post('/api/ai-builder/:project_id/respond', handleAIBuilderRespond);
+router.post('/api/ai-builder/:project_id/generate-preview', handleAIBuilderGenerate);
+router.post('/api/ai-builder/:project_id/upload', handleAIBuilderUpload);
+router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate);
+router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
 
 // Protected admin routes
 router.get('/logout', handleLogout, [authMiddleware]);

@@ -1,0 +1,216 @@
+// AI Section database operations
+
+/**
+ * Create a new section
+ * @param {object} db - D1 database instance
+ * @param {object} data - Section data
+ * @returns {object} Created section
+ */
+export async function createSection(db, data) {
+  const {
+    ai_project_id,
+    section_type,
+    section_order = 0,
+    html_template,
+    content_json = null,
+    is_visible = 1,
+  } = data;
+
+  const result = await db
+    .prepare(
+      `INSERT INTO ai_sections (
+         ai_project_id, section_type, section_order, html_template,
+         content_json, is_visible
+       )
+       VALUES (?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(ai_project_id, section_type, section_order, html_template, content_json, is_visible)
+    .first();
+
+  return result;
+}
+
+/**
+ * Get section by ID
+ * @param {object} db - D1 database instance
+ * @param {number} id - Section ID
+ * @returns {object|null} Section or null
+ */
+export async function getSectionById(db, id) {
+  const section = await db.prepare('SELECT * FROM ai_sections WHERE id = ?').bind(id).first();
+
+  return section;
+}
+
+/**
+ * Get all sections for a project
+ * @param {object} db - D1 database instance
+ * @param {number} aiProjectId - AI project ID
+ * @param {boolean} visibleOnly - Only return visible sections
+ * @returns {array} Array of sections
+ */
+export async function getSectionsByProjectId(db, aiProjectId, visibleOnly = false) {
+  let sql = 'SELECT * FROM ai_sections WHERE ai_project_id = ?';
+  if (visibleOnly) {
+    sql += ' AND is_visible = 1';
+  }
+  sql += ' ORDER BY section_order ASC';
+
+  const sections = await db.prepare(sql).bind(aiProjectId).all();
+
+  return sections.results || [];
+}
+
+/**
+ * Update section
+ * @param {object} db - D1 database instance
+ * @param {number} id - Section ID
+ * @param {object} data - Fields to update
+ * @returns {object} Updated section
+ */
+export async function updateSection(db, id, data) {
+  const allowedFields = ['section_type', 'section_order', 'html_template', 'content_json', 'is_visible'];
+
+  const updates = [];
+  const values = [];
+
+  Object.keys(data).forEach((key) => {
+    if (allowedFields.includes(key)) {
+      updates.push(`${key} = ?`);
+      values.push(data[key]);
+    }
+  });
+
+  if (updates.length === 0) {
+    throw new Error('No valid fields to update');
+  }
+
+  // Always update updated_at
+  updates.push('updated_at = unixepoch()');
+  values.push(id);
+
+  const sql = `UPDATE ai_sections SET ${updates.join(', ')} WHERE id = ? RETURNING *`;
+
+  const result = await db.prepare(sql).bind(...values).first();
+
+  return result;
+}
+
+/**
+ * Delete section
+ * @param {object} db - D1 database instance
+ * @param {number} id - Section ID
+ * @returns {boolean} Success
+ */
+export async function deleteSection(db, id) {
+  await db.prepare('DELETE FROM ai_sections WHERE id = ?').bind(id).run();
+
+  return true;
+}
+
+/**
+ * Delete all sections for a project
+ * @param {object} db - D1 database instance
+ * @param {number} aiProjectId - AI project ID
+ * @returns {boolean} Success
+ */
+export async function deleteSectionsByProjectId(db, aiProjectId) {
+  await db.prepare('DELETE FROM ai_sections WHERE ai_project_id = ?').bind(aiProjectId).run();
+
+  return true;
+}
+
+/**
+ * Reorder sections for a project
+ * @param {object} db - D1 database instance
+ * @param {number} aiProjectId - AI project ID
+ * @param {array} sectionIds - Array of section IDs in desired order
+ * @returns {boolean} Success
+ */
+export async function reorderSections(db, aiProjectId, sectionIds) {
+  // Use a transaction-like approach with batch updates
+  const promises = sectionIds.map((sectionId, index) =>
+    db
+      .prepare('UPDATE ai_sections SET section_order = ?, updated_at = unixepoch() WHERE id = ? AND ai_project_id = ?')
+      .bind(index, sectionId, aiProjectId)
+      .run()
+  );
+
+  await Promise.all(promises);
+
+  return true;
+}
+
+/**
+ * Get sections by type for a project
+ * @param {object} db - D1 database instance
+ * @param {number} aiProjectId - AI project ID
+ * @param {string} sectionType - Section type
+ * @returns {array} Array of sections
+ */
+export async function getSectionsByType(db, aiProjectId, sectionType) {
+  const sections = await db
+    .prepare('SELECT * FROM ai_sections WHERE ai_project_id = ? AND section_type = ? ORDER BY section_order ASC')
+    .bind(aiProjectId, sectionType)
+    .all();
+
+  return sections.results || [];
+}
+
+/**
+ * Update section content (JSON only)
+ * @param {object} db - D1 database instance
+ * @param {number} id - Section ID
+ * @param {object} contentJson - Content object to be stringified
+ * @returns {object} Updated section
+ */
+export async function updateSectionContent(db, id, contentJson) {
+  const result = await db
+    .prepare(
+      `UPDATE ai_sections
+       SET content_json = ?, updated_at = unixepoch()
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(JSON.stringify(contentJson), id)
+    .first();
+
+  return result;
+}
+
+/**
+ * Toggle section visibility
+ * @param {object} db - D1 database instance
+ * @param {number} id - Section ID
+ * @param {boolean} isVisible - Visibility state
+ * @returns {object} Updated section
+ */
+export async function toggleSectionVisibility(db, id, isVisible) {
+  const result = await db
+    .prepare(
+      `UPDATE ai_sections
+       SET is_visible = ?, updated_at = unixepoch()
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(isVisible ? 1 : 0, id)
+    .first();
+
+  return result;
+}
+
+/**
+ * Count sections for a project
+ * @param {object} db - D1 database instance
+ * @param {number} aiProjectId - AI project ID
+ * @returns {number} Count of sections
+ */
+export async function countSectionsByProjectId(db, aiProjectId) {
+  const result = await db
+    .prepare('SELECT COUNT(*) as count FROM ai_sections WHERE ai_project_id = ?')
+    .bind(aiProjectId)
+    .first();
+
+  return result?.count || 0;
+}

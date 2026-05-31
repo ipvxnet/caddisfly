@@ -1,0 +1,254 @@
+// AI Conversation State Machine
+
+/**
+ * Conversation steps definition
+ * Each step defines a question, type, and next step
+ */
+export const CONVERSATION_STEPS = {
+  initial_prompt: {
+    question: 'What kind of website do you need? Describe your business or project.',
+    type: 'text',
+    placeholder: 'e.g., A bakery website with online ordering, a portfolio for my photography...',
+    next: 'business_info',
+  },
+  business_info: {
+    question: "What's your business or project name?",
+    type: 'text',
+    placeholder: 'e.g., Sweet Delights Bakery',
+    next: 'features',
+  },
+  features: {
+    question: 'Which sections would you like on your website?',
+    type: 'multiple_choice',
+    options: [
+      { value: 'hero', label: 'Hero / Landing Section', description: 'Eye-catching introduction with call-to-action' },
+      { value: 'about', label: 'About Us', description: 'Tell your story and mission' },
+      { value: 'services', label: 'Services / Products', description: 'Showcase what you offer' },
+      { value: 'gallery', label: 'Photo Gallery', description: 'Visual showcase of your work' },
+      { value: 'testimonials', label: 'Customer Reviews', description: 'Social proof and testimonials' },
+      { value: 'contact', label: 'Contact Form', description: 'Let visitors get in touch' },
+      { value: 'footer', label: 'Footer', description: 'Contact info and social links' },
+    ],
+    next: 'audience',
+  },
+  audience: {
+    question: 'Who is your target audience?',
+    type: 'text',
+    placeholder: 'e.g., Local customers looking for fresh baked goods, wedding planners...',
+    next: 'style',
+  },
+  style: {
+    question: 'Choose a visual style for your website',
+    type: 'single_choice',
+    options: [
+      { value: 'modern', label: 'Modern', description: 'Clean lines, gradients, contemporary feel' },
+      { value: 'classic', label: 'Classic', description: 'Timeless, elegant, professional' },
+      { value: 'minimal', label: 'Minimal', description: 'Simple, focused, lots of white space' },
+      { value: 'bold', label: 'Bold', description: 'Vibrant colors, strong typography, energetic' },
+    ],
+    next: 'content_source',
+  },
+  content_source: {
+    question: 'How would you like to provide content?',
+    type: 'single_choice',
+    options: [
+      { value: 'ai_generate', label: 'AI Generate', description: "Let AI create content based on your answers (you can edit later)" },
+      { value: 'upload', label: "I'll Upload", description: 'Upload your own text and images' },
+      { value: 'hybrid', label: 'Mix of Both', description: 'AI generates some content, you upload specific items' },
+    ],
+    next: 'review',
+  },
+  review: {
+    question: 'Great! Let me generate your website preview...',
+    type: 'info',
+    next: null, // End of conversation
+  },
+};
+
+/**
+ * Get the first conversation step
+ * @returns {string} First step name
+ */
+export function getFirstStep() {
+  return 'initial_prompt';
+}
+
+/**
+ * Get step configuration
+ * @param {string} stepName - Step name
+ * @returns {object|null} Step configuration or null
+ */
+export function getStepConfig(stepName) {
+  return CONVERSATION_STEPS[stepName] || null;
+}
+
+/**
+ * Get next step name
+ * @param {string} currentStep - Current step name
+ * @returns {string|null} Next step name or null if conversation complete
+ */
+export function getNextStep(currentStep) {
+  const stepConfig = getStepConfig(currentStep);
+  return stepConfig?.next || null;
+}
+
+/**
+ * Check if step is valid
+ * @param {string} stepName - Step name
+ * @returns {boolean} Is valid step
+ */
+export function isValidStep(stepName) {
+  return stepName in CONVERSATION_STEPS;
+}
+
+/**
+ * Check if conversation is complete
+ * @param {string} stepName - Current step name
+ * @returns {boolean} Is conversation complete
+ */
+export function isConversationComplete(stepName) {
+  const stepConfig = getStepConfig(stepName);
+  return stepConfig?.next === null;
+}
+
+/**
+ * Validate answer based on step type
+ * @param {string} stepName - Step name
+ * @param {any} answer - User's answer
+ * @returns {object} Validation result { valid: boolean, error?: string }
+ */
+export function validateAnswer(stepName, answer) {
+  const stepConfig = getStepConfig(stepName);
+
+  if (!stepConfig) {
+    return { valid: false, error: 'Invalid step' };
+  }
+
+  // Info type doesn't require answer validation
+  if (stepConfig.type === 'info') {
+    return { valid: true };
+  }
+
+  // Check if answer exists
+  if (answer === null || answer === undefined || answer === '') {
+    return { valid: false, error: 'Answer is required' };
+  }
+
+  // Validate based on type
+  switch (stepConfig.type) {
+    case 'text':
+      if (typeof answer !== 'string') {
+        return { valid: false, error: 'Answer must be a string' };
+      }
+      if (answer.trim().length < 2) {
+        return { valid: false, error: 'Answer is too short (minimum 2 characters)' };
+      }
+      if (answer.length > 1000) {
+        return { valid: false, error: 'Answer is too long (maximum 1000 characters)' };
+      }
+      return { valid: true };
+
+    case 'single_choice':
+      if (typeof answer !== 'string') {
+        return { valid: false, error: 'Answer must be a string' };
+      }
+      const validOptions = stepConfig.options.map((opt) => opt.value);
+      if (!validOptions.includes(answer)) {
+        return { valid: false, error: 'Invalid option selected' };
+      }
+      return { valid: true };
+
+    case 'multiple_choice':
+      if (!Array.isArray(answer)) {
+        return { valid: false, error: 'Answer must be an array' };
+      }
+      if (answer.length === 0) {
+        return { valid: false, error: 'At least one option must be selected' };
+      }
+      const validMultiOptions = stepConfig.options.map((opt) => opt.value);
+      const invalidOption = answer.find((opt) => !validMultiOptions.includes(opt));
+      if (invalidOption) {
+        return { valid: false, error: `Invalid option: ${invalidOption}` };
+      }
+      return { valid: true };
+
+    default:
+      return { valid: false, error: 'Unknown question type' };
+  }
+}
+
+/**
+ * Get conversation progress
+ * @param {string} currentStep - Current step name
+ * @returns {object} Progress information { current: number, total: number, percentage: number }
+ */
+export function getConversationProgress(currentStep) {
+  const steps = Object.keys(CONVERSATION_STEPS);
+  const currentIndex = steps.indexOf(currentStep);
+  const total = steps.length;
+
+  return {
+    current: currentIndex >= 0 ? currentIndex + 1 : 0,
+    total,
+    percentage: currentIndex >= 0 ? Math.round(((currentIndex + 1) / total) * 100) : 0,
+  };
+}
+
+/**
+ * Get all conversation steps (for progress display)
+ * @returns {array} Array of step names
+ */
+export function getAllSteps() {
+  return Object.keys(CONVERSATION_STEPS);
+}
+
+/**
+ * Format step for API response
+ * @param {string} stepName - Step name
+ * @returns {object} Formatted step data
+ */
+export function formatStepForResponse(stepName) {
+  const stepConfig = getStepConfig(stepName);
+
+  if (!stepConfig) {
+    return null;
+  }
+
+  const response = {
+    step: stepName,
+    question: stepConfig.question,
+    type: stepConfig.type,
+  };
+
+  // Add options if present
+  if (stepConfig.options) {
+    response.options = stepConfig.options;
+  }
+
+  // Add placeholder if present
+  if (stepConfig.placeholder) {
+    response.placeholder = stepConfig.placeholder;
+  }
+
+  // Add progress
+  response.progress = getConversationProgress(stepName);
+
+  return response;
+}
+
+/**
+ * Build conversation summary from all answers
+ * @param {array} conversations - Array of conversation entries with answers
+ * @returns {object} Summary of all answers
+ */
+export function buildConversationSummary(conversations) {
+  const summary = {};
+
+  conversations.forEach((conv) => {
+    if (conv.answer) {
+      summary[conv.step_name] = conv.answer;
+    }
+  });
+
+  return summary;
+}

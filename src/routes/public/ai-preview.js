@@ -1,0 +1,175 @@
+// GET /ai-preview/:project_id
+// Display preview of AI-generated website
+
+import { getAIProjectByProjectId } from '../../db/ai-projects.js';
+import { getSectionsByProjectId } from '../../db/ai-sections.js';
+import { getWebsiteConfigByProjectId } from '../../db/ai-config.js';
+import { generatePreview } from '../../utils/ai-page-assembler.js';
+
+/**
+ * Handle AI preview page
+ * @param {object} ctx - Request context
+ * @returns {Response} HTTP response
+ */
+export async function handleAIPreview(ctx) {
+  const { env, params } = ctx;
+
+  try {
+    const { project_id } = params;
+
+    // Get project
+    const project = await getAIProjectByProjectId(env.DB, project_id);
+
+    if (!project) {
+      return new Response('Project not found', {
+        status: 404,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+
+    // Check if preview is ready
+    if (project.status === 'conversation' || project.status === 'content_generation') {
+      return new Response(
+        `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generating Preview...</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 2rem auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>Generating Your Website</h1>
+    <p>Please wait while we create your personalized website...</p>
+    <p style="font-size: 1rem; margin-top: 2rem;">This usually takes 10-15 seconds.</p>
+  </div>
+  <script>
+    // Auto-refresh every 3 seconds
+    setTimeout(() => location.reload(), 3000);
+  </script>
+</body>
+</html>
+        `,
+        {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' },
+        }
+      );
+    }
+
+    // Get sections and config
+    const sections = await getSectionsByProjectId(env.DB, project.id, true);
+    const config = await getWebsiteConfigByProjectId(env.DB, project.id);
+
+    if (sections.length === 0 || !config) {
+      return new Response('Preview not ready yet', {
+        status: 400,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+
+    // Generate preview HTML
+    const html = generatePreview(sections, config, project);
+
+    return new Response(html, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+  } catch (error) {
+    console.error('Error displaying preview:', error);
+
+    return new Response(
+      `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f7fafc;
+      color: #2d3748;
+      text-align: center;
+      padding: 2rem;
+    }
+    .error {
+      max-width: 600px;
+    }
+    h1 {
+      color: #e53e3e;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      font-size: 1.125rem;
+      margin-bottom: 2rem;
+    }
+    a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="error">
+    <h1>Oops! Something went wrong</h1>
+    <p>We encountered an error while loading your preview.</p>
+    <p><a href="/">Go back to home</a></p>
+  </div>
+</body>
+</html>
+      `,
+      {
+        status: 500,
+        headers: { 'Content-Type': 'text/html' },
+      }
+    );
+  }
+}
