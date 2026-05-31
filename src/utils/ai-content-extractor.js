@@ -13,42 +13,77 @@ export async function extractSectionsFromHTML(html, env) {
   const truncatedHTML = html.substring(0, 8000);
 
   const prompt = `
-Analyze this website HTML and identify the main sections.
+Extract content from this website HTML and organize it into sections.
 
-For each section found, return JSON with:
-- type: one of [hero, about, services, features, pricing, stats, gallery, testimonials, cta, contact, footer]
-- order: numerical order (0, 1, 2, etc.)
-- content: extracted text/data for that section
+IMPORTANT: Extract ACTUAL text from the HTML, do NOT use placeholder text.
 
-Common section types:
-- hero: Main landing section with headline and CTA
-- about: About us, company info, story
-- services: Services offered, what we do
-- features: Product features, benefits
-- pricing: Pricing plans, packages
-- stats: Statistics, numbers, metrics
-- gallery: Images, portfolio, work samples
-- testimonials: Customer reviews, quotes
-- cta: Call to action section
-- contact: Contact form, contact info
-- footer: Footer with links and info
+For each section, return JSON with:
+- type: section type (hero, about, services, features, pricing, stats, gallery, testimonials, cta, contact, footer)
+- order: numerical order starting from 0
+- content: object with actual extracted text from HTML
 
-HTML:
+Section types and required content fields:
+
+HERO: Main heading, tagline, call-to-action button
+{
+  "type": "hero",
+  "order": 0,
+  "content": {
+    "heading": "The ACTUAL main headline from the page",
+    "subheading": "The ACTUAL tagline or description",
+    "cta_text": "The ACTUAL button text"
+  }
+}
+
+ABOUT: Company info, story, mission
+{
+  "type": "about",
+  "order": 1,
+  "content": {
+    "heading": "ACTUAL section heading",
+    "text": "ACTUAL about text from the page"
+  }
+}
+
+SERVICES: List of services with descriptions
+{
+  "type": "services",
+  "order": 2,
+  "content": {
+    "heading": "ACTUAL heading",
+    "items": [
+      {"title": "ACTUAL service name", "description": "ACTUAL description"}
+    ]
+  }
+}
+
+TESTIMONIALS: Customer reviews
+{
+  "type": "testimonials",
+  "order": 7,
+  "content": {
+    "heading": "ACTUAL heading",
+    "testimonials": [
+      {"quote": "ACTUAL review text", "author": "ACTUAL customer name", "role": "ACTUAL role/company"}
+    ]
+  }
+}
+
+CONTACT: Contact information
+{
+  "type": "contact",
+  "order": 9,
+  "content": {
+    "heading": "ACTUAL heading",
+    "email": "ACTUAL email if found",
+    "phone": "ACTUAL phone if found"
+  }
+}
+
+HTML to analyze:
 ${truncatedHTML}
 
-Return ONLY a JSON array, no explanation:
-[
-  {
-    "type": "hero",
-    "order": 0,
-    "content": {
-      "heading": "extracted heading",
-      "subheading": "extracted subheading",
-      "cta_text": "button text"
-    }
-  },
-  ...
-]
+Return ONLY a JSON array with actual extracted content, no placeholders, no explanation:
 `.trim();
 
   try {
