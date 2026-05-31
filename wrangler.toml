@@ -23,7 +23,7 @@ SESSION_DURATION_HOURS = "168"
 # Preview environment (dev branch)
 [env.preview]
 name = "caddisfly-preview"
-vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fernandooliveira2.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fernandooliveira2.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168" }
 
 [[env.preview.d1_databases]]
 binding = "DB"
