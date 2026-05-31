@@ -321,117 +321,180 @@ function applyCSSModernization(originalHtml, pageUrl) {
   // Check if viewport meta tag exists
   const hasViewport = html.includes('viewport');
 
-  // Modern CSS that enhances without breaking layout
+  // Dramatic CSS modernization - visible changes
   const modernCSS = `
 <style>
-/* Caddisfly CSS Modernization */
-/* Reset and base styles */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* Caddisfly Dramatic Modernization */
 
+/* Add a subtle gradient background */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-  line-height: 1.6 !important;
-  color: #333 !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+  line-height: 1.8 !important;
+  color: #1a1a1a !important;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  letter-spacing: 0.01em !important;
 }
 
-/* Typography improvements */
+/* Add container max-width and centering */
+body > * {
+  max-width: 1400px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Dramatic typography */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600 !important;
-  line-height: 1.2 !important;
-  margin-top: 1em !important;
-  margin-bottom: 0.5em !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.75em !important;
+  color: #2d3748 !important;
+  letter-spacing: -0.02em !important;
+}
+
+h1 {
+  font-size: 3em !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+h2 {
+  font-size: 2.5em !important;
+  border-left: 4px solid #667eea !important;
+  padding-left: 20px !important;
 }
 
 p {
-  margin-bottom: 1em !important;
+  margin-bottom: 1.5em !important;
+  font-size: 1.1em !important;
 }
 
-/* Link improvements */
+/* Modern card-style sections */
+section, article, .section, .content {
+  background: white !important;
+  padding: 30px !important;
+  margin: 20px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+section:hover, article:hover, .section:hover, .content:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+}
+
+/* Vibrant links */
 a {
-  color: #007bff !important;
+  color: #667eea !important;
   text-decoration: none !important;
-  transition: all 0.2s ease !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  border-bottom: 2px solid transparent !important;
 }
 
 a:hover {
-  color: #0056b3 !important;
-  text-decoration: underline !important;
+  color: #764ba2 !important;
+  border-bottom-color: #764ba2 !important;
 }
 
-/* Image responsiveness */
+/* Gorgeous buttons */
+button, .button, .btn, input[type="submit"], input[type="button"], a[class*="button"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 14px 32px !important;
+  border-radius: 50px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-size: 0.9em !important;
+}
+
+button:hover, .button:hover, .btn:hover, input[type="submit"]:hover, input[type="button"]:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6) !important;
+}
+
+/* Beautiful images */
 img {
   max-width: 100% !important;
   height: auto !important;
-  display: block !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+  transition: transform 0.3s ease !important;
 }
 
-/* Button improvements */
-button, .button, input[type="submit"], input[type="button"] {
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  border-radius: 4px !important;
+img:hover {
+  transform: scale(1.02) !important;
 }
 
-button:hover, .button:hover, input[type="submit"]:hover, input[type="button"]:hover {
-  opacity: 0.9 !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Form improvements */
+/* Modern forms */
 input, textarea, select {
   font-family: inherit !important;
-  font-size: inherit !important;
-  border-radius: 4px !important;
+  padding: 12px 16px !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 1em !important;
+  transition: all 0.3s ease !important;
+  background: white !important;
 }
 
-/* Table improvements */
-table {
-  border-collapse: collapse !important;
-  width: 100% !important;
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
 }
 
-th, td {
-  padding: 12px !important;
-  text-align: left !important;
+/* Modern navigation */
+nav, header {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 20px 30px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+  margin: 15px !important;
 }
 
-/* List improvements */
+/* Cards for lists */
 ul, ol {
-  padding-left: 1.5em !important;
+  list-style: none !important;
+  padding: 0 !important;
 }
 
 li {
-  margin-bottom: 0.5em !important;
+  background: white !important;
+  margin-bottom: 12px !important;
+  padding: 16px 20px !important;
+  border-radius: 8px !important;
+  border-left: 4px solid #667eea !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+  transition: all 0.3s ease !important;
 }
 
-/* Mobile responsiveness */
+li:hover {
+  transform: translateX(5px) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+/* Mobile */
 @media (max-width: 768px) {
-  body {
-    font-size: 16px !important;
-  }
-
-  img {
-    width: 100% !important;
-  }
-
-  table {
-    font-size: 14px !important;
-  }
+  h1 { font-size: 2em !important; }
+  h2 { font-size: 1.75em !important; }
+  section, article { padding: 20px !important; margin: 10px !important; }
+  button, .button, .btn { padding: 12px 24px !important; }
 }
 
-/* Accessibility */
-:focus {
-  outline: 2px solid #007bff !important;
-  outline-offset: 2px !important;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth !important;
+/* Smooth everything */
+* {
+  transition: all 0.2s ease !important;
 }
 </style>
 `;
