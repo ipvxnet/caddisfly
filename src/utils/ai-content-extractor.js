@@ -9,9 +9,22 @@ import { callWorkersAI, extractJSON } from './ai-content-generator.js';
  * @returns {Promise<array>} Array of sections with type and content
  */
 export async function extractSectionsFromHTML(html, env) {
-  // Truncate HTML to avoid token limits (keep first 16000 chars which is ~4000 tokens)
-  const truncatedHTML = html.substring(0, 16000);
-  console.log(`AI extraction: Processing ${truncatedHTML.length} chars (original: ${html.length} chars)`);
+  // Clean HTML to extract more meaningful content in fewer characters
+  let cleanedHTML = html
+    // Remove script tags and their content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove style tags and their content
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    // Remove comments
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // Remove excessive whitespace
+    .replace(/\s+/g, ' ')
+    // Trim
+    .trim();
+
+  // Take more content after cleaning (20000 chars which is ~5000 tokens)
+  const truncatedHTML = cleanedHTML.substring(0, 20000);
+  console.log(`AI extraction: Processing ${truncatedHTML.length} chars after cleaning (original: ${html.length} chars, cleaned: ${cleanedHTML.length} chars)`);
 
   const prompt = `
 Extract content from this website HTML and organize it into sections.
