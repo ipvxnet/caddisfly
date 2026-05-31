@@ -1,6 +1,7 @@
 name = "caddisfly"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
 
 # D1 Database binding
 [[d1_databases]]
@@ -18,7 +19,8 @@ bucket_name = "caddisfly-storage"
 binding = "AI"
 
 # Browser Rendering binding
-browser = { binding = "BROWSER" }
+[browser]
+binding = "BROWSER"
 
 # Email Workers binding (configure for production)
 # [[send_email]]
@@ -52,7 +54,8 @@ bucket_name = "caddisfly-storage"
 [env.preview.ai]
 binding = "AI"
 
-env.preview.browser = { binding = "BROWSER" }
+[env.preview.browser]
+binding = "BROWSER"
 
 # [[env.preview.send_email]]
 # name = "SEND_EMAIL"
@@ -74,7 +77,8 @@ bucket_name = "caddisfly-storage"
 [env.production.ai]
 binding = "AI"
 
-env.production.browser = { binding = "BROWSER" }
+[env.production.browser]
+binding = "BROWSER"
 
 # [[env.production.send_email]]
 # name = "SEND_EMAIL"
