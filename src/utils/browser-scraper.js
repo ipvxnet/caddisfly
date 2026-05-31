@@ -38,18 +38,18 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
 
     // Wait for React/JavaScript to render content
     // Many modern sites use React/Vue/Angular that need time to hydrate
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Scroll to trigger lazy loading
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight / 2);
     });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     await page.evaluate(() => {
       window.scrollTo(0, 0);
     });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Get HTML content after rendering
     const homepageHtml = await page.content();
@@ -104,18 +104,18 @@ export async function scrapeWithBrowser(env, url, pageLimit = 2) {
           });
 
           // Wait for React/JavaScript to render content
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise(resolve => setTimeout(resolve, 3000));
 
           // Scroll to trigger lazy loading
           await page.evaluate(() => {
             window.scrollTo(0, document.body.scrollHeight / 2);
           });
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
 
           await page.evaluate(() => {
             window.scrollTo(0, 0);
           });
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
 
           const pageHtml = await page.content();
 
