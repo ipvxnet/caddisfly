@@ -5,7 +5,6 @@
 
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getScrapedPagesByProjectId } from '../../db/scraped-pages.js';
-import { getFromR2 } from '../../utils/r2-storage.js';
 import { buildPreviewComparisonHtml } from '../../templates/preview-comparison.js';
 
 /**
@@ -52,37 +51,11 @@ export async function handlePreviewView(ctx) {
 
     console.log(`Found ${scrapedPages.length} scraped pages`);
 
-    // Fetch HTML content from R2 for each page
-    const pages = [];
-
-    for (const scrapedPage of scrapedPages) {
-      try {
-        // Get both original and refactored HTML from R2
-        const [originalHtml, refactoredHtml] = await Promise.all([
-          getFromR2(env.STORAGE, scrapedPage.original_r2_path),
-          getFromR2(env.STORAGE, scrapedPage.refactored_r2_path),
-        ]);
-
-        if (!originalHtml || !refactoredHtml) {
-          console.warn(`Missing HTML for page ${scrapedPage.page_index}`);
-          continue;
-        }
-
-        pages.push({
-          url: scrapedPage.page_url,
-          originalHtml: originalHtml,
-          refactoredHtml: refactoredHtml,
-          pageIndex: scrapedPage.page_index,
-        });
-      } catch (error) {
-        console.error(`Failed to fetch HTML for page ${scrapedPage.page_index}:`, error);
-        // Continue with other pages
-      }
-    }
-
-    if (pages.length === 0) {
-      return renderError('Unable to load preview content');
-    }
+    // Prepare page data for template (no need to fetch HTML, iframes will load via URLs)
+    const pages = scrapedPages.map(page => ({
+      url: page.page_url,
+      pageIndex: page.page_index,
+    }));
 
     // Sort pages by index
     pages.sort((a, b) => a.pageIndex - b.pageIndex);

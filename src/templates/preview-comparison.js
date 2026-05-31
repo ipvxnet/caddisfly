@@ -27,7 +27,7 @@ export function buildPreviewComparisonHtml(data) {
     `;
   }).join('');
 
-  // Build page containers
+  // Build page containers with iframe src instead of srcdoc
   const pageContainers = pages.map((page, index) => `
     <div class="page-container ${index === 0 ? 'active' : ''}" data-page-index="${index}">
       <div class="comparison-grid">
@@ -38,8 +38,8 @@ export function buildPreviewComparisonHtml(data) {
           </div>
           <div class="iframe-container">
             <iframe
-              sandbox="allow-scripts allow-same-origin"
-              srcdoc="${escapeHtml(page.originalHtml)}"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              src="/preview/${previewId}/html/${index}/original"
               title="Original Page ${index}"
             ></iframe>
           </div>
@@ -52,8 +52,8 @@ export function buildPreviewComparisonHtml(data) {
           </div>
           <div class="iframe-container">
             <iframe
-              sandbox="allow-scripts allow-same-origin"
-              srcdoc="${escapeHtml(page.refactoredHtml)}"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              src="/preview/${previewId}/html/${index}/refactored"
               title="Refactored Page ${index}"
             ></iframe>
           </div>

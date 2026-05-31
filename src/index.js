@@ -15,6 +15,7 @@ import { handleLogout } from './routes/admin/logout.js';
 import { handleAdminDashboard } from './routes/admin/dashboard.js';
 import { handlePreviewCreate } from './routes/api/preview/create.js';
 import { handlePreviewView } from './routes/public/preview.js';
+import { handlePreviewHtml } from './routes/public/preview-html.js';
 
 // Initialize router
 const router = new Router();
@@ -24,6 +25,7 @@ router.get('/', handleLanding);
 router.get('/login', handleLogin);
 router.get('/auth/google/callback', handleGoogleCallback);
 router.get('/preview/:preview_id', handlePreviewView);
+router.get('/preview/:preview_id/html/:page_index/:type', handlePreviewHtml);
 
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
