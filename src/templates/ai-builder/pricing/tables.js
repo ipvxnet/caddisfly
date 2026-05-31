@@ -50,7 +50,7 @@ export function pricingTablesTemplate(data, config) {
             <span class="pricing-period">${plan.period}</span>
           </div>
           <ul class="pricing-features">
-            ${plan.features
+            ${(plan.features || [])
               .map(
                 (feature) => `
               <li class="pricing-feature">
