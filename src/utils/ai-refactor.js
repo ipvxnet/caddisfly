@@ -79,39 +79,40 @@ const FALLBACK_CSS = `
  * @returns {Promise<string>} Refactored HTML
  */
 export async function refactorHtml(env, originalHtml, pageUrl) {
+  // For now, use CSS-only modernization instead of AI
+  // AI restructuring is unreliable and often breaks layouts
+  console.log('Using CSS-only modernization (AI disabled for reliability)');
+  return applyCSSModernization(originalHtml, pageUrl);
+
+  /* AI refactoring disabled - uncomment to re-enable
   try {
-    // Check if HTML needs chunking
     const htmlSizeBytes = new TextEncoder().encode(originalHtml).length;
 
     if (htmlSizeBytes > MAX_HTML_SIZE_BYTES) {
-      console.log(`HTML too large (${htmlSizeBytes} bytes), chunking...`);
-      return await refactorWithChunking(env, originalHtml, pageUrl);
+      console.log(`HTML too large (${htmlSizeBytes} bytes), using CSS modernization`);
+      return applyCSSModernization(originalHtml, pageUrl);
     }
 
-    // Build the prompt
     const prompt = buildRefactorPrompt(originalHtml, pageUrl);
-
-    // Call Workers AI
     const refactoredHtml = await callWorkersAI(env, prompt);
 
-    // Validate the output
     if (!refactoredHtml || refactoredHtml.trim().length === 0) {
-      console.warn('AI returned empty result, using fallback');
-      return applyFallbackTemplate(originalHtml);
+      console.warn('AI returned empty result, using CSS modernization');
+      return applyCSSModernization(originalHtml, pageUrl);
     }
 
-    // Ensure it's valid HTML
     if (!refactoredHtml.includes('<!DOCTYPE') && !refactoredHtml.includes('<html')) {
-      console.warn('AI returned invalid HTML, using fallback');
-      return applyFallbackTemplate(originalHtml);
+      console.warn('AI returned invalid HTML, using CSS modernization');
+      return applyCSSModernization(originalHtml, pageUrl);
     }
 
     return refactoredHtml;
   } catch (error) {
     console.error('AI refactoring failed:', error);
-    console.log('Using fallback template');
-    return applyFallbackTemplate(originalHtml);
+    console.log('Using CSS modernization');
+    return applyCSSModernization(originalHtml, pageUrl);
   }
+  */
 }
 
 /**
@@ -297,6 +298,169 @@ function combineChunks(chunks, url) {
   ${chunks.join('\n')}
 </body>
 </html>`;
+}
+
+/**
+ * Applies modern CSS to original HTML without changing structure
+ * This preserves the original layout while modernizing the appearance
+ * @param {string} originalHtml - Original HTML content
+ * @param {string} pageUrl - URL of the page
+ * @returns {string} HTML with modern CSS injected
+ */
+function applyCSSModernization(originalHtml, pageUrl) {
+  // Remove existing style tags and inline styles for clean slate
+  let html = originalHtml;
+
+  // Extract title
+  let title = 'Modernized Page';
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch) {
+    title = titleMatch[1];
+  }
+
+  // Check if viewport meta tag exists
+  const hasViewport = html.includes('viewport');
+
+  // Modern CSS that enhances without breaking layout
+  const modernCSS = `
+<style>
+/* Caddisfly CSS Modernization */
+/* Reset and base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+  line-height: 1.6 !important;
+  color: #333 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography improvements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  margin-top: 1em !important;
+  margin-bottom: 0.5em !important;
+}
+
+p {
+  margin-bottom: 1em !important;
+}
+
+/* Link improvements */
+a {
+  color: #007bff !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+
+a:hover {
+  color: #0056b3 !important;
+  text-decoration: underline !important;
+}
+
+/* Image responsiveness */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+}
+
+/* Button improvements */
+button, .button, input[type="submit"], input[type="button"] {
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border-radius: 4px !important;
+}
+
+button:hover, .button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Form improvements */
+input, textarea, select {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  border-radius: 4px !important;
+}
+
+/* Table improvements */
+table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+th, td {
+  padding: 12px !important;
+  text-align: left !important;
+}
+
+/* List improvements */
+ul, ol {
+  padding-left: 1.5em !important;
+}
+
+li {
+  margin-bottom: 0.5em !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px !important;
+  }
+
+  img {
+    width: 100% !important;
+  }
+
+  table {
+    font-size: 14px !important;
+  }
+}
+
+/* Accessibility */
+:focus {
+  outline: 2px solid #007bff !important;
+  outline-offset: 2px !important;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth !important;
+}
+</style>
+`;
+
+  // Inject viewport meta tag if missing
+  const viewportTag = hasViewport ? '' : '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+
+  // Inject modern CSS into head
+  if (html.includes('</head>')) {
+    html = html.replace('</head>', `${viewportTag}\n${modernCSS}\n</head>`);
+  } else if (html.includes('<body')) {
+    html = html.replace('<body', `${viewportTag}\n${modernCSS}\n<body`);
+  } else {
+    // Wrap entire HTML
+    html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  ${viewportTag}
+  <title>${title}</title>
+  ${modernCSS}
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+  }
+
+  return html;
 }
 
 /**
