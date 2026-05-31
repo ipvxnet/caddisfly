@@ -10,6 +10,7 @@ import { refactorHtml } from '../../../utils/ai-refactor.js';
 import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
 import { createProject, updateProject } from '../../../db/projects.js';
 import { createScrapedPage, updateScrapedPagePaths } from '../../../db/scraped-pages.js';
+import { fixResourceUrls, addCSPForResources } from '../../../utils/html-processor.js';
 
 /**
  * Handles preview creation requests
@@ -92,15 +93,19 @@ export async function handlePreviewCreate(ctx) {
           page_index: i,
         });
 
+        // Fix resource URLs in original HTML
+        let fixedOriginalHtml = fixResourceUrls(page.html, page.url);
+        fixedOriginalHtml = addCSPForResources(fixedOriginalHtml, page.url);
+
         // Refactor HTML with AI
         let refactoredHtml;
         try {
-          refactoredHtml = await refactorHtml(env, page.html, page.url);
+          refactoredHtml = await refactorHtml(env, fixedOriginalHtml, page.url);
           console.log(`Refactored page ${i} successfully`);
         } catch (error) {
           console.error(`AI refactoring failed for page ${i}:`, error);
           // Use fallback - the refactorHtml function already handles this
-          refactoredHtml = page.html; // In case of complete failure
+          refactoredHtml = fixedOriginalHtml; // In case of complete failure
         }
 
         // Generate R2 paths
@@ -110,7 +115,7 @@ export async function handlePreviewCreate(ctx) {
         // Upload to R2
         try {
           await Promise.all([
-            uploadToR2(env.STORAGE, originalPath, page.html, 'text/html'),
+            uploadToR2(env.STORAGE, originalPath, fixedOriginalHtml, 'text/html'),
             uploadToR2(env.STORAGE, refactoredPath, refactoredHtml, 'text/html'),
           ]);
           console.log(`Uploaded page ${i} to R2`);
