@@ -6,7 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { isValidEmail, sanitizeEmail, sendPreviewEmail } from '../../../utils/email.js';
 import { isValidUrl, scrapeWebsite } from '../../../utils/scraper.js';
-import { scrapeWithBrowser, shouldUseBrowser, isContentThin } from '../../../utils/browser-scraper.js';
+import { scrapeWithBrowser, shouldUseBrowser, isContentThin, getContentWordCount } from '../../../utils/browser-scraper.js';
 import { refactorHtml } from '../../../utils/ai-refactor.js';
 import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
 import { createProject, updateProject } from '../../../db/projects.js';
@@ -89,13 +89,18 @@ export async function handlePreviewCreate(ctx) {
           if (scrapedPages.length > 0 && isContentThin(scrapedPages[0].html)) {
             console.log('Static content is thin (likely JS-rendered), trying browser rendering...');
             try {
+              const staticWords = getContentWordCount(scrapedPages[0].html);
               const browserPages = await scrapeWithBrowser(env, normalizedWebsite, pageLimit);
-              if (browserPages.length > 0 && !isContentThin(browserPages[0].html)) {
+              const browserWords = browserPages.length > 0 ? getContentWordCount(browserPages[0].html) : 0;
+
+              // Use browser content if it captured meaningfully more text
+              // (at least 20% more words than the static scrape)
+              if (browserWords > staticWords * 1.2) {
                 scrapedPages = browserPages;
                 usedBrowser = true;
-                console.log('Browser rendering provided richer content');
+                console.log(`Browser rendering provided richer content (${browserWords} vs ${staticWords} words)`);
               } else {
-                console.log('Browser rendering did not improve content, using static');
+                console.log(`Browser rendering did not improve content (${browserWords} vs ${staticWords} words), using static`);
               }
             } catch (browserError) {
               console.log('Browser fallback failed, using static content:', browserError.message);

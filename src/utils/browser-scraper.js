@@ -185,11 +185,37 @@ export function isContentThin(html) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Count meaningful words (length > 1 to skip stray characters)
   const wordCount = textContent.split(/\s+/).filter((w) => w.length > 1).length;
 
-  console.log(`Content quality check: ${wordCount} words of visible text`);
+  // Text density: ratio of visible text characters to total HTML size.
+  // JS app shells (React/Vue/Tailwind) have lots of markup but little text,
+  // giving a very low density (< 8%). Real content sites are typically 15-40%.
+  const textDensity = html.length > 0 ? textContent.length / html.length : 0;
 
-  // Real content pages typically have 100+ words; JS app shells have very few
-  return wordCount < 100;
+  console.log(
+    `Content quality check: ${wordCount} words, ${(textDensity * 100).toFixed(1)}% text density`
+  );
+
+  // Thin if almost no text, OR if the text-to-markup ratio is very low
+  // (indicating a JS-rendered app shell where real content loads dynamically)
+  return wordCount < 50 || textDensity < 0.08;
+}
+
+/**
+ * Count visible text words in HTML (for comparing scrape quality)
+ * @param {string} html - HTML content
+ * @returns {number} Number of visible text words
+ */
+export function getContentWordCount(html) {
+  if (!html) return 0;
+
+  const textContent = html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return textContent.split(/\s+/).filter((w) => w.length > 1).length;
 }
