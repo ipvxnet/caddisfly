@@ -252,6 +252,8 @@ function buildChatUI(project, conversationHistory, currentStep, isComplete) {
       padding: 1.5rem;
       background: white;
       border-top: 1px solid #e2e8f0;
+      max-height: 50vh;
+      overflow-y: auto;
     }
 
     .input-group {
