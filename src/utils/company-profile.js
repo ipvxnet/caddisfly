@@ -125,8 +125,12 @@ export function profileToFactSections(profile) {
     };
   }
 
-  // Real Google reviews make better testimonials than invented ones.
-  const realReviews = (profile.reviews || []).filter((r) => r.text && r.text.trim());
+  // Real Google reviews make better testimonials than invented ones — but only
+  // POSITIVE ones (4★+). This is the business's own marketing site; a 1★ "they
+  // were rude to me" review must never be surfaced as a testimonial.
+  const realReviews = (profile.reviews || []).filter(
+    (r) => r.text && r.text.trim() && typeof r.rating === 'number' && r.rating >= 4
+  );
   if (realReviews.length > 0) {
     sections.testimonials = {
       heading: 'What Our Customers Say',
