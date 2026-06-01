@@ -155,6 +155,10 @@ export async function handleAIBuilderGenerate(ctx) {
       if (sectionType === 'features' && !Array.isArray(content.features)) {
         content.features = content.services || content.items || [];
       }
+      // services/features templates render a `description` subtitle; AI returns `subheading`.
+      if ((sectionType === 'services' || sectionType === 'features') && !content.description && content.subheading) {
+        content.description = content.subheading;
+      }
 
       // Pick the recipe's variant for this section, then inject real images.
       const variant = recipeVariant(recipe, sectionType);

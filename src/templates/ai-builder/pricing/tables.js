@@ -2,7 +2,7 @@
 // Pricing plans comparison
 
 export function pricingTablesTemplate(data, config) {
-  const { heading, description, plans } = data;
+  const { heading, description = '', plans } = data;
   const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
 
   // Default pricing plans if not provided

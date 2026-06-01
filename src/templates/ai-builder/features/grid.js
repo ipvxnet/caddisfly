@@ -2,7 +2,7 @@
 // Feature highlights in a grid layout
 
 export function featuresGridTemplate(data, config) {
-  const { heading, description, features } = data;
+  const { heading, description = '', features } = data;
   // Config rows use snake_case; accept camelCase too for safety.
   const primaryColor = config.primary_color || config.primaryColor || '#667eea';
   const fontHeading = config.font_heading || config.fontHeading || 'Inter';

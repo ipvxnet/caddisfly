@@ -75,6 +75,10 @@ export async function generateAndStore(env, project, profile) {
     if (type === 'features' && !Array.isArray(content.features)) {
       content.features = content.services || content.items || [];
     }
+    // These templates render a `description` subtitle; AI returns `subheading`.
+    if ((type === 'services' || type === 'features') && !content.description && content.subheading) {
+      content.description = content.subheading;
+    }
 
     const variant = recipeVariant(recipe, type);
     attachImages(type, content, pickPhoto);

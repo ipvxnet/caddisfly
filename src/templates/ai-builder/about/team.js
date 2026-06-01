@@ -2,7 +2,7 @@
 // Team member showcase with photos and bios
 
 export function aboutTeamTemplate(data, config) {
-  const { heading, description, team_members } = data;
+  const { heading, description = '', team_members } = data;
   const { primaryColor, fontHeading, fontBody } = config;
 
   // Default team members if not provided

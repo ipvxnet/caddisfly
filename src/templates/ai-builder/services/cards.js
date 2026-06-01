@@ -2,7 +2,7 @@
 // Services displayed as hoverable cards with icons
 
 export function servicesCardsTemplate(data, config) {
-  const { heading, description, services } = data;
+  const { heading, description = '', services } = data;
   const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
 
   // Default services if not provided

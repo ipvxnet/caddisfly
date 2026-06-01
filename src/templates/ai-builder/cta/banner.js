@@ -2,7 +2,7 @@
 // Call-to-action banner section
 
 export function ctaBannerTemplate(data, config) {
-  const { heading, description, cta_text, cta_url } = data;
+  const { heading, description = '', cta_text, cta_url } = data;
   const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
 
   return `

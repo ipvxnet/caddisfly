@@ -2,7 +2,7 @@
 // Company history with visual timeline
 
 export function aboutTimelineTemplate(data, config) {
-  const { heading, description, milestones } = data;
+  const { heading, description = '', milestones } = data;
   const { primaryColor, fontHeading, fontBody } = config;
 
   // Default milestones if not provided

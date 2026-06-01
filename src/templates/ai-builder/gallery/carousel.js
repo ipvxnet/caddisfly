@@ -2,7 +2,7 @@
 // Image carousel/slider with navigation
 
 export function galleryCarouselTemplate(data, config) {
-  const { heading, description, images } = data;
+  const { heading, description = '', images } = data;
   const { primaryColor, fontHeading, fontBody } = config;
 
   // Default images if not provided
