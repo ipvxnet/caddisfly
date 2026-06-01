@@ -280,6 +280,24 @@ export async function handleAIBuilderCustomize(ctx) {
 
     .ai-edit-btn:hover { filter: brightness(1.08); }
 
+    .design-group {
+      margin-top: 1.75rem;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 1rem;
+    }
+    .design-group > summary {
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #4a5568;
+      padding: 0.4rem 0;
+      list-style: none;
+    }
+    .design-group > summary::-webkit-details-marker { display: none; }
+    .design-group > summary::before { content: '▸ '; color: #a0aec0; }
+    .design-group[open] > summary::before { content: '▾ '; }
+    .design-group-body { padding-top: 1rem; }
+
     .page-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -449,12 +467,6 @@ export async function handleAIBuilderCustomize(ctx) {
   <div class="container">
     <div class="split-view">
       <div class="sections-panel">
-        ${generateTemplatePicker(config.style_theme)}
-
-        ${generateColorPicker(config, project.project_id)}
-
-        ${generateFontPicker(config, project.project_id)}
-
         <h2 style="margin-bottom: 0.5rem;">Pages</h2>
         <div class="page-tabs">
           ${pages
@@ -481,6 +493,15 @@ export async function handleAIBuilderCustomize(ctx) {
         <div id="sections-list">
           ${sections.map((s) => renderTile(s)).join('') || '<p class="muted">No sections on this page yet.</p>'}
         </div>
+
+        <details class="design-group">
+          <summary>🎨 Design — theme, colors &amp; fonts</summary>
+          <div class="design-group-body">
+            ${generateTemplatePicker(config.style_theme)}
+            ${generateColorPicker(config, project.project_id)}
+            ${generateFontPicker(config, project.project_id)}
+          </div>
+        </details>
       </div>
 
       <div class="preview-frame">
