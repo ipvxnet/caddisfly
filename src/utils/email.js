@@ -162,6 +162,79 @@ function buildVerificationEmailHtml(verifyUrl, customerEmail) {
 }
 
 /**
+ * Sends a passwordless billing magic-link. Clicking it proves email ownership
+ * and signs the customer into the billing area. Mirrors sendVerificationEmail:
+ * when a transport is configured the link is emailed; in non-prod (or on a
+ * non-prod failure / missing transport) the link is logged so the flow stays
+ * testable. In production a missing transport / failure reports false.
+ *
+ * @param {Object} env
+ * @param {string} email - Recipient
+ * @param {string} linkUrl - Full magic-link URL (https://host/billing/verify/<token>)
+ * @returns {Promise<boolean>}
+ */
+export async function sendMagicLinkEmail(env, email, linkUrl) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  try {
+    const sent = await deliverEmail(env, {
+      to: email,
+      subject: 'Your Caddisfly billing sign-in link',
+      html: buildMagicLinkEmailHtml(linkUrl, email),
+    });
+    if (sent) {
+      console.log(`Billing magic link sent to ${email}`);
+      return true;
+    }
+    if (isProduction) {
+      console.error('No email transport configured in production; cannot send magic link');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to send magic link email:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Billing magic link for ${email}: ${linkUrl}`);
+  return true;
+}
+
+/**
+ * Builds the HTML body for the billing magic-link email.
+ * @param {string} linkUrl
+ * @param {string} email
+ * @returns {string}
+ */
+function buildMagicLinkEmailHtml(linkUrl, email) {
+  return `
+    <html>
+      <body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f5f6fa; padding: 32px;">
+        <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px;">
+          <h1 style="font-size: 22px; margin: 0 0 12px;">Sign in to manage your plan</h1>
+          <p style="color: #444; line-height: 1.6;">
+            Click below to manage billing for <strong>${email}</strong>. This link expires in 15 minutes
+            and can only be used once.
+          </p>
+          <p style="margin: 28px 0;">
+            <a href="${linkUrl}"
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+                      text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;
+                      display: inline-block;">
+              Open billing
+            </a>
+          </p>
+          <p style="color: #888; font-size: 13px; line-height: 1.6;">
+            If the button doesn't work, paste this link into your browser:<br>
+            <a href="${linkUrl}" style="color: #667eea;">${linkUrl}</a>
+          </p>
+          <p style="color: #aaa; font-size: 12px; margin-top: 24px;">
+            Didn't request this? You can safely ignore this email — no changes were made.
+          </p>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
  * Sends error notification email (for internal use)
  * @param {Object} env - Environment bindings
  * @param {string} subject - Email subject

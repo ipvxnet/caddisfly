@@ -43,6 +43,12 @@ import { handleAIEditPropose, handleAIEditApply } from './routes/api/ai-builder/
 import { handleListPages, handleCreatePage, handleReorderPages, handleUpdatePage, handleDeletePage } from './routes/api/ai-builder/pages.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
 
+// Billing (Stripe + magic-link) route handlers
+import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
+import { handleBillingLogin, handleBillingCheckout, handleBillingPortal } from './routes/api/billing.js';
+import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
+import { billingAuth } from './middleware/billing-auth.js';
+
 // Initialize router
 const router = new Router();
 
@@ -78,6 +84,11 @@ router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
 router.get('/site/:project_id', handlePublishedSite);
 router.get('/site/:project_id/:page_slug', handlePublishedSite);
 
+// Billing (magic-link auth; billingAuth sets ctx.billingEmail, never blocks)
+router.get('/billing', handleBilling, [billingAuth]);
+router.get('/billing/verify/:token', handleBillingVerify);
+router.get('/billing/logout', handleBillingLogout);
+
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
 router.post('/api/preview/manual/:token', handleManualProfile);
@@ -101,6 +112,12 @@ router.put('/api/ai-builder/:project_id/pages/reorder', handleReorderPages);
 router.put('/api/ai-builder/:project_id/pages/:page_id', handleUpdatePage);
 router.delete('/api/ai-builder/:project_id/pages/:page_id', handleDeletePage);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
+
+// Billing API
+router.post('/api/billing/login', handleBillingLogin);
+router.post('/api/billing/checkout', handleBillingCheckout, [billingAuth]);
+router.post('/api/billing/portal', handleBillingPortal, [billingAuth]);
+router.post('/api/stripe/webhook', handleStripeWebhook);
 
 // Protected admin routes
 router.get('/logout', handleLogout, [authMiddleware]);

@@ -98,3 +98,14 @@ binding = "BROWSER"
 # Production: npx wrangler secret put GOOGLE_CLIENT_ID --env production
 # Production: npx wrangler secret put GOOGLE_CLIENT_SECRET --env production
 # Production: npx wrangler secret put GOOGLE_PLACES_API_KEY --env production
+#
+# Stripe billing (all set as secrets so test vs live IDs aren't committed; the
+# code reads them from env regardless of var-vs-secret). Set per environment —
+# use sk_test_…/test price IDs on preview, sk_live_…/live price IDs on prod:
+#   STRIPE_SECRET_KEY            (sk_test_… / sk_live_…)
+#   STRIPE_WEBHOOK_SECRET        (whsec_…, from the webhook endpoint you create
+#                                 pointing at <APP_URL>/api/stripe/webhook)
+#   STRIPE_PRICE_STARTER_MONTHLY  STRIPE_PRICE_STARTER_ANNUAL
+#   STRIPE_PRICE_PRO_MONTHLY      STRIPE_PRICE_PRO_ANNUAL
+#   STRIPE_PRICE_AGENCY_MONTHLY   STRIPE_PRICE_AGENCY_ANNUAL
+# e.g. npx wrangler secret put STRIPE_SECRET_KEY --env preview

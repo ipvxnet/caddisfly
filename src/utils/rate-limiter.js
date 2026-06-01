@@ -224,13 +224,27 @@ export async function checkEnrichmentLimit(db, email, tier = 'free_trial') {
 }
 
 /**
- * Get user's pricing tier from project or email
+ * Get user's pricing tier. The billing account (Stripe subscription state, set
+ * by the webhook) is the source of truth when present — the webhook downgrades
+ * canceled subs back to 'free_trial', so the stored tier can be trusted. Falls
+ * back to the legacy per-project tier, then 'free_trial'.
  * @param {object} db - D1 database
  * @param {string} email - User email
  * @returns {string} Pricing tier
  */
 export async function getUserTier(db, email) {
-  // Check if user has any paid projects
+  // Preferred: subscription tier from billing_accounts (Stripe-synced).
+  try {
+    const billing = await db
+      .prepare('SELECT pricing_tier FROM billing_accounts WHERE email = ?')
+      .bind(email)
+      .first();
+    if (billing && billing.pricing_tier) return billing.pricing_tier;
+  } catch (e) {
+    // billing_accounts may not exist (pre-migration); fall through.
+  }
+
+  // Fallback: legacy per-project tier.
   const result = await db
     .prepare(
       `SELECT pricing_tier

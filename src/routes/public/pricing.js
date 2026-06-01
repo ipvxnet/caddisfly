@@ -8,20 +8,20 @@ const PLANS = [
   {
     key: 'free', name: 'Free', mo: 0, yr: 0, tagline: 'Try it, ship a site.',
     cta: 'Start free', highlight: false,
-    features: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.site subdomain', 'AI builder + 1 refactor', 'Community support'],
+    features: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.app subdomain', 'AI builder + 1 refactor', 'Community support'],
   },
   {
-    key: 'starter', name: 'Starter', mo: 9, yr: 7, tagline: 'For a polished personal or small-biz site.',
+    key: 'starter', name: 'Starter', mo: 9, yr: 90, tagline: 'For a polished personal or small-biz site.',
     cta: 'Get Starter', highlight: false,
     features: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', 'Email support'],
   },
   {
-    key: 'pro', name: 'Pro', mo: 19, yr: 15, tagline: 'For freelancers & growing businesses.',
+    key: 'pro', name: 'Pro', mo: 19, yr: 190, tagline: 'For freelancers & growing businesses.',
     cta: 'Get Pro', highlight: true,
     features: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '5 custom domains', 'Priority AI image generation', 'Everything in Starter', 'Priority support'],
   },
   {
-    key: 'agency', name: 'Agency', mo: 49, yr: 39, tagline: 'For studios building many sites.',
+    key: 'agency', name: 'Agency', mo: 49, yr: 490, tagline: 'For studios building many sites.',
     cta: 'Get Agency', highlight: false,
     features: ['Unlimited sites', '<strong>500 GB+</strong> storage', '8,000 AI credits / mo', 'Unlimited custom domains', 'Bulk refactor', 'Everything in Pro', 'Priority+ support'],
   },
@@ -36,10 +36,12 @@ export async function handlePricing(ctx) {
       <h3>${p.name}</h3>
       <p class="tag">${p.tagline}</p>
       <div class="price">
-        <span class="cur">$</span><span class="amt" data-mo="${p.mo}" data-yr="${p.yr}">${p.mo}</span><span class="per">/mo</span>
+        <span class="cur">$</span><span class="amt" data-mo="${p.mo}" data-yr="${p.yr}">${p.mo}</span><span class="per" data-mo="/mo" data-yr="/yr">/mo</span>
       </div>
-      <p class="billed" data-mo="&nbsp;" data-yr="billed annually">&nbsp;</p>
-      <a class="btn ${p.highlight ? 'btn-primary' : 'btn-ghost'} btn-full" href="/ai-builder">${p.cta}</a>
+      <p class="billed" data-mo="&nbsp;" data-yr="${p.mo > 0 ? '2 months free' : '&nbsp;'}">&nbsp;</p>
+      ${p.mo > 0
+        ? `<a class="btn ${p.highlight ? 'btn-primary' : 'btn-ghost'} btn-full plan-cta" data-plan="${p.key}" href="/billing?plan=${p.key}&amp;interval=mo">${p.cta}</a>`
+        : `<a class="btn btn-ghost btn-full" href="/ai-builder">${p.cta}</a>`}
       <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
     </div>`;
 
@@ -99,7 +101,7 @@ export async function handlePricing(ctx) {
       <p>AI builds your site — and you get far more storage for far less than the big builders. Start free, upgrade when you grow.</p>
       <div class="toggle" role="group" aria-label="Billing period">
         <button id="t-mo" class="on" onclick="setBilling('mo')">Monthly</button>
-        <button id="t-yr" onclick="setBilling('yr')">Annual <span class="save">save ~20%</span></button>
+        <button id="t-yr" onclick="setBilling('yr')">Annual <span class="save">2 months free</span></button>
       </div>
     </div></section>
 
@@ -135,7 +137,9 @@ export async function handlePricing(ctx) {
       document.getElementById('t-mo').classList.toggle('on', mode==='mo');
       document.getElementById('t-yr').classList.toggle('on', mode==='yr');
       document.querySelectorAll('.price .amt').forEach(function(el){ el.textContent = el.getAttribute('data-'+mode); });
+      document.querySelectorAll('.price .per').forEach(function(el){ el.textContent = el.getAttribute('data-'+mode); });
       document.querySelectorAll('.billed').forEach(function(el){ el.innerHTML = el.getAttribute('data-'+mode); });
+      document.querySelectorAll('.plan-cta').forEach(function(el){ el.href = '/billing?plan=' + el.getAttribute('data-plan') + '&interval=' + mode; });
     }
   </script>
 </body>
