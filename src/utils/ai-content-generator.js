@@ -55,29 +55,73 @@ export function extractJSON(aiResponse) {
     jsonText = codeBlockMatch[1].trim();
   }
 
-  // Try to find array first [...], then object {...}
-  const arrayMatch = jsonText.match(/\[[\s\S]*\]/);
-  const objectMatch = jsonText.match(/\{[\s\S]*\}/);
+  // Determine the TOP-LEVEL structure by whichever delimiter appears first, then
+  // extract a balanced span. This is critical: a naive "[...]" match would grab
+  // the inner array of an object like {"heading":"x","services":[...]} and throw
+  // away the wrapper, corrupting the content.
+  const firstBrace = jsonText.indexOf('{');
+  const firstBracket = jsonText.indexOf('[');
 
-  if (arrayMatch) {
-    jsonText = arrayMatch[0];
-  } else if (objectMatch) {
-    // Check if there are multiple objects (AI forgot array brackets)
-    const multipleObjects = jsonText.match(/\}\s*,\s*\{/);
-    if (multipleObjects) {
-      // Wrap multiple objects in array brackets
-      jsonText = '[' + jsonText + ']';
-    } else {
-      jsonText = objectMatch[0];
-    }
+  let candidate = null;
+  if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+    candidate = extractBalanced(jsonText, '[', ']');
+  } else if (firstBrace !== -1) {
+    candidate = extractBalanced(jsonText, '{', '}');
+  }
+  if (candidate) {
+    jsonText = candidate;
   }
 
   try {
     return JSON.parse(jsonText);
   } catch (error) {
+    // Fallback: the AI may have returned bare objects without array brackets
+    // (e.g. "{...},{...}"). Try wrapping in an array.
+    if (/\}\s*,\s*\{/.test(jsonText)) {
+      try {
+        return JSON.parse('[' + jsonText + ']');
+      } catch {
+        // fall through to the thrown error below
+      }
+    }
     console.error('Failed to parse JSON:', jsonText);
     throw new Error('AI returned invalid JSON: ' + error.message);
   }
+}
+
+/**
+ * Extract a balanced bracketed span starting at the first `open` delimiter,
+ * correctly skipping brackets that appear inside strings. Returns null if no
+ * balanced span is found.
+ * @param {string} text
+ * @param {string} open - '{' or '['
+ * @param {string} close - '}' or ']'
+ * @returns {string|null}
+ */
+function extractBalanced(text, open, close) {
+  const start = text.indexOf(open);
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === '\\') esc = true;
+      else if (ch === '"') inStr = false;
+    } else if (ch === '"') {
+      inStr = true;
+    } else if (ch === open) {
+      depth++;
+    } else if (ch === close) {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
 }
 
 /**
