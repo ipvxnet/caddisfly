@@ -184,6 +184,7 @@ export async function handleLanding(ctx) {
       <a class="brand" href="/">${brandMark('m-hd')}<span>caddisfly<span class="ai">.ai</span></span></a>
       <nav class="nav-links">
         <a href="#paths">How it works</a>
+        <a href="/pricing">Pricing</a>
         <a href="#features">Features</a>
         <a class="btn btn-primary" href="/ai-builder">Build with AI →</a>
       </nav>
