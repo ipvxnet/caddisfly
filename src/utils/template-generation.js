@@ -35,10 +35,10 @@ export async function generateAndStore(env, project, profile) {
   const photoPool = await buildPhotoPool(env, project, profile, industry);
   const pickPhoto = makePhotoPicker(photoPool);
 
-  // 2. Section line-up: gallery only when we have enough imagery; testimonials
-  //    only when we have real positive reviews.
+  // 2. Section line-up: a brand header first (logo/name from the original site),
+  //    gallery only when we have imagery, testimonials only with real reviews.
   const factSections = profileToFactSections(profile);
-  const types = ['hero', 'about', 'services'];
+  const types = ['header', 'hero', 'about', 'services'];
   if (photoPool.length >= 3) types.push('gallery');
   if (factSections.testimonials) types.push('testimonials');
   types.push('contact', 'footer');
@@ -50,7 +50,15 @@ export async function generateAndStore(env, project, profile) {
 
   for (const type of types) {
     let content;
-    if (factSections[type]) {
+    if (type === 'header') {
+      // Brand identity recovered from the original site.
+      content = {
+        logo: profile.logo || '',
+        business_name: profile.name,
+        phone: profile.phone || '',
+        cta_link: '#contact',
+      };
+    } else if (factSections[type]) {
       content = factSections[type]; // hard facts (contact, testimonials)
     } else {
       try {
@@ -68,12 +76,14 @@ export async function generateAndStore(env, project, profile) {
     sections.push({ type, order: order++, content, variant });
   }
 
-  // 4. Config with the industry palette (replaces the old hardcoded purple).
-  const palette = paletteFor(industry);
+  // 4. Config: industry palette, but prefer the original site's brand color as
+  //    primary when we recovered a valid one (stronger identity).
+  const industryPalette = paletteFor(industry);
+  const primaryColor = isHexColor(profile.brand_color) ? profile.brand_color : industryPalette.primary;
   const config = await createWebsiteConfig(env.DB, {
     project_id: project.id,
-    primary_color: palette.primary,
-    secondary_color: palette.secondary,
+    primary_color: primaryColor,
+    secondary_color: industryPalette.secondary,
     font_heading: 'Inter',
     font_body: 'Inter',
     style_theme: 'modern',
@@ -142,6 +152,11 @@ async function buildPhotoPool(env, project, profile, industry) {
 
   console.log(`Photo pool for ${profile.name}: ${pool.length} (industry=${industry})`);
   return pool;
+}
+
+/** True for a valid #RGB or #RRGGBB hex color string. */
+function isHexColor(s) {
+  return typeof s === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s.trim());
 }
 
 /**

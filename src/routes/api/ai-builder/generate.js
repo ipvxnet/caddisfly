@@ -113,9 +113,11 @@ export async function handleAIBuilderGenerate(ctx) {
 
     // Generate content for each selected section. Fall back to sensible defaults
     // on failure so a selected section is never silently dropped.
-    const sectionsToGenerate = context.selected_sections.length > 0
+    const selected = context.selected_sections.length > 0
       ? context.selected_sections
       : ['hero', 'about', 'services', 'gallery', 'testimonials', 'contact', 'footer'];
+    // Always lead with a brand header (text wordmark — no original logo here).
+    const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
 
     let sectionOrder = 0;
     const generationResults = [];
@@ -123,12 +125,16 @@ export async function handleAIBuilderGenerate(ctx) {
     for (const sectionType of sectionsToGenerate) {
       let content;
       let usedFallback = false;
-      try {
-        content = await generateSectionContent(env, sectionType, context);
-      } catch (error) {
-        console.error(`AI generation failed for ${sectionType}, using default:`, error.message);
-        content = defaultContent(sectionType, context);
-        usedFallback = true;
+      if (sectionType === 'header') {
+        content = { logo: '', business_name: context.business_name, cta_link: '#contact' };
+      } else {
+        try {
+          content = await generateSectionContent(env, sectionType, context);
+        } catch (error) {
+          console.error(`AI generation failed for ${sectionType}, using default:`, error.message);
+          content = defaultContent(sectionType, context);
+          usedFallback = true;
+        }
       }
 
       // Footer needs the business name; features reuse the services shape.

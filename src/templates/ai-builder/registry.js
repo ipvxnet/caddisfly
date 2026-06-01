@@ -1,6 +1,9 @@
 // Template Registry
 // Maps section types to their template functions
 
+// Header / nav
+import { navbarTemplate } from './header/navbar.js';
+
 // Hero templates
 import { heroCenteredTemplate } from './heroes/centered.js';
 import { heroSplitTemplate } from './heroes/split.js';
@@ -42,6 +45,10 @@ import { statsNumbersTemplate } from './stats/numbers.js';
  * Maps section types to their available template variants
  */
 export const TEMPLATE_REGISTRY = {
+  header: {
+    navbar: navbarTemplate,
+    default: navbarTemplate,
+  },
   hero: {
     centered: heroCenteredTemplate,
     split: heroSplitTemplate,

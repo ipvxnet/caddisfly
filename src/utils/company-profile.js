@@ -23,6 +23,8 @@ export function extractScrapeSignal(html, url) {
     headings: [],
     sampleText: '',
     domain: domainFromUrl(url),
+    logo: '',
+    brandColor: '',
   };
 
   if (!html || typeof html !== 'string') {
@@ -32,6 +34,19 @@ export function extractScrapeSignal(html, url) {
   signal.title = matchFirst(html, /<title[^>]*>([^<]+)<\/title>/i);
   signal.description = metaContent(html, 'name', 'description');
   signal.siteName = metaContent(html, 'property', 'og:site_name');
+
+  // Identity signals from the original site's <head> (usually readable even on
+  // bot-protected sites): logo image and brand color. Resolve to absolute URLs.
+  const logoRaw =
+    metaContent(html, 'property', 'og:image') ||
+    metaContent(html, 'name', 'twitter:image') ||
+    linkHref(html, 'apple-touch-icon');
+  signal.logo = absoluteUrl(logoRaw, url);
+
+  signal.brandColor =
+    metaContent(html, 'name', 'theme-color') ||
+    metaContent(html, 'name', 'msapplication-TileColor') ||
+    '';
 
   // Collect up to 8 heading texts (h1-h3) as topic hints.
   const headingMatches = html.matchAll(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi);
@@ -75,6 +90,10 @@ export function buildProfile(scrapeSignal = {}, placesData = {}) {
     rating_count: places.rating_count || 0,
     reviews: Array.isArray(places.reviews) ? places.reviews : [],
     photos: Array.isArray(places.photos) ? places.photos : [],
+    // Original-site identity (recovered from the static <head>).
+    logo: scrapeSignal.logo || '',
+    brand_color: scrapeSignal.brandColor || '',
+    domain: scrapeSignal.domain || '',
     // Provenance + raw hints kept for prompt-building and debugging.
     source: {
       places_found: !!places.name,
@@ -169,6 +188,36 @@ function metaContent(html, attr, value) {
   if (!tag) return '';
   const content = tag[0].match(/\bcontent=["']([^"']*)["']/i);
   return content ? stripTags(content[1]).trim() : '';
+}
+
+/**
+ * Extract a <link rel="..."> href value (e.g. apple-touch-icon, icon).
+ * @param {string} html
+ * @param {string} rel
+ * @returns {string}
+ */
+function linkHref(html, rel) {
+  const esc = rel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const tagRe = new RegExp(`<link[^>]*\\brel=["'][^"']*${esc}[^"']*["'][^>]*>`, 'i');
+  const tag = html.match(tagRe);
+  if (!tag) return '';
+  const href = tag[0].match(/\bhref=["']([^"']*)["']/i);
+  return href ? href[1].trim() : '';
+}
+
+/**
+ * Resolve a possibly-relative URL against a base page URL.
+ * @param {string} maybeUrl
+ * @param {string} base
+ * @returns {string}
+ */
+function absoluteUrl(maybeUrl, base) {
+  if (!maybeUrl) return '';
+  try {
+    return new URL(maybeUrl, base).href;
+  } catch {
+    return maybeUrl.startsWith('http') ? maybeUrl : '';
+  }
 }
 
 function stripTags(s) {

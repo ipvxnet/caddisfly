@@ -40,6 +40,7 @@ const PALETTES = {
 // Preferred image-forward variant per section, by industry. Falls back to
 // DEFAULT_VARIANTS for any section not listed.
 const DEFAULT_VARIANTS = {
+  header: 'navbar',
   hero: 'split',
   about: 'text-image',
   services: 'icon-grid',
