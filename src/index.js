@@ -17,6 +17,7 @@ import { handlePreviewCreate } from './routes/api/preview/create.js';
 import { handleManualProfile } from './routes/api/preview/manual.js';
 import { handlePreviewView } from './routes/public/preview.js';
 import { handlePreviewHtml } from './routes/public/preview-html.js';
+import { handlePreviewAsset } from './routes/public/preview-asset.js';
 import { handleVerify } from './routes/public/verify.js';
 
 // AI Builder route handlers
@@ -45,6 +46,7 @@ router.get('/auth/google/callback', handleGoogleCallback);
 router.get('/preview/:preview_id', handlePreviewView);
 router.get('/preview/:preview_id/html/:page_index/:type', handlePreviewHtml);
 router.get('/verify/:token', handleVerify);
+router.get('/preview-asset/:preview_id/:filename', handlePreviewAsset);
 
 // AI Builder public routes
 router.get('/ai-builder', handleAIBuilderLanding);

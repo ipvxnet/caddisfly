@@ -17,7 +17,7 @@ import { getProjectByVerificationToken, updateProject } from '../../db/projects.
 import { getUserTier, checkEnrichmentLimit, formatRateLimitError } from '../../utils/rate-limiter.js';
 import { enrichBusiness } from '../../utils/google-places.js';
 import { buildProfile } from '../../utils/company-profile.js';
-import { generateSectionsFromProfile, buildAndStorePreview } from '../../utils/template-generation.js';
+import { generateAndStore } from '../../utils/template-generation.js';
 import { sendPreviewEmail } from '../../utils/email.js';
 import { htmlResponse, redirect, badRequest } from '../../utils/response.js';
 
@@ -100,11 +100,7 @@ export async function handleVerify(ctx) {
   // Build the site from the merged profile using the shared template pipeline.
   const profile = buildProfile(scrapeSignal, places);
   try {
-    const sections = await generateSectionsFromProfile(env, profile);
-    await buildAndStorePreview(env, project, sections, {
-      project_name: profile.name,
-      project_id: project.preview_id,
-    });
+    await generateAndStore(env, project, profile);
   } catch (error) {
     console.error('Profile-based generation error:', error);
     await updateProject(env.DB, project.id, { enrichment_status: 'failed' });

@@ -74,6 +74,7 @@ export function buildProfile(scrapeSignal = {}, placesData = {}) {
     rating: places.rating || null,
     rating_count: places.rating_count || 0,
     reviews: Array.isArray(places.reviews) ? places.reviews : [],
+    photos: Array.isArray(places.photos) ? places.photos : [],
     // Provenance + raw hints kept for prompt-building and debugging.
     source: {
       places_found: !!places.name,

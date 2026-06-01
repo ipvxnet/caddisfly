@@ -7,7 +7,7 @@
  */
 
 import { getProjectByVerificationToken, updateProject } from '../../../db/projects.js';
-import { generateSectionsFromProfile, buildAndStorePreview } from '../../../utils/template-generation.js';
+import { generateAndStore } from '../../../utils/template-generation.js';
 import { redirect, badRequest, htmlResponse } from '../../../utils/response.js';
 
 export async function handleManualProfile(ctx) {
@@ -63,11 +63,7 @@ export async function handleManualProfile(ctx) {
   await updateProject(env.DB, project.id, { enrichment_status: 'running', status: 'enriching' });
 
   try {
-    const sections = await generateSectionsFromProfile(env, profile);
-    await buildAndStorePreview(env, project, sections, {
-      project_name: profile.name,
-      project_id: project.preview_id,
-    });
+    await generateAndStore(env, project, profile);
   } catch (error) {
     console.error('Manual-profile generation error:', error);
     await updateProject(env.DB, project.id, { enrichment_status: 'failed' });

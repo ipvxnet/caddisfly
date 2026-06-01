@@ -29,6 +29,7 @@ const DETAILS_FIELD_MASK = [
   'userRatingCount',
   'reviews',
   'editorialSummary',
+  'photos',
 ].join(',');
 
 const MAX_REVIEWS = 5;
@@ -149,6 +150,9 @@ function normalizeDetails(d, placeId) {
       }))
     : [];
 
+  // Photo resource names (e.g. "places/X/photos/Y") — fetched to R2 at gen time.
+  const photos = Array.isArray(d.photos) ? d.photos.map((p) => p.name).filter(Boolean).slice(0, 8) : [];
+
   return {
     found: true,
     place_id: placeId,
@@ -162,7 +166,34 @@ function normalizeDetails(d, placeId) {
     rating: d.rating || null,
     rating_count: d.userRatingCount || 0,
     reviews,
+    photos,
   };
+}
+
+/**
+ * Fetch the raw image bytes for a Places photo resource name.
+ * The media endpoint follows a redirect to the actual image.
+ * @param {object} env - Environment bindings (needs GOOGLE_PLACES_API_KEY)
+ * @param {string} photoName - e.g. "places/X/photos/Y"
+ * @returns {Promise<{bytes: ArrayBuffer, contentType: string}>}
+ */
+export async function fetchPlacePhotoBytes(env, photoName) {
+  if (!env.GOOGLE_PLACES_API_KEY) {
+    throw new Error('GOOGLE_PLACES_API_KEY not configured');
+  }
+  const url = `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=1200&maxWidthPx=1600`;
+  const response = await fetch(url, {
+    headers: {
+      'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
+      Referer: refererFor(env),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Places photo media failed (${response.status})`);
+  }
+  const contentType = response.headers.get('content-type') || 'image/jpeg';
+  const bytes = await response.arrayBuffer();
+  return { bytes, contentType };
 }
 
 /**
