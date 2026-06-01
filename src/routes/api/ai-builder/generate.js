@@ -8,7 +8,8 @@ import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-co
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
 import { getFontPairing } from '../../../utils/ai-prompts.js';
 import { checkAIGenerationLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
-import { inferIndustry, paletteFor, variantFor, imageKeywordsFor } from '../../../utils/industry-style.js';
+import { inferIndustry, paletteFor, imageKeywordsFor } from '../../../utils/industry-style.js';
+import { getRecipe, recipeVariant } from '../../../utils/industry-recipe.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 
@@ -91,11 +92,13 @@ export async function handleAIBuilderGenerate(ctx) {
     // Get or create website config
     let config = await getOrCreateWebsiteConfig(env.DB, project.id);
 
-    // Industry-aware styling: pick a palette that fits the business instead of
-    // a generic AI-guessed blue (e.g. a restaurant gets warm, appetizing colors).
+    // Industry-aware styling: pick a palette + recipe that fit the business
+    // instead of a generic AI-guessed blue (e.g. a restaurant gets warm colors).
     const industry = inferIndustry(context.industry, context.business_type, context.business_name);
+    const recipe = getRecipe(industry);
     const palette = paletteFor(industry);
-    const fonts = getFontPairing(context.style);
+    // The user's explicit style choice wins for fonts; else the recipe's pairing.
+    const fonts = context.style ? getFontPairing(context.style) : recipe.fonts;
     config = await updateWebsiteConfig(env.DB, project.id, {
       primary_color: palette.primary,
       secondary_color: palette.secondary,
@@ -103,6 +106,11 @@ export async function handleAIBuilderGenerate(ctx) {
       font_body: fonts.body,
       style_theme: context.style,
     });
+
+    // Ground AI copy in the vertical (real services, tone).
+    context.industry = industry;
+    context.service_hints = recipe.serviceHints;
+    if (!context.tone || context.tone === 'professional') context.tone = recipe.tone;
 
     // Fetch real imagery once for the whole site (graceful [] without a key).
     const stockPhotos = await searchStockPhotos(
@@ -115,9 +123,10 @@ export async function handleAIBuilderGenerate(ctx) {
 
     // Generate content for each selected section. Fall back to sensible defaults
     // on failure so a selected section is never silently dropped.
+    // Use the user's selected sections, else the industry recipe's line-up.
     const selected = context.selected_sections.length > 0
       ? context.selected_sections
-      : ['hero', 'about', 'services', 'gallery', 'testimonials', 'contact', 'footer'];
+      : recipe.sections;
     // Always lead with a brand header (text wordmark — no original logo here).
     const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
 
@@ -147,8 +156,8 @@ export async function handleAIBuilderGenerate(ctx) {
         content.features = content.services || content.items || [];
       }
 
-      // Pick an image-forward variant for the industry, then inject real images.
-      const variant = variantFor(industry, sectionType);
+      // Pick the recipe's variant for this section, then inject real images.
+      const variant = recipeVariant(recipe, sectionType);
       attachImages(sectionType, content, pickPhoto);
       content._variant = variant;
 
@@ -214,6 +223,16 @@ export async function handleAIBuilderGenerate(ctx) {
 function defaultContent(sectionType, context) {
   const name = context.business_name || 'Our Business';
   const type = context.business_type || 'business';
+  // Real vertical services from the recipe (via context.service_hints) instead
+  // of "Service 1" placeholders.
+  const serviceItems = hintsToItems(context.service_hints);
+  const fallbackItems = serviceItems.length
+    ? serviceItems
+    : [
+        { title: 'Quality Service', description: 'Delivered with care and expertise.', icon: '⭐' },
+        { title: 'Trusted Experience', description: 'Reliable results every time.', icon: '✅' },
+        { title: 'Here For You', description: 'Friendly support when you need it.', icon: '🤝' },
+      ];
 
   switch (sectionType) {
     case 'hero':
@@ -221,25 +240,9 @@ function defaultContent(sectionType, context) {
     case 'about':
       return { heading: `About ${name}`, subheading: '', story: `${name} is dedicated to serving our community with excellence.`, values: [] };
     case 'services':
-      return {
-        heading: 'Our Services',
-        subheading: '',
-        services: [
-          { title: 'Quality Service', description: 'Delivered with care and expertise.', icon: '⭐' },
-          { title: 'Trusted Experience', description: 'Reliable results every time.', icon: '✅' },
-          { title: 'Here For You', description: 'Friendly support when you need it.', icon: '🤝' },
-        ],
-      };
+      return { heading: 'Our Services', subheading: '', services: fallbackItems };
     case 'features':
-      return {
-        heading: 'Why Choose Us',
-        description: '',
-        features: [
-          { icon: '⚡', title: 'Fast', description: 'Quick and efficient service.' },
-          { icon: '🔒', title: 'Trusted', description: 'Dependable every time.' },
-          { icon: '💬', title: 'Friendly', description: 'Great customer care.' },
-        ],
-      };
+      return { heading: 'Why Choose Us', description: '', features: fallbackItems };
     case 'gallery':
       return { heading: 'Gallery', subheading: '', images: [] };
     case 'testimonials':
@@ -251,4 +254,15 @@ function defaultContent(sectionType, context) {
     default:
       return { heading: name };
   }
+}
+
+/** Turn a "A, B, C" service-hint string into [{title, description, icon}] items. */
+function hintsToItems(hints) {
+  if (!hints || typeof hints !== 'string') return [];
+  return hints
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((title) => ({ title, description: '', icon: '✓' }));
 }

@@ -107,21 +107,25 @@ export function buildProfile(scrapeSignal = {}, placesData = {}) {
 /**
  * Map a profile to the `context` object the AI content generator expects
  * (see ai-content-generator.js buildContext / ai-prompts.js getContentPrompt).
+ * The optional recipe grounds copy in the vertical (tone + real service hints).
  * @param {object} profile - Canonical profile
+ * @param {object} [recipe] - Industry recipe (getRecipe) for tone/service hints
  * @returns {object} Generation context
  */
-export function profileToContext(profile) {
+export function profileToContext(profile, recipe = {}) {
   return {
     business_name: profile.name,
     business_type: profile.category || 'business',
     industry: profile.category || 'general',
     audience: 'customers',
-    tone: 'professional',
+    tone: recipe.tone || 'professional',
     style: 'modern',
     content_source: 'google_places',
     // Extra facts the prompts can weave in (description, location, reviews).
     description: profile.description,
     location: profile.address,
+    // Vertical grounding for AI copy (Phase 3).
+    service_hints: recipe.serviceHints || '',
     selected_sections: [],
   };
 }

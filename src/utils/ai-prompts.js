@@ -49,13 +49,15 @@ Only JSON, no explanation.`;
  * @returns {string} AI prompt
  */
 export function generateHeroContent(context) {
-  const { business_name, business_type, audience, tone } = context;
+  const { business_name, business_type, audience, tone, description, location } = context;
+  const aboutLine = description ? `\nAbout this business: ${description}` : '';
+  const locationLine = location ? `\nLocation: ${location}` : '';
 
   return `Generate hero section content for a ${business_type} website. Return ONLY valid JSON (no markdown, no explanation):
 
 Business: ${business_name}
 Target Audience: ${audience}
-Tone: ${tone}
+Tone: ${tone}${aboutLine}${locationLine}
 
 Return this JSON structure:
 {
@@ -74,13 +76,14 @@ Only JSON, no explanation.`;
  * @returns {string} AI prompt
  */
 export function generateAboutContent(context) {
-  const { business_name, business_type, audience, tone } = context;
+  const { business_name, business_type, audience, tone, description } = context;
+  const aboutLine = description ? `\nAbout this business: ${description}. Base the story on this — do not invent contradicting facts.` : '';
 
   return `Generate about section content for a ${business_type} website. Return ONLY valid JSON (no markdown, no explanation):
 
 Business: ${business_name}
 Target Audience: ${audience}
-Tone: ${tone}
+Tone: ${tone}${aboutLine}
 
 Return this JSON structure:
 {
@@ -99,13 +102,16 @@ Only JSON, no explanation.`;
  * @returns {string} AI prompt
  */
 export function generateServicesContent(context) {
-  const { business_name, business_type, audience, tone } = context;
+  const { business_name, business_type, audience, tone, service_hints } = context;
+  const hintLine = service_hints
+    ? `\nIMPORTANT: This is a ${business_type} business. Real services for this kind of business include: ${service_hints}. Use REAL, specific services this business actually offers — never generic placeholders like "Service 1".`
+    : '';
 
   return `Generate services/products section for a ${business_type} website. Return ONLY valid JSON (no markdown, no explanation):
 
 Business: ${business_name}
 Target Audience: ${audience}
-Tone: ${tone}
+Tone: ${tone}${hintLine}
 
 Return this JSON structure:
 {

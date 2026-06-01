@@ -39,35 +39,7 @@ const PALETTES = {
   general: { primary: '#667eea', secondary: '#764ba2', accent: '#f093fb' },
 };
 
-// Preferred image-forward variant per section, by industry. Falls back to
-// DEFAULT_VARIANTS for any section not listed.
-const DEFAULT_VARIANTS = {
-  header: 'navbar',
-  hero: 'split',
-  about: 'text-image',
-  services: 'icon-grid',
-  gallery: 'masonry',
-  testimonials: 'cards',
-  contact: 'form',
-  footer: 'multi-column',
-  features: 'grid',
-  pricing: 'tables',
-  stats: 'numbers',
-  cta: 'banner',
-};
-
-const VARIANT_OVERRIDES = {
-  food: { hero: 'fullscreen', services: 'cards', gallery: 'masonry' },
-  fitness: { hero: 'fullscreen', gallery: 'masonry' },
-  beauty: { hero: 'fullscreen', gallery: 'masonry', services: 'cards' },
-  health: { hero: 'split', services: 'cards' },
-  realestate: { hero: 'fullscreen', gallery: 'masonry' },
-  retail: { hero: 'fullscreen', gallery: 'masonry' },
-  creative: { hero: 'fullscreen', gallery: 'masonry' },
-  automotive: { hero: 'fullscreen', gallery: 'masonry' },
-  home: { hero: 'split', services: 'cards' },
-  tech: { hero: 'split' },
-};
+// (Template-variant selection moved to industry-recipe.js — single home.)
 
 // Base stock-photo keywords per industry (appended to business hints).
 const IMAGE_KEYWORDS = {
@@ -119,17 +91,6 @@ export function inferIndustry(...texts) {
  */
 export function paletteFor(industry) {
   return PALETTES[industry] || PALETTES.general;
-}
-
-/**
- * Preferred (image-forward) template variant for a section in an industry.
- * @param {string} industry
- * @param {string} sectionType
- * @returns {string} variant name
- */
-export function variantFor(industry, sectionType) {
-  const overrides = VARIANT_OVERRIDES[industry] || {};
-  return overrides[sectionType] || DEFAULT_VARIANTS[sectionType] || 'default';
 }
 
 /**

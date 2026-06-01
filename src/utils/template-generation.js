@@ -17,7 +17,8 @@ import { assemblePage } from './ai-page-assembler.js';
 import { uploadToR2 } from './r2-storage.js';
 import { fetchPlacePhotoBytes } from './google-places.js';
 import { searchStockPhotos } from './stock-photos.js';
-import { inferIndustry, paletteFor, variantFor, imageKeywordsFor } from './industry-style.js';
+import { inferIndustry, paletteFor, imageKeywordsFor } from './industry-style.js';
+import { getRecipe, recipeVariant } from './industry-recipe.js';
 import { attachImages, makePhotoPicker } from './section-images.js';
 
 /**
@@ -30,21 +31,21 @@ import { attachImages, makePhotoPicker } from './section-images.js';
  */
 export async function generateAndStore(env, project, profile) {
   const industry = inferIndustry(profile.category, profile.name);
+  const recipe = getRecipe(industry);
 
   // 1. Image pool: real Google Places photos (→ R2) first, then stock to fill.
   const photoPool = await buildPhotoPool(env, project, profile, industry);
   const pickPhoto = makePhotoPicker(photoPool);
 
-  // 2. Section line-up: a brand header first (logo/name from the original site),
-  //    gallery only when we have imagery, testimonials only with real reviews.
+  // 2. Section line-up from the industry recipe, data-gated: drop gallery
+  //    without enough imagery and testimonials without real reviews.
   const factSections = profileToFactSections(profile);
-  const types = ['header', 'hero', 'about', 'services'];
-  if (photoPool.length >= 3) types.push('gallery');
-  if (factSections.testimonials) types.push('testimonials');
-  types.push('contact', 'footer');
+  const types = recipe.sections.filter(
+    (t) => (t !== 'gallery' || photoPool.length >= 3) && (t !== 'testimonials' || !!factSections.testimonials)
+  );
 
   // 3. Generate each section's content.
-  const context = profileToContext(profile);
+  const context = profileToContext(profile, recipe);
   const sections = [];
   let order = 0;
 
@@ -66,26 +67,31 @@ export async function generateAndStore(env, project, profile) {
         if (type === 'footer') content.business_name = content.business_name || profile.name;
       } catch (error) {
         console.error(`Profile generation: ${type} failed, using default:`, error.message);
-        content = defaultContentForType(type, profile);
+        content = defaultContentForType(type, profile, recipe);
       }
     }
 
-    const variant = variantFor(industry, type);
+    // Features reuse the services {title,description,icon} shape.
+    if (type === 'features' && !Array.isArray(content.features)) {
+      content.features = content.services || content.items || [];
+    }
+
+    const variant = recipeVariant(recipe, type);
     attachImages(type, content, pickPhoto);
     content._variant = variant;
     sections.push({ type, order: order++, content, variant });
   }
 
-  // 4. Config: industry palette, but prefer the original site's brand color as
-  //    primary when we recovered a valid one (stronger identity).
+  // 4. Config: industry palette + recipe fonts, but prefer the original site's
+  //    brand color as primary when we recovered a valid one (stronger identity).
   const industryPalette = paletteFor(industry);
   const primaryColor = isHexColor(profile.brand_color) ? profile.brand_color : industryPalette.primary;
   const config = await createWebsiteConfig(env.DB, {
     project_id: project.id,
     primary_color: primaryColor,
     secondary_color: industryPalette.secondary,
-    font_heading: 'Inter',
-    font_body: 'Inter',
+    font_heading: recipe.fonts.heading,
+    font_body: recipe.fonts.body,
     style_theme: 'modern',
   });
 
@@ -160,10 +166,12 @@ function isHexColor(s) {
 }
 
 /**
- * Sensible default content per section type, drawn from the profile, used when
- * an AI generation call fails so the page is never blank.
+ * Sensible default content per section type, drawn from the profile (and the
+ * recipe's service hints), used when an AI generation call fails so the page is
+ * never blank — and never shows "Service 1" placeholders.
  */
-function defaultContentForType(type, profile) {
+function defaultContentForType(type, profile, recipe = {}) {
+  const serviceItems = hintsToItems(recipe.serviceHints);
   switch (type) {
     case 'hero':
       return {
@@ -182,8 +190,11 @@ function defaultContentForType(type, profile) {
       return {
         heading: 'What We Offer',
         description: profile.category ? `Professional ${profile.category} services.` : '',
-        items: [],
+        services: serviceItems,
+        items: serviceItems,
       };
+    case 'features':
+      return { heading: 'Why Choose Us', description: '', features: serviceItems };
     case 'gallery':
       return { heading: 'Gallery', subheading: '', images: [] };
     case 'footer':
@@ -196,4 +207,15 @@ function defaultContentForType(type, profile) {
     default:
       return { heading: profile.name };
   }
+}
+
+/** Turn a "A, B, C" service-hint string into [{title, description, icon}] items. */
+function hintsToItems(hints) {
+  if (!hints || typeof hints !== 'string') return [];
+  return hints
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((title) => ({ title, description: '', icon: '✓' }));
 }
