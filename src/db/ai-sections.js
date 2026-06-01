@@ -10,6 +10,7 @@ export async function createSection(db, data) {
   const {
     ai_project_id,
     project_id,
+    page_id = null,
     section_type,
     section_order = 0,
     html_template,
@@ -20,15 +21,16 @@ export async function createSection(db, data) {
   const result = await db
     .prepare(
       `INSERT INTO ai_sections (
-         ai_project_id, project_id, section_type, section_order, html_template,
+         ai_project_id, project_id, page_id, section_type, section_order, html_template,
          content_json, is_visible
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
     .bind(
       ai_project_id ?? null,
       project_id ?? null,
+      page_id ?? null,
       section_type,
       section_order,
       html_template,
@@ -106,7 +108,7 @@ export async function getSectionsByProjectId(db, aiProjectId, visibleOnly = fals
  * @returns {object} Updated section
  */
 export async function updateSection(db, id, data) {
-  const allowedFields = ['section_type', 'section_order', 'html_template', 'content_json', 'is_visible'];
+  const allowedFields = ['section_type', 'section_order', 'html_template', 'content_json', 'is_visible', 'page_id'];
 
   const updates = [];
   const values = [];
@@ -158,24 +160,73 @@ export async function deleteSectionsByProjectId(db, aiProjectId) {
 }
 
 /**
- * Reorder sections for a project
+ * Reorder sections by id. Ownership is verified by the caller, so this scopes by
+ * section id only (works for both ai_project_id and project_id flows — the old
+ * `AND ai_project_id = ?` clause silently no-op'd for refactor projects).
  * @param {object} db - D1 database instance
- * @param {number} aiProjectId - AI project ID
- * @param {array} sectionIds - Array of section IDs in desired order
+ * @param {array} sectionIds - Array of section IDs in desired order (within one page)
  * @returns {boolean} Success
  */
-export async function reorderSections(db, aiProjectId, sectionIds) {
-  // Use a transaction-like approach with batch updates
-  const promises = sectionIds.map((sectionId, index) =>
+export async function reorderSections(db, sectionIds) {
+  const promises = (sectionIds || []).map((sectionId, index) =>
     db
-      .prepare('UPDATE ai_sections SET section_order = ?, updated_at = unixepoch() WHERE id = ? AND ai_project_id = ?')
-      .bind(index, sectionId, aiProjectId)
+      .prepare('UPDATE ai_sections SET section_order = ?, updated_at = unixepoch() WHERE id = ?')
+      .bind(index, sectionId)
       .run()
   );
 
   await Promise.all(promises);
 
   return true;
+}
+
+// ---- Page-aware queries (multi-page) ----
+
+/** Build a "project scope" WHERE fragment from {aiProjectId} | {projectId}. */
+function projectScope(projectKey) {
+  if (projectKey && projectKey.aiProjectId != null) {
+    return { clause: 'ai_project_id = ?', value: projectKey.aiProjectId };
+  }
+  return { clause: 'project_id = ?', value: projectKey.projectId };
+}
+
+/**
+ * Site-level sections (header/footer) — shared across every page, regardless of page_id.
+ * @param {object} projectKey - {aiProjectId} or {projectId}
+ */
+export async function getSiteSections(db, projectKey, visibleOnly = false) {
+  const scope = projectScope(projectKey);
+  let sql = `SELECT * FROM ai_sections WHERE ${scope.clause} AND section_type IN ('header','footer')`;
+  if (visibleOnly) sql += ' AND is_visible = 1';
+  sql += ' ORDER BY section_order ASC';
+  const r = await db.prepare(sql).bind(scope.value).all();
+  return r.results || [];
+}
+
+/**
+ * Body (non-header/footer) sections for a specific page.
+ */
+export async function getBodySectionsForPage(db, pageId, visibleOnly = false) {
+  let sql = `SELECT * FROM ai_sections WHERE page_id = ? AND section_type NOT IN ('header','footer')`;
+  if (visibleOnly) sql += ' AND is_visible = 1';
+  sql += ' ORDER BY section_order ASC';
+  const r = await db.prepare(sql).bind(pageId).all();
+  return r.results || [];
+}
+
+/**
+ * Body sections for the HOME page, tolerant of the upgrade window: also folds in
+ * legacy/unassigned body sections (page_id IS NULL).
+ */
+export async function getHomeBodySections(db, projectKey, homePageId, visibleOnly = false) {
+  const scope = projectScope(projectKey);
+  let sql =
+    `SELECT * FROM ai_sections WHERE ${scope.clause} AND section_type NOT IN ('header','footer') ` +
+    `AND (page_id = ? OR page_id IS NULL)`;
+  if (visibleOnly) sql += ' AND is_visible = 1';
+  sql += ' ORDER BY section_order ASC';
+  const r = await db.prepare(sql).bind(scope.value, homePageId).all();
+  return r.results || [];
 }
 
 /**

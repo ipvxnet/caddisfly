@@ -27,13 +27,36 @@ export function navbarTemplate(data, config) {
     ? `<a class="nav-phone" href="tel:${phone.replace(/[^+\d]/g, '')}">${escapeHtml(phone)}</a>`
     : '';
 
+  // Multi-page nav: render page links when the project has more than one visible
+  // page (injected via config by assemblePage). Falls back to the single Contact
+  // CTA / anchor nav for single-page sites.
+  const pages = Array.isArray(config.pages) ? config.pages.filter((p) => p.is_visible !== 0) : [];
+  const previewBase = config.previewBase || '';
+  const currentSlug = config.currentSlug || '';
+  const embedSuffix = config.embed ? '?embed=1' : '';
+  const homeHref = previewBase ? `${previewBase}/home${embedSuffix}` : '#top';
+
+  const pageLinks =
+    pages.length > 1 && previewBase
+      ? pages
+          .map((p) => {
+            const active = p.slug === currentSlug ? ' nav-link-active' : '';
+            const aria = p.slug === currentSlug ? ' aria-current="page"' : '';
+            return `<a class="nav-link${active}"${aria} href="${escapeAttr(`${previewBase}/${p.slug}${embedSuffix}`)}">${escapeHtml(p.nav_label || p.title || p.slug)}</a>`;
+          })
+          .join('\n      ')
+      : '';
+
+  const actions = pageLinks
+    ? `${pageLinks}\n      ${phoneLink}`
+    : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}">Contact</a>`;
+
   return `
 <header class="site-nav">
   <div class="site-nav-inner">
-    <a class="nav-brand" href="#top">${brand}</a>
+    <a class="nav-brand" href="${escapeAttr(homeHref)}">${brand}</a>
     <nav class="nav-actions">
-      ${phoneLink}
-      <a class="nav-cta" href="${escapeAttr(cta_link)}">Contact</a>
+      ${actions}
     </nav>
   </div>
 </header>
@@ -98,11 +121,25 @@ export function navbarTemplate(data, config) {
   font-weight: 600;
 }
 .nav-cta:hover { opacity: 0.92; }
+.nav-link {
+  color: #2d3748;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+}
+.nav-link:hover { color: ${primaryColor}; }
+.nav-link-active {
+  color: ${primaryColor};
+  border-bottom-color: ${primaryColor};
+}
 
 @media (max-width: 600px) {
-  .site-nav-inner { padding: 0.6rem 1rem; }
+  .site-nav-inner { padding: 0.6rem 1rem; flex-wrap: wrap; }
   .nav-phone { display: none; }
   .nav-logo { height: 32px; }
+  .nav-actions { gap: 0.85rem; flex-wrap: wrap; }
 }
 </style>
   `.trim();

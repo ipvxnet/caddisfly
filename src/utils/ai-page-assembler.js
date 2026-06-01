@@ -26,19 +26,24 @@ function fontFamilyParam(name, weights) {
  * @param {object} project - AI project object
  * @returns {string} Complete HTML document
  */
-export function assemblePage(sections, config, project) {
-  // Sort sections by order
-  const sortedSections = sections.sort((a, b) => a.section_order - b.section_order);
+export function assemblePage(sections, config, project, opts = {}) {
+  const { pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false } = opts;
 
-  // Render each section
-  const renderedSections = sortedSections
+  // Inject nav context so the navbar can render page links (other templates ignore it).
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed };
+
+  // Render in the given order when preordered (multi-page: header + page body +
+  // footer assembled by the caller); otherwise sort a COPY by section_order.
+  const ordered = preordered ? sections.slice() : sections.slice().sort((a, b) => a.section_order - b.section_order);
+
+  const renderedSections = ordered
     .filter((section) => section.is_visible)
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
       // Use html_template field if available, otherwise check contentData._variant
       const variant = section.html_template || contentData._variant || 'default';
 
-      const rendered = renderSection(section.section_type, contentData, config, variant);
+      const rendered = renderSection(section.section_type, contentData, renderConfig, variant);
       // Wrap in a stable anchor so the customize page can scroll the preview to a
       // section by its DB id (matches the left-panel section list's data-section-id).
       const anchorId = section.id != null ? `ai-sec-${section.id}` : '';
@@ -52,7 +57,7 @@ export function assemblePage(sections, config, project) {
   const html = buildHTMLDocument({
     title: project.project_name || 'My Website',
     body: renderedSections,
-    config,
+    config: renderConfig,
   });
 
   return html;
@@ -230,8 +235,8 @@ export function deduplicateCSS(html) {
  * @param {object} project - AI project object
  * @returns {string} Preview HTML
  */
-export function generatePreview(sections, config, project) {
-  const pageHtml = assemblePage(sections, config, project);
+export function generatePreview(sections, config, project, opts = {}) {
+  const pageHtml = assemblePage(sections, config, project, opts);
 
   // Add preview banner with project ID
   const previewBanner = `

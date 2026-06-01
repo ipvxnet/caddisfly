@@ -82,7 +82,7 @@ export async function handleAIBuilderSectionUpdate(ctx) {
 
     // Parse request body
     const body = await request.json();
-    const { content, is_visible, section_order, html_template } = body;
+    const { content, is_visible, section_order, html_template, page_id } = body;
 
     // Update content if provided
     if (content !== undefined) {
@@ -99,6 +99,10 @@ export async function handleAIBuilderSectionUpdate(ctx) {
     }
     if (html_template !== undefined) {
       updates.html_template = html_template;
+    }
+    if (page_id !== undefined) {
+      // Move the section to another page (page_id is a global ai_pages.id).
+      updates.page_id = page_id;
     }
 
     if (Object.keys(updates).length > 0) {

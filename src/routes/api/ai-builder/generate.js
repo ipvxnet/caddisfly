@@ -4,6 +4,8 @@
 import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
 import { getAnsweredConversations } from '../../../db/ai-conversations.js';
 import { createSection } from '../../../db/ai-sections.js';
+import { createPage } from '../../../db/ai-pages.js';
+import { planPages } from '../../../utils/pages-blueprint.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
 import { getFontPairing } from '../../../utils/ai-prompts.js';
@@ -130,7 +132,25 @@ export async function handleAIBuilderGenerate(ctx) {
     // Always lead with a brand header (text wordmark — no original logo here).
     const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
 
-    let sectionOrder = 0;
+    // Multi-page: split sections across pages (deterministic blueprint; thin
+    // sites collapse to a single Home page). Create the page rows up front.
+    const { pages: pagePlan, assign } = planPages(sectionsToGenerate);
+    const pageIdBySlug = {};
+    for (const p of pagePlan) {
+      const row = await createPage(env.DB, {
+        ai_project_id: project.id,
+        slug: p.slug,
+        title: p.title,
+        nav_label: p.nav_label,
+        page_order: p.order,
+        is_home: p.is_home,
+        is_visible: 1,
+      });
+      pageIdBySlug[p.slug] = row.id;
+    }
+
+    const orderByPage = {}; // per-page section_order counters
+    let siteOrder = 0; // header/footer order (page_id NULL)
     const generationResults = [];
 
     for (const sectionType of sectionsToGenerate) {
@@ -165,11 +185,23 @@ export async function handleAIBuilderGenerate(ctx) {
       attachImages(sectionType, content, pickPhoto);
       content._variant = variant;
 
+      // header/footer are site-level (page_id NULL); body sections go to their page.
+      let pageId = null;
+      let order;
+      if (sectionType === 'header' || sectionType === 'footer') {
+        order = siteOrder++;
+      } else {
+        pageId = pageIdBySlug[assign(sectionType)] ?? pageIdBySlug.home ?? null;
+        order = orderByPage[pageId] || 0;
+        orderByPage[pageId] = order + 1;
+      }
+
       try {
         await createSection(env.DB, {
           ai_project_id: project.id,
+          page_id: pageId,
           section_type: sectionType,
-          section_order: sectionOrder++,
+          section_order: order,
           html_template: variant,
           content_json: JSON.stringify(content),
           is_visible: 1,

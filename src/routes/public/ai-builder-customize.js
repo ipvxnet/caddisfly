@@ -2,8 +2,9 @@
 // Section customization interface
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
-import { getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../db/ai-sections.js';
+import { getSiteSections, getBodySectionsForPage, getHomeBodySections } from '../../db/ai-sections.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
+import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generateColorPicker } from '../../components/color-picker.js';
 import { generateTemplatePicker } from '../../components/template-picker.js';
@@ -16,19 +17,18 @@ import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
  * @returns {Response} HTTP response
  */
 export async function handleAIBuilderCustomize(ctx) {
-  const { env, params } = ctx;
+  const { env, params, query } = ctx;
 
   try {
     const { project_id } = params;
 
     // Try to load from ai_projects first, then regular projects
     let project = await getAIProjectByProjectId(env.DB, project_id);
-    let sections, config, isAIBuilder = true;
+    let config, projectKey, isAIBuilder = true;
 
     if (project) {
-      // AI Builder project
-      sections = await getSectionsByAIProjectId(env.DB, project.id, false);
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
+      projectKey = { aiProjectId: project.id };
     } else {
       // Regular refactoring project
       const regularProject = await getProjectByPreviewId(env.DB, project_id);
@@ -47,8 +47,8 @@ export async function handleAIBuilderCustomize(ctx) {
         id: regularProject.id,
       };
 
-      sections = await getSectionsByRegularProjectId(env.DB, regularProject.id, false);
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
+      projectKey = { projectId: regularProject.id };
       isAIBuilder = false;
     }
 
@@ -58,6 +58,61 @@ export async function handleAIBuilderCustomize(ctx) {
         headers: { 'Content-Type': 'text/html' },
       });
     }
+
+    // Multi-page: ensure pages exist, resolve the page being edited (?page=slug,
+    // else home), and split sections into site-wide (header/footer) + this page's.
+    await ensurePagesForProject(env.DB, projectKey);
+    const pages = await getPagesByProject(env.DB, projectKey);
+    const requestedSlug = query && query.page;
+    let currentPage = requestedSlug ? await getPageBySlug(env.DB, projectKey, requestedSlug) : null;
+    if (!currentPage) currentPage = await getHomePage(env.DB, projectKey);
+    const currentSlug = currentPage ? currentPage.slug : 'home';
+
+    const siteSections = await getSiteSections(env.DB, projectKey, false);
+    const sections = currentPage && currentPage.is_home
+      ? await getHomeBodySections(env.DB, projectKey, currentPage.id, false)
+      : await getBodySectionsForPage(env.DB, currentPage ? currentPage.id : -1, false);
+
+    const esc = (s) =>
+      String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // One section tile. siteWide tiles (header/footer) omit the "move to page" select.
+    const renderTile = (section, siteWide = false) => `
+            <div
+              class="section-item ${!section.is_visible ? 'section-hidden' : ''}"
+              data-section-id="${section.id}"
+              draggable="true"
+              onclick="focusSection(${section.id})"
+              ondragstart="handleDragStart(event)"
+              ondragover="handleDragOver(event)"
+              ondragenter="handleDragEnter(event)"
+              ondragleave="handleDragLeave(event)"
+              ondrop="handleDrop(event)"
+              ondragend="handleDragEnd(event)"
+            >
+              <div class="section-header">
+                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                <span class="section-type">${section.section_type}</span>
+                <button
+                  class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
+                  data-section-id="${section.id}"
+                  data-visible="${section.is_visible ? '1' : '0'}"
+                  onclick="toggleVisibility(event)"
+                  title="${section.is_visible ? 'Hide section' : 'Show section'}"
+                >${section.is_visible ? '👁️' : '👁️‍🗨️'}</button>
+              </div>
+              <div class="section-actions">
+                <button class="ai-edit-btn" onclick="editSection(${section.id})" title="Edit this section with AI">✨ Edit</button>
+                <select class="template-variant-select" data-section-id="${section.id}" onchange="switchTemplate(event)" onclick="event.stopPropagation()" title="Layout / template variant">
+                  ${getAvailableVariants(section.section_type)
+                    .map((variant) => `<option value="${variant}" ${section.html_template === variant ? 'selected' : ''}>${variant.replace('-', ' ')}</option>`)
+                    .join('')}
+                </select>
+                ${siteWide ? '' : `<select class="move-page-select" onchange="moveSectionToPage(${section.id}, this.value)" onclick="event.stopPropagation()" title="Move to another page">
+                  ${pages.map((p) => `<option value="${p.id}" ${section.page_id === p.id ? 'selected' : ''}>→ ${esc(p.nav_label || p.slug)}</option>`).join('')}
+                </select>`}
+              </div>
+            </div>`;
 
     const html = `
 <!DOCTYPE html>
@@ -225,6 +280,67 @@ export async function handleAIBuilderCustomize(ctx) {
 
     .ai-edit-btn:hover { filter: brightness(1.08); }
 
+    .page-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .page-tab {
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      border-radius: 8px;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .page-tab:hover { border-color: #7c3aed; }
+    .page-tab.active {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #fff;
+    }
+    .page-tab-add { color: #7c3aed; border-style: dashed; }
+    .page-toolbar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      min-height: 1.4rem;
+    }
+    .link-btn {
+      background: none;
+      border: none;
+      color: #7c3aed;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .link-btn.danger { color: #b91c1c; }
+    .group-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #4a5568;
+      margin: 1.25rem 0 0.6rem;
+    }
+    .muted { color: #a0aec0; font-size: 0.8rem; font-weight: 400; text-transform: none; letter-spacing: 0; }
+    .move-page-select {
+      flex: 1;
+      min-width: 0;
+      padding: 0.45rem 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: #fff;
+      cursor: pointer;
+    }
+
     .section-actions .template-variant-select {
       flex: 1;
       min-width: 0;
@@ -339,77 +455,98 @@ export async function handleAIBuilderCustomize(ctx) {
 
         ${generateFontPicker(config, project.project_id)}
 
-        <h2 style="margin-bottom: 0.5rem;">Sections</h2>
-        <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1.5rem;">
-          Click a section to select it, then <strong>✨ Edit</strong> — or drag to reorder.
+        <h2 style="margin-bottom: 0.5rem;">Pages</h2>
+        <div class="page-tabs">
+          ${pages
+            .map((p) => `<button class="page-tab ${p.slug === currentSlug ? 'active' : ''}" onclick="switchPage('${p.slug}')">${p.is_home ? '🏠 ' : ''}${esc(p.nav_label || p.slug)}</button>`)
+            .join('')}
+          <button class="page-tab page-tab-add" onclick="addPage()" title="Add a page">+ Page</button>
+        </div>
+        <div class="page-toolbar">
+          ${currentPage && !currentPage.is_home
+            ? `<button class="link-btn" onclick="renamePage(${currentPage.id}, '${esc(currentPage.nav_label || '').replace(/'/g, "\\'")}')">Rename</button>
+               <button class="link-btn danger" onclick="deletePage(${currentPage.id})">Delete page</button>`
+            : `<span class="muted">Home page</span>`}
+        </div>
+
+        ${siteSections.length
+          ? `<h3 class="group-title">Site-wide <span class="muted">· shown on every page</span></h3>
+             <div class="sections-list">${siteSections.map((s) => renderTile(s, true)).join('')}</div>`
+          : ''}
+
+        <h3 class="group-title">${esc((currentPage && currentPage.nav_label) || 'Home')} sections</h3>
+        <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1rem;">
+          Click a section to select it, then <strong>✨ Edit</strong> — drag to reorder, or move it to another page.
         </p>
         <div id="sections-list">
-          ${sections
-            .map(
-              (section, index) => `
-            <div
-              class="section-item ${!section.is_visible ? 'section-hidden' : ''}"
-              data-section-id="${section.id}"
-              draggable="true"
-              onclick="focusSection(${section.id})"
-              ondragstart="handleDragStart(event)"
-              ondragover="handleDragOver(event)"
-              ondragenter="handleDragEnter(event)"
-              ondragleave="handleDragLeave(event)"
-              ondrop="handleDrop(event)"
-              ondragend="handleDragEnd(event)"
-            >
-              <div class="section-header">
-                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-                <span class="section-type">${section.section_type}</span>
-                <button
-                  class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
-                  data-section-id="${section.id}"
-                  data-visible="${section.is_visible ? '1' : '0'}"
-                  onclick="toggleVisibility(event)"
-                  title="${section.is_visible ? 'Hide section' : 'Show section'}"
-                >
-                  ${section.is_visible ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-              <div class="section-actions">
-                <button class="ai-edit-btn" onclick="editSection(${section.id})" title="Edit this section with AI">
-                  ✨ Edit
-                </button>
-                <select
-                  class="template-variant-select"
-                  data-section-id="${section.id}"
-                  onchange="switchTemplate(event)"
-                  onclick="event.stopPropagation()"
-                  title="Layout / template variant"
-                >
-                  ${getAvailableVariants(section.section_type)
-                    .map(
-                      (variant) => `
-                    <option value="${variant}" ${section.html_template === variant ? 'selected' : ''}>
-                      ${variant.replace('-', ' ')}
-                    </option>
-                  `
-                    )
-                    .join('')}
-                </select>
-              </div>
-            </div>
-          `
-            )
-            .join('')}
+          ${sections.map((s) => renderTile(s)).join('') || '<p class="muted">No sections on this page yet.</p>'}
         </div>
       </div>
 
       <div class="preview-frame">
-        <iframe src="/ai-preview/${project.project_id}?embed=1" id="preview-iframe"></iframe>
+        <iframe src="/ai-preview/${project.project_id}/${currentSlug}?embed=1" id="preview-iframe"></iframe>
       </div>
     </div>
   </div>
 
   <script>
     const projectId = '${project.project_id}';
+    const currentPageSlug = '${currentSlug}';
     let draggedElement = null;
+
+    // ---- Pages (multi-page) ----
+    function gotoPage(slug) {
+      const u = new URL(location.href);
+      u.searchParams.set('page', slug);
+      location.href = u.toString();
+    }
+    function switchPage(slug) { gotoPage(slug); }
+
+    async function addPage() {
+      const label = prompt('New page name?', 'New Page');
+      if (!label) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages\`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nav_label: label })
+        });
+        const d = await r.json();
+        if (d.success) gotoPage(d.page.slug); else alert(d.error || 'Failed to add page');
+      } catch (e) { alert('Failed to add page: ' + e.message); }
+    }
+
+    async function renamePage(id, current) {
+      const label = prompt('Rename page', current || '');
+      if (!label) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nav_label: label })
+        });
+        const d = await r.json();
+        if (d.success) location.reload(); else alert(d.error || 'Failed to rename');
+      } catch (e) { alert('Failed to rename: ' + e.message); }
+    }
+
+    async function deletePage(id) {
+      if (!confirm('Delete this page? Its sections move to Home.')) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, { method: 'DELETE' });
+        const d = await r.json();
+        if (d.success) gotoPage('home'); else alert(d.error || 'Failed to delete');
+      } catch (e) { alert('Failed to delete: ' + e.message); }
+    }
+
+    async function moveSectionToPage(sectionId, pageId) {
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/sections/\${sectionId}\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page_id: parseInt(pageId) })
+        });
+        const d = await r.json();
+        if (d.success) gotoPage(currentPageSlug); else alert(d.error || 'Failed to move section');
+      } catch (e) { alert('Failed to move section: ' + e.message); }
+    }
 
     function handleDragStart(e) {
       draggedElement = e.target;

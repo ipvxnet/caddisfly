@@ -2,8 +2,9 @@
 // Display preview of AI-generated website
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
-import { getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../db/ai-sections.js';
+import { getSiteSections, getBodySectionsForPage, getHomeBodySections } from '../../db/ai-sections.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
+import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js';
 
@@ -20,7 +21,7 @@ export async function handleAIPreview(ctx) {
 
     // Try to load from ai_projects first, then regular projects
     let project = await getAIProjectByProjectId(env.DB, project_id);
-    let sections, config, isAIBuilder = true;
+    let config, projectKey, isAIBuilder = true;
 
     if (project) {
       // AI Builder project - check if preview is ready
@@ -92,9 +93,9 @@ export async function handleAIPreview(ctx) {
       );
       }
 
-      // Get sections and config for AI Builder project
-      sections = await getSectionsByAIProjectId(env.DB, project.id, true);
+      // Config + project key for AI Builder project
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
+      projectKey = { aiProjectId: project.id };
     } else {
       // Try regular refactoring project
       const regularProject = await getProjectByPreviewId(env.DB, project_id);
@@ -129,12 +130,36 @@ export async function handleAIPreview(ctx) {
         id: regularProject.id,
       };
 
-      sections = await getSectionsByRegularProjectId(env.DB, regularProject.id, true);
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
+      projectKey = { projectId: regularProject.id };
       isAIBuilder = false;
     }
 
-    if (sections.length === 0 || !config) {
+    if (!config) {
+      return new Response('Preview not ready yet', {
+        status: 400,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+
+    // Multi-page: ensure pages exist (lazily upgrades legacy single-page projects),
+    // then resolve the target page (slug param, else home; unknown slug → home).
+    await ensurePagesForProject(env.DB, projectKey);
+    const pages = await getPagesByProject(env.DB, projectKey);
+    const slug = params.page_slug;
+    let page = slug ? await getPageBySlug(env.DB, projectKey, slug) : null;
+    if (!page) page = await getHomePage(env.DB, projectKey);
+
+    // A rendered page = shared header + that page's body sections + shared footer.
+    const siteSections = await getSiteSections(env.DB, projectKey, true);
+    const header = siteSections.filter((s) => s.section_type === 'header');
+    const footer = siteSections.filter((s) => s.section_type === 'footer');
+    const body = page && page.is_home
+      ? await getHomeBodySections(env.DB, projectKey, page.id, true)
+      : await getBodySectionsForPage(env.DB, page ? page.id : -1, true);
+    const combined = [...header, ...body, ...footer];
+
+    if (combined.length === 0) {
       return new Response('Preview not ready yet', {
         status: 400,
         headers: { 'Content-Type': 'text/html' },
@@ -145,9 +170,16 @@ export async function handleAIPreview(ctx) {
     // (?embed=1), skip the "Preview Mode / Customize" banner so the Customize
     // link can't be re-triggered nested inside the editor.
     const embed = query && (query.embed === '1' || query.embed === 'true');
+    const opts = {
+      pages,
+      currentSlug: page ? page.slug : 'home',
+      previewBase: `/ai-preview/${project.project_id}`,
+      embed,
+      preordered: true,
+    };
     const html = (isAIBuilder && !embed)
-      ? generatePreview(sections, config, project)
-      : assemblePage(sections, config, project);
+      ? generatePreview(combined, config, project, opts)
+      : assemblePage(combined, config, project, opts);
 
     return new Response(html, {
       status: 200,

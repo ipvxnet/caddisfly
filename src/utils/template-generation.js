@@ -12,6 +12,8 @@
 import { generateSectionContent } from './ai-content-generator.js';
 import { profileToContext, profileToFactSections } from './company-profile.js';
 import { createSection } from '../db/ai-sections.js';
+import { createPage } from '../db/ai-pages.js';
+import { planPages } from './pages-blueprint.js';
 import { createWebsiteConfig } from '../db/ai-config.js';
 import { assemblePage } from './ai-page-assembler.js';
 import { uploadToR2 } from './r2-storage.js';
@@ -99,20 +101,54 @@ export async function generateAndStore(env, project, profile) {
     style_theme: 'modern',
   });
 
-  // 5. Persist sections, assemble, upload.
+  // 5. Multi-page split (deterministic blueprint; thin sites collapse to Home).
+  const { pages: pagePlan, assign } = planPages(sections.map((s) => s.type));
+  const pageIdBySlug = {};
+  for (const p of pagePlan) {
+    const row = await createPage(env.DB, {
+      project_id: project.id,
+      slug: p.slug,
+      title: p.title,
+      nav_label: p.nav_label,
+      page_order: p.order,
+      is_home: p.is_home,
+      is_visible: 1,
+    });
+    pageIdBySlug[p.slug] = row.id;
+  }
+  const pageSlugForSection = (type) =>
+    type === 'header' || type === 'footer' ? null : assign(type);
+
+  // 6. Persist sections with per-page ordering (header/footer site-level).
+  const orderByPage = {};
+  let siteOrder = 0;
   for (const s of sections) {
+    const slug = pageSlugForSection(s.type);
+    const pageId = slug ? (pageIdBySlug[slug] ?? pageIdBySlug.home ?? null) : null;
+    let secOrder;
+    if (pageId == null) {
+      secOrder = siteOrder++;
+    } else {
+      secOrder = orderByPage[pageId] || 0;
+      orderByPage[pageId] = secOrder + 1;
+    }
     await createSection(env.DB, {
       project_id: project.id,
+      page_id: pageId,
       section_type: s.type,
-      section_order: s.order,
+      section_order: secOrder,
       html_template: s.variant,
       content_json: JSON.stringify(s.content),
       is_visible: 1,
     });
   }
 
+  // 7. Stored R2 preview = the HOME page (shared header + home body + footer).
+  const homeSubset = sections.filter(
+    (s) => s.type === 'header' || s.type === 'footer' || assign(s.type) === 'home'
+  );
   const previewHtml = assemblePage(
-    sections.map((s) => ({
+    homeSubset.map((s) => ({
       section_type: s.type,
       section_order: s.order,
       html_template: s.variant,
@@ -120,13 +156,19 @@ export async function generateAndStore(env, project, profile) {
       is_visible: 1,
     })),
     config,
-    { project_name: profile.name, project_id: project.preview_id }
+    { project_name: profile.name, project_id: project.preview_id },
+    {
+      preordered: true,
+      pages: pagePlan.map((p) => ({ slug: p.slug, nav_label: p.nav_label, is_visible: 1 })),
+      currentSlug: 'home',
+      previewBase: `/ai-preview/${project.preview_id}`,
+    }
   );
 
   const previewPath = `projects/${project.id}/template-preview.html`;
   await uploadToR2(env.STORAGE, previewPath, previewHtml, 'text/html');
 
-  return { sectionsCreated: sections.length, previewPath, industry, photos: photoPool.length };
+  return { sectionsCreated: sections.length, pages: pagePlan.length, previewPath, industry, photos: photoPool.length };
 }
 
 /**

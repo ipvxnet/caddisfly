@@ -60,8 +60,9 @@ export async function handleSectionsReorder(ctx) {
     // Convert to integers
     const sectionIdsInt = section_ids.map((id) => parseInt(id));
 
-    // Reorder sections (note: this function uses ai_project_id but also works by updating individual sections)
-    await reorderSections(env.DB, projectDbId, sectionIdsInt);
+    // Reorder by section id (ownership verified above; scopes per the ids sent,
+    // which the customize page sends for one page at a time).
+    await reorderSections(env.DB, sectionIdsInt);
 
     return new Response(
       JSON.stringify({
