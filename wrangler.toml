@@ -22,7 +22,14 @@ binding = "AI"
 [browser]
 binding = "BROWSER"
 
-# Email Workers binding (configure for production)
+# Email transport: Resend HTTP API (preferred). Set the secret per environment:
+#   npx wrangler secret put RESEND_API_KEY --env preview
+#   npx wrangler secret put RESEND_API_KEY --env production
+# The send-from domain (EMAIL_FROM, default noreply@caddisfly.ai) must be a
+# verified domain in Resend (add their SPF/DKIM DNS records). Without the secret,
+# dev/preview logs the verify link to the console (stub mode).
+#
+# Optional fallback: Cloudflare Email Workers binding (verified destinations only).
 # [[send_email]]
 # name = "SEND_EMAIL"
 

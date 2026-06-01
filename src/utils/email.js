@@ -5,6 +5,49 @@
 
 import { buildPreviewEmailHtml } from '../templates/preview-email.js';
 
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+
+/**
+ * Low-level transport: deliver one email through whatever provider is configured.
+ *
+ * Order of preference:
+ *   1. Resend HTTP API (env.RESEND_API_KEY) — can reach arbitrary recipients from
+ *      a Worker; this is the real production path.
+ *   2. Cloudflare Email Workers binding (env.SEND_EMAIL) — only reaches addresses
+ *      verified in Email Routing; kept as a fallback.
+ *
+ * @param {Object} env - Environment bindings
+ * @param {{to: string, subject: string, html: string}} message
+ * @returns {Promise<boolean>} true if a transport accepted the message, false if
+ *   none is configured. Throws if a configured transport rejects the send.
+ */
+async function deliverEmail(env, { to, subject, html }) {
+  const from = env.EMAIL_FROM || 'noreply@caddisfly.ai';
+
+  if (env.RESEND_API_KEY) {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to, subject, html }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Resend ${res.status}: ${detail.slice(0, 300)}`);
+    }
+    return true;
+  }
+
+  if (env.SEND_EMAIL) {
+    await env.SEND_EMAIL.send({ from, to, subject, html });
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Sends preview link email to customer
  * @param {Object} env - Environment bindings
@@ -15,24 +58,17 @@ import { buildPreviewEmailHtml } from '../templates/preview-email.js';
  */
 export async function sendPreviewEmail(env, customerEmail, previewId, previewUrl) {
   try {
-    if (!env.SEND_EMAIL) {
-      console.warn('Email binding not available, skipping email send');
-      return false;
-    }
-
-    const emailFrom = env.EMAIL_FROM || 'noreply@caddisfly.ai';
-    const emailHtml = buildPreviewEmailHtml(previewUrl, customerEmail);
-
-    const message = {
-      from: emailFrom,
+    const sent = await deliverEmail(env, {
       to: customerEmail,
       subject: 'Your Caddisfly Preview is Ready! 🎉',
-      html: emailHtml,
-    };
-
-    await env.SEND_EMAIL.send(message);
-    console.log(`Preview email sent to ${customerEmail} for preview ${previewId}`);
-    return true;
+      html: buildPreviewEmailHtml(previewUrl, customerEmail),
+    });
+    if (sent) {
+      console.log(`Preview email sent to ${customerEmail} for preview ${previewId}`);
+      return true;
+    }
+    console.warn('No email transport configured, skipping preview email');
+    return false;
   } catch (error) {
     console.error('Failed to send preview email:', error);
     // Don't throw - we don't want to fail the entire request if email fails
@@ -44,44 +80,48 @@ export async function sendPreviewEmail(env, customerEmail, previewId, previewUrl
  * Sends an email-verification link to the customer.
  *
  * Verifying the email is the gate for paid Google Places enrichment, so this
- * link must reach a real human before any paid work runs. Until the SEND_EMAIL
- * binding is wired (see wrangler.toml), this logs the verify link to the console
- * so the flow is testable end-to-end. It always reports success in stub mode so
- * the create request can complete and the user/tester can use the logged link.
+ * link must reach a real human before any paid work runs. When a transport is
+ * configured (RESEND_API_KEY, or the SEND_EMAIL binding) the link is emailed.
+ * Otherwise — and on a non-production send failure — the link is logged to the
+ * console so the flow stays testable end-to-end in dev/preview. In production a
+ * missing transport or send failure reports false so the caller can react.
  *
  * @param {Object} env - Environment bindings
  * @param {string} customerEmail - Recipient email address
  * @param {string} token - Single-use verification token
  * @param {string} verifyUrl - Full verification URL (e.g. https://host/verify/<token>)
- * @returns {Promise<boolean>} True if sent (or stubbed), false on real send failure
+ * @returns {Promise<boolean>} True if sent (or stubbed in non-prod), false on failure
  */
 export async function sendVerificationEmail(env, customerEmail, token, verifyUrl) {
-  // Stub mode: no email transport configured yet. Log the link so verification
-  // can still be completed manually during development.
-  if (!env.SEND_EMAIL) {
-    console.warn(
-      `[email stub] No SEND_EMAIL binding. Verification link for ${customerEmail}: ${verifyUrl}`
-    );
-    return true;
-  }
+  const isProduction = env.ENVIRONMENT === 'production';
 
   try {
-    const emailFrom = env.EMAIL_FROM || 'noreply@caddisfly.ai';
-
-    const message = {
-      from: emailFrom,
+    const sent = await deliverEmail(env, {
       to: customerEmail,
       subject: 'Confirm your email to build your free website preview',
       html: buildVerificationEmailHtml(verifyUrl, customerEmail),
-    };
-
-    await env.SEND_EMAIL.send(message);
-    console.log(`Verification email sent to ${customerEmail}`);
-    return true;
+    });
+    if (sent) {
+      console.log(`Verification email sent to ${customerEmail}`);
+      return true;
+    }
+    // No transport configured.
+    if (isProduction) {
+      console.error('No email transport configured in production; cannot send verification');
+      return false;
+    }
   } catch (error) {
     console.error('Failed to send verification email:', error);
-    return false;
+    if (isProduction) return false;
+    // Non-prod: fall through to the stub log so testing is unblocked.
   }
+
+  // Stub fallback (dev/preview only): log the link so verification can still be
+  // completed manually without a configured transport.
+  console.warn(
+    `[email stub] Verification link for ${customerEmail}: ${verifyUrl}`
+  );
+  return true;
 }
 
 /**
@@ -130,14 +170,11 @@ function buildVerificationEmailHtml(verifyUrl, customerEmail) {
  */
 export async function sendErrorNotification(env, subject, message) {
   try {
-    if (!env.SEND_EMAIL || !env.ADMIN_EMAIL) {
+    if (!env.ADMIN_EMAIL) {
       return false;
     }
 
-    const emailFrom = env.EMAIL_FROM || 'noreply@caddisfly.ai';
-
-    const email = {
-      from: emailFrom,
+    return await deliverEmail(env, {
       to: env.ADMIN_EMAIL,
       subject: `[Caddisfly Error] ${subject}`,
       html: `
@@ -154,10 +191,7 @@ export async function sendErrorNotification(env, subject, message) {
           </body>
         </html>
       `,
-    };
-
-    await env.SEND_EMAIL.send(email);
-    return true;
+    });
   } catch (error) {
     console.error('Failed to send error notification:', error);
     return false;
