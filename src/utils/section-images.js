@@ -46,21 +46,24 @@ export function attachImages(sectionType, content, pickPhoto) {
     case 'gallery': {
       const existing = Array.isArray(content.images) ? content.images : [];
       if (existing.length > 0) {
-        // AI gives alt/caption but no url — fill urls, keep its descriptions.
-        content.images = existing
-          .map((img) => {
-            const p = pickPhoto();
-            return { ...img, url: img.url || (p && p.url) || '' };
-          })
-          .filter((img) => img.url);
+        // AI gives alt/caption but no url — fill urls where we have photos, and
+        // keep the rest as-is (the masonry template has a per-image fallback),
+        // so we never blank out the gallery when there are no photos.
+        content.images = existing.map((img) => {
+          if (img.url) return img;
+          const p = pickPhoto();
+          return p ? { ...img, url: p.url } : { ...img };
+        });
       } else {
-        // No AI images — build a gallery straight from the photo pool.
+        // No AI images — build a gallery from the photo pool when we have one.
         const imgs = [];
         for (let i = 0; i < 6; i++) {
           const p = pickPhoto();
           if (p) imgs.push({ url: p.url, alt: p.alt || '', caption: '' });
         }
-        content.images = imgs;
+        // Only set when we actually have photos; otherwise leave undefined so
+        // the template's own defaults render instead of an empty gallery.
+        if (imgs.length) content.images = imgs;
       }
       break;
     }
