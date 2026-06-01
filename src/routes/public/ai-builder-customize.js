@@ -490,14 +490,7 @@ export async function handleAIBuilderCustomize(ctx) {
         const data = await response.json();
 
         if (data.success) {
-          // Update order numbers in UI
-          items.forEach((item, index) => {
-            const orderText = item.querySelector('div:last-child');
-            if (orderText) {
-              orderText.textContent = \`Order: \${index + 1}\`;
-            }
-          });
-
+          // Order is conveyed by tile position now (no per-tile "Order: N" label).
           // Reload preview
           const previewIframe = document.getElementById('preview-iframe');
           if (previewIframe) {
