@@ -144,11 +144,43 @@ export function renderSection(sectionType, data, config, variant = 'default') {
   }
 
   try {
-    return template(data, config);
+    return template(data, normalizeConfig(config));
   } catch (error) {
     console.error(`Error rendering template ${sectionType}:${variant}:`, error);
     return `<!-- Error rendering ${sectionType}:${variant} -->`;
   }
+}
+
+/**
+ * Normalize a website config so templates can read EITHER snake_case
+ * (primary_color, font_heading) OR camelCase (primaryColor, fontHeading).
+ * Historically some templates used camelCase keys that don't exist on the
+ * snake_case config rows, producing "undefined" in rendered CSS. Carrying both
+ * casings (with defaults) fixes all of them at one boundary.
+ * @param {object} config - Website configuration (snake_case columns)
+ * @returns {object} Config with both casings + defaults
+ */
+function normalizeConfig(config = {}) {
+  const primary_color = config.primary_color || config.primaryColor || '#667eea';
+  const secondary_color = config.secondary_color || config.secondaryColor || '#764ba2';
+  const accent_color = config.accent_color || config.accentColor || '#f093fb';
+  const font_heading = config.font_heading || config.fontHeading || 'Inter';
+  const font_body = config.font_body || config.fontBody || 'Inter';
+
+  return {
+    ...config,
+    primary_color,
+    secondary_color,
+    accent_color,
+    font_heading,
+    font_body,
+    // camelCase aliases for templates that use them
+    primaryColor: primary_color,
+    secondaryColor: secondary_color,
+    accentColor: accent_color,
+    fontHeading: font_heading,
+    fontBody: font_body,
+  };
 }
 
 /**

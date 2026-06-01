@@ -14,7 +14,9 @@ const INDUSTRY_KEYWORDS = [
   ['health', ['clinic', 'dental', 'dentist', 'medical', 'doctor', 'health', 'therapy', 'chiropractic', 'veterinary', 'pharmacy']],
   ['legal', ['law', 'lawyer', 'attorney', 'legal', 'firm', 'accounting', 'accountant', 'finance', 'insurance', 'consulting']],
   ['realestate', ['real estate', 'realtor', 'property', 'realty', 'mortgage', 'broker']],
-  ['retail', ['shop', 'store', 'boutique', 'retail', 'clothing', 'fashion', 'jewelry', 'furniture']],
+  // Note: bare 'shop'/'store' are intentionally excluded — too generic (they
+  // would mis-match "Tire Shop", "Coffee Shop", "Barber Shop", etc.).
+  ['retail', ['boutique', 'retail', 'clothing', 'fashion', 'jewelry', 'furniture', 'apparel']],
   ['creative', ['design', 'studio', 'agency', 'photography', 'art', 'creative', 'media', 'marketing', 'branding']],
   ['automotive', ['auto', 'car', 'mechanic', 'automotive', 'repair', 'tire', 'dealership']],
   ['home', ['plumbing', 'plumber', 'electric', 'hvac', 'roofing', 'construction', 'contractor', 'landscaping', 'cleaning', 'remodeling']],
@@ -91,12 +93,23 @@ const IMAGE_KEYWORDS = {
  */
 export function inferIndustry(...texts) {
   const haystack = texts.filter(Boolean).join(' ').toLowerCase();
+
+  // Score each industry by total matched keyword length so more-specific signals
+  // win (e.g. "Tire Shop" → automotive via 'tire', not retail). First-listed
+  // industry wins ties (strictly-greater comparison preserves order).
+  let best = 'general';
+  let bestScore = 0;
   for (const [industry, keywords] of INDUSTRY_KEYWORDS) {
-    if (keywords.some((k) => haystack.includes(k))) {
-      return industry;
+    let score = 0;
+    for (const k of keywords) {
+      if (haystack.includes(k)) score += k.length;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = industry;
     }
   }
-  return 'general';
+  return best;
 }
 
 /**

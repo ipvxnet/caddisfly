@@ -112,10 +112,20 @@ export async function handleAIPreview(ctx) {
         return Response.redirect(`/preview/${project_id}`, 302);
       }
 
+      // Prefer the real business name (from the stored company profile) for the
+      // page <title>; fall back to the URL only if unavailable.
+      let businessName = regularProject.website_url;
+      try {
+        const profile = JSON.parse(regularProject.company_profile_json || '{}');
+        if (profile && profile.name) businessName = profile.name;
+      } catch {
+        // keep URL fallback
+      }
+
       // Convert regular project to AI project format for rendering
       project = {
         project_id: regularProject.preview_id,
-        project_name: regularProject.website_url,
+        project_name: businessName,
         id: regularProject.id,
       };
 

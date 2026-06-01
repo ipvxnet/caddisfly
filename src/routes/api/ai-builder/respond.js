@@ -14,7 +14,7 @@ import {
   isConversationComplete,
 } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
-import { checkRequestRateLimit, getUserTier, formatRateLimitError } from '../../../utils/rate-limiter.js';
+import { checkRequestRateLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
 
 /**
  * Handle conversation response
@@ -49,7 +49,9 @@ export async function handleAIBuilderRespond(ctx) {
 
     // Check rate limits
     const tier = await getUserTier(env.DB, project.customer_email);
-    const limitCheck = await checkRequestRateLimit(env.DB, project.customer_email, tier);
+    const limitCheck = limitsDisabled(env)
+      ? unlimited(tier)
+      : await checkRequestRateLimit(env.DB, project.customer_email, tier);
 
     if (!limitCheck.allowed) {
       return new Response(

@@ -32,6 +32,27 @@ export const RATE_LIMITS = {
 };
 
 /**
+ * Whether rate limits should be bypassed for this environment.
+ * Limits protect production cost/abuse; in preview/development we disable them
+ * so testing isn't throttled. Production (ENVIRONMENT='production') is unaffected.
+ * @param {object} env - Environment bindings
+ * @returns {boolean}
+ */
+export function limitsDisabled(env) {
+  return !!env && env.ENVIRONMENT !== 'production';
+}
+
+/**
+ * An "allowed" rate-limit result for when limits are bypassed.
+ * @param {string} tier
+ * @returns {object}
+ */
+export function unlimited(tier = 'free_trial') {
+  const now = Math.floor(Date.now() / 1000);
+  return { allowed: true, count: 0, remaining: 999999, limit: 999999, resetAt: now + 86400, tier };
+}
+
+/**
  * Check if user can create a new project
  * @param {object} db - D1 database
  * @param {string} email - User email

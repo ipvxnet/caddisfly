@@ -6,7 +6,7 @@ import { createConversationEntry } from '../../../db/ai-conversations.js';
 import { createWebsiteConfig } from '../../../db/ai-config.js';
 import { getFirstStep, formatStepForResponse } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
-import { checkProjectCreationLimit, getUserTier, formatRateLimitError } from '../../../utils/rate-limiter.js';
+import { checkProjectCreationLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
 
 /**
  * Handle AI builder project creation
@@ -37,7 +37,9 @@ export async function handleAIBuilderCreate(ctx) {
 
     // Check rate limits
     const tier = await getUserTier(env.DB, email);
-    const limitCheck = await checkProjectCreationLimit(env.DB, email, tier);
+    const limitCheck = limitsDisabled(env)
+      ? unlimited(tier)
+      : await checkProjectCreationLimit(env.DB, email, tier);
 
     if (!limitCheck.allowed) {
       return new Response(

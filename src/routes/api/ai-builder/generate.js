@@ -7,7 +7,7 @@ import { createSection } from '../../../db/ai-sections.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
 import { getFontPairing } from '../../../utils/ai-prompts.js';
-import { checkAIGenerationLimit, getUserTier, formatRateLimitError } from '../../../utils/rate-limiter.js';
+import { checkAIGenerationLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
 import { inferIndustry, paletteFor, variantFor, imageKeywordsFor } from '../../../utils/industry-style.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
@@ -41,7 +41,9 @@ export async function handleAIBuilderGenerate(ctx) {
 
     // Check AI generation rate limits (most important for cost control)
     const tier = await getUserTier(env.DB, project.customer_email);
-    const limitCheck = await checkAIGenerationLimit(env.DB, project.customer_email, tier);
+    const limitCheck = limitsDisabled(env)
+      ? unlimited(tier)
+      : await checkAIGenerationLimit(env.DB, project.customer_email, tier);
 
     if (!limitCheck.allowed) {
       return new Response(

@@ -14,7 +14,7 @@
  */
 
 import { getProjectByVerificationToken, updateProject } from '../../db/projects.js';
-import { getUserTier, checkEnrichmentLimit, formatRateLimitError } from '../../utils/rate-limiter.js';
+import { getUserTier, checkEnrichmentLimit, formatRateLimitError, limitsDisabled, unlimited } from '../../utils/rate-limiter.js';
 import { enrichBusiness } from '../../utils/google-places.js';
 import { buildProfile } from '../../utils/company-profile.js';
 import { generateAndStore } from '../../utils/template-generation.js';
@@ -55,7 +55,9 @@ export async function handleVerify(ctx) {
 
   // Cost control: per-email daily enrichment cap.
   const tier = await getUserTier(env.DB, project.customer_email);
-  const limit = await checkEnrichmentLimit(env.DB, project.customer_email, tier);
+  const limit = limitsDisabled(env)
+    ? unlimited(tier)
+    : await checkEnrichmentLimit(env.DB, project.customer_email, tier);
   if (!limit.allowed) {
     const msg = formatRateLimitError(limit, 'enrichments').error;
     return htmlResponse(statusPage('Daily limit reached', msg), 429);
