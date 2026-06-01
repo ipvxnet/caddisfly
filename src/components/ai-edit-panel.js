@@ -19,6 +19,8 @@ export function generateAIEditPanel(section, projectId) {
   const isHero = sectionType === 'hero';
   // The field a "use my own image" upload/URL writes to.
   const imageField = imageTargets.includes('background_image') ? 'background_image' : (imageTargets[0] || 'image_url');
+  // Single-image sections (hero/about) can clear their image; gallery (images[]) can't via this button.
+  const canRemove = imageTargets.includes('background_image') || imageTargets.includes('image_url');
 
   return `
 <div class="ai-edit-panel">
@@ -46,6 +48,7 @@ export function generateAIEditPanel(section, projectId) {
         <input type="text" id="ai-edit-url" class="ai-edit-input" placeholder="https://…">
         <button type="button" class="ai-edit-send" onclick="aiEditApplyUrl()">Use</button>
       </div>
+      ${canRemove ? `<button type="button" class="ai-edit-remove" onclick="aiEditRemoveMedia()">🗑 Remove current image${isHero ? ' / video' : ''}</button>` : ''}
       <div id="ai-edit-own-status" class="ai-edit-own-status"></div>
     </div>
   </details>
@@ -79,6 +82,8 @@ export function generateAIEditPanel(section, projectId) {
 .ai-edit-own-body { padding-top:0.6rem; display:flex; flex-direction:column; gap:0.35rem; }
 .ai-edit-own-label { font-size:0.75rem; color:#6b7280; font-weight:600; margin-top:0.3rem; }
 .ai-edit-url-row { display:flex; gap:0.5rem; }
+.ai-edit-remove { margin-top:0.6rem; background:#fff; color:#b91c1c; border:1px solid #fecaca; padding:0.5rem 0.8rem; border-radius:8px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+.ai-edit-remove:hover { background:#fef2f2; }
 .ai-edit-own-status { font-size:0.78rem; color:#7c3aed; min-height:1em; }
 .ai-edit-typing { font-size:0.8rem; color:#7c3aed; }
 </style>
@@ -227,6 +232,23 @@ async function aiEditUpload(input) {
     const isVideo = (file.type || '').startsWith('video');
     await aiEditPostApply(aiEditMediaPayload(updata.url, isVideo));
     status.textContent = '✓ Applied your ' + (isVideo ? 'video' : 'image') + '.';
+  } catch (error) {
+    status.textContent = '⚠️ ' + error.message;
+  }
+}
+
+async function aiEditRemoveMedia() {
+  const status = document.getElementById('ai-edit-own-status');
+  status.textContent = 'Removing…';
+  try {
+    // Clear every field that could hold this section's image/video, regardless
+    // of which variant is active (background_image vs image_url).
+    await aiEditPostApply({ patch: { background_image: '', image_url: '', video_url: '' } });
+    const fileInput = document.getElementById('ai-edit-file');
+    if (fileInput) fileInput.value = '';
+    const urlInput = document.getElementById('ai-edit-url');
+    if (urlInput) urlInput.value = '';
+    status.textContent = '✓ Removed.';
   } catch (error) {
     status.textContent = '⚠️ ' + error.message;
   }
