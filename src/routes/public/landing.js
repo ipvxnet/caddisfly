@@ -453,11 +453,16 @@ export async function handleLanding(ctx) {
             const data = await response.json();
 
             if (data.success) {
-              // Show success message
+              // Show success message. The gated (template) flow returns no
+              // previewUrl yet — the user must confirm their email first. Only
+              // the legacy synchronous flow returns a ready previewUrl.
               successMessage.classList.add('show');
-              document.getElementById('success-text').innerHTML =
-                data.message + '<br><br>' +
-                '<a href="' + data.previewUrl + '" target="_blank">View your preview now →</a>';
+              var successHtml = data.message;
+              if (data.previewUrl) {
+                successHtml += '<br><br>' +
+                  '<a href="' + data.previewUrl + '" target="_blank">View your preview now →</a>';
+              }
+              document.getElementById('success-text').innerHTML = successHtml;
 
               // Reset form
               form.reset();

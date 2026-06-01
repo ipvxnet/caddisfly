@@ -41,6 +41,87 @@ export async function sendPreviewEmail(env, customerEmail, previewId, previewUrl
 }
 
 /**
+ * Sends an email-verification link to the customer.
+ *
+ * Verifying the email is the gate for paid Google Places enrichment, so this
+ * link must reach a real human before any paid work runs. Until the SEND_EMAIL
+ * binding is wired (see wrangler.toml), this logs the verify link to the console
+ * so the flow is testable end-to-end. It always reports success in stub mode so
+ * the create request can complete and the user/tester can use the logged link.
+ *
+ * @param {Object} env - Environment bindings
+ * @param {string} customerEmail - Recipient email address
+ * @param {string} token - Single-use verification token
+ * @param {string} verifyUrl - Full verification URL (e.g. https://host/verify/<token>)
+ * @returns {Promise<boolean>} True if sent (or stubbed), false on real send failure
+ */
+export async function sendVerificationEmail(env, customerEmail, token, verifyUrl) {
+  // Stub mode: no email transport configured yet. Log the link so verification
+  // can still be completed manually during development.
+  if (!env.SEND_EMAIL) {
+    console.warn(
+      `[email stub] No SEND_EMAIL binding. Verification link for ${customerEmail}: ${verifyUrl}`
+    );
+    return true;
+  }
+
+  try {
+    const emailFrom = env.EMAIL_FROM || 'noreply@caddisfly.ai';
+
+    const message = {
+      from: emailFrom,
+      to: customerEmail,
+      subject: 'Confirm your email to build your free website preview',
+      html: buildVerificationEmailHtml(verifyUrl, customerEmail),
+    };
+
+    await env.SEND_EMAIL.send(message);
+    console.log(`Verification email sent to ${customerEmail}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+    return false;
+  }
+}
+
+/**
+ * Builds the HTML body for the verification email.
+ * @param {string} verifyUrl - Full verification URL
+ * @param {string} customerEmail - Recipient email (for display)
+ * @returns {string} HTML string
+ */
+function buildVerificationEmailHtml(verifyUrl, customerEmail) {
+  return `
+    <html>
+      <body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f5f6fa; padding: 32px;">
+        <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px;">
+          <h1 style="font-size: 22px; margin: 0 0 12px;">One quick step</h1>
+          <p style="color: #444; line-height: 1.6;">
+            Confirm <strong>${customerEmail}</strong> to start building your free website preview.
+            We'll pull public details about your business and generate a fresh site for you.
+          </p>
+          <p style="margin: 28px 0;">
+            <a href="${verifyUrl}"
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+                      text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;
+                      display: inline-block;">
+              Confirm &amp; build my preview
+            </a>
+          </p>
+          <p style="color: #888; font-size: 13px; line-height: 1.6;">
+            If the button doesn't work, paste this link into your browser:<br>
+            <a href="${verifyUrl}" style="color: #667eea;">${verifyUrl}</a>
+          </p>
+          <p style="color: #aaa; font-size: 12px; margin-top: 24px;">
+            Didn't request this? You can safely ignore this email.
+          </p>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
  * Sends error notification email (for internal use)
  * @param {Object} env - Environment bindings
  * @param {string} subject - Email subject

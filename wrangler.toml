@@ -86,5 +86,7 @@ binding = "BROWSER"
 # Secrets (set via CLI):
 # Preview: npx wrangler secret put GOOGLE_CLIENT_ID --env preview
 # Preview: npx wrangler secret put GOOGLE_CLIENT_SECRET --env preview
+# Preview: npx wrangler secret put GOOGLE_PLACES_API_KEY --env preview
 # Production: npx wrangler secret put GOOGLE_CLIENT_ID --env production
 # Production: npx wrangler secret put GOOGLE_CLIENT_SECRET --env production
+# Production: npx wrangler secret put GOOGLE_PLACES_API_KEY --env production

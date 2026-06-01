@@ -4,8 +4,10 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { isValidEmail, sanitizeEmail, sendPreviewEmail } from '../../../utils/email.js';
+import { isValidEmail, sanitizeEmail, sendPreviewEmail, sendVerificationEmail } from '../../../utils/email.js';
 import { isValidUrl, scrapeWebsite } from '../../../utils/scraper.js';
+import { generateToken } from '../../../utils/crypto.js';
+import { extractScrapeSignal } from '../../../utils/company-profile.js';
 import { scrapeWithBrowser, shouldUseBrowser, isContentThin, getContentWordCount } from '../../../utils/browser-scraper.js';
 import { refactorHtml } from '../../../utils/ai-refactor.js';
 import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
@@ -68,7 +70,15 @@ export async function handlePreviewCreate(ctx) {
     projectId = project.id;
     console.log(`Created project ${projectId} with preview_id ${previewId}`);
 
-    // Step 2: Scrape website
+    // Template-based generation is GATED behind email verification: the paid
+    // Google Places enrichment only runs after the user clicks the verify link.
+    // We do a cheap best-effort static fetch here only to get a business-name
+    // hint for a better Places query — no browser rendering, no paid calls.
+    if (useTemplates) {
+      return await handleVerificationRequest(env, project, normalizedWebsite, sanitizedEmail, request);
+    }
+
+    // Step 2: Scrape website (legacy CSS-only path — unchanged)
     let scrapedPages;
     let usedBrowser = false;
 
@@ -127,12 +137,6 @@ export async function handlePreviewCreate(ctx) {
     if (scrapedPages.length === 0) {
       await updateProject(env.DB, projectId, { status: 'failed' });
       throw new Error('No pages could be scraped');
-    }
-
-    // Check if user wants template-based generation
-    if (useTemplates) {
-      console.log('Using template-based generation');
-      return await handleTemplateBasedGeneration(env, project, scrapedPages, request);
     }
 
     // Step 3: Process each page (refactor + upload to R2) - CSS-only mode
@@ -334,6 +338,64 @@ function normalizeWebsiteUrl(url) {
 function getBaseUrl(request) {
   const url = new URL(request.url);
   return `${url.protocol}//${url.host}`;
+}
+
+/**
+ * Gated template flow: best-effort static scrape for a name hint, store a
+ * single-use verification token, send the verification email, and stop.
+ * The paid Google Places enrichment + generation run later in GET /verify/:token.
+ * @param {object} env - Environment bindings
+ * @param {object} project - Created project row
+ * @param {string} website - Normalized website URL
+ * @param {string} email - Sanitized customer email
+ * @param {Request} request - HTTP request (for base URL)
+ * @returns {Response} HTTP response
+ */
+async function handleVerificationRequest(env, project, website, email, request) {
+  // Cheap, best-effort static fetch — bot protection may block it; that's fine.
+  let scrapeSignal = null;
+  try {
+    const pages = await scrapeWebsite(website, 1);
+    if (pages.length > 0) {
+      scrapeSignal = extractScrapeSignal(pages[0].html, pages[0].url);
+      console.log(`Captured scrape signal for ${website}: name hint "${scrapeSignal.siteName || scrapeSignal.title || ''}"`);
+    }
+  } catch (error) {
+    console.log(`Pre-verification scrape failed (continuing without signal): ${error.message}`);
+  }
+
+  // Single-use token; store interim scrape signal for use at verify time.
+  const token = generateToken(32);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+
+  await updateProject(env.DB, project.id, {
+    status: 'awaiting_verification',
+    use_templates: 1,
+    template_generation_status: 'awaiting_verification',
+    enrichment_status: 'pending',
+    verification_token: token,
+    verification_sent_at: nowSeconds,
+    company_profile_json: JSON.stringify({ scrapeSignal }),
+  });
+
+  const baseUrl = getBaseUrl(request);
+  const verifyUrl = `${baseUrl}/verify/${token}`;
+
+  // Stub email: logs the link when SEND_EMAIL is not configured.
+  await sendVerificationEmail(env, email, token, verifyUrl);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      previewId: project.preview_id,
+      status: 'awaiting_verification',
+      message: 'Almost there! Check your email and click the link to build your preview.',
+    }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
 }
 
 /**

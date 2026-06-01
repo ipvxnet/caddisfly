@@ -9,21 +9,25 @@ export const RATE_LIMITS = {
     projects_per_day: 2,
     requests_per_hour: 10,
     ai_generations_per_day: 5,
+    enrichments_per_day: 2,
   },
   starter: {
     projects_per_day: 10,
     requests_per_hour: 50,
     ai_generations_per_day: 25,
+    enrichments_per_day: 10,
   },
   pro: {
     projects_per_day: 50,
     requests_per_hour: 200,
     ai_generations_per_day: 100,
+    enrichments_per_day: 50,
   },
   agency: {
     projects_per_day: 200,
     requests_per_hour: 500,
     ai_generations_per_day: 500,
+    enrichments_per_day: 200,
   },
 };
 
@@ -151,6 +155,54 @@ export async function checkAIGenerationLimit(db, email, tier = 'free_trial') {
 }
 
 /**
+ * Check if user can run a paid Google Places enrichment today.
+ * Primary cost control for the gated refactoring flow. Counts enrichments
+ * already attempted today (verified projects whose enrichment ran), keyed on
+ * the refactoring `projects` table by email.
+ * @param {object} db - D1 database
+ * @param {string} email - User email
+ * @param {string} tier - Pricing tier
+ * @returns {object} { allowed, count, remaining, limit, resetAt, tier }
+ */
+export async function checkEnrichmentLimit(db, email, tier = 'free_trial') {
+  const limits = RATE_LIMITS[tier];
+  if (!limits) {
+    throw new Error(`Invalid tier: ${tier}`);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const startOfDay = Math.floor(now / 86400) * 86400;
+  const resetAt = startOfDay + 86400;
+
+  // Count paid enrichment attempts today: verified projects where enrichment
+  // has progressed past 'pending' (running/complete/no_match/failed).
+  const result = await db
+    .prepare(
+      `SELECT COUNT(*) as count
+       FROM projects
+       WHERE customer_email = ?
+       AND verified_at >= ?
+       AND enrichment_status IS NOT NULL
+       AND enrichment_status != 'pending'`
+    )
+    .bind(email, startOfDay)
+    .first();
+
+  const count = result?.count || 0;
+  const remaining = Math.max(0, limits.enrichments_per_day - count);
+  const allowed = count < limits.enrichments_per_day;
+
+  return {
+    allowed,
+    count,
+    remaining,
+    limit: limits.enrichments_per_day,
+    resetAt,
+    tier,
+  };
+}
+
+/**
  * Get user's pricing tier from project or email
  * @param {object} db - D1 database
  * @param {string} email - User email
@@ -186,6 +238,7 @@ export function formatRateLimitError(limitInfo, limitType = 'requests') {
     projects: `Daily project limit reached (${limitInfo.limit} projects per day on ${limitInfo.tier} tier). Resets at ${resetTime}.`,
     requests: `Hourly request limit reached (${limitInfo.limit} requests per hour on ${limitInfo.tier} tier). Try again in a few minutes.`,
     generations: `Daily AI generation limit reached (${limitInfo.limit} generations per day on ${limitInfo.tier} tier). Resets at ${resetTime}.`,
+    enrichments: `Daily limit reached (${limitInfo.limit} site builds per day on ${limitInfo.tier} tier). Resets at ${resetTime}.`,
   };
 
   return {

@@ -70,6 +70,23 @@ export async function getProjectByPreviewId(db, previewId) {
 }
 
 /**
+ * Get project by single-use email verification token
+ * @param {object} db - D1 database instance
+ * @param {string} token - Verification token
+ * @returns {object|null} Project object or null
+ */
+export async function getProjectByVerificationToken(db, token) {
+  if (!token) return null;
+
+  const project = await db
+    .prepare('SELECT * FROM projects WHERE verification_token = ?')
+    .bind(token)
+    .first();
+
+  return project;
+}
+
+/**
  * Update project status
  * @param {object} db - D1 database instance
  * @param {number} projectId - Project ID
@@ -101,7 +118,10 @@ export async function updateProject(db, projectId, updates) {
   const allowedFields = [
     'status', 'pricing_tier', 'portfolio_included', 'dns_zone_id',
     'dns_status', 'github_repo_url', 'github_username', 'purchased_at', 'activated_at',
-    'use_templates', 'template_generation_status', 'config_id'
+    'use_templates', 'template_generation_status', 'config_id',
+    // Email verification + Google Places enrichment (migration 006)
+    'email_verified', 'verification_token', 'verification_sent_at', 'verified_at',
+    'enrichment_status', 'place_id', 'company_profile_json'
   ];
 
   const fields = [];
