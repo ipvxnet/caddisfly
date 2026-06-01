@@ -2,6 +2,22 @@
 // Assembles complete HTML pages from sections
 
 import { renderSection } from '../templates/ai-builder/registry.js';
+import { getTheme, darkModeCss } from './site-themes.js';
+
+// Google Fonts that ship a single (400) weight only — requesting extra weights in
+// the css2 URL returns HTTP 400 and breaks the whole stylesheet, so omit the axis.
+const SINGLE_WEIGHT_FONTS = new Set(['Instrument Serif']);
+
+/**
+ * Build one css2 `family=` token for a font, picking a safe weight axis.
+ * @param {string} name - Font family
+ * @param {string} weights - Weight axis (e.g. '400;600;700') for multi-weight fonts
+ * @returns {string}
+ */
+function fontFamilyParam(name, weights) {
+  const family = encodeURIComponent(name);
+  return SINGLE_WEIGHT_FONTS.has(name) ? `family=${family}` : `family=${family}:wght@${weights}`;
+}
 
 /**
  * Assemble a complete HTML page from sections
@@ -44,6 +60,13 @@ export function assemblePage(sections, config, project) {
 export function buildHTMLDocument({ title, body, config }) {
   const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter' } = config;
 
+  // Dark themes carry surface tokens; inject a global override layer when active.
+  const theme = getTheme(config.style_theme);
+  const isDark = theme && theme.mode === 'dark';
+  const darkLayer = isDark ? darkModeCss(theme) : '';
+
+  const fontsHref = `https://fonts.googleapis.com/css2?${fontFamilyParam(font_heading, '400;600;700')}&${fontFamilyParam(font_body, '400;500;600')}&display=swap`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,7 +79,7 @@ export function buildHTMLDocument({ title, body, config }) {
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(font_heading)}:wght@400;600;700&family=${encodeURIComponent(font_body)}:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="${fontsHref}" rel="stylesheet">
 
   <style>
     /* Global Reset & Base Styles */
@@ -113,6 +136,9 @@ export function buildHTMLDocument({ title, body, config }) {
     body {
       animation: fadeIn 0.5s ease-in;
     }
+
+    /* Dark theme override layer (only present for dark themes) */
+    ${darkLayer}
   </style>
 </head>
 <body>

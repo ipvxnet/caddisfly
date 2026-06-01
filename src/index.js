@@ -35,6 +35,7 @@ import { handleSectionsReorder } from './routes/api/ai-builder/sections-reorder.
 import { handleGetSectionEditor } from './routes/api/ai-builder/section-editor.js';
 import { handleUpdateColors } from './routes/api/ai-builder/config-colors.js';
 import { handleApplyTemplate } from './routes/api/ai-builder/apply-template.js';
+import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
 
 // Initialize router
@@ -69,6 +70,7 @@ router.get('/api/ai-builder/:project_id/sections/:section_id/editor', handleGetS
 router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate);
 router.put('/api/ai-builder/:project_id/sections/reorder', handleSectionsReorder);
 router.put('/api/ai-builder/:project_id/config/colors', handleUpdateColors);
+router.put('/api/ai-builder/:project_id/config/fonts', handleUpdateFonts);
 router.post('/api/ai-builder/:project_id/template', handleApplyTemplate);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
 

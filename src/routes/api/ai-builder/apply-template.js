@@ -68,13 +68,19 @@ export async function handleApplyTemplate(ctx) {
       updated++;
     }
 
-    // Fonts + remember the choice; colors are deliberately untouched.
+    // Fonts + remember the choice. Light themes preserve existing colors; themes
+    // that carry their own palette (e.g. dark themes) set primary/secondary too.
     if (config) {
-      await updateWebsiteConfigById(env.DB, config.id, {
+      const configUpdate = {
         font_heading: theme.fonts.heading,
         font_body: theme.fonts.body,
         style_theme: theme.key,
-      });
+      };
+      if (theme.colors) {
+        configUpdate.primary_color = theme.colors.primary;
+        configUpdate.secondary_color = theme.colors.secondary;
+      }
+      await updateWebsiteConfigById(env.DB, config.id, configUpdate);
     }
 
     return json({ success: true, theme: theme.key, sections_updated: updated });

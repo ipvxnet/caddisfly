@@ -7,6 +7,7 @@ import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } fro
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generateColorPicker } from '../../components/color-picker.js';
 import { generateTemplatePicker } from '../../components/template-picker.js';
+import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 
 /**
@@ -290,6 +291,8 @@ export async function handleAIBuilderCustomize(ctx) {
         ${generateTemplatePicker(config.style_theme)}
 
         ${generateColorPicker(config, project.project_id)}
+
+        ${generateFontPicker(config, project.project_id)}
 
         <h2 style="margin-bottom: 0.5rem;">Sections</h2>
         <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1.5rem;">

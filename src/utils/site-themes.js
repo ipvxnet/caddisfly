@@ -74,6 +74,43 @@ export const SITE_THEMES = [
     },
     fonts: { heading: 'Merriweather', body: 'Source Sans Pro' },
   },
+  // Dark themes carry their own palette (colors) + surface tokens + mode:'dark'.
+  // Applying one overrides colors (unlike the light themes above, which preserve
+  // them); the assembler injects darkModeCss() when the active style_theme is dark.
+  {
+    key: 'midnight',
+    label: 'Midnight',
+    description: 'Sleek near-black surfaces with an electric-blue accent.',
+    mode: 'dark',
+    accent: 'linear-gradient(135deg, #0d0d0f 0%, #3b82f6 100%)',
+    variants: {
+      hero: 'split',
+      about: 'text-image',
+      services: 'cards',
+      testimonials: 'quotes',
+      gallery: 'masonry',
+    },
+    fonts: { heading: 'Space Grotesk', body: 'Inter' },
+    colors: { primary: '#3b82f6', secondary: '#60a5fa' },
+    surface: { bg: '#0d0d0f', card: '#18181b', text: '#f4f4f5', muted: '#a1a1aa', border: '#27272a' },
+  },
+  {
+    key: 'goldcard',
+    label: 'Gold Card',
+    description: 'Black and champagne gold — luxe, official, high-contrast serif.',
+    mode: 'dark',
+    accent: 'linear-gradient(135deg, #000000 0%, #f0c94f 100%)',
+    variants: {
+      hero: 'fullscreen',
+      about: 'text-image',
+      services: 'cards',
+      testimonials: 'quotes',
+      gallery: 'carousel',
+    },
+    fonts: { heading: 'Instrument Serif', body: 'Instrument Sans' },
+    colors: { primary: '#f0c94f', secondary: '#cfae44' },
+    surface: { bg: '#000000', card: '#15130d', text: '#f5ecd6', muted: '#b8a98a', border: '#3a3320' },
+  },
 ];
 
 /**
@@ -91,4 +128,51 @@ export function getTheme(key) {
  */
 export function listThemes() {
   return SITE_THEMES;
+}
+
+// Section wrappers that hardcode a light background — flipped to surface.bg.
+// Config-gradient/image sections (.hero-centered/.hero-fullscreen/.cta-banner/
+// .stats-numbers) are intentionally NOT listed so they keep the theme palette.
+const DARK_SURFACE_SECTIONS = [
+  '.hero-minimal', '.hero-split', '.hero-split-content',
+  '.about-section', '.about-team', '.about-timeline',
+  '.services-cards', '.services-section', '.features-grid',
+  '.testimonials-section', '.testimonials-quotes',
+  '.gallery-section', '.gallery-carousel',
+  '.contact-section', '.pricing-tables',
+];
+
+// Inner card/well surfaces (light) — flipped to the slightly lighter surface.card.
+const DARK_CARD_SURFACES = [
+  '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
+  '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
+  '.team-card', '.feature-item',
+];
+
+/**
+ * Build the global dark-mode CSS override layer for a dark theme.
+ *
+ * Section templates set their backgrounds via class selectors in <style> blocks
+ * that appear later in the document, so these overrides use !important to win.
+ * Heading colors go to surface.text, body text to surface.muted; config-gradient
+ * sections (heroes/CTA/stats) are left alone so they render the theme palette.
+ * @param {object} theme - A theme with a `surface` object
+ * @returns {string} CSS (no <style> wrapper)
+ */
+export function darkModeCss(theme) {
+  const s = theme && theme.surface;
+  if (!s) return '';
+  return `
+    body { background: ${s.bg} !important; color: ${s.text} !important; }
+    ${DARK_SURFACE_SECTIONS.join(', ')} { background: ${s.bg} !important; }
+    ${DARK_CARD_SURFACES.join(', ')} { background: ${s.card} !important; border-color: ${s.border} !important; }
+    section h1, section h2, section h3, section h4, section h5, section h6 { color: ${s.text} !important; }
+    section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p { color: ${s.muted} !important; }
+    .contact-form input, .contact-form textarea, .contact-form select {
+      background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important;
+    }
+    .contact-form input::placeholder, .contact-form textarea::placeholder { color: ${s.muted} !important; }
+    /* Caddisfly branding strip */
+    body > div[style*="#f7fafc"] { background: ${s.bg} !important; color: ${s.muted} !important; }
+  `;
 }
