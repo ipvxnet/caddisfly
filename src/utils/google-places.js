@@ -53,6 +53,10 @@ export async function findPlace(env, query) {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
       'X-Goog-FieldMask': SEARCH_FIELD_MASK,
+      // The API key may be referrer-restricted ("Website" application
+      // restriction). Server-side fetch sends no Referer by default, so set one
+      // that matches the allowed pattern (our app origin).
+      Referer: refererFor(env),
     },
     body: JSON.stringify({ textQuery: query.trim(), maxResultCount: 1 }),
   });
@@ -84,6 +88,7 @@ export async function getPlaceDetails(env, placeId) {
     headers: {
       'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
       'X-Goog-FieldMask': DETAILS_FIELD_MASK,
+      Referer: refererFor(env),
     },
   });
 
@@ -158,6 +163,19 @@ function normalizeDetails(d, placeId) {
     rating_count: d.userRatingCount || 0,
     reviews,
   };
+}
+
+/**
+ * Build a Referer value that matches the API key's allowed HTTP-referrer
+ * patterns. Uses the app origin (APP_URL); falls back to the preview origin.
+ * Note: for an apex prod domain (caddisfly.ai), a `*.caddisfly.ai/*` referrer
+ * pattern won't match — use www.caddisfly.ai or add `caddisfly.ai/*` in GCP.
+ * @param {object} env
+ * @returns {string}
+ */
+function refererFor(env) {
+  const base = (env && env.APP_URL) || 'https://caddisfly-preview.fabianodevtools.workers.dev';
+  return base.endsWith('/') ? base : base + '/';
 }
 
 /**
