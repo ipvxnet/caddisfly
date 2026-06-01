@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Asian Wok</title>
+  <meta name="description" content="Asian Wok - Built with Caddisfly">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair%20Display:wght@400;600;700&family=Lato:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Global Reset & Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #2d3748;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Playfair Display', sans-serif;
+      line-height: 1.2;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* CSS Variables */
+    :root {
+      --primary-color: #c0392b;
+      --primary-color-rgb: 192, 57, 43;
+    }
+
+    /* Smooth scroll offset for anchor links */
+    section {
+      scroll-margin-top: 20px;
+    }
+
+    /* Loading animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    body {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    /* Dark theme override layer (only present for dark themes) */
+    
+  </style>
+</head>
+<body>
+<div id="ai-sec-275" style="scroll-margin-top: 70px;"><header class="site-nav">
+  <div class="site-nav-inner">
+    <a class="nav-brand" href="/site/e7ccbeb2-1c10-45cb-996e-758d5f938271/home"><span class="nav-brand-name nav-brand-wordmark">Asian Wok</span></a>
+    <nav class="nav-actions">
+      <a class="nav-link" href="/site/e7ccbeb2-1c10-45cb-996e-758d5f938271/home">Home</a>
+      <a class="nav-link nav-link-active" aria-current="page" href="/site/e7ccbeb2-1c10-45cb-996e-758d5f938271/about">About</a>
+      <a class="nav-link" href="/site/e7ccbeb2-1c10-45cb-996e-758d5f938271/services">Services</a>
+      <a class="nav-link" href="/site/e7ccbeb2-1c10-45cb-996e-758d5f938271/gallery">Gallery</a>
+      <a class="nav-link" href="/site/e7ccbeb2-1c10-45cb-996e-758d5f938271/contact">Contact</a>
+      <a class="nav-phone" href="tel:+17024328886">+1 702-432-8886</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+}
+.site-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+.nav-logo {
+  height: 40px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+.nav-brand-name {
+  font-family: 'Playfair Display', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #1a202c;
+}
+.nav-brand-wordmark {
+  font-size: 1.4rem;
+  color: #c0392b;
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.nav-phone {
+  color: #2d3748;
+  text-decoration: none;
+  font-weight: 600;
+}
+.nav-phone:hover { color: #c0392b; }
+.nav-cta {
+  background: #c0392b;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.nav-cta:hover { opacity: 0.92; }
+.nav-link {
+  color: #2d3748;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+}
+.nav-link:hover { color: #c0392b; }
+.nav-link-active {
+  color: #c0392b;
+  border-bottom-color: #c0392b;
+}
+
+@media (max-width: 600px) {
+  .site-nav-inner { padding: 0.6rem 1rem; flex-wrap: wrap; }
+  .nav-phone { display: none; }
+  .nav-logo { height: 32px; }
+  .nav-actions { gap: 0.85rem; flex-wrap: wrap; }
+}
+</style></div>
+
+<div id="ai-sec-277" style="scroll-margin-top: 70px;"><section id="about" class="about-section">
+  <div class="about-container">
+    <div class="about-image">
+      <img src="/preview-asset/e7ccbeb2-1c10-45cb-996e-758d5f938271/1.jpg" alt="Experience Authentic Chinese Cuisine" />
+    </div>
+    <div class="about-content">
+      <h2 class="about-heading">Experience Authentic Chinese Cuisine</h2>
+      <h3 class="about-subheading">Delicious dishes made with love, served with a smile</h3>
+      <p class="about-story">At Asian Wok, we're passionate about serving the best Chinese food in town. Our chefs carefully prepare each dish to bring you an authentic taste of China. From appetizers to entrees, every bite is a delight.</p>
+      <div class="about-values">
+        <div class="value-item"><span class="value-check">✓</span>Quality</div><div class="value-item"><span class="value-check">✓</span>Freshness</div><div class="value-item"><span class="value-check">✓</span>Hospitality</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.about-section {
+  padding: 5rem 2rem;
+  background: white;
+}
+
+.about-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.about-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.about-heading {
+  font-family: Playfair Display, sans-serif;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 0.5rem;
+}
+
+.about-subheading {
+  font-size: 1.25rem;
+  color: #c0392b;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.about-story {
+  font-size: 1.125rem;
+  color: #4a5568;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+.about-values {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.value-item {
+  display: flex;
+  align-items: center;
+  font-size: 1.125rem;
+  color: #2d3748;
+}
+
+.value-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #c0392b;
+  color: white;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+@media (max-width: 968px) {
+  .about-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .about-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+</style></div>
+
+<div id="ai-sec-280" style="scroll-margin-top: 70px;"><section id="testimonials" class="testimonials-section">
+  <div class="testimonials-container">
+    <div class="testimonials-header">
+      <h2 class="testimonials-heading">What Our Customers Say</h2>
+      <p class="testimonials-subheading">Testimonials</p>
+    </div>
+    <div class="testimonials-grid">
+      
+        <div class="testimonial-card">
+          <div class="testimonial-rating">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Went to this establishment on Christmas Eve, 2025. I walked in with my boyfriend and grabbed a menu at the counter to order for us and our relatives back home. A young man came up greeting us and asked if our order would be dine in or take out, we replied take out then he informed us it would be 50 minute wait, but we reassured him we didn’t mind waiting. I asked if I could just get a side of green beans or would I have to order it with let’s say beef and green beans like on their menu. He went back to the kitchen to speak with his mother and came back saying I could for $7.00 but would also have to get like beef as a main dish they would just separate the beef and green beans. To not add any confusion I just ordered a whole dish of beef and green beans, veggie rolls, and my chicken and broccoli with white rice. My boyfriend got orange chicken just like his relatives ordered. After taking our order he repeated it back to us to confirm which I appreciated since it was a big order. The gentleman asked us how we were that night, after replying “good how has your night been?” He replied back “good”. The young man was very kind and fast paced so we tipped in the tipping jar near the register. My boyfriend and I went to go sit down as we waited for the order to be done, we really did not wait long at all I’d say it felt like less than 20 minutes. The kind boy came up to us and brought us our order with a smile and we thought that was so kind of him. Thanked him and told him to thank his mother and family working in the back for everything. I highly recommend this business. The food was delicious as well. My boyfriend and his family loved how spicy the orange chicken was and the veggie rolls tasted freshly made and still days later the food tastes fresh as the day we got it."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">V</div>
+            <div class="author-info">
+              <div class="author-name">Victoria Rudinski</div>
+              <div class="author-role">5★ Google review</div>
+            </div>
+          </div>
+        </div>
+      
+        <div class="testimonial-card">
+          <div class="testimonial-rating">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"While at work, I was looking for some asian food besides Panda and found this to be closest to my location. Decided to order chicken pad thai and Jasmine Tea drink(per recommendation of the young cashier). The food i ordered was priced ok - $12.75, including tax. The food was good, and the portion was plenty. I could not finish it. Would love to try other food on their menu, but too bad this location is on the opposite end of town. The likelihood I will be back is slim."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">E</div>
+            <div class="author-info">
+              <div class="author-name">Exploring with Braddock</div>
+              <div class="author-role">5★ Google review</div>
+            </div>
+          </div>
+        </div>
+      
+        <div class="testimonial-card">
+          <div class="testimonial-rating">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"The food is great! Service outstanding.
+Packed well and large portions to go.
+Fair prices, clean facility, nice family running it.
+A real gem in this neighborhood.
+I came here last night to feed a bunch of family and returned next afternoon to take a large order back home to Kingman Arizona with me.
+The dinning room though mid day is way to warm to sit and relax.. please turn the AC on or down some.
+Best sweet n sour chicken in town. Good batter, quality chicken, fried perfect and their sauce is sweet but not over sweet.
+Everything was good!"</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">J</div>
+            <div class="author-info">
+              <div class="author-name">Joshua Potter</div>
+              <div class="author-role">5★ Google review</div>
+            </div>
+          </div>
+        </div>
+      
+        <div class="testimonial-card">
+          <div class="testimonial-rating">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"First time here. This restaurant is visually appealing and smells wonderful when you walk in. The pu pu platter was a real treat! The egg foo young was so light and in a crispy batter that was delicious!  The fried rice had big chunks of meats in it and everything was cooked to perfection.  We ate way more than we should've, but it was hard to stop when everything was so good. We'll be back again and again."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">J</div>
+            <div class="author-info">
+              <div class="author-name">Josanna Espejo</div>
+              <div class="author-role">5★ Google review</div>
+            </div>
+          </div>
+        </div>
+      
+        <div class="testimonial-card">
+          <div class="testimonial-rating">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Food is excellent. However, I placed an order online for several items,  including 3 vegetable egg rolls. We were having guests and had been praising the egg rolls. When we picked up our order, there were no egg rolls. We got spring rolls. They were very good, but not what we ordered.  Was there a reason?"</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">C</div>
+            <div class="author-info">
+              <div class="author-name">Carolyn Allen</div>
+              <div class="author-role">4★ Google review</div>
+            </div>
+          </div>
+        </div>
+      
+    </div>
+  </div>
+</section>
+
+<style>
+.testimonials-section {
+  padding: 5rem 2rem;
+  background: white;
+}
+
+.testimonials-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testimonials-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.testimonials-heading {
+  font-family: Playfair Display, sans-serif;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 1rem;
+}
+
+.testimonials-subheading {
+  font-size: 1.25rem;
+  color: #4a5568;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.testimonial-card {
+  background: #f7fafc;
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 4px solid #c0392b;
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.testimonial-rating {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.testimonial-text {
+  font-size: 1.125rem;
+  color: #2d3748;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.author-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #c0392b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #1a202c;
+  font-size: 1rem;
+}
+
+.author-role {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+@media (max-width: 768px) {
+  .testimonials-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .testimonials-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .testimonials-grid {
+    gap: 1.5rem;
+  }
+}
+</style></div>
+
+<div id="ai-sec-282" style="scroll-margin-top: 70px;"><footer class="footer-section">
+  <div class="footer-container">
+    <div class="footer-brand">
+      <h3 class="footer-brand-name">Asian Wok</h3>
+      <p class="footer-tagline">Authentic Chinese Cuisine, Every Time</p>
+    </div>
+    <div class="footer-links">
+      <h4 class="footer-links-heading">Quick Links</h4>
+      <ul class="footer-links-list">
+        <li><a href="#about">About</a></li><li><a href="#services">Services</a></li><li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-social">
+      <h4 class="footer-social-heading">Follow Us</h4>
+      <div class="footer-social-icons">
+        
+          <a href="#" class="social-icon" aria-label="facebook">
+            F
+          </a>
+        
+          <a href="#" class="social-icon" aria-label="instagram">
+            I
+          </a>
+        
+          <a href="#" class="social-icon" aria-label="twitter">
+            T
+          </a>
+        
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copyright">Asian Wok. All rights reserved.</p>
+  </div>
+</footer>
+
+<style>
+.footer-section {
+  background: #1a202c;
+  color: white;
+  padding: 3rem 2rem 2rem;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.footer-brand-name {
+  font-family: Playfair Display, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #c0392b;
+}
+
+.footer-tagline {
+  color: #a0aec0;
+  font-size: 1rem;
+}
+
+.footer-links-heading,
+.footer-social-heading {
+  font-family: Playfair Display, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.footer-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links-list li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links-list a {
+  color: #a0aec0;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links-list a:hover {
+  color: #c0392b;
+}
+
+.footer-social-icons {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 2rem;
+  text-align: center;
+}
+
+.footer-copyright {
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 968px) {
+  .footer-section {
+    padding: 2.5rem 1.5rem 1.5rem;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+</style></div>
+
+<!-- Caddisfly Branding -->
+<div style="text-align: center; padding: 1rem; background: #f7fafc; font-size: 0.875rem; color: #718096;">
+  Built with <a href="https://caddisfly.ai" target="_blank" style="color: #c0392b; text-decoration: none; font-weight: 600;">Caddisfly</a>
+</div>
+
+<!-- Simple smooth scroll script -->
+<script>
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+</body>
+</html>

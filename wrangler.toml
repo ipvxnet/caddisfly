@@ -3,16 +3,17 @@ main = "src/index.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# D1 Database binding
+# D1 Database binding — default/top-level targets the `caddisfly` worker (== production),
+# so it points at the PRODUCTION database. Preview overrides this in [env.preview] below.
 [[d1_databases]]
 binding = "DB"
-database_name = "caddisfly-db"
-database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
+database_name = "caddisfly-db-prod"
+database_id = "eae91748-f3a9-4f78-9662-067ca2197181"
 
-# R2 Storage binding
+# R2 Storage binding (production)
 [[r2_buckets]]
 binding = "STORAGE"
-bucket_name = "caddisfly-storage"
+bucket_name = "caddisfly-storage-prod"
 
 # Workers AI binding
 [ai]
@@ -74,12 +75,12 @@ vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_RE
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "caddisfly-db"
-database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
+database_name = "caddisfly-db-prod"
+database_id = "eae91748-f3a9-4f78-9662-067ca2197181"
 
 [[env.production.r2_buckets]]
 binding = "STORAGE"
-bucket_name = "caddisfly-storage"
+bucket_name = "caddisfly-storage-prod"
 
 [env.production.ai]
 binding = "AI"
