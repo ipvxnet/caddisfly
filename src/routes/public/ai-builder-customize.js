@@ -547,15 +547,32 @@ export async function handleAIBuilderCustomize(ctx) {
 
     // Highlight the section in the left list and scroll the preview to it.
     function focusSection(sectionId) {
+      // Highlight the clicked item in the left list.
       document.querySelectorAll('.section-item').forEach((el) => {
         el.classList.toggle('active', String(el.dataset.sectionId) === String(sectionId));
       });
+      scrollPreviewToSection(sectionId, 0);
+    }
+
+    // Scroll the preview iframe to a section. Uses the iframe window's own
+    // scrollTo (cross-frame element.scrollIntoView is unreliable), and retries
+    // briefly in case the iframe is still (re)loading.
+    function scrollPreviewToSection(sectionId, attempt) {
       const iframe = document.getElementById('preview-iframe');
       try {
-        const doc = iframe && iframe.contentWindow && iframe.contentWindow.document;
+        const win = iframe && iframe.contentWindow;
+        const doc = win && win.document;
         const target = doc && doc.getElementById('ai-sec-' + sectionId);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (e) { /* cross-origin or not loaded yet — ignore */ }
+        if (target && doc.body) {
+          const offset = win.pageYOffset || doc.documentElement.scrollTop || doc.body.scrollTop || 0;
+          const top = target.getBoundingClientRect().top + offset - 60;
+          win.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+          return;
+        }
+      } catch (e) { /* not ready / cross-origin — fall through to retry */ }
+      if ((attempt || 0) < 12) {
+        setTimeout(() => scrollPreviewToSection(sectionId, (attempt || 0) + 1), 150);
+      }
     }
 
     async function editSection(sectionId) {

@@ -200,10 +200,7 @@ async function aiEditPostApply(payload) {
     // After reload, scroll the preview back to the section we just edited.
     iframe.addEventListener('load', function once() {
       iframe.removeEventListener('load', once);
-      try {
-        const t = iframe.contentWindow.document.getElementById('ai-sec-' + sid);
-        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (e) { /* ignore */ }
+      if (typeof scrollPreviewToSection === 'function') scrollPreviewToSection(sid, 0);
     });
     iframe.contentWindow.location.reload();
   }
