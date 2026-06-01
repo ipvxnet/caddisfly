@@ -325,6 +325,9 @@ export function getContentPrompt(sectionType, context) {
       return generateAboutContent(context);
     case 'services':
       return generateServicesContent(context);
+    case 'features':
+      // Features use the same {title, description, icon} shape as services.
+      return generateServicesContent(context);
     case 'testimonials':
       return generateTestimonialsContent(context);
     case 'contact':

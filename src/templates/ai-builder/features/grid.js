@@ -3,7 +3,10 @@
 
 export function featuresGridTemplate(data, config) {
   const { heading, description, features } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  // Config rows use snake_case; accept camelCase too for safety.
+  const primaryColor = config.primary_color || config.primaryColor || '#667eea';
+  const fontHeading = config.font_heading || config.fontHeading || 'Inter';
+  const fontBody = config.font_body || config.fontBody || 'Inter';
 
   // Default features if not provided
   const featureList = features || [

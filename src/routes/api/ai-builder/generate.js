@@ -5,9 +5,12 @@ import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-project
 import { getAnsweredConversations } from '../../../db/ai-conversations.js';
 import { createSection } from '../../../db/ai-sections.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
-import { buildContext, generateSectionContent, generateColorScheme } from '../../../utils/ai-content-generator.js';
+import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
 import { getFontPairing } from '../../../utils/ai-prompts.js';
 import { checkAIGenerationLimit, getUserTier, formatRateLimitError } from '../../../utils/rate-limiter.js';
+import { inferIndustry, paletteFor, variantFor, imageKeywordsFor } from '../../../utils/industry-style.js';
+import { searchStockPhotos } from '../../../utils/stock-photos.js';
+import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 
 /**
  * Handle preview generation
@@ -86,49 +89,62 @@ export async function handleAIBuilderGenerate(ctx) {
     // Get or create website config
     let config = await getOrCreateWebsiteConfig(env.DB, project.id);
 
-    // Generate color scheme based on style and industry
-    try {
-      const colorScheme = await generateColorScheme(env, context.style, context.industry);
-      if (colorScheme.primary_color && colorScheme.secondary_color) {
-        config = await updateWebsiteConfig(env.DB, project.id, {
-          primary_color: colorScheme.primary_color,
-          secondary_color: colorScheme.secondary_color,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to generate color scheme:', error);
-      // Continue with default colors
-    }
-
-    // Update fonts based on style
+    // Industry-aware styling: pick a palette that fits the business instead of
+    // a generic AI-guessed blue (e.g. a restaurant gets warm, appetizing colors).
+    const industry = inferIndustry(context.industry, context.business_type, context.business_name);
+    const palette = paletteFor(industry);
     const fonts = getFontPairing(context.style);
     config = await updateWebsiteConfig(env.DB, project.id, {
+      primary_color: palette.primary,
+      secondary_color: palette.secondary,
       font_heading: fonts.heading,
       font_body: fonts.body,
       style_theme: context.style,
     });
 
-    // Generate content for each selected section
-    const sectionsToGenerate = context.selected_sections.length > 0 ? context.selected_sections : ['hero', 'about', 'services', 'contact', 'footer'];
+    // Fetch real imagery once for the whole site (graceful [] without a key).
+    const stockPhotos = await searchStockPhotos(
+      env,
+      imageKeywordsFor(industry, context.business_name),
+      8
+    );
+    const pickPhoto = makePhotoPicker(stockPhotos);
+    console.log(`Industry=${industry}, palette=${palette.primary}, stockPhotos=${stockPhotos.length}`);
+
+    // Generate content for each selected section. Fall back to sensible defaults
+    // on failure so a selected section is never silently dropped.
+    const sectionsToGenerate = context.selected_sections.length > 0
+      ? context.selected_sections
+      : ['hero', 'about', 'services', 'gallery', 'testimonials', 'contact', 'footer'];
 
     let sectionOrder = 0;
     const generationResults = [];
 
     for (const sectionType of sectionsToGenerate) {
+      let content;
+      let usedFallback = false;
       try {
-        // Generate content using AI
-        const content = await generateSectionContent(env, sectionType, context);
+        content = await generateSectionContent(env, sectionType, context);
+      } catch (error) {
+        console.error(`AI generation failed for ${sectionType}, using default:`, error.message);
+        content = defaultContent(sectionType, context);
+        usedFallback = true;
+      }
 
-        // Add business name to footer if it's a footer section
-        if (sectionType === 'footer') {
-          content.business_name = context.business_name;
-        }
+      // Footer needs the business name; features reuse the services shape.
+      if (sectionType === 'footer') {
+        content.business_name = content.business_name || context.business_name;
+      }
+      if (sectionType === 'features' && !Array.isArray(content.features)) {
+        content.features = content.services || content.items || [];
+      }
 
-        // Determine template variant based on style
-        const variant = getTemplateVariant(sectionType, context.style);
-        content._variant = variant;
+      // Pick an image-forward variant for the industry, then inject real images.
+      const variant = variantFor(industry, sectionType);
+      attachImages(sectionType, content, pickPhoto);
+      content._variant = variant;
 
-        // Create section in database
+      try {
         await createSection(env.DB, {
           ai_project_id: project.id,
           section_type: sectionType,
@@ -137,18 +153,10 @@ export async function handleAIBuilderGenerate(ctx) {
           content_json: JSON.stringify(content),
           is_visible: 1,
         });
-
-        generationResults.push({
-          section: sectionType,
-          success: true,
-        });
+        generationResults.push({ section: sectionType, success: true, fallback: usedFallback });
       } catch (error) {
-        console.error(`Failed to generate ${sectionType} section:`, error);
-        generationResults.push({
-          section: sectionType,
-          success: false,
-          error: error.message,
-        });
+        console.error(`Failed to save ${sectionType} section:`, error);
+        generationResults.push({ section: sectionType, success: false, error: error.message });
       }
     }
 
@@ -189,42 +197,50 @@ export async function handleAIBuilderGenerate(ctx) {
 }
 
 /**
- * Get template variant based on section type and style
- * @param {string} sectionType - Section type
- * @param {string} style - Visual style
- * @returns {string} Template variant
+ * Sensible default content per section type, used when an AI generation call
+ * fails so a selected section is never silently dropped.
+ * @param {string} sectionType
+ * @param {object} context - Generation context
+ * @returns {object}
  */
-function getTemplateVariant(sectionType, style) {
-  // Map styles to template variants
-  const variantMap = {
-    hero: {
-      modern: 'centered',
-      bold: 'split',
-      classic: 'centered',
-      minimal: 'centered',
-    },
-    about: {
-      default: 'text-image',
-    },
-    services: {
-      default: 'icon-grid',
-    },
-    testimonials: {
-      default: 'cards',
-    },
-    contact: {
-      default: 'form',
-    },
-    gallery: {
-      default: 'masonry',
-    },
-    footer: {
-      default: 'multi-column',
-    },
-  };
+function defaultContent(sectionType, context) {
+  const name = context.business_name || 'Our Business';
+  const type = context.business_type || 'business';
 
-  const sectionVariants = variantMap[sectionType];
-  if (!sectionVariants) return 'default';
-
-  return sectionVariants[style] || sectionVariants.default || 'default';
+  switch (sectionType) {
+    case 'hero':
+      return { heading: `Welcome to ${name}`, subheading: `Your trusted ${type}`, cta_text: 'Get Started', cta_link: '#contact' };
+    case 'about':
+      return { heading: `About ${name}`, subheading: '', story: `${name} is dedicated to serving our community with excellence.`, values: [] };
+    case 'services':
+      return {
+        heading: 'Our Services',
+        subheading: '',
+        services: [
+          { title: 'Quality Service', description: 'Delivered with care and expertise.', icon: '⭐' },
+          { title: 'Trusted Experience', description: 'Reliable results every time.', icon: '✅' },
+          { title: 'Here For You', description: 'Friendly support when you need it.', icon: '🤝' },
+        ],
+      };
+    case 'features':
+      return {
+        heading: 'Why Choose Us',
+        description: '',
+        features: [
+          { icon: '⚡', title: 'Fast', description: 'Quick and efficient service.' },
+          { icon: '🔒', title: 'Trusted', description: 'Dependable every time.' },
+          { icon: '💬', title: 'Friendly', description: 'Great customer care.' },
+        ],
+      };
+    case 'gallery':
+      return { heading: 'Gallery', subheading: '', images: [] };
+    case 'testimonials':
+      return { heading: 'What Our Customers Say', testimonials: [{ quote: 'A wonderful experience!', author: 'Happy Customer', role: '' }] };
+    case 'contact':
+      return { heading: 'Get In Touch', subheading: "We'd love to hear from you", button_text: 'Send Message' };
+    case 'footer':
+      return { company_name: name, business_name: name, description: '', links: [], social_links: [] };
+    default:
+      return { heading: name };
+  }
 }
