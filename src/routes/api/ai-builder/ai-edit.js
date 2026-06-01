@@ -6,7 +6,7 @@ import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
 import { callWorkersAI, extractJSON } from '../../../utils/ai-content-generator.js';
-import { buildEditPrompt, sanitizeProposal, mergePatch } from '../../../utils/ai-edit.js';
+import { buildEditPrompt, sanitizeProposal, mergePatch, ensureItemIcons } from '../../../utils/ai-edit.js';
 import { generateToken } from '../../../utils/crypto.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier, checkAIGenerationLimit, limitsDisabled, formatRateLimitError } from '../../../utils/rate-limiter.js';
@@ -117,7 +117,7 @@ export async function handleAIEditApply(ctx) {
     }
 
     const content = JSON.parse(section.content_json || '{}');
-    const merged = mergePatch(content, patch);
+    const merged = ensureItemIcons(mergePatch(content, patch));
     await updateSectionContent(env.DB, section.id, merged);
 
     // Optional variant switch (e.g. hero → video so an uploaded/linked video renders).

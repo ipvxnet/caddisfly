@@ -191,6 +191,12 @@ export async function handleAIBuilderCustomize(ctx) {
       cursor: grabbing;
     }
 
+    .section-item.active {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    }
+
     .section-item.drag-over {
       border-color: #667eea;
       border-style: dashed;
@@ -520,7 +526,22 @@ export async function handleAIBuilderCustomize(ctx) {
       }
     }
 
+    // Highlight the section in the left list and scroll the preview to it.
+    function focusSection(sectionId) {
+      document.querySelectorAll('.section-item').forEach((el) => {
+        el.classList.toggle('active', String(el.dataset.sectionId) === String(sectionId));
+      });
+      const iframe = document.getElementById('preview-iframe');
+      try {
+        const doc = iframe && iframe.contentWindow && iframe.contentWindow.document;
+        const target = doc && doc.getElementById('ai-sec-' + sectionId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) { /* cross-origin or not loaded yet — ignore */ }
+    }
+
     async function editSection(sectionId) {
+      // Focus/scroll the preview to this section (visible thanks to the left-docked modal).
+      focusSection(sectionId);
       try {
         // Fetch modal HTML from API
         const response = await fetch(\`/api/ai-builder/\${projectId}/sections/\${sectionId}/editor\`);
@@ -673,7 +694,11 @@ export async function handleAIBuilderCustomize(ctx) {
 
     return new Response(html, {
       status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        // Always serve the latest editor UI (no stale browser/edge cache).
+        'Cache-Control': 'no-store, must-revalidate',
+      },
     });
   } catch (error) {
     console.error('Error displaying customize page:', error);

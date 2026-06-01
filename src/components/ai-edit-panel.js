@@ -190,7 +190,18 @@ async function aiEditPostApply(payload) {
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to apply');
   const iframe = document.getElementById('preview-iframe');
-  if (iframe) iframe.contentWindow.location.reload();
+  if (iframe) {
+    const sid = window.currentSectionId;
+    // After reload, scroll the preview back to the section we just edited.
+    iframe.addEventListener('load', function once() {
+      iframe.removeEventListener('load', once);
+      try {
+        const t = iframe.contentWindow.document.getElementById('ai-sec-' + sid);
+        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) { /* ignore */ }
+    });
+    iframe.contentWindow.location.reload();
+  }
   if (typeof showNotification === 'function') showNotification('Section updated!', 'success');
   return data;
 }

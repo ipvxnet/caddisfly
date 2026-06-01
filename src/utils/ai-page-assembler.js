@@ -38,7 +38,13 @@ export function assemblePage(sections, config, project) {
       // Use html_template field if available, otherwise check contentData._variant
       const variant = section.html_template || contentData._variant || 'default';
 
-      return renderSection(section.section_type, contentData, config, variant);
+      const rendered = renderSection(section.section_type, contentData, config, variant);
+      // Wrap in a stable anchor so the customize page can scroll the preview to a
+      // section by its DB id (matches the left-panel section list's data-section-id).
+      const anchorId = section.id != null ? `ai-sec-${section.id}` : '';
+      return anchorId
+        ? `<div id="${anchorId}" style="scroll-margin-top: 70px;">${rendered}</div>`
+        : rendered;
     })
     .join('\n\n');
 

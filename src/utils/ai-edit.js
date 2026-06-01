@@ -41,6 +41,28 @@ const IMAGE_TARGETS = {
 // a hallucinated URL from the text model.
 const IMAGE_URL_FIELDS = ['background_image', 'image_url', 'video_url', 'logo', 'images'];
 
+const DEFAULT_ITEM_ICON = '✓';
+
+/**
+ * Ensure list items (services/features) always have a non-empty icon — the LLM
+ * sometimes omits one, which renders as a blank icon. Mutates + returns obj.
+ * @param {object} obj
+ * @returns {object}
+ */
+export function ensureItemIcons(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  for (const key of ['services', 'features', 'items']) {
+    if (Array.isArray(obj[key])) {
+      obj[key] = obj[key].map((it) =>
+        it && typeof it === 'object' && (!it.icon || !String(it.icon).trim())
+          ? { ...it, icon: DEFAULT_ITEM_ICON }
+          : it
+      );
+    }
+  }
+  return obj;
+}
+
 /**
  * Return the image-target field names allowed for a section type.
  * @param {string} sectionType
@@ -112,6 +134,9 @@ export function sanitizeProposal(raw, sectionType) {
 
   // Images only via actions/uploads — never a model-supplied URL.
   for (const f of IMAGE_URL_FIELDS) delete patch[f];
+
+  // Never let a list item ship without an icon.
+  ensureItemIcons(patch);
 
   const targets = imageTargetsFor(sectionType);
   const actions = Array.isArray(obj.actions)

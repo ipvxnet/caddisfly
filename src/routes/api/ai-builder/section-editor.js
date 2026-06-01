@@ -45,7 +45,10 @@ export async function handleGetSectionEditor(ctx) {
 
     return new Response(html, {
       status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, must-revalidate',
+      },
     });
   } catch (error) {
     console.error('Error generating section editor:', error);

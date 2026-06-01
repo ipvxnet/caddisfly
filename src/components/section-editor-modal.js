@@ -45,10 +45,12 @@ export function generateSectionEditorModal(section, projectId) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  /* Light backdrop + left-docked panel so the preview on the right stays visible
+     and you can watch the edited section while you work. */
+  background: rgba(15, 23, 42, 0.18);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   z-index: 10000;
   animation: fadeIn 0.2s ease-out;
   padding: 1rem;
@@ -58,14 +60,18 @@ export function generateSectionEditorModal(section, projectId) {
 .modal-content {
   background: white;
   border-radius: 12px;
-  max-width: 700px;
+  max-width: 460px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   animation: slideUp 0.3s ease-out;
-  margin: auto;
+  margin: 0;
+}
+
+@media (min-width: 769px) {
+  .modal-content { margin-left: 0.5rem; }
 }
 
 .modal-header {
