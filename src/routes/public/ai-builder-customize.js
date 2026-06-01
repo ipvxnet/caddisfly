@@ -170,7 +170,7 @@ export async function handleAIBuilderCustomize(ctx) {
       border: 2px solid #e2e8f0;
       border-radius: 8px;
       margin-bottom: 1rem;
-      cursor: move;
+      cursor: pointer;
       transition: all 0.2s;
       user-select: none;
     }
@@ -328,6 +328,7 @@ export async function handleAIBuilderCustomize(ctx) {
               class="section-item ${!section.is_visible ? 'section-hidden' : ''}"
               data-section-id="${section.id}"
               draggable="true"
+              onclick="focusSection(${section.id})"
               ondragstart="handleDragStart(event)"
               ondragover="handleDragOver(event)"
               ondragenter="handleDragEnter(event)"
