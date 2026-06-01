@@ -166,10 +166,10 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     .section-item {
-      padding: 1rem;
+      padding: 0.7rem 0.85rem;
       border: 2px solid #e2e8f0;
       border-radius: 8px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.6rem;
       cursor: pointer;
       transition: all 0.2s;
       user-select: none;
@@ -197,21 +197,44 @@ export async function handleAIBuilderCustomize(ctx) {
       box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
     }
 
-    .ai-edit-btn {
-      width: 100%;
+    /* Per-section actions are revealed only for the selected (.active) tile,
+       so the list isn't a wall of repeated buttons. */
+    .section-actions {
+      display: none;
+    }
+
+    .section-item.active .section-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
       margin-top: 0.75rem;
-      padding: 0.6rem;
+    }
+
+    .ai-edit-btn {
+      flex: 0 0 auto;
+      padding: 0.5rem 0.9rem;
       border: none;
       border-radius: 8px;
       background: linear-gradient(135deg, #7c3aed, #6366f1);
       color: white;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       cursor: pointer;
       transition: filter 0.2s;
     }
 
     .ai-edit-btn:hover { filter: brightness(1.08); }
+
+    .section-actions .template-variant-select {
+      flex: 1;
+      min-width: 0;
+      padding: 0.45rem 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: white;
+      cursor: pointer;
+    }
 
     .section-item.drag-over {
       border-color: #667eea;
@@ -318,7 +341,7 @@ export async function handleAIBuilderCustomize(ctx) {
 
         <h2 style="margin-bottom: 0.5rem;">Sections</h2>
         <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1.5rem;">
-          Click <strong>✨ AI Edit</strong> on a section to change it with AI — or drag to reorder.
+          Click a section to select it, then <strong>✨ Edit</strong> — or drag to reorder.
         </p>
         <div id="sections-list">
           ${sections
@@ -338,7 +361,7 @@ export async function handleAIBuilderCustomize(ctx) {
             >
               <div class="section-header">
                 <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-                <span class="section-type" onclick="editSection(${section.id})" style="cursor: pointer;">${section.section_type}</span>
+                <span class="section-type">${section.section_type}</span>
                 <button
                   class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
                   data-section-id="${section.id}"
@@ -349,15 +372,16 @@ export async function handleAIBuilderCustomize(ctx) {
                   ${section.is_visible ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
-              <div style="font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem;">Order: ${section.section_order + 1}</div>
-              <div style="margin-top: 0.5rem;">
-                <label style="font-size: 0.75rem; color: #718096; display: block; margin-bottom: 0.25rem;">Template:</label>
+              <div class="section-actions">
+                <button class="ai-edit-btn" onclick="editSection(${section.id})" title="Edit this section with AI">
+                  ✨ Edit
+                </button>
                 <select
                   class="template-variant-select"
                   data-section-id="${section.id}"
                   onchange="switchTemplate(event)"
                   onclick="event.stopPropagation()"
-                  style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; background: white; cursor: pointer;"
+                  title="Layout / template variant"
                 >
                   ${getAvailableVariants(section.section_type)
                     .map(
@@ -370,9 +394,6 @@ export async function handleAIBuilderCustomize(ctx) {
                     .join('')}
                 </select>
               </div>
-              <button class="ai-edit-btn" onclick="editSection(${section.id})" title="Edit this section with AI">
-                ✨ AI Edit
-              </button>
             </div>
           `
             )
@@ -548,11 +569,33 @@ export async function handleAIBuilderCustomize(ctx) {
 
     // Highlight the section in the left list and scroll the preview to it.
     function focusSection(sectionId) {
-      // Highlight the clicked item in the left list.
+      window.selectedSectionId = sectionId;
+      // Highlight the clicked item in the left list (reveals its actions via CSS).
       document.querySelectorAll('.section-item').forEach((el) => {
         el.classList.toggle('active', String(el.dataset.sectionId) === String(sectionId));
       });
       scrollPreviewToSection(sectionId, 0);
+    }
+
+    // Outline the selected section inside the preview iframe (clearing the prior
+    // one). Same-origin; safe to no-op if the iframe isn't ready.
+    function markPreviewRing(sectionId) {
+      const iframe = document.getElementById('preview-iframe');
+      try {
+        const win = iframe && iframe.contentWindow;
+        const doc = win && win.document;
+        if (!doc) return;
+        if (win.__ringedEl) {
+          win.__ringedEl.style.outline = '';
+          win.__ringedEl.style.outlineOffset = '';
+        }
+        const target = doc.getElementById('ai-sec-' + sectionId);
+        if (target) {
+          target.style.outline = '3px solid #7c3aed';
+          target.style.outlineOffset = '-3px';
+          win.__ringedEl = target;
+        }
+      } catch (e) { /* ignore */ }
     }
 
     // Scroll the preview iframe to a section. Uses the iframe window's own
@@ -568,6 +611,7 @@ export async function handleAIBuilderCustomize(ctx) {
           const offset = win.pageYOffset || doc.documentElement.scrollTop || doc.body.scrollTop || 0;
           const top = target.getBoundingClientRect().top + offset - 60;
           win.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+          markPreviewRing(sectionId);
           return;
         }
       } catch (e) { /* not ready / cross-origin — fall through to retry */ }
@@ -575,6 +619,26 @@ export async function handleAIBuilderCustomize(ctx) {
         setTimeout(() => scrollPreviewToSection(sectionId, (attempt || 0) + 1), 150);
       }
     }
+
+    // On each preview (re)load, re-apply the selection: ring the selected section
+    // (or auto-select the first one on initial load) without forcing a scroll.
+    (function initPreviewSelection() {
+      const iframe = document.getElementById('preview-iframe');
+      if (!iframe) return;
+      const apply = () => {
+        const first = document.querySelector('.section-item');
+        const sel = window.selectedSectionId || (first && first.dataset.sectionId);
+        if (!sel) return;
+        window.selectedSectionId = sel;
+        document.querySelectorAll('.section-item').forEach((el) => {
+          el.classList.toggle('active', String(el.dataset.sectionId) === String(sel));
+        });
+        markPreviewRing(sel);
+      };
+      iframe.addEventListener('load', apply);
+      // Cover the case where the iframe already finished loading.
+      setTimeout(apply, 600);
+    })();
 
     async function editSection(sectionId) {
       // Focus/scroll the preview to this section (visible thanks to the left-docked modal).
