@@ -197,6 +197,22 @@ export async function handleAIBuilderCustomize(ctx) {
       box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
     }
 
+    .ai-edit-btn {
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #7c3aed, #6366f1);
+      color: white;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .ai-edit-btn:hover { filter: brightness(1.08); }
+
     .section-item.drag-over {
       border-color: #667eea;
       border-style: dashed;
@@ -302,7 +318,7 @@ export async function handleAIBuilderCustomize(ctx) {
 
         <h2 style="margin-bottom: 0.5rem;">Sections</h2>
         <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1.5rem;">
-          Click on a section to edit its content
+          Click <strong>✨ AI Edit</strong> on a section to change it with AI — or drag to reorder.
         </p>
         <div id="sections-list">
           ${sections
@@ -353,6 +369,9 @@ export async function handleAIBuilderCustomize(ctx) {
                     .join('')}
                 </select>
               </div>
+              <button class="ai-edit-btn" onclick="editSection(${section.id})" title="Edit this section with AI">
+                ✨ AI Edit
+              </button>
             </div>
           `
             )
@@ -361,7 +380,7 @@ export async function handleAIBuilderCustomize(ctx) {
       </div>
 
       <div class="preview-frame">
-        <iframe src="/ai-preview/${project.project_id}" id="preview-iframe"></iframe>
+        <iframe src="/ai-preview/${project.project_id}?embed=1" id="preview-iframe"></iframe>
       </div>
     </div>
   </div>

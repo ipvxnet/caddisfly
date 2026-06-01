@@ -13,7 +13,7 @@ import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js'
  * @returns {Response} HTTP response
  */
 export async function handleAIPreview(ctx) {
-  const { env, params } = ctx;
+  const { env, params, query } = ctx;
 
   try {
     const { project_id } = params;
@@ -141,8 +141,13 @@ export async function handleAIPreview(ctx) {
       });
     }
 
-    // Generate preview HTML
-    const html = isAIBuilder ? generatePreview(sections, config, project) : assemblePage(sections, config, project);
+    // Generate preview HTML. When embedded in the customize page iframe
+    // (?embed=1), skip the "Preview Mode / Customize" banner so the Customize
+    // link can't be re-triggered nested inside the editor.
+    const embed = query && (query.embed === '1' || query.embed === 'true');
+    const html = (isAIBuilder && !embed)
+      ? generatePreview(sections, config, project)
+      : assemblePage(sections, config, project);
 
     return new Response(html, {
       status: 200,
