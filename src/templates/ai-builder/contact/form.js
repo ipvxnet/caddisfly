@@ -11,8 +11,21 @@ export function contactFormTemplate(data, config) {
     heading = 'Get In Touch',
     subheading = "We'd love to hear from you",
     button_text = 'Send Message',
+    phone = '',
+    address = '',
+    email = '',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
+
+  // Real business contact details (e.g. from Google Places) shown only when present.
+  const infoItems = [
+    phone && `<a class="contact-info-item" href="tel:${phone.replace(/[^+\d]/g, '')}"><span>📞</span>${phone}</a>`,
+    email && `<a class="contact-info-item" href="mailto:${email}"><span>✉️</span>${email}</a>`,
+    address && `<span class="contact-info-item"><span>📍</span>${address}</span>`,
+  ].filter(Boolean);
+  const contactInfo = infoItems.length
+    ? `<div class="contact-info">${infoItems.join('')}</div>`
+    : '';
 
   return `
 <section id="contact" class="contact-section">
@@ -21,6 +34,7 @@ export function contactFormTemplate(data, config) {
       <h2 class="contact-heading">${heading}</h2>
       <p class="contact-subheading">${subheading}</p>
     </div>
+    ${contactInfo}
     <form class="contact-form" onsubmit="event.preventDefault(); alert('Form submission not configured yet. Connect to your backend!');">
       <div class="form-row">
         <div class="form-group">
@@ -68,6 +82,31 @@ export function contactFormTemplate(data, config) {
 .contact-subheading {
   font-size: 1.25rem;
   color: #4a5568;
+}
+
+.contact-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.contact-info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2d3748;
+  font-size: 1.0625rem;
+  text-decoration: none;
+}
+
+.contact-info-item span {
+  font-size: 1.25rem;
+}
+
+a.contact-info-item:hover {
+  color: ${primary_color};
 }
 
 .contact-form {
