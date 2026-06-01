@@ -26,6 +26,7 @@ import { handleAIBuilderChat } from './routes/public/ai-builder-chat.js';
 import { handleAIBuilderGenerating } from './routes/public/ai-builder-generating.js';
 import { handleAIBuilderCustomize } from './routes/public/ai-builder-customize.js';
 import { handleAIPreview } from './routes/public/ai-preview.js';
+import { handlePublishedSite } from './routes/public/published-site.js';
 import { handleAIBuilderCreate } from './routes/api/ai-builder/create.js';
 import { handleAIBuilderRespond } from './routes/api/ai-builder/respond.js';
 import { handleAIBuilderGenerate } from './routes/api/ai-builder/generate.js';
@@ -59,6 +60,8 @@ router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
+router.get('/site/:project_id', handlePublishedSite);
+router.get('/site/:project_id/:page_slug', handlePublishedSite);
 
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
