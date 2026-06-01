@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caddisfly — Logo Concepts</title>
+<style>
+  :root{
+    --c1:#667eea; --c2:#764ba2; --c3:#f093fb; --ink:#1a202c;
+    --bg:#0e1018; --panel:#161a26; --line:#262c3d; --muted:#8b93a7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%, #1c2030 0%, var(--bg) 55%);
+    color:#e7eaf2; -webkit-font-smoothing:antialiased; padding:48px 24px 80px;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  header.page{margin-bottom:40px}
+  header.page .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--c3);font-weight:700}
+  header.page h1{font-size:34px;margin:8px 0 6px;font-weight:800;letter-spacing:-.02em}
+  header.page p{color:var(--muted);max-width:620px;line-height:1.55;margin:0}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:36px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .card .stage{
+    display:flex;align-items:center;justify-content:center;gap:34px;
+    padding:38px 24px;min-height:200px;
+    background:
+      linear-gradient(180deg,#fff 0%,#f6f7fb 100%);
+  }
+  .card .stage.dark{background:linear-gradient(180deg,#1a1f2e,#0d1019)}
+  .card .meta{padding:18px 22px 22px;border-top:1px solid var(--line)}
+  .card .tag{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--c3);font-weight:700}
+  .card h3{margin:6px 0 6px;font-size:19px;font-weight:700}
+  .card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#a8b0c2;text-align:center;margin-top:10px;font-weight:600}
+  .pair{display:flex;flex-direction:column;align-items:center}
+
+  /* ---------- shared svg ---------- */
+  svg{display:block}
+  .mark{width:104px;height:104px}
+  .mark-sm{width:84px;height:84px}
+
+  /* ============ C1: Mosaic assembly ============ */
+  @keyframes pop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+  .c1 .tile{transform-box:fill-box;transform-origin:center;animation:pop 2.6s cubic-bezier(.2,.9,.3,1.3) infinite}
+  .c1 .ant{stroke-dasharray:60;stroke-dashoffset:60;animation:draw1 2.6s ease infinite}
+  @keyframes draw1{0%,55%{stroke-dashoffset:60}80%,100%{stroke-dashoffset:0}}
+
+  /* ============ C2: Continuous stroke monogram ============ */
+  @keyframes drawWing{0%{stroke-dashoffset:520}45%{stroke-dashoffset:0}80%{stroke-dashoffset:0}100%{stroke-dashoffset:520}}
+  .c2 .wing{stroke-dasharray:520;animation:drawWing 3.4s ease-in-out infinite}
+  .c2 .dot{transform-box:fill-box;transform-origin:center;animation:pop 3.4s ease infinite}
+
+  /* ============ C3: Metamorphosis (grid -> fly) ============ */
+  @keyframes morphGrid{0%,12%{opacity:1}40%,100%{opacity:0}}
+  @keyframes morphFly{0%,28%{opacity:0;transform:translateY(6px) scale(.96)}55%,88%{opacity:1;transform:none}100%{opacity:0}}
+  .c3 .gridState{animation:morphGrid 4s ease-in-out infinite}
+  .c3 .flyState{transform-box:fill-box;transform-origin:center;animation:morphFly 4s ease-in-out infinite}
+
+  /* ============ C4: Liftoff ============ */
+  @keyframes lift{0%{transform:translate(0,0);opacity:0}15%{opacity:1}70%{opacity:1}100%{transform:translate(14px,-20px);opacity:0}}
+  .c4 .fly{transform-box:fill-box;transform-origin:center;animation:lift 3s ease-in infinite}
+  .c4 .trail rect{transform-box:fill-box;transform-origin:center;animation:trailFade 3s ease-in infinite}
+  @keyframes trailFade{0%,100%{opacity:0}30%,60%{opacity:.9}}
+  .c4 .trail rect:nth-child(1){animation-delay:.0s}
+  .c4 .trail rect:nth-child(2){animation-delay:.12s}
+  .c4 .trail rect:nth-child(3){animation-delay:.24s}
+  .c4 .trail rect:nth-child(4){animation-delay:.36s}
+
+  /* ---------- taglines ---------- */
+  .taglines{margin-top:46px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 28px}
+  .taglines h2{margin:0 0 4px;font-size:18px}
+  .taglines .sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+  .tg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.tg{grid-template-columns:1fr}}
+  .tg .t{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#11151f}
+  .tg .t b{display:block;font-size:14.5px;color:#fff;margin-bottom:2px}
+  .tg .t span{font-size:12px;color:var(--muted)}
+
+  /* ---------- wordmark ---------- */
+  .word{display:flex;align-items:center;gap:14px;font-weight:800;letter-spacing:-.02em}
+  .word .name{font-size:30px;background:linear-gradient(120deg,var(--c1),var(--c2) 55%,var(--c3));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .word .name .ai{color:#cfd5e6;-webkit-text-fill-color:#a6aec4}
+  .word.dark .name .ai{-webkit-text-fill-color:#7c84a0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <div class="eyebrow">Caddisfly · Logo Exploration</div>
+    <h1>Built from pieces. Made to fly.</h1>
+    <p>Four directions, each in a static and an animated version. The metaphor: the caddisfly larva is <em>nature's architect</em> — it builds an intricate case from scattered fragments — while the adult takes flight. That's assembly + transformation, the heart of an AI site builder &amp; refactorer. All use the existing brand gradient.</p>
+  </header>
+
+  <!-- WORDMARKS -->
+  <div class="card">
+    <div class="stage">
+      <div class="pair"><div class="word"><span id="wmA"></span><span class="name">caddisfly<span class="ai">.ai</span></span></div><div class="label">light wordmark</div></div>
+    </div>
+    <div class="stage dark">
+      <div class="pair"><div class="word dark"><span id="wmB"></span><span class="name">caddisfly<span class="ai">.ai</span></span></div><div class="label">dark wordmark</div></div>
+    </div>
+    <div class="meta">
+      <div class="tag">Wordmark</div>
+      <h3>Lockup: mark + name</h3>
+      <p>Pair any mark below with the gradient wordmark. The “.ai” drops to a neutral tone so the brand name leads.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- CONCEPT 1 -->
+    <div class="card">
+      <div class="stage">
+        <div class="pair"><div id="c1static"></div><div class="label">static</div></div>
+        <div class="pair"><div id="c1anim"></div><div class="label">animated · pieces assemble</div></div>
+      </div>
+      <div class="meta">
+        <div class="tag">Concept 1 · Assembly</div>
+        <h3>Mosaic Case</h3>
+        <p>A wing/case built from a triangle of tiles — the larva gathering fragments into structure. Animation: tiles pop into place, then the antennae draw in. “A site, assembled.”</p>
+      </div>
+    </div>
+
+    <!-- CONCEPT 2 -->
+    <div class="card">
+      <div class="stage">
+        <div class="pair"><div id="c2static"></div><div class="label">static</div></div>
+        <div class="pair"><div id="c2anim"></div><div class="label">animated · self-drawing</div></div>
+      </div>
+      <div class="meta">
+        <div class="tag">Concept 2 · Monogram</div>
+        <h3>Continuous Wing “C”</h3>
+        <p>One unbroken gradient stroke reads as both a wing and a “c”. Animation: the line draws itself, head dot pops — generative, “made by AI.” Scales down to a favicon cleanly.</p>
+      </div>
+    </div>
+
+    <!-- CONCEPT 3 -->
+    <div class="card">
+      <div class="stage">
+        <div class="pair"><div id="c3static"></div><div class="label">static</div></div>
+        <div class="pair"><div id="c3anim"></div><div class="label">animated · grid → fly</div></div>
+      </div>
+      <div class="meta">
+        <div class="tag">Concept 3 · Metamorphosis</div>
+        <h3>Pixels Take Flight</h3>
+        <p>A grid of layout blocks transforms into a winged caddisfly. The clearest “refactor / transform” story — raw blocks become something alive. Loops grid → fly → grid.</p>
+      </div>
+    </div>
+
+    <!-- CONCEPT 4 -->
+    <div class="card">
+      <div class="stage">
+        <div class="pair"><div id="c4static"></div><div class="label">static</div></div>
+        <div class="pair"><div id="c4anim"></div><div class="label">animated · liftoff</div></div>
+      </div>
+      <div class="meta">
+        <div class="tag">Concept 4 · Flight</div>
+        <h3>Liftoff Trail</h3>
+        <p>A caddisfly rising on a trail of content blocks — “from prompt to published, watch it fly.” Energetic; great for hero loops and loading states.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAGLINES -->
+  <div class="taglines">
+    <h2>Tagline options</h2>
+    <p class="sub">Grouped by the angle they lean into.</p>
+    <div class="tg">
+      <div class="t"><b>Where ideas take flight.</b><span>Aspirational · flight angle</span></div>
+      <div class="t"><b>Built piece by piece. By AI.</b><span>Literal · the larva/assembly angle</span></div>
+      <div class="t"><b>Nature's architect, for the web.</b><span>Story-led · leans on the real biology</span></div>
+      <div class="t"><b>From prompt to published.</b><span>Functional · the actual workflow</span></div>
+      <div class="t"><b>Build it. Refactor it. Watch it fly.</b><span>Covers both products in one line</span></div>
+      <div class="t"><b>Small bug. Big builds.</b><span>Playful · memorable, owns the name</span></div>
+      <div class="t"><b>The web's tiniest architect.</b><span>Charm · pairs with the assembly marks</span></div>
+      <div class="t"><b>Describe it. We'll build the rest.</b><span>Benefit-first · for the hero CTA</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- shared defs (gradient) ----
+const defs = `
+  <defs>
+    <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#667eea"/>
+      <stop offset="0.55" stop-color="#764ba2"/>
+      <stop offset="1" stop-color="#f093fb"/>
+    </linearGradient>
+  </defs>`;
+
+// triangle of tiles for concept 1 (rows of 1,2,3,4 centered)
+function mosaicTiles(){
+  const rows=[1,2,3,4]; const s=15, gap=3.5; let out=''; let i=0;
+  const top=22;
+  rows.forEach((n,r)=>{
+    const rowW=n*s+(n-1)*gap;
+    const x0=60-rowW/2;
+    const y=top+r*(s+gap);
+    for(let c=0;c<n;c++){
+      const x=x0+c*(s+gap);
+      out+=`<rect class="tile" x="${x}" y="${y}" width="${s}" height="${s}" rx="4"
+              fill="url(#cg)" style="animation-delay:${(i*0.13).toFixed(2)}s"/>`;
+      i++;
+    }
+  });
+  return out;
+}
+function antennae(animClass){
+  return `<g fill="none" stroke="url(#cg)" stroke-width="3.4" stroke-linecap="round" class="${animClass||''}">
+    <path class="ant" d="M53 22 C46 12, 40 9, 34 9"/>
+    <path class="ant" d="M67 22 C74 12, 80 9, 86 9"/>
+  </g>`;
+}
+function concept1(anim){
+  return `<svg class="mark ${anim?'c1':''}" viewBox="0 0 120 120">${defs}
+    ${anim?antennae('') : `<g fill="none" stroke="url(#cg)" stroke-width="3.4" stroke-linecap="round">
+        <path d="M53 22 C46 12, 40 9, 34 9"/><path d="M67 22 C74 12, 80 9, 86 9"/></g>`}
+    ${mosaicTiles()}
+  </svg>`;
+}
+
+// continuous wing "C" monogram
+function concept2(anim){
+  // a sweeping open path that looks like a wing + c, plus antennae + head dot
+  const wing=`M88 34
+    C 58 18, 26 34, 26 64
+    C 26 92, 56 104, 84 92`;
+  const vein=`M40 58 C 56 64, 70 70, 84 80`;
+  return `<svg class="mark ${anim?'c2':''}" viewBox="0 0 120 120">${defs}
+    <path class="wing" d="${wing}" fill="none" stroke="url(#cg)" stroke-width="9" stroke-linecap="round"/>
+    <path class="wing" d="${vein}" fill="none" stroke="url(#cg)" stroke-width="4" stroke-linecap="round" opacity="0.6" style="animation-delay:.15s"/>
+    <circle class="dot" cx="92" cy="30" r="6.5" fill="url(#cg)"/>
+    <path class="dot" d="M92 24 C 96 14, 102 11, 108 11" fill="none" stroke="url(#cg)" stroke-width="3.4" stroke-linecap="round" style="animation-delay:.25s"/>
+  </svg>`;
+}
+
+// metamorphosis grid -> fly
+function flySilhouette(){
+  return `<g fill="url(#cg)">
+    <path d="M60 30 C 42 42, 36 74, 50 98 C 56 104, 64 104, 70 98 C 84 74, 78 42, 60 30 Z"/>
+    <circle cx="60" cy="26" r="6.5"/>
+  </g>
+  <g fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round">
+    <path d="M55 23 C 49 13, 43 10, 37 10"/><path d="M65 23 C 71 13, 77 10, 83 10"/>
+  </g>
+  <path d="M60 36 L60 92" stroke="#ffffff" stroke-width="2" opacity="0.35"/>`;
+}
+function gridState(){
+  let out=''; const s=18, gap=5, x0=24, y0=24;
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+    out+=`<rect x="${x0+c*(s+gap)}" y="${y0+r*(s+gap)}" width="${s}" height="${s}" rx="4" fill="url(#cg)"/>`;
+  }
+  return out;
+}
+function concept3(anim){
+  if(!anim){ // static = the resolved fly silhouette, cleanest single mark
+    return `<svg class="mark" viewBox="0 0 120 120">${defs}${flySilhouette()}</svg>`;
+  }
+  return `<svg class="mark c3" viewBox="0 0 120 120">${defs}
+    <g class="gridState">${gridState()}</g>
+    <g class="flyState">${flySilhouette()}</g>
+  </svg>`;
+}
+
+// liftoff
+function concept4(anim){
+  const trail=`<g class="trail">
+    <rect x="44" y="92" width="14" height="14" rx="3" fill="url(#cg)" opacity="0.9"/>
+    <rect x="36" y="80" width="12" height="12" rx="3" fill="url(#cg)" opacity="0.7"/>
+    <rect x="30" y="70" width="10" height="10" rx="3" fill="url(#cg)" opacity="0.55"/>
+    <rect x="26" y="62" width="8" height="8" rx="2" fill="url(#cg)" opacity="0.4"/>
+  </g>`;
+  const fly=`<g class="fly">
+    <g fill="url(#cg)" transform="rotate(20 70 50)">
+      <path d="M70 26 C 54 36, 49 64, 61 84 C 66 89, 74 89, 79 84 C 91 64, 86 36, 70 26 Z"/>
+      <circle cx="70" cy="22" r="5.5"/>
+    </g>
+    <g fill="none" stroke="url(#cg)" stroke-width="3" stroke-linecap="round" transform="rotate(20 70 50)">
+      <path d="M66 20 C 61 11, 56 9, 51 10"/><path d="M75 20 C 80 11, 86 9, 92 11"/>
+    </g>
+  </g>`;
+  return `<svg class="mark ${anim?'c4':''}" viewBox="0 0 120 120">${defs}
+    ${anim?trail:''}${fly}
+  </svg>`;
+}
+
+// small mark for wordmark lockups
+function miniMark(){return concept2(false).replace('class="mark ','class="mark-sm ');}
+
+// inject
+document.getElementById('c1static').innerHTML=concept1(false);
+document.getElementById('c1anim').innerHTML=concept1(true);
+document.getElementById('c2static').innerHTML=concept2(false);
+document.getElementById('c2anim').innerHTML=concept2(true);
+document.getElementById('c3static').innerHTML=concept3(false);
+document.getElementById('c3anim').innerHTML=concept3(true);
+document.getElementById('c4static').innerHTML=concept4(false);
+document.getElementById('c4anim').innerHTML=concept4(true);
+document.getElementById('wmA').innerHTML=miniMark();
+document.getElementById('wmB').innerHTML=miniMark();
+</script>
+</body>
+</html>

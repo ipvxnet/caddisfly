@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Caddisfly">
+  <defs>
+    <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#667eea"/>
+      <stop offset="0.55" stop-color="#764ba2"/>
+      <stop offset="1" stop-color="#f093fb"/>
+    </linearGradient>
+  </defs>
+  <path d="M88 34 C 58 18, 26 34, 26 64 C 26 92, 56 104, 84 92" fill="none" stroke="url(#cg)" stroke-width="9" stroke-linecap="round"/>
+  <path d="M40 58 C 56 64, 70 70, 84 80" fill="none" stroke="url(#cg)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+  <circle cx="92" cy="30" r="6.5" fill="url(#cg)"/>
+  <path d="M92 24 C 96 14, 102 11, 108 11" fill="none" stroke="url(#cg)" stroke-width="3.4" stroke-linecap="round"/>
+</svg>

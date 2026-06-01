@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 140" width="620" height="140" role="img" aria-label="caddisfly.ai">
+  <defs>
+    <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#667eea"/>
+      <stop offset="0.55" stop-color="#764ba2"/>
+      <stop offset="1" stop-color="#f093fb"/>
+    </linearGradient>
+    <style>
+      @keyframes cf-draw{0%{stroke-dashoffset:520}45%{stroke-dashoffset:0}80%{stroke-dashoffset:0}100%{stroke-dashoffset:520}}
+      @keyframes cf-pop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+      .cf-wing{stroke-dasharray:520;animation:cf-draw 3.4s ease-in-out infinite}
+      .cf-vein{stroke-dasharray:520;animation:cf-draw 3.4s ease-in-out infinite;animation-delay:.15s}
+      .cf-dot{transform-box:fill-box;transform-origin:center;animation:cf-pop 3.4s ease infinite}
+      .cf-ant{transform-box:fill-box;transform-origin:center;animation:cf-pop 3.4s ease infinite;animation-delay:.25s}
+      @media (prefers-reduced-motion: reduce){.cf-wing,.cf-vein,.cf-dot,.cf-ant{animation:none;stroke-dashoffset:0;opacity:1;transform:none}}
+    </style>
+  </defs>
+  <g transform="translate(6 10)">
+    <path class="cf-wing" d="M88 34 C 58 18, 26 34, 26 64 C 26 92, 56 104, 84 92" fill="none" stroke="url(#cg)" stroke-width="9" stroke-linecap="round"/>
+    <path class="cf-vein" d="M40 58 C 56 64, 70 70, 84 80" fill="none" stroke="url(#cg)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+    <circle class="cf-dot" cx="92" cy="30" r="6.5" fill="url(#cg)"/>
+    <path class="cf-ant" d="M92 24 C 96 14, 102 11, 108 11" fill="none" stroke="url(#cg)" stroke-width="3.4" stroke-linecap="round"/>
+  </g>
+  <text x="146" y="95" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="66" font-weight="800" letter-spacing="-2.5">
+    <tspan fill="url(#cg)">caddisfly</tspan><tspan fill="#9aa3b8">.ai</tspan>
+  </text>
+</svg>
