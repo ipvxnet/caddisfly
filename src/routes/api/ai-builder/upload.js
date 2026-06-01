@@ -2,19 +2,24 @@
 // Upload assets for AI project
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { getProjectByPreviewId } from '../../../db/projects.js';
 import { createAsset } from '../../../db/ai-assets.js';
 import { generateToken } from '../../../utils/crypto.js';
+import { uploadToR2 } from '../../../utils/r2-storage.js';
 
-// Allowed file types
+// Allowed file types → extension. Images + short MP4/WebM video (hero video bg).
 const ALLOWED_MIME_TYPES = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/gif': '.gif',
   'image/webp': '.webp',
   'image/svg+xml': '.svg',
+  'video/mp4': '.mp4',
+  'video/webm': '.webm',
 };
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB
 
 /**
  * Handle asset upload
@@ -27,20 +32,16 @@ export async function handleAIBuilderUpload(ctx) {
   try {
     const { project_id } = params;
 
-    // Get project
-    const project = await getAIProjectByProjectId(env.DB, project_id);
-
-    if (!project) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Project not found',
-        }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+    // Resolve project: AI builder first, else the refactoring bridge.
+    const aiProject = await getAIProjectByProjectId(env.DB, project_id);
+    if (!aiProject) {
+      const regularProject = await getProjectByPreviewId(env.DB, project_id);
+      if (!regularProject) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Project not found' }),
+          { status: 404, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Parse multipart form data
@@ -75,65 +76,59 @@ export async function handleAIBuilderUpload(ctx) {
       );
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    // Validate file size (videos allowed to be larger than images).
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    if (file.size > maxSize) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+          error: `File too large. Maximum size: ${maxSize / 1024 / 1024}MB`,
         }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Generate unique filename
+    // Store under assets/<project_id>/<file> and serve via /preview-asset/...,
+    // consistent with how generated/Places/stock images are served.
     const extension = ALLOWED_MIME_TYPES[file.type];
-    const uniqueId = generateToken(12);
-    const filename = `${uniqueId}${extension}`;
-    const r2Path = `ai-projects/${project.project_id}/assets/${assetType}/${filename}`;
-
-    // Upload to R2
-    if (!env.ASSETS_BUCKET) {
-      throw new Error('R2 bucket not configured');
-    }
+    const filename = `${generateToken(12)}${extension}`;
+    const r2Path = `assets/${project_id}/${filename}`;
 
     const fileBuffer = await file.arrayBuffer();
-    await env.ASSETS_BUCKET.put(r2Path, fileBuffer, {
-      httpMetadata: {
-        contentType: file.type,
-      },
-    });
+    await uploadToR2(env.STORAGE, r2Path, fileBuffer, file.type);
 
-    // Create asset record
-    const asset = await createAsset(env.DB, {
-      ai_project_id: project.id,
-      asset_type: assetType,
-      original_filename: file.name,
-      r2_path: r2Path,
-      file_size: file.size,
-      mime_type: file.type,
-    });
+    // Best-effort asset record (AI-builder projects only; the table is keyed to them).
+    let assetId = null;
+    if (aiProject) {
+      try {
+        const asset = await createAsset(env.DB, {
+          ai_project_id: aiProject.id,
+          asset_type: assetType,
+          original_filename: file.name,
+          r2_path: r2Path,
+          file_size: file.size,
+          mime_type: file.type,
+        });
+        assetId = asset && asset.id;
+      } catch (e) {
+        console.error('createAsset failed (non-fatal):', e.message);
+      }
+    }
 
-    // Generate public URL
-    const publicUrl = `${env.R2_PUBLIC_URL || 'https://assets.caddisfly.ai'}/${r2Path}`;
+    const publicUrl = `/preview-asset/${project_id}/${filename}`;
 
     return new Response(
       JSON.stringify({
         success: true,
-        asset_id: asset.id,
+        asset_id: assetId,
         url: publicUrl,
-        filename: filename,
+        filename,
         original_filename: file.name,
         size: file.size,
         type: file.type,
       }),
-      {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error uploading asset:', error);

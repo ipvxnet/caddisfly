@@ -531,10 +531,24 @@ export async function handleAIBuilderCustomize(ctx) {
 
         const html = await response.text();
 
-        // Inject modal into page
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = html;
-        document.body.appendChild(modalContainer.firstChild);
+        // Remove any previous editor instance.
+        const prev = document.getElementById('section-editor-host');
+        if (prev) prev.remove();
+
+        // Inject into a single host element (so close removes styles+scripts too).
+        const host = document.createElement('div');
+        host.id = 'section-editor-host';
+        host.innerHTML = html;
+        document.body.appendChild(host);
+
+        // Scripts set via innerHTML do NOT execute — re-create them so the modal's
+        // handlers (saveSectionChanges, aiEditSend, showNotification, globals) run.
+        host.querySelectorAll('script').forEach((old) => {
+          const s = document.createElement('script');
+          s.textContent = old.textContent;
+          host.appendChild(s);
+          old.remove();
+        });
       } catch (error) {
         alert('Failed to load editor: ' + error.message);
       }

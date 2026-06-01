@@ -1,6 +1,8 @@
 // Section Editor Modal Component
 // Generates an HTML modal for editing section content
 
+import { generateAIEditPanel } from './ai-edit-panel.js';
+
 /**
  * Generate section editor modal HTML
  * @param {object} section - Section data
@@ -19,14 +21,19 @@ export function generateSectionEditorModal(section, projectId) {
     </div>
 
     <div class="modal-body">
-      <form id="section-edit-form" onsubmit="saveSectionChanges(event)">
-        ${generateFormFields(section.section_type, content)}
+      ${generateAIEditPanel(section, projectId)}
 
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
-          <button type="submit" class="btn-primary" id="save-btn">Save Changes</button>
-        </div>
-      </form>
+      <details class="manual-edit">
+        <summary>✏️ Edit fields manually</summary>
+        <form id="section-edit-form" onsubmit="saveSectionChanges(event)">
+          ${generateFormFields(section.section_type, content)}
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" id="save-btn">Save Changes</button>
+          </div>
+        </form>
+      </details>
     </div>
   </div>
 </div>
@@ -241,6 +248,18 @@ export function generateSectionEditorModal(section, projectId) {
   }
 }
 
+.manual-edit > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #4a5568;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.manual-edit[open] > summary {
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     max-height: 100vh;
@@ -259,8 +278,14 @@ window.currentProjectId = '${projectId}';
 
 function closeModal() {
   const modal = document.getElementById('section-editor-modal');
-  modal.style.animation = 'fadeOut 0.2s ease-out';
-  setTimeout(() => modal.remove(), 200);
+  // editSection wraps everything in a host element; remove the whole host so the
+  // injected styles/scripts go with it.
+  const host = document.getElementById('section-editor-host');
+  if (modal) modal.style.animation = 'fadeOut 0.2s ease-out';
+  setTimeout(() => {
+    const el = host || modal;
+    if (el) el.remove();
+  }, 200);
 }
 
 function closeModalOnOutsideClick(event) {
