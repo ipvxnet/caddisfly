@@ -35,6 +35,7 @@ const FAVICON =
  * @returns {Response} HTML response
  */
 export async function handleLanding(ctx) {
+  const origin = (ctx && ctx.url && ctx.url.origin) || (ctx && ctx.env && ctx.env.APP_URL) || '';
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,7 +46,21 @@ export async function handleLanding(ctx) {
   <meta property="og:title" content="Caddisfly — Build a beautiful website with AI">
   <meta property="og:description" content="Chat to build a new site, or refactor your existing one. Modern, multi-page, ready to publish.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="${origin}/">
+  <meta property="og:image" content="${origin}/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Caddisfly — Build a beautiful website with AI">
+  <meta name="twitter:description" content="Chat to build a new site, or refactor your existing one.">
+  <meta name="twitter:image" content="${origin}/og.png">
+  <meta name="theme-color" content="#764ba2">
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
