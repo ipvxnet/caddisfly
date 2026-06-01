@@ -6,6 +6,7 @@ import { getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../d
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generateColorPicker } from '../../components/color-picker.js';
+import { generateTemplatePicker } from '../../components/template-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 
 /**
@@ -286,6 +287,8 @@ export async function handleAIBuilderCustomize(ctx) {
   <div class="container">
     <div class="split-view">
       <div class="sections-panel">
+        ${generateTemplatePicker(config.style_theme)}
+
         ${generateColorPicker(config, project.project_id)}
 
         <h2 style="margin-bottom: 0.5rem;">Sections</h2>
@@ -570,6 +573,33 @@ export async function handleAIBuilderCustomize(ctx) {
         select.value = previousValue;
         select.dataset.previousValue = previousValue;
         alert('Failed to switch template: ' + error.message);
+      }
+    }
+
+    // Apply a whole-site theme: re-skins every section + fonts at once,
+    // preserving content and colors. Reload the page so the section dropdowns
+    // re-render with the new selected variants and the preview reflects them.
+    async function applyTemplate(themeKey) {
+      const card = document.querySelector(\`.template-card[data-theme="\${themeKey}"]\`);
+      if (card) card.classList.add('applying');
+
+      try {
+        const response = await fetch(\`/api/ai-builder/\${projectId}/template\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: themeKey })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          showNotification('Template applied! Refreshing...', 'success');
+          setTimeout(() => location.reload(), 400);
+        } else {
+          throw new Error(data.error || 'Failed to apply template');
+        }
+      } catch (error) {
+        if (card) card.classList.remove('applying');
+        alert('Failed to apply template: ' + error.message);
       }
     }
 
