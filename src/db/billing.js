@@ -49,14 +49,19 @@ export async function upsertBillingAccount(db, email, fields = {}) {
   const now = nowSec();
 
   if (!existing) {
-    const vals = cols.map((c) => (fields[c] !== undefined ? fields[c] : null));
+    // Insert ONLY provided columns so NOT NULL defaults (e.g. pricing_tier
+    // 'free_trial') apply when a field is absent — checkout.session.completed
+    // carries no tier, so binding NULL here would violate the constraint.
+    const provided = cols.filter((c) => fields[c] !== undefined);
+    const insertCols = ['email', ...provided];
+    const insertVals = [email, ...provided.map((c) => fields[c])];
     await db
       .prepare(
         `INSERT INTO billing_accounts
-           (email, ${cols.join(', ')}, created_at, updated_at)
-         VALUES (?, ${cols.map(() => '?').join(', ')}, ?, ?)`
+           (${insertCols.join(', ')}, created_at, updated_at)
+         VALUES (${insertCols.map(() => '?').join(', ')}, ?, ?)`
       )
-      .bind(email, ...vals, now, now)
+      .bind(...insertVals, now, now)
       .run();
     return getBillingAccount(db, email);
   }

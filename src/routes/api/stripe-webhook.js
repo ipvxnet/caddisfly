@@ -21,15 +21,18 @@ async function applySubscription(env, sub) {
     console.warn('Subscription event without resolvable email:', sub.id);
     return;
   }
-  const priceId = sub.items && sub.items.data && sub.items.data[0] && sub.items.data[0].price
-    ? sub.items.data[0].price.id
-    : null;
+  const item = sub.items && sub.items.data && sub.items.data[0] ? sub.items.data[0] : null;
+  const priceId = item && item.price ? item.price.id : null;
   const plan = planForPriceId(env, priceId);
+  // Recent Stripe API versions moved current_period_end from the subscription
+  // onto the subscription item; fall back to it when the top-level is absent.
+  const periodEnd =
+    sub.current_period_end != null ? sub.current_period_end : item && item.current_period_end != null ? item.current_period_end : null;
   const fields = {
     stripe_customer_id: sub.customer,
     stripe_subscription_id: sub.id,
     subscription_status: sub.status,
-    current_period_end: sub.current_period_end,
+    current_period_end: periodEnd,
     cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
   };
   if (plan) {
