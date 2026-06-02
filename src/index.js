@@ -10,6 +10,7 @@ import { notFound } from './utils/response.js';
 // Import route handlers
 import { handleLanding } from './routes/public/landing.js';
 import { handlePricing } from './routes/public/pricing.js';
+import { handleTerms } from './routes/public/terms.js';
 import { handleLogin } from './routes/admin/login.js';
 import { handleGoogleCallback } from './routes/api/auth/google-callback.js';
 import { handleLogout } from './routes/admin/logout.js';
@@ -55,6 +56,7 @@ const router = new Router();
 // Public routes
 router.get('/', handleLanding);
 router.get('/pricing', handlePricing);
+router.get('/terms', handleTerms);
 
 // Brand static assets (favicons + manifest + OG image)
 router.get('/favicon.ico', handleStaticAsset);

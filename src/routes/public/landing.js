@@ -169,6 +169,7 @@ export async function handleLanding(ctx) {
     .foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
     .foot .brand{font-size:1rem;color:var(--ink)}
     .foot .brand svg{width:24px;height:24px}
+    .foot-links a{color:var(--body);font-weight:600}.foot-links a:hover{color:var(--p2)}
 
     @media (max-width:820px){
       .nav-links a:not(.btn){display:none}
@@ -295,6 +296,7 @@ export async function handleLanding(ctx) {
   <footer class="site">
     <div class="wrap foot">
       <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
+      <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/terms">Terms</a> · <a href="/billing">Billing</a></span>
       <span>© 2026 Caddisfly. Build beautiful websites with AI.</span>
     </div>
   </footer>

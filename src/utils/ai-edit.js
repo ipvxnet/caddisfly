@@ -13,6 +13,8 @@
  * (see ai-prompts.js / generate.js defaults).
  */
 
+import { POLICY_INSTRUCTION } from './content-policy.js';
+
 // Per-section editable fields, used to steer the LLM. `images` lists the fields
 // that hold image URLs — the LLM must NOT fill these (images come via actions).
 const SECTION_FIELDS = {
@@ -87,7 +89,8 @@ export function buildEditPrompt(sectionType, content, message, history = []) {
   const system_message =
     'You are a website section editor. You receive a section\'s current content as JSON and a ' +
     'user request, and you return ONLY a JSON object describing the change. Never include prose ' +
-    'outside the JSON. Keep copy concise and on-brand. Do not invent image URLs.';
+    'outside the JSON. Keep copy concise and on-brand. Do not invent image URLs. ' +
+    POLICY_INSTRUCTION;
 
   const historyText = history
     .slice(-6)

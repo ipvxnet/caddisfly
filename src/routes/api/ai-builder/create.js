@@ -7,6 +7,7 @@ import { createWebsiteConfig } from '../../../db/ai-config.js';
 import { getFirstStep, formatStepForResponse } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
 import { checkProjectCreationLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
+import { screenContent, policyError } from '../../../utils/content-policy.js';
 
 /**
  * Handle AI builder project creation
@@ -62,6 +63,15 @@ export async function handleAIBuilderCreate(ctx) {
           headers: { 'Content-Type': 'application/json' },
         }
       );
+    }
+
+    // Acceptable Use screening — block prohibited prompts up front.
+    const screen = screenContent(initial_prompt);
+    if (!screen.allowed) {
+      return new Response(JSON.stringify(policyError(screen)), {
+        status: 422,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Create AI project

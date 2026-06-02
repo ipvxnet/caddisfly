@@ -1,5 +1,7 @@
 // AI Content Generation using Workers AI
 
+import { POLICY_INSTRUCTION } from './content-policy.js';
+
 /**
  * Call Workers AI with a prompt
  * @param {object} env - Environment bindings
@@ -137,7 +139,7 @@ export async function generateContentWithRetry(env, prompt, maxRetries = 2) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const aiResponse = await callWorkersAI(env, prompt, {
-        system_message: 'You are a website content generator. You ONLY output valid JSON, never explanations.',
+        system_message: `You are a website content generator. You ONLY output valid JSON, never explanations. ${POLICY_INSTRUCTION}`,
         temperature: 0.3,
         max_tokens: 2048,
       });

@@ -87,6 +87,7 @@ export function baseCss() {
     footer.site{border-top:1px solid var(--line);padding:2.2rem 0;color:var(--muted);font-size:.9rem;margin-top:2rem}
     .foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
     .foot .brand{font-size:1rem;color:var(--ink)}.foot .brand svg{width:24px;height:24px}
+    .foot-links a{color:var(--body);font-weight:600}.foot-links a:hover{color:var(--p2)}
     @media (max-width:820px){.nav-links a:not(.btn):not(.credit-pill){display:none}}`;
 }
 
@@ -114,6 +115,7 @@ export function siteHeader(activePath = '', opts = {}) {
 export function siteFooter() {
   return `<footer class="site"><div class="wrap foot">
     <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
+    <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/terms">Terms</a> · <a href="/billing">Billing</a></span>
     <span>© 2026 Caddisfly. Build beautiful websites with AI.</span>
   </div></footer>`;
 }

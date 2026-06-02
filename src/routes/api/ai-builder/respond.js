@@ -15,6 +15,7 @@ import {
 } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
 import { checkRequestRateLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
+import { screenContent, policyError } from '../../../utils/content-policy.js';
 
 /**
  * Handle conversation response
@@ -93,6 +94,16 @@ export async function handleAIBuilderRespond(ctx) {
           headers: { 'Content-Type': 'application/json' },
         }
       );
+    }
+
+    // Acceptable Use screening on free-text answers.
+    const answerText = typeof answer === 'string' ? answer : JSON.stringify(answer);
+    const screen = screenContent(answerText);
+    if (!screen.allowed) {
+      return new Response(JSON.stringify(policyError(screen)), {
+        status: 422,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Store answer as JSON string if it's an array or object

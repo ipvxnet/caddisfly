@@ -11,6 +11,7 @@ import { generateToken } from '../../../utils/crypto.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier, checkAIGenerationLimit, limitsDisabled, formatRateLimitError } from '../../../utils/rate-limiter.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
+import { screenContent, policyError } from '../../../utils/content-policy.js';
 
 const IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
 
@@ -57,6 +58,9 @@ export async function handleAIEditPropose(ctx) {
     const body = await request.json();
     const message = (body.message || '').toString().trim();
     if (!message) return json({ success: false, error: 'Empty request' }, 400);
+
+    const screen = screenContent(message);
+    if (!screen.allowed) return json(policyError(screen), 422);
 
     const content = JSON.parse(section.content_json || '{}');
     const { system_message, prompt } = buildEditPrompt(section.section_type, content, message, body.history || []);
