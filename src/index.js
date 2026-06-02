@@ -11,6 +11,7 @@ import { notFound } from './utils/response.js';
 import { handleLanding } from './routes/public/landing.js';
 import { handlePricing } from './routes/public/pricing.js';
 import { handleTerms } from './routes/public/terms.js';
+import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
 import { handleGoogleCallback } from './routes/api/auth/google-callback.js';
 import { handleLogout } from './routes/admin/logout.js';
@@ -57,6 +58,7 @@ const router = new Router();
 router.get('/', handleLanding);
 router.get('/pricing', handlePricing);
 router.get('/terms', handleTerms);
+router.get('/privacy', handlePrivacy);
 
 // Brand static assets (favicons + manifest + OG image)
 router.get('/favicon.ico', handleStaticAsset);

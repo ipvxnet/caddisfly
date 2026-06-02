@@ -121,7 +121,9 @@ export async function updateProject(db, projectId, updates) {
     'use_templates', 'template_generation_status', 'config_id',
     // Email verification + Google Places enrichment (migration 006)
     'email_verified', 'verification_token', 'verification_sent_at', 'verified_at',
-    'enrichment_status', 'place_id', 'company_profile_json'
+    'enrichment_status', 'place_id', 'company_profile_json',
+    // Terms acceptance (migration 010)
+    'terms_accepted_at'
   ];
 
   const fields = [];

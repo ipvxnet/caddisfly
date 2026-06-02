@@ -32,6 +32,19 @@ export async function handlePreviewCreate(ctx) {
     // Parse and validate request body
     const body = await request.json();
     const { email, website, use_templates } = body;
+    const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
+
+    // Require Terms/Privacy acceptance before building.
+    if (!acceptedTerms) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'You must agree to the Terms of Service and Privacy Policy to start building.',
+          terms_url: '/terms',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Validate inputs
     const errors = validatePreviewRequest(email, website);
@@ -69,6 +82,13 @@ export async function handlePreviewCreate(ctx) {
 
     projectId = project.id;
     console.log(`Created project ${projectId} with preview_id ${previewId}`);
+
+    // Record Terms/Privacy acceptance.
+    try {
+      await updateProject(env.DB, project.id, { terms_accepted_at: Math.floor(Date.now() / 1000) });
+    } catch (e) {
+      console.error('Failed to record terms acceptance:', e.message);
+    }
 
     // Template-based generation is GATED behind email verification: the paid
     // Google Places enrichment only runs after the user clicks the verify link.

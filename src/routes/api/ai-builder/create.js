@@ -1,7 +1,7 @@
 // POST /api/ai-builder/create
 // Creates a new AI project and starts the conversation
 
-import { createAIProject } from '../../../db/ai-projects.js';
+import { createAIProject, updateAIProject } from '../../../db/ai-projects.js';
 import { createConversationEntry } from '../../../db/ai-conversations.js';
 import { createWebsiteConfig } from '../../../db/ai-config.js';
 import { getFirstStep, formatStepForResponse } from '../../../utils/ai-conversation.js';
@@ -21,6 +21,19 @@ export async function handleAIBuilderCreate(ctx) {
     // Parse request body
     const body = await request.json();
     const { email, initial_prompt } = body;
+    const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
+
+    // Require Terms/Privacy acceptance before building.
+    if (!acceptedTerms) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'You must agree to the Terms of Service and Privacy Policy to start building.',
+          terms_url: '/terms',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Validate inputs
     if (!email || !email.includes('@')) {
@@ -81,6 +94,13 @@ export async function handleAIBuilderCreate(ctx) {
       conversation_step: 'initial_prompt',
       pricing_tier: 'free_trial',
     });
+
+    // Record Terms/Privacy acceptance.
+    try {
+      await updateAIProject(env.DB, project.id, { terms_accepted_at: Math.floor(Date.now() / 1000) });
+    } catch (e) {
+      console.error('Failed to record terms acceptance:', e.message);
+    }
 
     // Create initial conversation entry
     const firstStep = getFirstStep();

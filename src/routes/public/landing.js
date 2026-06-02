@@ -244,6 +244,10 @@ export async function handleLanding(ctx) {
                 <input type="text" id="website" name="website" placeholder="https://yourbusiness.com" autocomplete="url">
                 <div class="err" id="website-err"></div>
               </div>
+              <div class="field" style="display:flex;align-items:flex-start;gap:.5rem">
+                <input type="checkbox" id="refactor-agree" style="width:auto;margin-top:.25rem;flex:none">
+                <label for="refactor-agree" style="font-weight:500;margin:0;cursor:pointer;font-size:.9rem">I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</label>
+              </div>
               <button type="submit" class="btn btn-primary btn-full" id="refactor-btn">
                 <span id="refactor-label">Get my free preview</span>
                 <span class="spin" id="refactor-spin"></span>
@@ -296,7 +300,7 @@ export async function handleLanding(ctx) {
   <footer class="site">
     <div class="wrap foot">
       <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
-      <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/terms">Terms</a> · <a href="/billing">Billing</a></span>
+      <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/billing">Billing</a></span>
       <span>© 2026 Caddisfly. Build beautiful websites with AI.</span>
     </div>
   </footer>
@@ -332,13 +336,14 @@ export async function handleLanding(ctx) {
         var bad1 = false;
         if (!isEmail(email)) { emailErr.textContent = 'Please enter a valid email.'; emailErr.classList.add('show'); emailInput.classList.add('error'); bad1 = true; }
         if (!isUrl(website)) { siteErr.textContent = 'Please enter a valid website URL.'; siteErr.classList.add('show'); siteInput.classList.add('error'); bad1 = true; }
+        if (!document.getElementById('refactor-agree').checked) { bad.textContent = 'Please agree to the Terms of Service and Privacy Policy to continue.'; bad.classList.add('show'); bad1 = true; }
         if (bad1) return;
 
         btn.disabled = true; label.textContent = 'Sending…'; spin.classList.add('show');
         try {
           var res = await fetch('/api/preview/create', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, website: website, use_templates: 1 })
+            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true })
           });
           var data = await res.json();
           if (data.success) {

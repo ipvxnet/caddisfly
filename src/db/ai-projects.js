@@ -96,6 +96,7 @@ export async function updateAIProject(db, id, data) {
     'pricing_tier',
     'deployed_at',
     'deployed_url',
+    'terms_accepted_at',
   ];
 
   const updates = [];
