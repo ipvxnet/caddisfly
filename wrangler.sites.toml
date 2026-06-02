@@ -1,0 +1,34 @@
+# caddisfly-sites — lean worker serving published customer sites on
+# *.caddisfly.app. Separate from the main app worker (wrangler.toml): R2
+# read-only, no DB/secrets/AI. Reads what the app's deploy step writes
+# (sites/<subdomain>/<slug>.html, assets/<id>/<file>).
+#
+# Deploy (preview, on workers.dev for testing — no routes):
+#   npx wrangler deploy -c wrangler.sites.toml --env preview
+# Deploy (production — requires the caddisfly.app zone on this account):
+#   npx wrangler deploy -c wrangler.sites.toml
+
+name = "caddisfly-sites"
+main = "src/sites-worker.js"
+compatibility_date = "2024-01-01"
+
+# Production binds the production bucket and routes the wildcard subdomain.
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "caddisfly-storage-prod"
+
+# Wildcard subdomain route. Requires: caddisfly.app added as a zone on this
+# Cloudflare account + a proxied wildcard DNS record (* -> 100::/dummy, orange
+# cloud). Until the zone exists, deploy --env preview instead (no routes).
+routes = [
+  { pattern = "*.caddisfly.app/*", zone_name = "caddisfly.app" },
+]
+
+# Preview: deploys to caddisfly-sites-preview.<acct>.workers.dev (no custom
+# route) and reads the PREVIEW bucket. Test with ?site=<subdomain>.
+[env.preview]
+name = "caddisfly-sites-preview"
+
+[[env.preview.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "caddisfly-storage"

@@ -71,7 +71,7 @@ binding = "BROWSER"
 # Production environment (main branch)
 [env.production]
 name = "caddisfly"
-vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30" }
+vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app" }
 
 [[env.production.d1_databases]]
 binding = "DB"

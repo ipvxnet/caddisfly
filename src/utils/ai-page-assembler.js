@@ -27,10 +27,10 @@ function fontFamilyParam(name, weights) {
  * @returns {string} Complete HTML document
  */
 export function assemblePage(sections, config, project, opts = {}) {
-  const { pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false, hideBadge = false, trackId = null } = opts;
+  const { pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false, hideBadge = false, trackId = null, appOrigin = '' } = opts;
 
   // Inject nav context so the navbar can render page links (other templates ignore it).
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId };
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.
@@ -69,7 +69,7 @@ export function assemblePage(sections, config, project, opts = {}) {
  * @returns {string} Complete HTML document
  */
 export function buildHTMLDocument({ title, body, config }) {
-  const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null } = config;
+  const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '' } = config;
 
   // Dark themes carry surface tokens; inject a global override layer when active.
   const theme = getTheme(config.style_theme);
@@ -161,7 +161,7 @@ ${hideBadge ? '' : `<div style="text-align: center; padding: 1rem; background: #
 </div>`}
 
 ${trackId ? `<!-- Caddisfly analytics (cookieless) -->
-<script>(function(){try{fetch('/api/track',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({s:'${trackId}',p:location.pathname,r:document.referrer})});}catch(e){}})();</script>` : ''}
+<script>(function(){try{fetch('${appOrigin}/api/track',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({s:'${trackId}',p:location.pathname,r:document.referrer})});}catch(e){}})();</script>` : ''}
 
 <!-- Simple smooth scroll script -->
 <script>

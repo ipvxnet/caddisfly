@@ -97,6 +97,7 @@ export async function updateAIProject(db, id, data) {
     'deployed_at',
     'deployed_url',
     'terms_accepted_at',
+    'subdomain',
   ];
 
   const updates = [];

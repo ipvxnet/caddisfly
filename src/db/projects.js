@@ -123,7 +123,9 @@ export async function updateProject(db, projectId, updates) {
     'email_verified', 'verification_token', 'verification_sent_at', 'verified_at',
     'enrichment_status', 'place_id', 'company_profile_json',
     // Terms acceptance (migration 010)
-    'terms_accepted_at'
+    'terms_accepted_at',
+    // Subdomain hosting (migration 012)
+    'subdomain'
   ];
 
   const fields = [];

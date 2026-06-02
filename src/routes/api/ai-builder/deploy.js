@@ -11,6 +11,7 @@ import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { countPublishedSites } from '../../../db/billing.js';
 import { PUBLISH_LIMITS } from '../../../utils/credits.js';
+import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -84,16 +85,26 @@ export async function handleAIBuilderDeploy(ctx) {
     const header = siteSections.filter((s) => s.section_type === 'header');
     const footer = siteSections.filter((s) => s.section_type === 'footer');
 
-    // Clean previous output so deleted/renamed pages don't linger.
-    const prefix = `published/${publicId}/`;
-    try {
-      const listed = await env.STORAGE.list({ prefix });
-      await Promise.all((listed.objects || []).map((o) => env.STORAGE.delete(o.key)));
-    } catch (e) {
-      console.error('deploy: failed clearing old files (continuing):', e.message);
+    // Assign a unique subdomain for *.caddisfly.app hosting (idempotent).
+    const existingSub = aiProject ? aiProject.subdomain : regularProjectRow && regularProjectRow.subdomain;
+    const subdomain = await ensureUniqueSubdomain(env.DB, projectKey, projectView.project_name, existingSub);
+
+    // Clean previous output (both the /site/:id copy and the subdomain copy) so
+    // deleted/renamed pages don't linger.
+    for (const prefix of [`published/${publicId}/`, `sites/${subdomain}/`]) {
+      try {
+        const listed = await env.STORAGE.list({ prefix });
+        await Promise.all((listed.objects || []).map((o) => env.STORAGE.delete(o.key)));
+      } catch (e) {
+        console.error('deploy: failed clearing old files (continuing):', e.message);
+      }
     }
 
-    // Render + store each visible page.
+    const appOrigin = env.APP_URL || '';
+
+    // Render + store each visible page TWICE: once for /site/:id (nav rooted at
+    // /site/<id>) and once for the subdomain (nav rooted at /). Analytics beacon
+    // always posts to the app origin (the sites worker is DB-free).
     let pageCount = 0;
     for (const page of pages) {
       if (page.is_visible === 0) continue;
@@ -103,21 +114,38 @@ export async function handleAIBuilderDeploy(ctx) {
       const combined = [...header, ...body, ...footer];
       if (combined.length === 0) continue;
 
-      const html = assemblePage(combined, config, projectView, {
+      const common = {
         pages: navPages,
         currentSlug: page.slug,
-        previewBase: `/site/${publicId}`,
         preordered: true,
         hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
         trackId: publicId, // cookieless analytics beacon on published pages
-      });
-      await uploadToR2(env.STORAGE, `published/${publicId}/${page.slug}.html`, html, 'text/html; charset=utf-8');
+        appOrigin, // absolute beacon target (works on both serving surfaces)
+      };
+
+      // /site/:id copy (app worker).
+      const idHtml = assemblePage(combined, config, projectView, { ...common, previewBase: `/site/${publicId}` });
+      await uploadToR2(env.STORAGE, `published/${publicId}/${page.slug}.html`, idHtml, 'text/html; charset=utf-8');
+
+      // Subdomain copy (caddisfly-sites worker) — nav rooted at /.
+      const subHtml = assemblePage(combined, config, projectView, { ...common, previewBase: '' });
+      await uploadToR2(env.STORAGE, `sites/${subdomain}/${page.slug}.html`, subHtml, 'text/html; charset=utf-8');
+      // Home also written as index.html so the worker serves "/" DB-free.
+      if (page.is_home) {
+        await uploadToR2(env.STORAGE, `sites/${subdomain}/index.html`, subHtml, 'text/html; charset=utf-8');
+      }
+
       pageCount++;
     }
 
     if (pageCount === 0) return json({ success: false, error: 'Nothing to deploy' }, 400);
 
-    const deployedUrl = `${env.APP_URL || ''}/site/${publicId}`;
+    // Canonical URL: the subdomain when SITES_BASE is configured (e.g. caddisfly.app),
+    // else the /site/:id route (used in preview where the apex isn't wired yet).
+    const sitesBase = env.SITES_BASE || '';
+    const subdomainUrl = sitesBase ? `https://${subdomain}.${sitesBase}` : '';
+    const siteUrl = `${appOrigin}/site/${publicId}`;
+    const deployedUrl = subdomainUrl || siteUrl;
 
     // Persist for AI-builder projects (the refactor `projects` table has no
     // deployed_url column — returned but not stored; additive column is a later nicety).
@@ -132,7 +160,15 @@ export async function handleAIBuilderDeploy(ctx) {
       await updateProject(env.DB, regularProjectRow.id, { status: 'deployed' });
     }
 
-    return json({ success: true, message: 'Website published', deployed_url: deployedUrl, pages: pageCount });
+    return json({
+      success: true,
+      message: 'Website published',
+      deployed_url: deployedUrl,
+      subdomain,
+      subdomain_url: subdomainUrl || null,
+      site_url: siteUrl,
+      pages: pageCount,
+    });
   } catch (error) {
     console.error('Error deploying website:', error);
     return json({ success: false, error: 'Failed to deploy website', details: error.message }, 500);
