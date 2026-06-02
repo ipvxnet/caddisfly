@@ -33,7 +33,7 @@ function fmtDate(ts) {
   }
 }
 
-function pageShell(origin, inner) {
+function pageShell(origin, inner, headerOpts = {}) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,11 +69,17 @@ function pageShell(origin, inner) {
     .notice.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
     .muted-link{color:var(--muted);font-size:.88rem}
     .cont{background:linear-gradient(135deg,#eef2ff,#faf5ff);border:1px solid #e0e7ff;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .credits-hero{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;background:var(--grad);color:#fff;border-radius:18px;padding:1.6rem 1.7rem;margin-bottom:1.2rem;box-shadow:0 12px 32px rgba(118,75,162,.22)}
+    .credits-hero .ch-label{font-weight:800;font-size:.95rem;opacity:.92;letter-spacing:.01em}
+    .credits-hero .ch-bal{font-size:2.7rem;font-weight:900;line-height:1.05;letter-spacing:-1px}
+    .credits-hero .ch-bal small{font-size:1rem;font-weight:700;opacity:.85;margin-left:.35rem}
+    .credits-hero .ch-sub{font-size:.85rem;opacity:.9;margin-top:.25rem}
+    .credits-hero .btn{background:#fff;color:var(--p2)}
     @media (max-width:620px){.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  ${siteHeader('/pricing')}
+  ${siteHeader('/pricing', headerOpts)}
   <main><div class="bwrap">${inner}</div></main>
   ${siteFooter()}
 </body>
@@ -194,10 +200,21 @@ function dashboardView(email, account, query, env) {
       </div>`;
   }
 
-  // One-time AI credit top-ups (purchased credits never expire).
+  // One-time AI credit top-ups (purchased credits never expire). The balance
+  // leads the page (hero) so it's impossible to miss; packs sit right under it.
+  let creditsHero = '';
   let creditsBlock = '';
   if (configured) {
     const bal = (account && account.ai_credits_purchased) || 0;
+    creditsHero = `
+      <div class="credits-hero">
+        <div>
+          <div class="ch-label">✨ Caddi Credits</div>
+          <div class="ch-bal">${bal.toLocaleString()}<small>credits</small></div>
+          <div class="ch-sub">Never expire · spend on AI builds, edits &amp; images</div>
+        </div>
+        <a class="btn" href="#buy-credits">Buy more →</a>
+      </div>`;
     const packCard = (p) => `
       <div class="pcard">
         <h3>$${p.usd}</h3>
@@ -208,9 +225,9 @@ function dashboardView(email, account, query, env) {
         </form>
       </div>`;
     creditsBlock = `
-      <div class="panel">
-        <h2>Buy AI credits</h2>
-        <p class="sub" style="margin-bottom:1rem">A one-time top-up for when you need more AI mid-build — purchased credits never expire. Current balance: <strong>${bal.toLocaleString()}</strong> credits.</p>
+      <div class="panel" id="buy-credits">
+        <h2>Buy Caddi Credits</h2>
+        <p class="sub" style="margin-bottom:1rem">A one-time top-up for when you need more AI mid-build — purchased credits never expire (flat 50 credits / $1).</p>
         <div class="grid">${CREDIT_PACKS.map(packCard).join('')}</div>
       </div>`;
   }
@@ -221,6 +238,8 @@ function dashboardView(email, account, query, env) {
     ${noticeFor(query)}
     ${notConfigured}
     ${continueBlock}
+    ${creditsHero}
+    ${creditsBlock}
     <div class="panel">
       <h2>Current plan</h2>
       <div class="row"><span class="k">Plan</span><span class="v"><span class="pill">${tier.name}</span></span></div>
@@ -228,8 +247,7 @@ function dashboardView(email, account, query, env) {
       ${account && account.plan_interval ? `<div class="row"><span class="k">Billing</span><span class="v">${account.plan_interval === 'year' ? 'Annual' : 'Monthly'}</span></div>` : ''}
       ${periodRow}
     </div>
-    ${actions}
-    ${creditsBlock}`;
+    ${actions}`;
 }
 
 /** GET /billing */
@@ -240,7 +258,8 @@ export async function handleBilling(ctx) {
     return htmlResponse(pageShell(origin, signInView(query || {})));
   }
   const account = await getBillingAccount(env.DB, ctx.billingEmail);
-  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, query || {}, env)));
+  const headerOpts = isStripeConfigured(env) ? { credits: (account && account.ai_credits_purchased) || 0 } : {};
+  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, query || {}, env), headerOpts));
 }
 
 /** GET /billing/verify/:token — consume magic link, set session cookie. */

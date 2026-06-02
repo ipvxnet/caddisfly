@@ -81,21 +81,30 @@ export function baseCss() {
     .nav-links a:hover{color:var(--ink)}
     .nav-links a.active{color:var(--p2)}
     .nav .btn{padding:.55rem 1.05rem}
+    .credit-pill{display:inline-flex;align-items:center;gap:.3rem;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.4rem .85rem;font-weight:800;font-size:.9rem;color:var(--p2);line-height:1}
+    .credit-pill strong{font-weight:900}
+    .credit-pill:hover{border-color:var(--p1);color:var(--p1)}
     footer.site{border-top:1px solid var(--line);padding:2.2rem 0;color:var(--muted);font-size:.9rem;margin-top:2rem}
     .foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
     .foot .brand{font-size:1rem;color:var(--ink)}.foot .brand svg{width:24px;height:24px}
-    @media (max-width:820px){.nav-links a:not(.btn){display:none}}`;
+    @media (max-width:820px){.nav-links a:not(.btn):not(.credit-pill){display:none}}`;
 }
 
-/** Shared sticky header. activePath highlights the matching nav link. */
-export function siteHeader(activePath = '') {
+/** Shared sticky header. activePath highlights the matching nav link.
+ * opts.credits (number) renders a "✨ N" Caddi-Credits pill linking to /billing. */
+export function siteHeader(activePath = '', opts = {}) {
   const a = (path) => (activePath === path ? ' class="active"' : '');
+  const pill =
+    opts && opts.credits != null
+      ? `<a class="credit-pill" href="/billing" title="Your Caddi Credits — click to buy more">✨ <strong>${Number(opts.credits).toLocaleString()}</strong></a>`
+      : '';
   return `<header class="site"><div class="wrap nav">
     <a class="brand" href="/">${brandMark('m-hd')}<span>caddisfly<span class="ai">.ai</span></span></a>
     <nav class="nav-links">
       <a href="/#paths"${a('/#paths')}>How it works</a>
       <a href="/pricing"${a('/pricing')}>Pricing</a>
       <a href="/#features">Features</a>
+      ${pill}
       <a class="btn btn-primary" href="/ai-builder">Build with AI →</a>
     </nav>
   </div></header>`;
