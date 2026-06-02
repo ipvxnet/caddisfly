@@ -76,6 +76,25 @@ export async function upsertBillingAccount(db, email, fields = {}) {
   return getBillingAccount(db, email);
 }
 
+/**
+ * Add purchased AI credits to an account (atomic upsert). Creates the account
+ * at the default tier if it doesn't exist yet. Purchased credits never expire.
+ */
+export async function addPurchasedCredits(db, email, credits) {
+  const now = nowSec();
+  await db
+    .prepare(
+      `INSERT INTO billing_accounts (email, ai_credits_purchased, created_at, updated_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(email) DO UPDATE SET
+         ai_credits_purchased = ai_credits_purchased + excluded.ai_credits_purchased,
+         updated_at = excluded.updated_at`
+    )
+    .bind(email, credits, now, now)
+    .run();
+  return getBillingAccount(db, email);
+}
+
 // ---- magic links -----------------------------------------------------------
 
 /** Create a single-use magic-link token (15-min TTL) for an email. */

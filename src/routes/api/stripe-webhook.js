@@ -4,7 +4,7 @@
 import { jsonResponse } from '../../utils/response.js';
 import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
-import { upsertBillingAccount, getBillingAccountByCustomer } from '../../db/billing.js';
+import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits } from '../../db/billing.js';
 
 async function emailForSubscription(env, sub) {
   if (sub.metadata && sub.metadata.email) return sanitizeEmail(sub.metadata.email);
@@ -64,12 +64,26 @@ export async function handleStripeWebhook(ctx) {
           s.client_reference_id ||
           (s.customer_details && s.customer_details.email) ||
           (s.metadata && s.metadata.email);
-        if (email) {
-          await upsertBillingAccount(env.DB, sanitizeEmail(email), {
-            stripe_customer_id: s.customer,
-            stripe_subscription_id: s.subscription,
-          });
+        if (!email) break;
+        const emailNorm = sanitizeEmail(email);
+
+        // One-time AI credit top-up: add the purchased credits (never expire).
+        if (s.mode === 'payment' && s.metadata && s.metadata.type === 'credit_pack') {
+          const credits = parseInt(s.metadata.credits, 10);
+          if (Number.isFinite(credits) && credits > 0) {
+            await addPurchasedCredits(env.DB, emailNorm, credits);
+            if (s.customer) {
+              await upsertBillingAccount(env.DB, emailNorm, { stripe_customer_id: s.customer });
+            }
+          }
+          break;
         }
+
+        // Subscription checkout: link the Stripe customer + subscription.
+        await upsertBillingAccount(env.DB, emailNorm, {
+          stripe_customer_id: s.customer,
+          stripe_subscription_id: s.subscription,
+        });
         break;
       }
       case 'customer.subscription.created':

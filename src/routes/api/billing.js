@@ -11,6 +11,8 @@ import {
   priceIdFor,
   createCheckoutSession,
   createPortalSession,
+  createCreditCheckoutSession,
+  creditPackFor,
 } from '../../utils/stripe.js';
 
 async function readForm(request) {
@@ -76,6 +78,34 @@ export async function handleBillingCheckout(ctx) {
     return redirect(session.url, 303);
   } catch (err) {
     console.error('Checkout error:', err);
+    return redirect('/billing?error=' + encodeURIComponent('Could not start checkout. Please try again.'), 303);
+  }
+}
+
+/** POST /api/billing/credits/checkout — one-time payment for an AI credit pack. */
+export async function handleCreditCheckout(ctx) {
+  const { env, request, url } = ctx;
+  if (!ctx.billingEmail) return redirect('/billing', 303);
+  if (!isStripeConfigured(env)) {
+    return redirect('/billing?error=' + encodeURIComponent('Billing is not enabled yet.'), 303);
+  }
+  const body = await readForm(request);
+  const pack = creditPackFor(body.pack);
+  if (!pack) {
+    return redirect('/billing?error=' + encodeURIComponent('That credit pack is unavailable.'), 303);
+  }
+  try {
+    const account = await getBillingAccount(env.DB, ctx.billingEmail);
+    const session = await createCreditCheckoutSession(env, {
+      email: ctx.billingEmail,
+      pack,
+      customerId: account && account.stripe_customer_id ? account.stripe_customer_id : undefined,
+      successUrl: `${url.origin}/billing?credits=success`,
+      cancelUrl: `${url.origin}/billing?credits=cancelled`,
+    });
+    return redirect(session.url, 303);
+  } catch (err) {
+    console.error('Credit checkout error:', err);
     return redirect('/billing?error=' + encodeURIComponent('Could not start checkout. Please try again.'), 303);
   }
 }

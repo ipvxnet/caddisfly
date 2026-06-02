@@ -12,7 +12,7 @@ import {
   deleteBillingSession,
   BILLING_COOKIE,
 } from '../../db/billing.js';
-import { isStripeConfigured } from '../../utils/stripe.js';
+import { isStripeConfigured, CREDIT_PACKS } from '../../utils/stripe.js';
 
 const NEXT_COOKIE = 'cf_billing_next';
 
@@ -86,6 +86,12 @@ function noticeFor(query) {
       return `<div class="notice ok">✓ Subscription active — thank you! It may take a few seconds to reflect below.</div>`;
     case 'cancelled':
       return `<div class="notice warn">Checkout cancelled. No charge was made.</div>`;
+  }
+  switch (query.credits) {
+    case 'success':
+      return `<div class="notice ok">✓ Credits purchased — thank you! Your balance updates below in a few seconds.</div>`;
+    case 'cancelled':
+      return `<div class="notice warn">Credit purchase cancelled. No charge was made.</div>`;
   }
   if (query.sent) return `<div class="notice ok">✓ Check your email for a sign-in link (expires in 15 min).</div>`;
   if (query.error) return `<div class="notice err">${escapeHtml(query.error)}</div>`;
@@ -188,6 +194,27 @@ function dashboardView(email, account, query, env) {
       </div>`;
   }
 
+  // One-time AI credit top-ups (purchased credits never expire).
+  let creditsBlock = '';
+  if (configured) {
+    const bal = (account && account.ai_credits_purchased) || 0;
+    const packCard = (p) => `
+      <div class="pcard">
+        <h3>$${p.usd}</h3>
+        <div class="pr">${p.credits.toLocaleString()} credits</div>
+        <form method="POST" action="/api/billing/credits/checkout">
+          <input type="hidden" name="pack" value="${p.usd}">
+          <button class="btn btn-ghost" type="submit">Buy</button>
+        </form>
+      </div>`;
+    creditsBlock = `
+      <div class="panel">
+        <h2>Buy AI credits</h2>
+        <p class="sub" style="margin-bottom:1rem">A one-time top-up for when you need more AI mid-build — purchased credits never expire. Current balance: <strong>${bal.toLocaleString()}</strong> credits.</p>
+        <div class="grid">${CREDIT_PACKS.map(packCard).join('')}</div>
+      </div>`;
+  }
+
   return `
     <h1>Your billing</h1>
     <p class="sub">Signed in as <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
@@ -201,7 +228,8 @@ function dashboardView(email, account, query, env) {
       ${account && account.plan_interval ? `<div class="row"><span class="k">Billing</span><span class="v">${account.plan_interval === 'year' ? 'Annual' : 'Monthly'}</span></div>` : ''}
       ${periodRow}
     </div>
-    ${actions}`;
+    ${actions}
+    ${creditsBlock}`;
 }
 
 /** GET /billing */

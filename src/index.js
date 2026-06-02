@@ -45,7 +45,7 @@ import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
 
 // Billing (Stripe + magic-link) route handlers
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
-import { handleBillingLogin, handleBillingCheckout, handleBillingPortal } from './routes/api/billing.js';
+import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleCreditCheckout } from './routes/api/billing.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
 
@@ -116,6 +116,7 @@ router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
 // Billing API
 router.post('/api/billing/login', handleBillingLogin);
 router.post('/api/billing/checkout', handleBillingCheckout, [billingAuth]);
+router.post('/api/billing/credits/checkout', handleCreditCheckout, [billingAuth]);
 router.post('/api/billing/portal', handleBillingPortal, [billingAuth]);
 router.post('/api/stripe/webhook', handleStripeWebhook);
 

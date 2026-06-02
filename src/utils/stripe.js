@@ -105,6 +105,47 @@ export async function createCheckoutSession(env, { email, priceId, successUrl, c
   return stripeRequest(env, '/checkout/sessions', body);
 }
 
+// One-time AI credit top-up packs (flat 50 credits per $1; purchased credits
+// never expire). Keyed by USD amount so the route can validate the requested pack.
+export const CREDIT_PACKS = [5, 10, 20, 30, 50, 100].map((usd) => ({ usd, credits: usd * 50 }));
+
+/** Look up a credit pack by its dollar amount, or null. */
+export function creditPackFor(usd) {
+  const n = Number(usd);
+  return CREDIT_PACKS.find((p) => p.usd === n) || null;
+}
+
+/**
+ * Create a one-time (mode=payment) Checkout Session for an AI credit pack.
+ * Uses inline price_data so packs live in code, not the Stripe catalog. The
+ * webhook reads metadata.{type,email,credits} to credit the account.
+ * @returns {Promise<{id:string,url:string}>}
+ */
+export async function createCreditCheckoutSession(env, { email, pack, successUrl, cancelUrl, customerId }) {
+  const meta = { type: 'credit_pack', email, credits: String(pack.credits) };
+  const body = {
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          unit_amount: pack.usd * 100,
+          product_data: { name: `${pack.credits.toLocaleString()} AI credits` },
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    client_reference_id: email,
+    metadata: meta,
+    payment_intent_data: { metadata: meta },
+  };
+  if (customerId) body.customer = customerId;
+  else body.customer_email = email;
+  return stripeRequest(env, '/checkout/sessions', body);
+}
+
 /**
  * Create a Billing Portal session so a customer can manage/cancel their plan.
  * @returns {Promise<{id:string,url:string}>}
