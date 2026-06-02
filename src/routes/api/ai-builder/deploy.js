@@ -109,6 +109,7 @@ export async function handleAIBuilderDeploy(ctx) {
         previewBase: `/site/${publicId}`,
         preordered: true,
         hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
+        trackId: publicId, // cookieless analytics beacon on published pages
       });
       await uploadToR2(env.STORAGE, `published/${publicId}/${page.slug}.html`, html, 'text/html; charset=utf-8');
       pageCount++;

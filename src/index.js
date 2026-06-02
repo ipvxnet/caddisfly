@@ -50,6 +50,8 @@ import { handleBilling, handleBillingVerify, handleBillingLogout } from './route
 import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleCreditCheckout } from './routes/api/billing.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
+import { handleTrack } from './routes/api/track.js';
+import { handleSiteAnalytics } from './routes/public/analytics.js';
 
 // Initialize router
 const router = new Router();
@@ -83,6 +85,7 @@ router.get('/ai-builder', handleAIBuilderLanding);
 router.get('/ai-builder/chat/:project_id', handleAIBuilderChat);
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize);
+router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
 router.get('/site/:project_id', handlePublishedSite);
@@ -96,6 +99,9 @@ router.get('/billing/logout', handleBillingLogout);
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
 router.post('/api/preview/manual/:token', handleManualProfile);
+
+// Analytics beacon (public, cookieless)
+router.post('/api/track', handleTrack);
 
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);
