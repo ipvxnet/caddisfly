@@ -105,7 +105,8 @@ export async function handleStripeWebhook(ctx) {
         }
         break;
       }
-      case 'invoice.paid': {
+      case 'invoice.paid':
+      case 'invoice.payment_succeeded': {
         // Renewal (or first) payment → reset the monthly AI-credit allotment.
         const inv = event.data.object;
         let email = null;
