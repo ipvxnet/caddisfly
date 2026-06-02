@@ -1,0 +1,112 @@
+// AI credit ledger: monthly per-tier allotments + persistent purchased balance.
+// Spending draws down the monthly allotment first, then purchased credits.
+// Enforced in production; in preview/dev it never blocks (so testing isn't
+// throttled) but still decrements so the effect is visible.
+
+import {
+  getBillingAccount,
+  ensureBillingAccount,
+  applyCreditPeriodReset,
+  spendCredits,
+} from '../db/billing.js';
+
+// Monthly allotment per tier (see memory/pricing.md).
+export const MONTHLY_CREDITS = { free_trial: 50, starter: 500, pro: 2000, agency: 8000 };
+
+// Cost per metered AI action (indicative; tune to measured per-call spend).
+export const CREDIT_COSTS = { generate: 20, image: 5, text_edit: 1, enrich: 10 };
+
+// Published-site cap per tier (Agency = unlimited).
+export const PUBLISH_LIMITS = { free_trial: 1, starter: 3, pro: 15, agency: Infinity };
+
+/** Monthly allotment for a tier (defaults to free). */
+export function monthlyAllotment(tier) {
+  return MONTHLY_CREDITS[tier] != null ? MONTHLY_CREDITS[tier] : MONTHLY_CREDITS.free_trial;
+}
+
+/**
+ * Resolve an account's current credit state, ensuring the row exists and the
+ * monthly window is current. Returns { tier, allotment, used, purchased,
+ * monthlyRemaining, totalRemaining, resetAt }.
+ */
+export async function getCreditState(db, email) {
+  if (!email) {
+    const allotment = MONTHLY_CREDITS.free_trial;
+    return { tier: 'free_trial', allotment, used: 0, purchased: 0, monthlyRemaining: allotment, totalRemaining: allotment, resetAt: null };
+  }
+  await ensureBillingAccount(db, email);
+  await applyCreditPeriodReset(db, email);
+  const acct = await getBillingAccount(db, email);
+  const tier = (acct && acct.pricing_tier) || 'free_trial';
+  const allotment = monthlyAllotment(tier);
+  const used = (acct && acct.ai_credits_used) || 0;
+  const purchased = (acct && acct.ai_credits_purchased) || 0;
+  const monthlyRemaining = Math.max(0, allotment - used);
+  return {
+    tier,
+    allotment,
+    used,
+    purchased,
+    monthlyRemaining,
+    totalRemaining: monthlyRemaining + purchased,
+    resetAt: acct ? acct.credits_reset_at : null,
+  };
+}
+
+/** Whether credits are hard-enforced (production only). */
+export function creditsEnforced(env) {
+  return !!env && env.ENVIRONMENT === 'production';
+}
+
+/**
+ * Charge credits for an action. Spends monthly allotment first, then purchased.
+ * - Production: if the balance is insufficient, charges NOTHING and returns
+ *   { allowed:false } so the caller can block + prompt to buy/upgrade.
+ * - Preview/dev: never blocks — charges what's available (clamped) so the
+ *   decrement is visible during testing — and returns { allowed:true }.
+ * @returns {Promise<{allowed:boolean, charged:number, state:object}>}
+ */
+export async function chargeCredits(env, db, email, amount) {
+  const state = await getCreditState(db, email);
+  if (!email || amount <= 0) return { allowed: true, charged: 0, state };
+
+  const available = state.totalRemaining;
+  let toCharge = amount;
+  if (available < amount) {
+    if (creditsEnforced(env)) return { allowed: false, charged: 0, state };
+    toCharge = available; // preview: clamp, never block
+  }
+
+  const fromMonthly = Math.min(toCharge, state.monthlyRemaining);
+  const fromPurchased = toCharge - fromMonthly;
+  if (toCharge > 0) await spendCredits(db, email, fromMonthly, fromPurchased);
+
+  const newState = await getCreditState(db, email);
+  return { allowed: true, charged: toCharge, state: newState };
+}
+
+/**
+ * Pre-flight affordability check (no charge). True if the action may proceed.
+ * Always true in preview/dev. Use before starting expensive work.
+ */
+export async function canAfford(env, db, email, amount) {
+  if (!creditsEnforced(env)) return { ok: true, state: await getCreditState(db, email) };
+  const state = await getCreditState(db, email);
+  return { ok: state.totalRemaining >= amount, state };
+}
+
+/** Friendly error payload when a user can't afford an action (HTTP 402). */
+export function formatCreditError(state, actionLabel = 'this action') {
+  return {
+    success: false,
+    error: `Not enough AI credits for ${actionLabel}. You have ${state.totalRemaining} credit${state.totalRemaining === 1 ? '' : 's'} left.`,
+    credits: {
+      tier: state.tier,
+      monthly_remaining: state.monthlyRemaining,
+      purchased: state.purchased,
+      total_remaining: state.totalRemaining,
+    },
+    upgrade_message: 'Buy more credits or upgrade your plan to keep going.',
+    billing_url: '/billing',
+  };
+}

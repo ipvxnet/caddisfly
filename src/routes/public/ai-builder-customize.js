@@ -10,6 +10,7 @@ import { generateColorPicker } from '../../components/color-picker.js';
 import { generateTemplatePicker } from '../../components/template-picker.js';
 import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
+import { getCreditState } from '../../utils/credits.js';
 
 /**
  * Handle customization interface
@@ -24,11 +25,12 @@ export async function handleAIBuilderCustomize(ctx) {
 
     // Try to load from ai_projects first, then regular projects
     let project = await getAIProjectByProjectId(env.DB, project_id);
-    let config, projectKey, isAIBuilder = true;
+    let config, projectKey, isAIBuilder = true, customerEmail;
 
     if (project) {
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
       projectKey = { aiProjectId: project.id };
+      customerEmail = project.customer_email;
     } else {
       // Regular refactoring project
       const regularProject = await getProjectByPreviewId(env.DB, project_id);
@@ -50,6 +52,7 @@ export async function handleAIBuilderCustomize(ctx) {
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
       projectKey = { projectId: regularProject.id };
       isAIBuilder = false;
+      customerEmail = regularProject.customer_email;
     }
 
     if (!config) {
@@ -58,6 +61,9 @@ export async function handleAIBuilderCustomize(ctx) {
         headers: { 'Content-Type': 'text/html' },
       });
     }
+
+    // Live AI-credit balance for the header pill (total = monthly remaining + purchased).
+    const creditState = await getCreditState(env.DB, customerEmail);
 
     // Multi-page: ensure pages exist, resolve the page being edited (?page=slug,
     // else home), and split sections into site-wide (header/footer) + this page's.
@@ -453,12 +459,15 @@ export async function handleAIBuilderCustomize(ctx) {
         max-height: none;
       }
     }
+    .credit-chip{display:inline-flex;align-items:center;gap:.3rem;background:#f3f0ff;border:1px solid #e0d8ff;border-radius:999px;padding:.45rem .8rem;font-weight:800;color:#6b46c1;text-decoration:none;font-size:.9rem}
+    .credit-chip:hover{background:#ebe5ff}
   </style>
 </head>
 <body>
   <div class="header">
     <h1>${project.project_name || 'Your Website'}</h1>
     <div class="header-actions">
+      <a href="/billing" class="credit-chip" title="Caddi Credits — ${creditState.monthlyRemaining.toLocaleString()} monthly + ${creditState.purchased.toLocaleString()} purchased. Click to buy more.">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">View Full Preview</a>
       <button class="btn btn-primary" onclick="deployWebsite()">Deploy Website</button>
     </div>

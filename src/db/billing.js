@@ -6,6 +6,7 @@ import { generateToken } from '../utils/crypto.js';
 
 const MAGIC_LINK_TTL_SECONDS = 15 * 60; // 15 minutes
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
+const MONTH_SECONDS = 30 * 24 * 60 * 60; // monthly credit period
 
 function nowSec() {
   return Math.floor(Date.now() / 1000);
@@ -74,6 +75,83 @@ export async function upsertBillingAccount(db, email, fields = {}) {
     .bind(...updates.map((c) => fields[c]), now, email)
     .run();
   return getBillingAccount(db, email);
+}
+
+/** Ensure a billing account row exists for an email (default free_trial tier). */
+export async function ensureBillingAccount(db, email) {
+  const now = nowSec();
+  await db
+    .prepare('INSERT OR IGNORE INTO billing_accounts (email, created_at, updated_at) VALUES (?, ?, ?)')
+    .bind(email, now, now)
+    .run();
+  return getBillingAccount(db, email);
+}
+
+/**
+ * Roll the monthly credit window forward if it has elapsed (or initialize it).
+ * On first touch sets credits_reset_at = now + 1 month. Once past, zeroes
+ * ai_credits_used and advances credits_reset_at to the next future boundary.
+ * Free users have no Stripe invoice, so this is their reset mechanism; paid
+ * users also get an invoice.paid reset (both converge).
+ */
+export async function applyCreditPeriodReset(db, email) {
+  const now = nowSec();
+  const acct = await getBillingAccount(db, email);
+  if (!acct) return;
+  if (acct.credits_reset_at == null) {
+    await db
+      .prepare('UPDATE billing_accounts SET credits_reset_at = ?, updated_at = ? WHERE email = ?')
+      .bind(now + MONTH_SECONDS, now, email)
+      .run();
+  } else if (acct.credits_reset_at <= now) {
+    let next = acct.credits_reset_at;
+    while (next <= now) next += MONTH_SECONDS;
+    await db
+      .prepare('UPDATE billing_accounts SET ai_credits_used = 0, credits_reset_at = ?, updated_at = ? WHERE email = ?')
+      .bind(next, now, email)
+      .run();
+  }
+}
+
+/** Spend credits: increment monthly used and decrement the purchased balance. */
+export async function spendCredits(db, email, fromMonthly, fromPurchased) {
+  const now = nowSec();
+  await db
+    .prepare(
+      `UPDATE billing_accounts
+       SET ai_credits_used = ai_credits_used + ?,
+           ai_credits_purchased = ai_credits_purchased - ?,
+           updated_at = ?
+       WHERE email = ?`
+    )
+    .bind(fromMonthly, fromPurchased, now, email)
+    .run();
+}
+
+/** Reset the monthly allotment (invoice.paid). Sets used=0 and the next reset. */
+export async function resetMonthlyCredits(db, email, resetAt) {
+  const now = nowSec();
+  await db
+    .prepare('UPDATE billing_accounts SET ai_credits_used = 0, credits_reset_at = ?, updated_at = ? WHERE email = ?')
+    .bind(resetAt, now, email)
+    .run();
+}
+
+/**
+ * Count DISTINCT published sites for an email across both bridges (AI builder
+ * ai_projects + refactor projects), excluding a given public id (the site
+ * being (re)published shouldn't count against its own cap).
+ */
+export async function countPublishedSites(db, email, excludePublicId = '') {
+  const row = await db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM ai_projects WHERE customer_email = ?1 AND status = 'deployed' AND project_id != ?2)
+       + (SELECT COUNT(*) FROM projects     WHERE customer_email = ?1 AND status = 'deployed' AND preview_id != ?2) AS n`
+    )
+    .bind(email, excludePublicId)
+    .first();
+  return (row && row.n) || 0;
 }
 
 /**

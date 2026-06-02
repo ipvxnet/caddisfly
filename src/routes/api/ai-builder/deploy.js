@@ -2,12 +2,15 @@
 // Publish a (multi-page) site: render each page to R2 and serve it at /site/:id.
 
 import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
-import { getProjectByPreviewId } from '../../../db/projects.js';
+import { getProjectByPreviewId, updateProject } from '../../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../../db/ai-config.js';
 import { ensurePagesForProject, getPagesByProject } from '../../../db/ai-pages.js';
 import { getSiteSections, getBodySectionsForPage, getHomeBodySections } from '../../../db/ai-sections.js';
 import { assemblePage } from '../../../utils/ai-page-assembler.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
+import { getUserTier } from '../../../utils/rate-limiter.js';
+import { countPublishedSites } from '../../../db/billing.js';
+import { PUBLISH_LIMITS } from '../../../utils/credits.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -26,15 +29,17 @@ export async function handleAIBuilderDeploy(ctx) {
     // Resolve project (AI builder first, else refactoring), build the project key,
     // config, and a view object for the page <title>.
     const aiProject = await getAIProjectByProjectId(env.DB, publicId);
-    let projectKey, config, projectView;
+    let projectKey, config, projectView, email, regularProjectRow = null;
 
     if (aiProject) {
       projectKey = { aiProjectId: aiProject.id };
       config = await getWebsiteConfigByAIProjectId(env.DB, aiProject.id);
       projectView = { project_name: aiProject.project_name || 'My Website', project_id: publicId, id: aiProject.id };
+      email = aiProject.customer_email;
     } else {
       const regularProject = await getProjectByPreviewId(env.DB, publicId);
       if (!regularProject) return json({ success: false, error: 'Project not found' }, 404);
+      regularProjectRow = regularProject;
       let businessName = regularProject.website_url;
       try {
         const profile = JSON.parse(regularProject.company_profile_json || '{}');
@@ -43,9 +48,32 @@ export async function handleAIBuilderDeploy(ctx) {
       projectKey = { projectId: regularProject.id };
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
       projectView = { project_name: businessName, project_id: publicId, id: regularProject.id };
+      email = regularProject.customer_email;
     }
 
     if (!config) return json({ success: false, error: 'Website configuration not found' }, 400);
+
+    // Tier drives the publish-count cap + the "Built with Caddisfly" badge.
+    const tier = await getUserTier(env.DB, email);
+    const publishLimit = PUBLISH_LIMITS[tier] != null ? PUBLISH_LIMITS[tier] : 1;
+
+    // Publish-count gate (enforced in production only; this site is excluded
+    // from the count so re-publishing an already-live site is always allowed).
+    if (env.ENVIRONMENT === 'production' && Number.isFinite(publishLimit)) {
+      const alreadyPublished = await countPublishedSites(env.DB, email, publicId);
+      if (alreadyPublished >= publishLimit) {
+        return json(
+          {
+            success: false,
+            error: `You've reached your plan's published-site limit (${publishLimit} on ${tier.replace('_', ' ')}). Upgrade to publish more.`,
+            published: alreadyPublished,
+            limit: publishLimit,
+            billing_url: '/billing',
+          },
+          402
+        );
+      }
+    }
 
     await ensurePagesForProject(env.DB, projectKey);
     const pages = await getPagesByProject(env.DB, projectKey);
@@ -80,6 +108,7 @@ export async function handleAIBuilderDeploy(ctx) {
         currentSlug: page.slug,
         previewBase: `/site/${publicId}`,
         preordered: true,
+        hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
       });
       await uploadToR2(env.STORAGE, `published/${publicId}/${page.slug}.html`, html, 'text/html; charset=utf-8');
       pageCount++;
@@ -97,6 +126,9 @@ export async function handleAIBuilderDeploy(ctx) {
         deployed_url: deployedUrl,
         deployed_at: Math.floor(Date.now() / 1000),
       });
+    } else if (regularProjectRow) {
+      // Mark refactor projects deployed too so the publish-count cap is consistent.
+      await updateProject(env.DB, regularProjectRow.id, { status: 'deployed' });
     }
 
     return json({ success: true, message: 'Website published', deployed_url: deployedUrl, pages: pageCount });

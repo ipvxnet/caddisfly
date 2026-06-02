@@ -15,6 +15,7 @@
 
 import { getProjectByVerificationToken, updateProject } from '../../db/projects.js';
 import { getUserTier, checkEnrichmentLimit, formatRateLimitError, limitsDisabled, unlimited } from '../../utils/rate-limiter.js';
+import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../utils/credits.js';
 import { enrichBusiness } from '../../utils/google-places.js';
 import { buildProfile } from '../../utils/company-profile.js';
 import { generateAndStore } from '../../utils/template-generation.js';
@@ -63,6 +64,15 @@ export async function handleVerify(ctx) {
     return htmlResponse(statusPage('Daily limit reached', msg), 429);
   }
 
+  // AI credit pre-check (enforced in production; non-blocking in preview/dev).
+  const afford = await canAfford(env, env.DB, project.customer_email, CREDIT_COSTS.enrich);
+  if (!afford.ok) {
+    return htmlResponse(
+      statusPage('Out of AI credits', formatCreditError(afford.state, 'business enrichment').error + ' Add credits at /billing to continue.'),
+      402
+    );
+  }
+
   // Mark verified + running BEFORE the paid call so the attempt is counted and
   // a quick double-click lands on the "building" page instead of paying twice.
   await updateProject(env.DB, project.id, {
@@ -93,6 +103,9 @@ export async function handleVerify(ctx) {
       500
     );
   }
+
+  // Charge AI credits for the paid enrichment (the Google call succeeded).
+  await chargeCredits(env, env.DB, project.customer_email, CREDIT_COSTS.enrich);
 
   if (!places.found) {
     await updateProject(env.DB, project.id, { enrichment_status: 'no_match' });

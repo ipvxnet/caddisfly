@@ -10,6 +10,7 @@ import { buildEditPrompt, sanitizeProposal, mergePatch, ensureItemIcons } from '
 import { generateToken } from '../../../utils/crypto.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier, checkAIGenerationLimit, limitsDisabled, formatRateLimitError } from '../../../utils/rate-limiter.js';
+import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 
 const IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
 
@@ -94,11 +95,20 @@ export async function handleAIEditApply(ctx) {
     const actions = Array.isArray(body.actions) ? body.actions : [];
     const imageActions = actions.filter((a) => a && a.type === 'generate_image' && a.prompt && a.target);
 
+    // Credit cost: 1 for the text edit + 5 per generated image.
+    const editCost = CREDIT_COSTS.text_edit + imageActions.length * CREDIT_COSTS.image;
+
     // Rate-limit the costly path (image generation), bypassed in preview/dev.
     if (imageActions.length && !limitsDisabled(env)) {
       const tier = await getUserTier(env.DB, email);
       const check = await checkAIGenerationLimit(env.DB, email, tier);
       if (!check.allowed) return json(formatRateLimitError(check, 'generations'), 429);
+    }
+
+    // AI credit pre-check (enforced in production; non-blocking in preview/dev).
+    const afford = await canAfford(env, env.DB, email, editCost);
+    if (!afford.ok) {
+      return json(formatCreditError(afford.state, imageActions.length ? 'an AI image edit' : 'an AI edit'), 402);
     }
 
     // Generate images → store to R2 → write the served URL into the patch.
@@ -124,6 +134,9 @@ export async function handleAIEditApply(ctx) {
     if (body.set_variant && typeof body.set_variant === 'string') {
       await updateSection(env.DB, section.id, { html_template: body.set_variant });
     }
+
+    // Charge AI credits for the edit (after success).
+    await chargeCredits(env, env.DB, email, editCost);
 
     return json({ success: true, content: merged });
   } catch (error) {

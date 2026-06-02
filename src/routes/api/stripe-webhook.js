@@ -4,7 +4,9 @@
 import { jsonResponse } from '../../utils/response.js';
 import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
-import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits } from '../../db/billing.js';
+import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
+
+const MONTH_SECONDS = 30 * 24 * 60 * 60;
 
 async function emailForSubscription(env, sub) {
   if (sub.metadata && sub.metadata.email) return sanitizeEmail(sub.metadata.email);
@@ -100,6 +102,19 @@ export async function handleStripeWebhook(ctx) {
             subscription_status: 'canceled',
             cancel_at_period_end: 0,
           });
+        }
+        break;
+      }
+      case 'invoice.paid': {
+        // Renewal (or first) payment → reset the monthly AI-credit allotment.
+        const inv = event.data.object;
+        let email = null;
+        if (inv.customer) {
+          const acct = await getBillingAccountByCustomer(env.DB, inv.customer);
+          if (acct) email = acct.email;
+        }
+        if (email) {
+          await resetMonthlyCredits(env.DB, email, Math.floor(Date.now() / 1000) + MONTH_SECONDS);
         }
         break;
       }

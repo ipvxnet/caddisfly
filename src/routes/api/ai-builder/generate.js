@@ -10,6 +10,7 @@ import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-co
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
 import { getFontPairing } from '../../../utils/ai-prompts.js';
 import { checkAIGenerationLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
+import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { inferIndustry, paletteFor, imageKeywordsFor } from '../../../utils/industry-style.js';
 import { getRecipe, recipeVariant } from '../../../utils/industry-recipe.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
@@ -56,6 +57,15 @@ export async function handleAIBuilderGenerate(ctx) {
           headers: { 'Content-Type': 'application/json' },
         }
       );
+    }
+
+    // AI credit pre-check (enforced in production; non-blocking in preview/dev)
+    const afford = await canAfford(env, env.DB, project.customer_email, CREDIT_COSTS.generate);
+    if (!afford.ok) {
+      return new Response(JSON.stringify(formatCreditError(afford.state, 'a website generation')), {
+        status: 402,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Check if conversation is complete
@@ -217,6 +227,9 @@ export async function handleAIBuilderGenerate(ctx) {
     await updateAIProject(env.DB, project.id, {
       status: 'preview_ready',
     });
+
+    // Charge AI credits for the generation (after success)
+    await chargeCredits(env, env.DB, project.customer_email, CREDIT_COSTS.generate);
 
     return new Response(
       JSON.stringify({

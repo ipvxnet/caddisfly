@@ -13,6 +13,7 @@ import {
   BILLING_COOKIE,
 } from '../../db/billing.js';
 import { isStripeConfigured, CREDIT_PACKS } from '../../utils/stripe.js';
+import { getCreditState } from '../../utils/credits.js';
 
 const NEXT_COOKIE = 'cf_billing_next';
 
@@ -131,7 +132,7 @@ function signInView(query) {
     <p class="muted-link">Use the same email you used to build your site so your plan applies to it.</p>`;
 }
 
-function dashboardView(email, account, query, env) {
+function dashboardView(email, account, creditState, query, env) {
   const tierKey = (account && account.pricing_tier) || 'free_trial';
   const tier = TIERS[tierKey] || TIERS.free_trial;
   const status = (account && account.subscription_status) || (tierKey === 'free_trial' ? 'free' : '—');
@@ -205,13 +206,14 @@ function dashboardView(email, account, query, env) {
   let creditsHero = '';
   let creditsBlock = '';
   if (configured) {
-    const bal = (account && account.ai_credits_purchased) || 0;
+    const cs = creditState || { totalRemaining: 0, monthlyRemaining: 0, allotment: 0, purchased: 0, resetAt: null };
+    const resetTxt = cs.resetAt ? ` · monthly resets ${fmtDate(cs.resetAt)}` : '';
     creditsHero = `
       <div class="credits-hero">
         <div>
           <div class="ch-label">✨ Caddi Credits</div>
-          <div class="ch-bal">${bal.toLocaleString()}<small>credits</small></div>
-          <div class="ch-sub">Never expire · spend on AI builds, edits &amp; images</div>
+          <div class="ch-bal">${cs.totalRemaining.toLocaleString()}<small>available</small></div>
+          <div class="ch-sub">${cs.monthlyRemaining.toLocaleString()} of ${cs.allotment.toLocaleString()} monthly + ${cs.purchased.toLocaleString()} purchased${resetTxt}</div>
         </div>
         <a class="btn" href="#buy-credits">Buy more →</a>
       </div>`;
@@ -257,9 +259,12 @@ export async function handleBilling(ctx) {
   if (!ctx.billingEmail) {
     return htmlResponse(pageShell(origin, signInView(query || {})));
   }
+  const configured = isStripeConfigured(env);
+  // getCreditState ensures the account row + rolls the monthly window first.
+  const creditState = configured ? await getCreditState(env.DB, ctx.billingEmail) : null;
   const account = await getBillingAccount(env.DB, ctx.billingEmail);
-  const headerOpts = isStripeConfigured(env) ? { credits: (account && account.ai_credits_purchased) || 0 } : {};
-  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, query || {}, env), headerOpts));
+  const headerOpts = creditState ? { credits: creditState.totalRemaining } : {};
+  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, creditState, query || {}, env), headerOpts));
 }
 
 /** GET /billing/verify/:token — consume magic link, set session cookie. */
