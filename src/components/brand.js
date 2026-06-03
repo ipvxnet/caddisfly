@@ -105,6 +105,7 @@ export function siteHeader(activePath = '', opts = {}) {
       <a href="/#paths"${a('/#paths')}>How it works</a>
       <a href="/pricing"${a('/pricing')}>Pricing</a>
       <a href="/#features">Features</a>
+      <a href="/dashboard"${a('/dashboard')}>Dashboard</a>
       ${pill}
       <a class="btn btn-primary" href="/ai-builder">Build with AI →</a>
     </nav>

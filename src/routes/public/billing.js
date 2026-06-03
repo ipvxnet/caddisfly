@@ -113,7 +113,9 @@ function escapeHtml(s) {
 function signInView(query) {
   const plan = query.plan && UPGRADE_PLANS.includes(query.plan) ? query.plan : '';
   const interval = query.interval === 'yr' ? 'yr' : 'mo';
-  const next = plan ? `/billing?plan=${plan}&interval=${interval}` : '/billing';
+  const next = plan
+    ? `/billing?plan=${plan}&interval=${interval}`
+    : query.next === '/dashboard' ? '/dashboard' : '/billing';
   const intent = plan
     ? `<p class="sub">Sign in to continue to <strong>${TIERS[plan].name}</strong> checkout. We'll email you a one-time link — no password.</p>`
     : `<p class="sub">Enter your email and we'll send a one-time sign-in link — no password needed.</p>`;
@@ -282,7 +284,7 @@ export async function handleBillingVerify(ctx) {
   const nextCookie = cookies.find((c) => c.startsWith(`${NEXT_COOKIE}=`));
   if (nextCookie) {
     const val = decodeURIComponent(nextCookie.slice(NEXT_COOKIE.length + 1));
-    if (val.startsWith('/billing')) dest = val;
+    if (val.startsWith('/billing') || val.startsWith('/dashboard')) dest = val;
   }
 
   let res = redirect(dest, 303);

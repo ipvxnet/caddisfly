@@ -88,7 +88,7 @@ export async function handleDashboard(ctx) {
   const { env, url } = ctx;
   const origin = url.origin;
   const email = ctx.billingEmail;
-  if (!email) return redirect('/billing');
+  if (!email) return redirect('/billing?next=/dashboard');
 
   // Own sites.
   const [aiRows, refactorRes] = await Promise.all([

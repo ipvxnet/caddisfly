@@ -187,6 +187,7 @@ export async function handleLanding(ctx) {
         <a href="#paths">How it works</a>
         <a href="/pricing">Pricing</a>
         <a href="#features">Features</a>
+        <a href="/dashboard">Dashboard</a>
         <a class="btn btn-primary" href="/ai-builder">Build with AI →</a>
       </nav>
     </div>
