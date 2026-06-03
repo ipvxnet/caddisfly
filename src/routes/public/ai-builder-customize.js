@@ -30,6 +30,7 @@ export async function handleAIBuilderCustomize(ctx) {
     let config, projectKey, isAIBuilder = true, customerEmail;
 
     let currentSubdomain;
+    let siteSubtitle = '';
     if (project) {
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
       projectKey = { aiProjectId: project.id };
@@ -46,10 +47,21 @@ export async function handleAIBuilderCustomize(ctx) {
         });
       }
 
+      // Title = the real business name (from the stored profile); show the
+      // original site URL as a subtitle. Fall back to the URL if no name.
+      let businessName = regularProject.website_url;
+      try {
+        const profile = JSON.parse(regularProject.company_profile_json || '{}');
+        if (profile && profile.name) businessName = profile.name;
+      } catch {
+        // keep URL fallback
+      }
+      siteSubtitle = regularProject.website_url || '';
+
       // Convert regular project to AI project format for rendering
       project = {
         project_id: regularProject.preview_id,
-        project_name: regularProject.website_url,
+        project_name: businessName,
         id: regularProject.id,
       };
 
@@ -198,7 +210,15 @@ export async function handleAIBuilderCustomize(ctx) {
     .header h1 {
       font-size: 1.5rem;
       color: #1a202c;
+      margin: 0;
     }
+    .header .site-subtitle {
+      font-size: 0.8125rem;
+      color: #718096;
+      margin: 2px 0 0;
+    }
+    .header .site-subtitle a { color: inherit; text-decoration: none; }
+    .header .site-subtitle a:hover { text-decoration: underline; }
 
     .header-actions {
       display: flex;
@@ -526,7 +546,10 @@ export async function handleAIBuilderCustomize(ctx) {
 </head>
 <body>
   <div class="header">
-    <h1>${project.project_name || 'Your Website'}</h1>
+    <div class="header-title">
+      <h1>${project.project_name || 'Your Website'}</h1>
+      ${siteSubtitle ? `<p class="site-subtitle"><a href="${siteSubtitle}" target="_blank" rel="noopener">${siteSubtitle}</a></p>` : ''}
+    </div>
     <div class="header-actions">
       <a href="/billing" class="credit-chip" title="Caddi Credits — ${creditState.monthlyRemaining.toLocaleString()} monthly + ${creditState.purchased.toLocaleString()} purchased. Click to buy more.">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
       <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="Traffic analytics for your published site">📊 Analytics</a>
