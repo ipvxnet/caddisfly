@@ -176,8 +176,14 @@ export async function handleAIPreview(ctx) {
       previewBase: `/ai-preview/${project.project_id}`,
       embed,
       preordered: true,
+      // Badge "Built with Caddisfly" links back to THIS app origin (the new
+      // landing), not the hardcoded prod domain that still runs old code.
+      appOrigin: env.APP_URL || '',
     };
-    const html = (isAIBuilder && !embed)
+    // Show the "Preview Mode / Customize" banner for BOTH AI-builder and
+    // refactor projects (the customize page handles both); only the embedded
+    // customize iframe (?embed=1) renders bare.
+    const html = !embed
       ? generatePreview(combined, config, project, opts)
       : assemblePage(combined, config, project, opts);
 

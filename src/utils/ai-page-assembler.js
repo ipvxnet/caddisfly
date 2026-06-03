@@ -157,7 +157,7 @@ ${body}
 
 <!-- Caddisfly Branding (free tier only; paid plans remove it) -->
 ${hideBadge ? '' : `<div style="text-align: center; padding: 1rem; background: #f7fafc; font-size: 0.875rem; color: #718096;">
-  Built with <a href="https://caddisfly.ai" target="_blank" style="color: ${primary_color}; text-decoration: none; font-weight: 600;">Caddisfly</a>
+  Built with <a href="${appOrigin || 'https://caddisfly.ai'}" target="_blank" style="color: ${primary_color}; text-decoration: none; font-weight: 600;">Caddisfly</a>
 </div>`}
 
 ${trackId ? `<!-- Caddisfly analytics (cookieless) -->
