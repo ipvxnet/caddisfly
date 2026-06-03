@@ -212,7 +212,7 @@ export async function handleDashboard(ctx) {
       <h1>Your websites</h1>
       <a class="btn ghost" href="/billing">Plan &amp; billing →</a>
     </div>
-    <p class="sub">Signed in as <strong>${esc(email)}</strong> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
+    <p class="sub">Signed in as <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">Support</a> · <a class="muted-link" href="/help">Help</a> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
 
     <div class="panel">
       ${ownSites.length

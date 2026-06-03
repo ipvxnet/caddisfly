@@ -116,7 +116,7 @@ export function siteHeader(activePath = '', opts = {}) {
 export function siteFooter() {
   return `<footer class="site"><div class="wrap foot">
     <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
-    <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/billing">Billing</a></span>
+    <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/help">Help</a> · <a href="/support">Support</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/billing">Billing</a></span>
     <span>© 2026 Caddisfly. Build beautiful websites with AI.</span>
   </div></footer>`;
 }

@@ -4,6 +4,7 @@
 
 import { htmlResponse } from '../../utils/response.js';
 import { getPlatformMetrics, getCustomerRows } from '../../db/admin-stats.js';
+import { countOpenTickets } from '../../db/tickets.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -24,7 +25,11 @@ function statusBadge(s) {
 
 export async function handleAdminDashboard(ctx) {
   const { env, user } = ctx;
-  const [m, rows] = await Promise.all([getPlatformMetrics(env.DB), getCustomerRows(env.DB)]);
+  const [m, rows, openTickets] = await Promise.all([
+    getPlatformMetrics(env.DB),
+    getCustomerRows(env.DB),
+    countOpenTickets(env.DB),
+  ]);
 
   const card = (label, value, sub = '') =>
     `<div class="stat"><div class="stat-v">${value}</div><div class="stat-l">${esc(label)}</div>${sub ? `<div class="stat-s">${esc(sub)}</div>` : ''}</div>`;
@@ -90,7 +95,7 @@ export async function handleAdminDashboard(ctx) {
 <body>
   <div class="header">
     <h1>Caddisfly Admin</h1>
-    <div><span class="who">${esc(user.email)}</span> · <a href="/logout">Sign out</a></div>
+    <div><a href="/admin/tickets" style="color:#fff;font-weight:700">🎫 Tickets${openTickets ? ` (${openTickets})` : ''}</a> · <span class="who">${esc(user.email)}</span> · <a href="/logout">Sign out</a></div>
   </div>
   <div class="wrap">
     <div class="stats">

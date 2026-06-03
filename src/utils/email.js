@@ -303,6 +303,40 @@ function buildTeamInviteEmailHtml(inviteUrl, memberEmail, ownerEmail) {
 }
 
 /**
+ * Sends a support-ticket notification (new ticket or reply). Best-effort:
+ * emails when a transport is configured, logs a stub otherwise (non-prod).
+ * @param {Object} env
+ * @param {Object} opts - { to, subject, heading, intro, body, linkUrl, linkLabel }
+ * @returns {Promise<boolean>}
+ */
+export async function sendTicketEmail(env, { to, subject, heading, intro, body, linkUrl, linkLabel }) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">${esc(heading)}</h1>
+        ${intro ? `<p style="color:#444;line-height:1.6;">${esc(intro)}</p>` : ''}
+        ${body ? `<blockquote style="border-left:3px solid #cbd5e0;margin:14px 0;padding:6px 14px;color:#555;white-space:pre-wrap;">${esc(body)}</blockquote>` : ''}
+        ${linkUrl ? `<p style="margin:24px 0;"><a href="${linkUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">${esc(linkLabel || 'View ticket')}</a></p>` : ''}
+      </div>
+    </body></html>`;
+  try {
+    const sent = await deliverEmail(env, { to, subject, html });
+    if (sent) return true;
+    if (isProduction) {
+      console.error('No email transport in production; cannot send ticket email');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to send ticket email:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Ticket email to ${to}: ${subject} ${linkUrl || ''}`);
+  return true;
+}
+
+/**
  * Sends error notification email (for internal use)
  * @param {Object} env - Environment bindings
  * @param {string} subject - Email subject

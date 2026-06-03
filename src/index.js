@@ -55,6 +55,10 @@ import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleC
 import { handleDashboard } from './routes/public/dashboard.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
+import { handleHelp } from './routes/public/help.js';
+import { handleSupport } from './routes/public/support.js';
+import { handleCreateTicket, handleReplyTicket } from './routes/api/support.js';
+import { handleAdminTickets, handleAdminTicketReply, handleAdminTicketStatus } from './routes/admin/tickets.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
 import { handleTrack } from './routes/api/track.js';
@@ -107,6 +111,12 @@ router.get('/billing/logout', handleBillingLogout);
 router.get('/dashboard', handleDashboard, [billingAuth]);
 router.get('/team/accept/:token', handleTeamAccept);
 
+// Help/docs (public) + support tickets (customer, magic-link auth)
+router.get('/help', handleHelp);
+router.get('/support', handleSupport, [billingAuth]);
+router.post('/api/support/ticket', handleCreateTicket, [billingAuth]);
+router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingAuth]);
+
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
 router.post('/api/preview/manual/:token', handleManualProfile);
@@ -154,6 +164,9 @@ router.post('/api/stripe/webhook', handleStripeWebhook);
 // Protected admin routes
 router.get('/logout', handleLogout, [authMiddleware]);
 router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
+router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
 
 /**
  * Main fetch handler
