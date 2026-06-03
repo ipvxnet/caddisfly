@@ -192,6 +192,67 @@ export function generateSectionEditorModal(section, projectId) {
   color: #667eea;
 }
 
+.gallery-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+.gallery-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+.gallery-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f1f5f9;
+  flex: 0 0 auto;
+}
+.gallery-alt {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.gallery-row-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+.gallery-row-actions button {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+.gallery-row-actions button:hover:not(:disabled) { border-color: #7c3aed; background: #faf5ff; }
+.gallery-row-actions button:disabled { opacity: 0.35; cursor: default; }
+.gallery-row-actions .gallery-del { color: #b91c1c; border-color: #fecaca; }
+.gallery-row-actions .gallery-del:hover { background: #fef2f2; border-color: #f87171; }
+.gallery-add-btn {
+  padding: 0.5rem 0.9rem;
+  border: 1px dashed #7c3aed;
+  border-radius: 8px;
+  background: #faf5ff;
+  color: #7c3aed;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gallery-add-btn:hover { background: #f3e8ff; }
+
 .form-actions {
   display: flex;
   gap: 1rem;
@@ -320,6 +381,13 @@ async function saveSectionChanges(event) {
     }
   }
 
+  // Gallery images travel as a JSON blob in a hidden field (array of objects);
+  // expand it into content.images.
+  if (content.images_json !== undefined) {
+    try { content.images = JSON.parse(content.images_json) || []; } catch (e) { content.images = []; }
+    delete content.images_json;
+  }
+
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
 
@@ -420,6 +488,75 @@ function showNotification(message, type = 'info') {
     setTimeout(() => notification.remove(), 300);
   }, 3000);
 }
+
+// ---- Gallery photo manager (reorder / replace / remove / add) ----
+// The hidden #gallery-images-json input is the single source of truth; it is
+// kept in sync on every change and picked up by saveSectionChanges.
+function galleryRead() {
+  const el = document.getElementById('gallery-images-json');
+  if (!el) return [];
+  try { return JSON.parse(el.value || '[]') || []; } catch (e) { return []; }
+}
+function galleryWrite(imgs) {
+  const el = document.getElementById('gallery-images-json');
+  if (el) el.value = JSON.stringify(imgs);
+}
+function galleryEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+function galleryRender() {
+  const wrap = document.getElementById('gallery-manager');
+  if (!wrap) return;
+  const imgs = galleryRead();
+  if (!imgs.length) {
+    wrap.innerHTML = '<p style="color:#718096;font-size:.85rem;margin:.25rem 0">No photos yet — click “Add photo”.</p>';
+    return;
+  }
+  wrap.innerHTML = imgs.map(function (img, i) {
+    return '<div class="gallery-row">'
+      + '<img class="gallery-thumb" src="' + galleryEsc(img.url || '') + '" alt="">'
+      + '<input class="gallery-alt" type="text" placeholder="Describe this photo (alt text)" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
+      + '<div class="gallery-row-actions">'
+      + '<button type="button" title="Move up" onclick="galleryMove(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+      + '<button type="button" title="Move down" onclick="galleryMove(' + i + ',1)"' + (i === imgs.length - 1 ? ' disabled' : '') + '>↓</button>'
+      + '<button type="button" title="Replace photo" onclick="galleryReplace(' + i + ')">Replace</button>'
+      + '<button type="button" class="gallery-del" title="Remove photo" onclick="galleryRemove(' + i + ')">🗑</button>'
+      + '</div></div>';
+  }).join('');
+}
+function gallerySetAlt(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].alt = val; galleryWrite(imgs); } }
+function galleryRemove(i) { const imgs = galleryRead(); imgs.splice(i, 1); galleryWrite(imgs); galleryRender(); }
+function galleryMove(i, dir) {
+  const imgs = galleryRead(); const j = i + dir;
+  if (j < 0 || j >= imgs.length) return;
+  const t = imgs[i]; imgs[i] = imgs[j]; imgs[j] = t;
+  galleryWrite(imgs); galleryRender();
+}
+window.__galleryReplaceIndex = -1;
+function galleryReplace(i) { window.__galleryReplaceIndex = i; document.getElementById('gallery-replace-input').click(); }
+async function galleryUploadFile(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('asset_type', 'gallery');
+  const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/upload\`, { method: 'POST', body: fd });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || 'Upload failed');
+  return data.url;
+}
+async function galleryAddImage(input) {
+  const file = input.files[0]; if (!file) return; input.value = '';
+  try { const url = await galleryUploadFile(file); const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); }
+  catch (e) { alert('Upload failed: ' + e.message); }
+}
+async function galleryReplaceUpload(input) {
+  const file = input.files[0]; if (!file) return; input.value = '';
+  const i = window.__galleryReplaceIndex; if (i < 0) return;
+  try { const url = await galleryUploadFile(file); const imgs = galleryRead(); if (imgs[i]) imgs[i].url = url; galleryWrite(imgs); galleryRender(); }
+  catch (e) { alert('Upload failed: ' + e.message); }
+}
+
+// Initialise the gallery manager if this section has one (runs on inject).
+galleryRender();
 </script>
   `;
 }
@@ -576,6 +713,7 @@ function generateContactFields(content) {
 }
 
 function generateGalleryFields(content) {
+  const images = Array.isArray(content.images) ? content.images : [];
   return `
     <div class="form-group">
       <label for="heading">Section Heading</label>
@@ -584,12 +722,17 @@ function generateGalleryFields(content) {
 
     <div class="form-group">
       <label for="subheading">Subheading</label>
-      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
 
-    <p style="color: #718096; font-size: 0.875rem; margin-top: 1rem;">
-      Gallery image management coming soon.
-    </p>
+    <div class="form-group">
+      <label>Photos <span style="color:#718096;font-weight:400;font-size:.8rem">· drag-free reorder, replace, or remove — no new AI images</span></label>
+      <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
+      <div id="gallery-manager" class="gallery-manager"></div>
+      <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">＋ Add photo</button>
+      <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
+      <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
+    </div>
   `;
 }
 

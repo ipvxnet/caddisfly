@@ -135,6 +135,9 @@ export async function handleAIBuilderCustomize(ctx) {
     const esc = (s) =>
       String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+    // Layout variants per addable section type (for the add-time layout picker).
+    const sectionVariants = Object.fromEntries(ADDABLE_SECTIONS.map((s) => [s.type, getAvailableVariants(s.type)]));
+
     // One section tile. siteWide tiles (header/footer) omit the "move to page" select.
     const renderTile = (section, siteWide = false) => `
             <div
@@ -488,8 +491,33 @@ export async function handleAIBuilderCustomize(ctx) {
       background: #fff;
       font-size: 0.8rem;
       cursor: pointer;
+      text-transform: capitalize;
     }
     .add-section-option:hover { border-color: #7c3aed; background: #faf5ff; }
+    .add-variant-menu {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .add-variant-menu[hidden] { display: none; }
+    .variant-head {
+      flex-basis: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #4a5568;
+      margin-bottom: 0.2rem;
+    }
+    .variant-back {
+      border: none;
+      background: none;
+      color: #7c3aed;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0;
+    }
 
     .section-actions .template-variant-select {
       flex: 1;
@@ -636,8 +664,9 @@ export async function handleAIBuilderCustomize(ctx) {
         <div class="add-section-wrap">
           <button class="add-section-btn" onclick="toggleAddSection()" title="Add a new section to this page">+ Add section</button>
           <div class="add-section-menu" id="add-section-menu" hidden>
-            ${ADDABLE_SECTIONS.map((s) => `<button class="add-section-option" onclick="addSection('${s.type}')">${s.emoji} ${esc(s.label)}</button>`).join('')}
+            ${ADDABLE_SECTIONS.map((s) => `<button class="add-section-option" onclick="pickSectionType('${s.type}')">${s.emoji} ${esc(s.label)}</button>`).join('')}
           </div>
+          <div class="add-variant-menu" id="add-variant-menu" hidden></div>
         </div>
 
         <details class="design-group">
@@ -684,18 +713,46 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     // ---- Add / remove sections ----
+    const sectionVariants = ${JSON.stringify(sectionVariants)};
+    const addableLabels = ${JSON.stringify(Object.fromEntries(ADDABLE_SECTIONS.map((s) => [s.type, s.label])))};
+
     function toggleAddSection() {
       const m = document.getElementById('add-section-menu');
+      const v = document.getElementById('add-variant-menu');
+      if (v) v.hidden = true;
       if (m) m.hidden = !m.hidden;
     }
 
-    async function addSection(type) {
-      const menu = document.getElementById('add-section-menu');
-      if (menu) menu.hidden = true;
+    // Step 1: pick a type. Single-variant types add immediately; multi-variant
+    // types open a layout chooser first.
+    function pickSectionType(type) {
+      const variants = sectionVariants[type] || [];
+      if (variants.length <= 1) { doAddSection(type, variants[0] || 'default'); return; }
+      const v = document.getElementById('add-variant-menu');
+      const label = addableLabels[type] || type;
+      v.innerHTML =
+        '<div class="variant-head"><button class="variant-back" onclick="backToTypes()">← Back</button>'
+        + '<span>Choose a ' + label + ' layout</span></div>'
+        + variants.map(function (vr) {
+            return '<button class="add-section-option" onclick="doAddSection(\\'' + type + '\\',\\'' + vr + '\\')">'
+              + vr.replace(/-/g, ' ') + '</button>';
+          }).join('');
+      document.getElementById('add-section-menu').hidden = true;
+      v.hidden = false;
+    }
+
+    function backToTypes() {
+      document.getElementById('add-variant-menu').hidden = true;
+      document.getElementById('add-section-menu').hidden = false;
+    }
+
+    async function doAddSection(type, variant) {
+      document.getElementById('add-section-menu').hidden = true;
+      document.getElementById('add-variant-menu').hidden = true;
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/sections\`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ section_type: type, page_slug: currentPageSlug })
+          body: JSON.stringify({ section_type: type, variant: variant, page_slug: currentPageSlug })
         });
         const d = await r.json();
         if (d.success) location.reload(); else alert(d.error || 'Failed to add section');

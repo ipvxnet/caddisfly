@@ -74,7 +74,13 @@ export async function handleAddSection(ctx) {
     ? await getHomeBodySections(env.DB, proj.projectKey, page.id, false)
     : await getBodySectionsForPage(env.DB, page.id, false);
   const order = existing.reduce((m, s) => Math.max(m, (s.section_order || 0) + 1), 0);
-  const variant = getAvailableVariants(type)[0] || 'default';
+
+  // Layout variant: use the requested one if valid, else the type's first.
+  const allowedVariants = getAvailableVariants(type);
+  const requested = String(body.variant || '').trim();
+  const variant = requested && (allowedVariants.includes(requested) || requested === 'default')
+    ? requested
+    : (allowedVariants[0] || 'default');
 
   const section = await createSection(env.DB, {
     ...proj.createKey,
