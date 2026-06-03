@@ -31,8 +31,8 @@ export function galleryMasonryTemplate(data, config) {
         .map(
           (image) => `
         <div class="gallery-item">
-          <img src="${image.url || 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600'}" alt="${image.alt}" />
-          ${image.caption ? `<div class="gallery-caption">${image.caption}</div>` : ''}
+          <img src="${image.url || 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600'}" alt="${image.alt || image.caption || ''}" />
+          ${image.caption && image.caption !== 'undefined' ? `<div class="gallery-caption">${image.caption}</div>` : ''}
         </div>
       `
         )

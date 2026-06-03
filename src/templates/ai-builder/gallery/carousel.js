@@ -32,8 +32,8 @@ export function galleryCarouselTemplate(data, config) {
             .map(
               (image, index) => `
             <div class="carousel-slide ${index === 0 ? 'active' : ''}">
-              <img src="${image.url}" alt="${image.caption}" class="carousel-image">
-              <div class="carousel-caption">${image.caption}</div>
+              <img src="${image.url}" alt="${image.alt || image.caption || ''}" class="carousel-image">
+              ${image.caption && image.caption !== 'undefined' ? `<div class="carousel-caption">${image.caption}</div>` : ''}
             </div>
           `
             )
