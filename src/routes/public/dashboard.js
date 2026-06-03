@@ -8,6 +8,9 @@ import { getAIProjectsByEmail } from '../../db/ai-projects.js';
 import { getAllProjects } from '../../db/projects.js';
 import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
+import { getDomainsByProject } from '../../db/custom-domains.js';
+import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
+import { renderDomainsPanel, DOMAINS_CSS, DOMAINS_JS } from '../../components/domains-panel.js';
 
 const SITES_BASE = 'caddisfly.app';
 
@@ -25,10 +28,13 @@ function profileName(project) {
   return project.website_url || project.original_url || 'Untitled site';
 }
 
-// Normalize an ai_project or refactor project into one site row.
+// Normalize an ai_project or refactor project into one site row. dbId + kind
+// let us load custom domains (projectKey is {aiProjectId} XOR {projectId}).
 function normalizeAI(p) {
   return {
     id: p.project_id,
+    dbId: p.id,
+    kind: 'ai',
     name: p.project_name || 'Untitled site',
     status: p.status || 'draft',
     subdomain: p.subdomain || '',
@@ -38,31 +44,37 @@ function normalizeAI(p) {
 function normalizeRefactor(p) {
   return {
     id: p.preview_id,
+    dbId: p.id,
+    kind: 'refactor',
     name: profileName(p),
     status: p.status || 'preview_ready',
     subdomain: p.subdomain || '',
     deployed: p.status === 'deployed',
   };
 }
+const projectKeyFor = (site) => (site.kind === 'ai' ? { aiProjectId: site.dbId } : { projectId: site.dbId });
 
 function statusPill(s) {
   const ok = s === 'deployed';
   return `<span class="pill ${ok ? 'ok' : ''}">${ok ? 'Live' : esc(s)}</span>`;
 }
 
-function siteCard(site) {
+function siteCard(site, domainsBlock = '') {
   const live = site.subdomain ? `https://${site.subdomain}.${SITES_BASE}` : '';
   return `
     <div class="site">
-      <div class="site-main">
-        <div class="site-name">${esc(site.name)} ${statusPill(site.status)}</div>
-        ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}.${SITES_BASE}</a>` : '<span class="site-url muted">Not published yet</span>'}
+      <div class="site-top">
+        <div class="site-main">
+          <div class="site-name">${esc(site.name)} ${statusPill(site.status)}</div>
+          ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}.${SITES_BASE}</a>` : '<span class="site-url muted">Not published yet</span>'}
+        </div>
+        <div class="site-actions">
+          <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">Customize</a>
+          <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">Analytics</a>
+          ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">Open ↗</a>` : ''}
+        </div>
       </div>
-      <div class="site-actions">
-        <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">Customize</a>
-        <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">Analytics</a>
-        ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">Open ↗</a>` : ''}
-      </div>
+      ${domainsBlock}
     </div>`;
 }
 
@@ -154,6 +166,24 @@ export async function handleDashboard(ctx) {
     ...((refactorRes && refactorRes.projects) || []).map(normalizeRefactor),
   ];
 
+  // Each own site gets a collapsible custom-domain manager (published sites
+  // only — a domain needs a subdomain to point at).
+  const saasOn = isSaaSConfigured(env);
+  const sitesBase = env.SITES_BASE || SITES_BASE;
+  const ownCards = await Promise.all(
+    ownSites.map(async (s) => {
+      let block = '';
+      if (s.subdomain) {
+        const ds = await getDomainsByProject(env.DB, projectKeyFor(s));
+        const badge = ds.length ? ` <span class="pill ${ds.some((d) => d.status === 'active') ? 'ok' : 'warn'}">${ds.length}</span>` : '';
+        block = `<details class="site-domains"><summary>🌐 Custom domain${badge}</summary>
+          ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase })}</details>`;
+      }
+      return siteCard(s, block);
+    })
+  );
+  const ownCardsHtml = ownCards.join('');
+
   const creditState = await getCreditState(env.DB, email);
 
   // Teams the viewer can access: their OWN account (owner) + any team they've
@@ -186,7 +216,7 @@ export async function handleDashboard(ctx) {
 
     <div class="panel">
       ${ownSites.length
-        ? ownSites.map(siteCard).join('')
+        ? ownCardsHtml
         : '<p class="muted">You have no websites yet. <a href="/ai-builder">Build one →</a></p>'}
     </div>
 
@@ -220,12 +250,20 @@ function pageShell(origin, inner, headerOpts = {}) {
     .pill{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.1rem .6rem;font-size:.74rem;font-weight:700;color:var(--p2);vertical-align:middle}
     .pill.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
     .pill.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
-    .site{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+    .site{padding:.85rem 0;border-bottom:1px solid var(--line)}
     .site:last-child{border-bottom:none}
+    .site-top{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
     .site-name{font-weight:800;color:var(--ink);margin-bottom:.15rem}
     .site-url{font-size:.85rem;color:var(--p2);text-decoration:none}
     .site-url:hover{text-decoration:underline}
     .site-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+    .site-domains{margin-top:.7rem;background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem}
+    .site-domains > summary{cursor:pointer;font-size:.85rem;font-weight:700;color:var(--p2);list-style:none}
+    .site-domains > summary::-webkit-details-marker{display:none}
+    .site-domains > summary::before{content:'▸ ';color:#a0aec0}
+    .site-domains[open] > summary::before{content:'▾ '}
+    .site-domains[open] > summary{margin-bottom:.6rem}
+    ${DOMAINS_CSS}
     .btn{display:inline-flex;align-items:center;gap:.3rem;background:var(--grad);color:#fff;border:none;border-radius:10px;padding:.5rem .9rem;font-size:.85rem;font-weight:700;cursor:pointer;text-decoration:none}
     .btn.ghost{background:#fff;color:var(--p2);border:1px solid var(--line)}
     .btn.ghost:hover{border-color:var(--p1)}
@@ -238,7 +276,7 @@ function pageShell(origin, inner, headerOpts = {}) {
     .invite{display:flex;gap:.5rem;margin-top:1rem}
     .invite input{flex:1;padding:.7rem .9rem;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:.95rem}
     .invite input:focus{outline:none;border-color:var(--p1)}
-    @media (max-width:560px){.site,.member{align-items:flex-start}}
+    @media (max-width:560px){.site-top,.member{align-items:flex-start}}
   </style>
 </head>
 <body>
@@ -270,6 +308,7 @@ function pageShell(origin, inner, headerOpts = {}) {
       try { await postTeam('/api/team/remove', { owner, email }); location.reload(); }
       catch (e) { alert(e.message); }
     }
+    ${DOMAINS_JS}
   </script>
 </body>
 </html>`;
