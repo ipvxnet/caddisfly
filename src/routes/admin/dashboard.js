@@ -1,216 +1,122 @@
-// Admin dashboard route
+// SaaS admin dashboard — platform-owner view of all customers, subscriptions,
+// and site status. Gated by [authMiddleware, adminMiddleware] (role 'admin' AND
+// the ADMIN_EMAILS allowlist). Read-only aggregates from src/db/admin-stats.js.
 
 import { htmlResponse } from '../../utils/response.js';
-import { sanitizeInput } from '../../utils/validation.js';
+import { getPlatformMetrics, getCustomerRows } from '../../db/admin-stats.js';
 
-/**
- * Handle admin dashboard
- * @param {object} ctx - Request context
- * @returns {Response} HTML response
- */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  try { return new Date(ts * 1000).toISOString().slice(0, 10); } catch { return '—'; }
+}
+function tierBadge(t) {
+  const tier = t || 'free_trial';
+  return `<span class="badge t-${esc(tier)}">${esc(tier.replace('_', ' '))}</span>`;
+}
+function statusBadge(s) {
+  if (!s) return '<span class="badge">—</span>';
+  const ok = s === 'active';
+  return `<span class="badge ${ok ? 'ok' : 'warn'}">${esc(s)}</span>`;
+}
+
 export async function handleAdminDashboard(ctx) {
-  const { user } = ctx;
+  const { env, user } = ctx;
+  const [m, rows] = await Promise.all([getPlatformMetrics(env.DB), getCustomerRows(env.DB)]);
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Admin Dashboard - Caddisfly</title>
-      <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
+  const card = (label, value, sub = '') =>
+    `<div class="stat"><div class="stat-v">${value}</div><div class="stat-l">${esc(label)}</div>${sub ? `<div class="stat-s">${esc(sub)}</div>` : ''}</div>`;
 
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          background: #f5f5f5;
-          min-height: 100vh;
-        }
+  const tierLine = ['free_trial', 'starter', 'pro', 'agency']
+    .map((t) => `${t.replace('_', ' ')}: ${m.byTier[t] || 0}`)
+    .join(' · ');
 
-        .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 1.5rem 2rem;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+  const rowsHtml = rows
+    .map(
+      (r) => `
+      <tr>
+        <td class="email">${esc(r.email)}</td>
+        <td>${tierBadge(r.pricing_tier)}</td>
+        <td>${statusBadge(r.subscription_status)}</td>
+        <td>${r.plan_interval ? esc(r.plan_interval === 'year' ? 'annual' : 'monthly') : '—'}</td>
+        <td>${fmtDate(r.current_period_end)}</td>
+        <td class="num">${r.sites}</td>
+        <td class="num">${r.deployed}</td>
+        <td class="num">${r.team_size}</td>
+        <td class="num">${r.ai_credits_used || 0}</td>
+      </tr>`
+    )
+    .join('');
 
-        .header-content {
-          max-width: 1200px;
-          margin: 0 auto;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Admin · Caddisfly</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#1a202c}
+    .header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:1.4rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+    .header h1{font-size:1.4rem}
+    .header .who{font-size:.85rem;opacity:.9}
+    .header a{color:#fff;font-size:.85rem;text-decoration:underline}
+    .wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1rem}
+    .stat{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem}
+    .stat-v{font-size:1.9rem;font-weight:800;color:#5a3da8}
+    .stat-l{color:#4a5568;font-size:.85rem;font-weight:600;margin-top:.2rem}
+    .stat-s{color:#a0aec0;font-size:.75rem;margin-top:.2rem}
+    .tierline{color:#718096;font-size:.85rem;margin:.2rem 0 1.4rem}
+    .panel{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem 1.4rem}
+    .panel h2{font-size:1.05rem;margin-bottom:.8rem}
+    table{width:100%;border-collapse:collapse;font-size:.85rem}
+    th,td{text-align:left;padding:.6rem .5rem;border-bottom:1px solid #edf2f7}
+    th{color:#718096;font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em}
+    td.num{text-align:right;font-variant-numeric:tabular-nums}
+    td.email{font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;background:#edf2f7;color:#4a5568}
+    .badge.ok{background:#ecfdf5;color:#065f46}
+    .badge.warn{background:#fffbeb;color:#92400e}
+    .badge.t-pro{background:#eef2ff;color:#3730a3}
+    .badge.t-agency{background:#faf5ff;color:#6b21a8}
+    .badge.t-starter{background:#f0fdfa;color:#115e59}
+    .muted{color:#a0aec0}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Caddisfly Admin</h1>
+    <div><span class="who">${esc(user.email)}</span> · <a href="/logout">Sign out</a></div>
+  </div>
+  <div class="wrap">
+    <div class="stats">
+      ${card('Customers', m.customers)}
+      ${card('Active subscriptions', m.activeSubs)}
+      ${card('Sites', m.totalSites, `${m.deployedSites} deployed`)}
+      ${card('Custom domains', m.activeDomains, 'active')}
+      ${card('Pageviews (30d)', m.views30d)}
+    </div>
+    <div class="tierline">By tier — ${esc(tierLine)}</div>
 
-        .header h1 {
-          font-size: 1.75rem;
-        }
-
-        .user-info {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .user-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 2px solid white;
-        }
-
-        .user-name {
-          font-weight: 600;
-        }
-
-        .logout-btn {
-          background: rgba(255, 255, 255, 0.2);
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 6px;
-          text-decoration: none;
-          font-size: 0.9rem;
-          transition: background 0.3s ease;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .logout-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-
-        .container {
-          max-width: 1200px;
-          margin: 2rem auto;
-          padding: 0 2rem;
-        }
-
-        .welcome-card {
-          background: white;
-          border-radius: 12px;
-          padding: 2rem;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          margin-bottom: 2rem;
-        }
-
-        .welcome-card h2 {
-          font-size: 1.5rem;
-          margin-bottom: 0.5rem;
-          color: #333;
-        }
-
-        .welcome-card p {
-          color: #666;
-          font-size: 1rem;
-        }
-
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-          margin-bottom: 2rem;
-        }
-
-        .stat-card {
-          background: white;
-          border-radius: 12px;
-          padding: 1.5rem;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card h3 {
-          font-size: 0.9rem;
-          color: #888;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-          font-size: 2rem;
-          font-weight: bold;
-          color: #667eea;
-        }
-
-        .placeholder {
-          background: white;
-          border-radius: 12px;
-          padding: 3rem 2rem;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          text-align: center;
-          color: #888;
-        }
-
-        .placeholder h3 {
-          margin-bottom: 0.5rem;
-          color: #666;
-        }
-
-        @media (max-width: 768px) {
-          .header-content {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-          }
-
-          .user-info {
-            flex-direction: column;
-          }
-
-          .container {
-            padding: 0 1rem;
-          }
-
-          .stats-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="header-content">
-          <h1>Caddisfly Admin</h1>
-          <div class="user-info">
-            ${user.avatarUrl ? `<img src="${sanitizeInput(user.avatarUrl)}" alt="${sanitizeInput(user.name)}" class="user-avatar">` : ''}
-            <span class="user-name">${sanitizeInput(user.name)}</span>
-            <a href="/logout" class="logout-btn">Logout</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="container">
-        <div class="welcome-card">
-          <h2>Welcome back, ${sanitizeInput(user.name.split(' ')[0])}!</h2>
-          <p>Logged in as ${sanitizeInput(user.email)}</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h3>Total Projects</h3>
-            <div class="stat-value">0</div>
-          </div>
-          <div class="stat-card">
-            <h3>Active Projects</h3>
-            <div class="stat-value">0</div>
-          </div>
-          <div class="stat-card">
-            <h3>Pending Previews</h3>
-            <div class="stat-value">0</div>
-          </div>
-        </div>
-
-        <div class="placeholder">
-          <h3>Project Management</h3>
-          <p>Project listing and management will be available in Phase 2</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+    <div class="panel">
+      <h2>Customers (${rows.length})</h2>
+      ${rows.length
+        ? `<table>
+            <thead><tr>
+              <th>Email</th><th>Tier</th><th>Status</th><th>Interval</th><th>Renews</th>
+              <th class="num">Sites</th><th class="num">Deployed</th><th class="num">Team</th><th class="num">Credits used</th>
+            </tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>`
+        : '<p class="muted">No customers yet.</p>'}
+    </div>
+  </div>
+</body>
+</html>`;
 
   return htmlResponse(html);
 }

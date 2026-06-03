@@ -4,7 +4,7 @@
 import { Router } from './router.js';
 import { handleError } from './middleware/error-handler.js';
 import { handleCorsPrelight, applyCorsHeaders } from './middleware/cors.js';
-import { authMiddleware } from './middleware/auth.js';
+import { authMiddleware, adminMiddleware } from './middleware/auth.js';
 import { notFound } from './utils/response.js';
 
 // Import route handlers
@@ -153,7 +153,7 @@ router.post('/api/stripe/webhook', handleStripeWebhook);
 
 // Protected admin routes
 router.get('/logout', handleLogout, [authMiddleware]);
-router.get('/admin', handleAdminDashboard, [authMiddleware]);
+router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
 
 /**
  * Main fetch handler
