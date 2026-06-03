@@ -40,6 +40,7 @@ import { handleAIBuilderUpload } from './routes/api/ai-builder/upload.js';
 import { handleAIBuilderSectionUpdate } from './routes/api/ai-builder/sections.js';
 import { handleSectionsReorder } from './routes/api/ai-builder/sections-reorder.js';
 import { handleGetSectionEditor } from './routes/api/ai-builder/section-editor.js';
+import { handleAddSection, handleDeleteSection } from './routes/api/ai-builder/section-create.js';
 import { handleUpdateColors } from './routes/api/ai-builder/config-colors.js';
 import { handleApplyTemplate } from './routes/api/ai-builder/apply-template.js';
 import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
@@ -118,6 +119,8 @@ router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit', handleAI
 router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit/apply', handleAIEditApply);
 router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate);
 router.put('/api/ai-builder/:project_id/sections/reorder', handleSectionsReorder);
+router.post('/api/ai-builder/:project_id/sections', handleAddSection);
+router.delete('/api/ai-builder/:project_id/sections/:section_id', handleDeleteSection);
 router.put('/api/ai-builder/:project_id/config/colors', handleUpdateColors);
 router.put('/api/ai-builder/:project_id/config/fonts', handleUpdateFonts);
 router.post('/api/ai-builder/:project_id/template', handleApplyTemplate);

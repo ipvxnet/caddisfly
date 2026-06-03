@@ -10,6 +10,7 @@ import { generateColorPicker } from '../../components/color-picker.js';
 import { generateTemplatePicker } from '../../components/template-picker.js';
 import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
+import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
 import { getCreditState } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
@@ -168,7 +169,8 @@ export async function handleAIBuilderCustomize(ctx) {
                 </select>
                 ${siteWide ? '' : `<select class="move-page-select" onchange="moveSectionToPage(${section.id}, this.value)" onclick="event.stopPropagation()" title="Move to another page">
                   ${pages.map((p) => `<option value="${p.id}" ${section.page_id === p.id ? 'selected' : ''}>→ ${esc(p.nav_label || p.slug)}</option>`).join('')}
-                </select>`}
+                </select>
+                <button class="del-section-btn" onclick="removeSection(event, ${section.id})" title="Delete this section">🗑</button>`}
               </div>
             </div>`;
 
@@ -446,6 +448,49 @@ export async function handleAIBuilderCustomize(ctx) {
       cursor: pointer;
     }
 
+    .del-section-btn {
+      flex: 0 0 auto;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      background: #fff;
+      color: #b91c1c;
+      font-size: 0.85rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .del-section-btn:hover { background: #fef2f2; border-color: #f87171; }
+
+    .add-section-wrap { margin-top: 0.75rem; }
+    .add-section-btn {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px dashed #7c3aed;
+      border-radius: 8px;
+      background: #faf5ff;
+      color: #7c3aed;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .add-section-btn:hover { background: #f3e8ff; }
+    .add-section-menu {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .add-section-menu[hidden] { display: none; }
+    .add-section-option {
+      padding: 0.45rem 0.7rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .add-section-option:hover { border-color: #7c3aed; background: #faf5ff; }
+
     .section-actions .template-variant-select {
       flex: 1;
       min-width: 0;
@@ -588,6 +633,13 @@ export async function handleAIBuilderCustomize(ctx) {
           ${sections.map((s) => renderTile(s)).join('') || '<p class="muted">No sections on this page yet.</p>'}
         </div>
 
+        <div class="add-section-wrap">
+          <button class="add-section-btn" onclick="toggleAddSection()" title="Add a new section to this page">+ Add section</button>
+          <div class="add-section-menu" id="add-section-menu" hidden>
+            ${ADDABLE_SECTIONS.map((s) => `<button class="add-section-option" onclick="addSection('${s.type}')">${s.emoji} ${esc(s.label)}</button>`).join('')}
+          </div>
+        </div>
+
         <details class="design-group">
           <summary>🎨 Design — theme, colors &amp; fonts</summary>
           <div class="design-group-body">
@@ -629,6 +681,35 @@ export async function handleAIBuilderCustomize(ctx) {
         const d = await r.json();
         if (d.success) gotoPage(d.page.slug); else alert(d.error || 'Failed to add page');
       } catch (e) { alert('Failed to add page: ' + e.message); }
+    }
+
+    // ---- Add / remove sections ----
+    function toggleAddSection() {
+      const m = document.getElementById('add-section-menu');
+      if (m) m.hidden = !m.hidden;
+    }
+
+    async function addSection(type) {
+      const menu = document.getElementById('add-section-menu');
+      if (menu) menu.hidden = true;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/sections\`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_type: type, page_slug: currentPageSlug })
+        });
+        const d = await r.json();
+        if (d.success) location.reload(); else alert(d.error || 'Failed to add section');
+      } catch (e) { alert('Failed to add section: ' + e.message); }
+    }
+
+    async function removeSection(event, id) {
+      event.stopPropagation();
+      if (!confirm('Delete this section? You can add it again later.')) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/sections/\${id}\`, { method: 'DELETE' });
+        const d = await r.json();
+        if (d.success) location.reload(); else alert(d.error || 'Failed to delete section');
+      } catch (e) { alert('Failed to delete section: ' + e.message); }
     }
 
     async function renamePage(id, current) {
