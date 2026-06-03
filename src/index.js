@@ -44,6 +44,7 @@ import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
 import { handleAIEditPropose, handleAIEditApply } from './routes/api/ai-builder/ai-edit.js';
 import { handleListPages, handleCreatePage, handleReorderPages, handleUpdatePage, handleDeletePage } from './routes/api/ai-builder/pages.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
+import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './routes/api/ai-builder/domains.js';
 
 // Billing (Stripe + magic-link) route handlers
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
@@ -122,6 +123,9 @@ router.put('/api/ai-builder/:project_id/pages/reorder', handleReorderPages);
 router.put('/api/ai-builder/:project_id/pages/:page_id', handleUpdatePage);
 router.delete('/api/ai-builder/:project_id/pages/:page_id', handleDeletePage);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
+router.post('/api/ai-builder/:project_id/domains', handleAddDomain);
+router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus);
+router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain);
 
 // Billing API
 router.post('/api/billing/login', handleBillingLogin);

@@ -18,18 +18,21 @@ function notFound() {
   );
 }
 
-// Resolve the subdomain from Host (first DNS label), with a ?site= override for
-// testing on *.workers.dev where Host isn't a real subdomain.
-function resolveSubdomain(url, host) {
+// Resolve the site's subdomain from the request:
+//   ?site=<sub>            -> override (workers.dev testing)
+//   <sub>.caddisfly.app    -> "<sub>"
+//   any other host         -> custom domain: R2 pointer domains/<host> -> "<sub>"
+async function resolveSubdomain(env, url, host) {
   const override = url.searchParams.get('site');
   if (override) return override.toLowerCase();
   if (!host) return null;
   const h = host.split(':')[0].toLowerCase();
   if (APEX_HOSTS.has(h)) return null; // apex/www handled by the caller
-  // <sub>.caddisfly.app -> "<sub>"
   if (h.endsWith('.caddisfly.app')) return h.slice(0, -'.caddisfly.app'.length).split('.')[0];
-  // Fallback: first label of any other host.
-  return h.split('.')[0];
+  // Custom domain — look up the pointer written when the domain went active.
+  const ptr = await env.STORAGE.get(`domains/${h}`);
+  if (ptr) return (await ptr.text()).trim();
+  return null;
 }
 
 function safeLabel(s) {
@@ -56,7 +59,9 @@ async function serveAsset(env, pathname) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const host = request.headers.get('Host') || url.host;
+    // ?host= overrides the Host for testing the custom-domain path on workers.dev
+    // (Cloudflare rejects spoofed Host headers there). Harmless: sites are public.
+    const host = url.searchParams.get('host') || request.headers.get('Host') || url.host;
 
     // Apex / www -> send to the marketing app.
     if (APEX_HOSTS.has(host.split(':')[0].toLowerCase()) && !url.searchParams.get('site')) {
@@ -69,7 +74,7 @@ export default {
       if (asset) return asset;
     }
 
-    const sub = safeLabel(resolveSubdomain(url, host));
+    const sub = safeLabel(await resolveSubdomain(env, url, host));
     if (!sub) return notFound();
 
     // "/" -> index; "/slug" -> slug (no DB; home was written as index.html).

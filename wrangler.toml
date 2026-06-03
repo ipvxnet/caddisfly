@@ -109,3 +109,13 @@ binding = "BROWSER"
 #   STRIPE_PRICE_PRO_MONTHLY      STRIPE_PRICE_PRO_ANNUAL
 #   STRIPE_PRICE_AGENCY_MONTHLY   STRIPE_PRICE_AGENCY_ANNUAL
 # e.g. npx wrangler secret put STRIPE_SECRET_KEY --env preview
+#
+# Custom domains (Cloudflare for SaaS — Custom Hostnames). Until set, the
+# "Custom domain" UI shows but registration is disabled. Enable Cloudflare for
+# SaaS on the caddisfly.app zone first.
+#   CF_API_TOKEN      (token scoped to the caddisfly.app zone: SSL and
+#                      Certificates = Edit; lets us create custom hostnames)
+#   CF_ZONE_ID        (the caddisfly.app zone id)
+#   SAAS_CNAME_TARGET (hostname customers CNAME to, e.g. sites.caddisfly.app —
+#                      the SaaS fallback origin/target)
+# e.g. npx wrangler secret put CF_API_TOKEN --env preview

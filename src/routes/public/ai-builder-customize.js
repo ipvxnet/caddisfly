@@ -11,6 +11,8 @@ import { generateTemplatePicker } from '../../components/template-picker.js';
 import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { getCreditState } from '../../utils/credits.js';
+import { getDomainsByProject } from '../../db/custom-domains.js';
+import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
 
 /**
  * Handle customization interface
@@ -27,10 +29,12 @@ export async function handleAIBuilderCustomize(ctx) {
     let project = await getAIProjectByProjectId(env.DB, project_id);
     let config, projectKey, isAIBuilder = true, customerEmail;
 
+    let currentSubdomain;
     if (project) {
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
       projectKey = { aiProjectId: project.id };
       customerEmail = project.customer_email;
+      currentSubdomain = project.subdomain;
     } else {
       // Regular refactoring project
       const regularProject = await getProjectByPreviewId(env.DB, project_id);
@@ -53,6 +57,7 @@ export async function handleAIBuilderCustomize(ctx) {
       projectKey = { projectId: regularProject.id };
       isAIBuilder = false;
       customerEmail = regularProject.customer_email;
+      currentSubdomain = regularProject.subdomain;
     }
 
     if (!config) {
@@ -64,6 +69,41 @@ export async function handleAIBuilderCustomize(ctx) {
 
     // Live AI-credit balance for the header pill (total = monthly remaining + purchased).
     const creditState = await getCreditState(env.DB, customerEmail);
+
+    // Custom-domain panel data.
+    const domains = await getDomainsByProject(env.DB, projectKey);
+    const saasOn = isSaaSConfigured(env);
+    const sitesBase = env.SITES_BASE || 'caddisfly.app';
+    const dEsc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const domainRow = (d) => `
+      <div class="d-row" data-id="${d.id}">
+        <div class="d-host"><strong>${dEsc(d.hostname)}</strong> <span class="d-badge ${d.status === 'active' ? 'ok' : 'pending'}">${d.status === 'active' ? 'Active' : 'Pending'}</span></div>
+        ${d.status === 'active'
+          ? `<div class="d-live">Live at <a href="https://${dEsc(d.hostname)}" target="_blank">https://${dEsc(d.hostname)}</a></div>`
+          : `<div class="d-dns"><p>Add these DNS records at your domain registrar, then click <em>Check status</em>:</p>
+               <div class="d-rec"><span>CNAME</span><code>${dEsc(d.hostname)}</code><code>${dEsc(d.cname_target || sitesBase)}</code></div>
+               ${d.dcv_name ? `<div class="d-rec"><span>${dEsc(d.dcv_type || 'TXT')}</span><code>${dEsc(d.dcv_name)}</code><code class="wrap">${dEsc(d.dcv_value)}</code></div>` : ''}
+             </div>`}
+        <div class="d-actions">
+          ${d.status !== 'active' ? `<button class="d-btn" onclick="checkDomain(${d.id})">Check status</button>` : ''}
+          <button class="d-btn danger" onclick="removeDomain(${d.id})">Remove</button>
+        </div>
+      </div>`;
+    const domainsPanel = `
+      <details class="design-group" id="domains-group">
+        <summary>🌐 Custom domain</summary>
+        <div class="design-group-body">
+          ${!saasOn ? `<p class="d-note">Custom domains aren't enabled in this environment yet — the form is here for setup.</p>` : ''}
+          <div id="domains-list">${domains.length ? domains.map(domainRow).join('') : '<p class="d-empty">No custom domain connected yet.</p>'}</div>
+          ${currentSubdomain
+            ? `<form id="domain-form" onsubmit="addDomain(event)">
+                 <input type="text" id="domain-input" placeholder="www.yourbusiness.com" autocomplete="off">
+                 <button class="d-btn primary" type="submit">Connect domain</button>
+                 <div class="d-err" id="domain-err"></div>
+               </form>`
+            : `<p class="d-empty">Publish your site first — then you can point a domain at it.</p>`}
+        </div>
+      </details>`;
 
     // Multi-page: ensure pages exist, resolve the page being edited (?page=slug,
     // else home), and split sections into site-wide (header/footer) + this page's.
@@ -303,6 +343,27 @@ export async function handleAIBuilderCustomize(ctx) {
     .design-group > summary::before { content: '▸ '; color: #a0aec0; }
     .design-group[open] > summary::before { content: '▾ '; }
     .design-group-body { padding-top: 1rem; }
+    .d-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: .8rem; margin-bottom: .7rem; }
+    .d-host { font-size: .95rem; color: #1a202c; display: flex; align-items: center; gap: .5rem; }
+    .d-badge { font-size: .7rem; font-weight: 800; padding: .12rem .5rem; border-radius: 999px; }
+    .d-badge.ok { background: #def7ec; color: #03543f; }
+    .d-badge.pending { background: #fef3c7; color: #92400e; }
+    .d-dns { margin: .6rem 0; font-size: .82rem; color: #4a5568; }
+    .d-dns p { margin-bottom: .4rem; }
+    .d-rec { display: flex; gap: .4rem; align-items: center; margin-bottom: .3rem; flex-wrap: wrap; }
+    .d-rec > span { font-weight: 800; color: #718096; min-width: 48px; font-size: .72rem; }
+    .d-rec code { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: .15rem .4rem; font-size: .78rem; }
+    .d-rec code.wrap { word-break: break-all; }
+    .d-live { font-size: .85rem; margin: .5rem 0; }
+    .d-live a { color: #667eea; font-weight: 600; }
+    .d-actions { display: flex; gap: .4rem; margin-top: .5rem; }
+    .d-btn { font: inherit; font-size: .8rem; font-weight: 700; padding: .35rem .7rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; }
+    .d-btn.primary { background: #667eea; color: #fff; border-color: #667eea; }
+    .d-btn.danger { color: #c53030; border-color: #fed7d7; }
+    .d-empty, .d-note { font-size: .85rem; color: #718096; margin: .3rem 0; }
+    #domain-form { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
+    #domain-input { flex: 1; min-width: 180px; padding: .5rem .7rem; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: .9rem; }
+    .d-err { color: #c53030; font-size: .8rem; width: 100%; }
 
     .page-tabs {
       display: flex;
@@ -512,6 +573,7 @@ export async function handleAIBuilderCustomize(ctx) {
             ${generateFontPicker(config, project.project_id)}
           </div>
         </details>
+        ${domainsPanel}
       </div>
 
       <div class="preview-frame">
@@ -874,6 +936,42 @@ export async function handleAIBuilderCustomize(ctx) {
         select.dataset.previousValue = previousValue;
         alert('Failed to switch template: ' + error.message);
       }
+    }
+
+    // ---- Custom domains ----
+    async function addDomain(e) {
+      e.preventDefault();
+      const input = document.getElementById('domain-input');
+      const err = document.getElementById('domain-err');
+      err.textContent = '';
+      const hostname = (input.value || '').trim();
+      if (!hostname) return;
+      try {
+        const res = await fetch(\`/api/ai-builder/\${projectId}/domains\`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hostname })
+        });
+        const data = await res.json();
+        if (data.success) { location.reload(); }
+        else { err.textContent = data.error || 'Could not connect that domain.'; }
+      } catch (e2) { err.textContent = 'Network error. Please try again.'; }
+    }
+    async function checkDomain(id) {
+      try {
+        const res = await fetch(\`/api/ai-builder/\${projectId}/domains/\${id}/status\`);
+        const data = await res.json();
+        if (data.success && data.domain && data.domain.status === 'active') { location.reload(); }
+        else { alert('Still pending — DNS and SSL can take a few minutes to validate after you add the records. Check again shortly.'); }
+      } catch (e) { alert('Could not check status right now.'); }
+    }
+    async function removeDomain(id) {
+      if (!confirm('Disconnect this domain from your site?')) return;
+      try {
+        const res = await fetch(\`/api/ai-builder/\${projectId}/domains/\${id}\`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.error || 'Could not remove the domain.');
+      } catch (e) { alert('Network error. Please try again.'); }
     }
 
     // Apply a whole-site theme: re-skins every section + fonts at once,

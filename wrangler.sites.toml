@@ -31,6 +31,7 @@ bucket_name = "caddisfly-storage-prod"
 # the *.caddisfly.app route for live testing.
 [env.preview]
 name = "caddisfly-sites-preview"
+workers_dev = true   # keep the workers.dev URL for ?site=/?host= testing alongside the route
 routes = [
   { pattern = "*.caddisfly.app/*", zone_name = "caddisfly.app" },
 ]

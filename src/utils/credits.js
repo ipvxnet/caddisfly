@@ -19,6 +19,9 @@ export const CREDIT_COSTS = { generate: 20, image: 5, text_edit: 1, enrich: 10 }
 // Published-site cap per tier (Agency = unlimited).
 export const PUBLISH_LIMITS = { free_trial: 1, starter: 3, pro: 15, agency: Infinity };
 
+// Custom-domain cap per tier (free gets a subdomain only).
+export const DOMAIN_LIMITS = { free_trial: 0, starter: 1, pro: 5, agency: Infinity };
+
 /** Monthly allotment for a tier (defaults to free). */
 export function monthlyAllotment(tier) {
   return MONTHLY_CREDITS[tier] != null ? MONTHLY_CREDITS[tier] : MONTHLY_CREDITS.free_trial;
