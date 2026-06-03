@@ -21,6 +21,8 @@ import { buildProfile } from '../../utils/company-profile.js';
 import { generateAndStore } from '../../utils/template-generation.js';
 import { sendPreviewEmail } from '../../utils/email.js';
 import { htmlResponse, redirect, badRequest } from '../../utils/response.js';
+import { brandMark } from '../../components/brand.js';
+import { cannedJoke } from '../../utils/jokes.js';
 
 const TOKEN_TTL_SECONDS = 24 * 60 * 60;
 
@@ -45,7 +47,14 @@ export async function handleVerify(ctx) {
     return htmlResponse(manualEntryPage(token, project));
   }
   if (project.enrichment_status === 'running') {
-    return htmlResponse(buildingPage(project.preview_id));
+    // Build already in flight — show the fun page; it polls until ready.
+    return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(Date.now())));
+  }
+  if (project.enrichment_status === 'failed') {
+    return htmlResponse(
+      statusPage('Something went wrong', 'We hit a snag building your site. Please request a new preview from the homepage.'),
+      500
+    );
   }
 
   // Expiry only applies before the first verification.
@@ -82,6 +91,29 @@ export async function handleVerify(ctx) {
     enrichment_status: 'running',
   });
 
+  // Run the (slow, paid) enrichment + generation in the background so we can
+  // return a delightful "building your site" page immediately. The page polls
+  // /api/preview/:id/status and redirects when the build finishes. waitUntil
+  // keeps the worker alive for the task after the response is sent.
+  const origin = new URL(request.url).origin;
+  const buildTask = runBuild(env, project, origin);
+  if (ctx.ctx && typeof ctx.ctx.waitUntil === 'function') {
+    ctx.ctx.waitUntil(buildTask);
+  } else {
+    // No execution context (e.g. some test harnesses) — fall back to blocking.
+    await buildTask;
+    return redirect(`/ai-preview/${project.preview_id}`);
+  }
+
+  return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(now)));
+}
+
+/**
+ * The actual paid build: Google Places enrichment + template generation.
+ * Runs in the background (waitUntil); communicates only via project status:
+ *   running -> complete | no_match | failed
+ */
+async function runBuild(env, project, origin) {
   // Recover the interim scrape signal stored at create time.
   let scrapeSignal = null;
   try {
@@ -98,10 +130,7 @@ export async function handleVerify(ctx) {
   } catch (error) {
     console.error('Places enrichment error:', error);
     await updateProject(env.DB, project.id, { enrichment_status: 'failed' });
-    return htmlResponse(
-      statusPage('Something went wrong', 'We had trouble identifying your business right now. Please try again later.'),
-      500
-    );
+    return;
   }
 
   // Charge AI credits for the paid enrichment (the Google call succeeded).
@@ -109,7 +138,7 @@ export async function handleVerify(ctx) {
 
   if (!places.found) {
     await updateProject(env.DB, project.id, { enrichment_status: 'no_match' });
-    return htmlResponse(manualEntryPage(token, project));
+    return;
   }
 
   // Build the site from the merged profile using the shared template pipeline.
@@ -119,10 +148,7 @@ export async function handleVerify(ctx) {
   } catch (error) {
     console.error('Profile-based generation error:', error);
     await updateProject(env.DB, project.id, { enrichment_status: 'failed' });
-    return htmlResponse(
-      statusPage('Almost there', 'We found your business but hit a snag building the site. Please try again in a moment.'),
-      500
-    );
+    return;
   }
 
   await updateProject(env.DB, project.id, {
@@ -135,13 +161,10 @@ export async function handleVerify(ctx) {
 
   // Best-effort preview email (no-op until SEND_EMAIL is wired).
   try {
-    const base = new URL(request.url).origin;
-    await sendPreviewEmail(env, project.customer_email, project.preview_id, `${base}/ai-preview/${project.preview_id}`);
+    await sendPreviewEmail(env, project.customer_email, project.preview_id, `${origin}/ai-preview/${project.preview_id}`);
   } catch (error) {
     console.error('Preview email failed (non-fatal):', error);
   }
-
-  return redirect(`/ai-preview/${project.preview_id}`);
 }
 
 // ---- branded pages ----
@@ -179,14 +202,76 @@ function statusPage(title, message) {
   return pageShell(title, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><p><a href="/">Back to homepage</a></p>`);
 }
 
-function buildingPage(previewId) {
-  return pageShell(
-    'Building your preview',
-    `<h1>Building your preview…</h1>
-     <p>We're identifying your business and assembling your new site. This page will refresh automatically.</p>
-     <p class="muted">If it doesn't, <a href="/ai-preview/${escapeHtml(previewId)}">click here</a>.</p>
-     <script>setTimeout(function(){ location.href='/ai-preview/${escapeHtml(previewId)}'; }, 6000);</script>`
-  );
+function buildingPage(previewId, token, joke) {
+  const pid = JSON.stringify(previewId);
+  const tok = JSON.stringify(token);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building your site · Caddisfly</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;min-height:100vh;
+       display:flex;align-items:center;justify-content:center;color:#fff;padding:24px;
+       background:linear-gradient(135deg,#667eea 0%,#764ba2 55%,#f093fb 120%)}
+  .wrap{text-align:center;max-width:560px;width:100%}
+  .logo{width:128px;height:128px;margin:0 auto 6px;filter:drop-shadow(0 10px 28px rgba(0,0,0,.28))}
+  .logo svg{width:100%;height:100%}
+  h1{font-size:25px;margin:6px 0 8px;font-weight:800;letter-spacing:-.01em}
+  .sub{opacity:.92;margin:0 auto 30px;max-width:420px;line-height:1.55}
+  .joke-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;margin:0 0 10px}
+  .joke-card{background:rgba(255,255,255,.15);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+             border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:24px 26px;min-height:92px;
+             display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1.5;
+             transition:opacity .45s ease}
+  .dots{margin-top:30px;display:flex;gap:8px;justify-content:center}
+  .dots i{width:10px;height:10px;border-radius:50%;background:#fff;opacity:.5;animation:bob 1.2s infinite ease-in-out}
+  .dots i:nth-child(2){animation-delay:.18s}.dots i:nth-child(3){animation-delay:.36s}
+  @keyframes bob{0%,100%{opacity:.35;transform:translateY(0)}50%{opacity:1;transform:translateY(-6px)}}
+  .err{display:none;margin-top:24px;line-height:1.6}
+  .err a{color:#fff;font-weight:700}
+  @media (prefers-reduced-motion:reduce){.dots i{animation:none}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">${brandMark('build-logo', '', true)}</div>
+    <h1>Building your site…</h1>
+    <p class="sub">We're identifying your business and assembling your pages. Hang tight — this usually takes under a minute.</p>
+    <p class="joke-label">😄 A joke while you wait</p>
+    <div class="joke-card" id="joke">${escapeHtml(joke)}</div>
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="err" id="err">
+      <p>This is taking longer than usual. <a href="/ai-preview/${escapeHtml(previewId)}">Try opening your site</a>, or <a href="/">start over</a>.</p>
+    </div>
+  </div>
+  <script>
+    var previewId=${pid}, token=${tok};
+    var jokeEl=document.getElementById('joke'), errEl=document.getElementById('err');
+    function rotateJoke(){
+      fetch('/api/fun/joke').then(function(r){return r.json()}).then(function(d){
+        if(d&&d.joke){jokeEl.style.opacity=0;setTimeout(function(){jokeEl.textContent=d.joke;jokeEl.style.opacity=1;},450);}
+      }).catch(function(){});
+    }
+    var jokeTimer=setInterval(rotateJoke,12000);
+    var tries=0;
+    function poll(){
+      tries++;
+      fetch('/api/preview/'+encodeURIComponent(previewId)+'/status').then(function(r){return r.json()}).then(function(d){
+        var s=d&&d.status;
+        if(s==='complete'){clearInterval(jokeTimer);location.href='/ai-preview/'+encodeURIComponent(previewId);return;}
+        if(s==='no_match'){clearInterval(jokeTimer);location.href='/verify/'+encodeURIComponent(token);return;}
+        if(s==='failed'){clearInterval(jokeTimer);errEl.style.display='block';return;}
+        if(tries>72){errEl.style.display='block';return;}  // ~3 min safety net
+        setTimeout(poll,2500);
+      }).catch(function(){setTimeout(poll,3000);});
+    }
+    setTimeout(poll,2500);
+  </script>
+</body>
+</html>`;
 }
 
 function manualEntryPage(token, project) {
