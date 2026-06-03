@@ -132,7 +132,45 @@ export async function enrichBusiness(env, { businessName, website, location } = 
   }
 
   const details = await getPlaceDetails(env, placeId);
-  return normalizeDetails(details, placeId);
+  const profile = normalizeDetails(details, placeId);
+
+  // Verify the match actually corresponds to the input site. Google Places
+  // frequently fuzzy-matches an UNRELATED business (e.g. searching for IPVXNet
+  // returned "Modern Networks LLC" in Florida). Trusting that would stamp a
+  // stranger's name, phone, and address onto the customer's site — useless and
+  // a real liability. Require the matched listing's website domain to equal the
+  // input domain; otherwise reject so the caller falls back to scrape-only.
+  const inputDomain = domainFromUrl(website || '');
+  if (inputDomain) {
+    const matchDomain = domainFromUrl(profile.website || '');
+    if (!matchDomain || !sameRegistrableDomain(inputDomain, matchDomain)) {
+      return {
+        found: false,
+        reason: 'domain_mismatch',
+        query,
+        place_id: placeId,
+        matched_name: profile.name || null,
+        matched_domain: matchDomain || null,
+      };
+    }
+    profile.verified = true;
+  }
+  return profile;
+}
+
+/**
+ * True when two bare domains belong to the same registrable site (exact match
+ * or one is a subdomain of the other). Both inputs are already www-stripped.
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+function sameRegistrableDomain(a, b) {
+  a = (a || '').toLowerCase().replace(/\.$/, '');
+  b = (b || '').toLowerCase().replace(/\.$/, '');
+  if (!a || !b) return false;
+  if (a === b) return true;
+  return a.endsWith('.' + b) || b.endsWith('.' + a);
 }
 
 /**

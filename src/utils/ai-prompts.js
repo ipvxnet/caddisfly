@@ -1,6 +1,17 @@
 // AI Prompt Templates for Content Generation
 
 /**
+ * Build a prompt block that grounds copy in the business's real, scraped site
+ * content. Returns '' when there's nothing, so prompts stay clean.
+ * @param {string} sourceMaterial
+ * @returns {string}
+ */
+function sourceMaterialBlock(sourceMaterial) {
+  if (!sourceMaterial) return '';
+  return `\n\nSOURCE MATERIAL from the business's existing website — base the copy on THIS so it reflects what they actually do. Do not invent a different business or generic filler:\n${sourceMaterial}`;
+}
+
+/**
  * Extract structured data from initial prompt
  * @param {string} userPrompt - User's initial website description
  * @returns {string} AI prompt
@@ -49,15 +60,16 @@ Only JSON, no explanation.`;
  * @returns {string} AI prompt
  */
 export function generateHeroContent(context) {
-  const { business_name, business_type, audience, tone, description, location } = context;
+  const { business_name, business_type, audience, tone, description, location, source_material } = context;
   const aboutLine = description ? `\nAbout this business: ${description}` : '';
   const locationLine = location ? `\nLocation: ${location}` : '';
+  const sourceLine = sourceMaterialBlock(source_material);
 
   return `Generate hero section content for a ${business_type} website. Return ONLY valid JSON (no markdown, no explanation):
 
 Business: ${business_name}
 Target Audience: ${audience}
-Tone: ${tone}${aboutLine}${locationLine}
+Tone: ${tone}${aboutLine}${locationLine}${sourceLine}
 
 Return this JSON structure:
 {
@@ -76,14 +88,15 @@ Only JSON, no explanation.`;
  * @returns {string} AI prompt
  */
 export function generateAboutContent(context) {
-  const { business_name, business_type, audience, tone, description } = context;
+  const { business_name, business_type, audience, tone, description, source_material } = context;
   const aboutLine = description ? `\nAbout this business: ${description}. Base the story on this — do not invent contradicting facts.` : '';
+  const sourceLine = sourceMaterialBlock(source_material);
 
   return `Generate about section content for a ${business_type} website. Return ONLY valid JSON (no markdown, no explanation):
 
 Business: ${business_name}
 Target Audience: ${audience}
-Tone: ${tone}${aboutLine}
+Tone: ${tone}${aboutLine}${sourceLine}
 
 Return this JSON structure:
 {
@@ -102,16 +115,21 @@ Only JSON, no explanation.`;
  * @returns {string} AI prompt
  */
 export function generateServicesContent(context) {
-  const { business_name, business_type, audience, tone, service_hints } = context;
+  const { business_name, business_type, audience, tone, service_hints, source_material } = context;
+  // When we scraped the real site, the ACTUAL services take priority over the
+  // generic per-industry hints.
+  const sourceLine = source_material
+    ? `\n\nSOURCE MATERIAL from their existing website — extract the ACTUAL services/offerings named here and use them verbatim where possible (real service names, real descriptions). Do NOT invent generic services:\n${source_material}`
+    : '';
   const hintLine = service_hints
-    ? `\nIMPORTANT: This is a ${business_type} business. Real services for this kind of business include: ${service_hints}. Use REAL, specific services this business actually offers — never generic placeholders like "Service 1".`
+    ? `\n${source_material ? 'If the source material is thin, ' : 'IMPORTANT: This is a ' + business_type + ' business. '}real services for this kind of business include: ${service_hints}. Never use generic placeholders like "Service 1".`
     : '';
 
   return `Generate services/products section for a ${business_type} website. Return ONLY valid JSON (no markdown, no explanation):
 
 Business: ${business_name}
 Target Audience: ${audience}
-Tone: ${tone}${hintLine}
+Tone: ${tone}${sourceLine}${hintLine}
 
 Return this JSON structure:
 {

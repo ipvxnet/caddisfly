@@ -32,7 +32,16 @@ import { attachImages, makePhotoPicker } from './section-images.js';
  * @returns {Promise<{sectionsCreated: number, previewPath: string, industry: string, photos: number}>}
  */
 export async function generateAndStore(env, project, profile) {
-  const industry = inferIndustry(profile.category, profile.name);
+  // Infer the industry from EVERYTHING we know — including the headings/body
+  // scraped from the original site — so a scrape-only refactor (no verified
+  // Places match) still lands on the right vertical (palette, fonts, imagery).
+  const src = profile.source || {};
+  const industry = inferIndustry(
+    profile.category,
+    profile.name,
+    ...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []),
+    src.scrape_sample || ''
+  );
   const recipe = getRecipe(industry);
 
   // 1. Image pool: real Google Places photos (→ R2) first, then stock to fill.
@@ -47,7 +56,7 @@ export async function generateAndStore(env, project, profile) {
   );
 
   // 3. Generate each section's content.
-  const context = profileToContext(profile, recipe);
+  const context = profileToContext(profile, recipe, industry);
   const sections = [];
   let order = 0;
 

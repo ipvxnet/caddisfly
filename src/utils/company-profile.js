@@ -71,12 +71,9 @@ export function extractScrapeSignal(html, url) {
 export function buildProfile(scrapeSignal = {}, placesData = {}) {
   const places = placesData && placesData.found ? placesData : {};
 
-  const name =
-    places.name ||
-    scrapeSignal.siteName ||
-    cleanTitle(scrapeSignal.title) ||
-    scrapeSignal.domain ||
-    'Your Business';
+  // Identity is scrape-first: only a verified Places match overrides the real
+  // business name recovered from the original site (see google-places.js).
+  const name = places.name || pickBusinessName(scrapeSignal) || 'Your Business';
 
   return {
     name,
@@ -112,11 +109,11 @@ export function buildProfile(scrapeSignal = {}, placesData = {}) {
  * @param {object} [recipe] - Industry recipe (getRecipe) for tone/service hints
  * @returns {object} Generation context
  */
-export function profileToContext(profile, recipe = {}) {
+export function profileToContext(profile, recipe = {}, industry = '') {
   return {
     business_name: profile.name,
-    business_type: profile.category || 'business',
-    industry: profile.category || 'general',
+    business_type: profile.category || industry || 'business',
+    industry: profile.category || industry || 'general',
     audience: 'customers',
     tone: recipe.tone || 'professional',
     style: 'modern',
@@ -126,8 +123,30 @@ export function profileToContext(profile, recipe = {}) {
     location: profile.address,
     // Vertical grounding for AI copy (Phase 3).
     service_hints: recipe.serviceHints || '',
+    // The REAL content scraped from the business's existing site (headings +
+    // body sample). This is what makes refactor copy specific instead of
+    // generic — the AI grounds hero/about/services in what they actually do.
+    source_material: buildSourceMaterial(profile),
     selected_sections: [],
   };
+}
+
+/**
+ * Assemble a compact "source material" brief from the scraped original site so
+ * the content prompts can ground copy in the real business. Empty when we have
+ * nothing useful (the prompts then fall back to industry hints).
+ * @param {object} profile - Canonical profile (carries source.* hints)
+ * @returns {string}
+ */
+function buildSourceMaterial(profile) {
+  const src = (profile && profile.source) || {};
+  const parts = [];
+  if (profile && profile.description) parts.push(`Tagline/summary: ${profile.description}`);
+  const headings = Array.isArray(src.scrape_headings) ? src.scrape_headings.filter(Boolean) : [];
+  if (headings.length) parts.push(`Headings from their current site: ${headings.slice(0, 8).join(' | ')}`);
+  const sample = (src.scrape_sample || '').trim();
+  if (sample) parts.push(`Body text from their current site: ${sample.slice(0, 800)}`);
+  return parts.join('\n');
 }
 
 /**
@@ -246,6 +265,31 @@ function visibleText(html) {
 function cleanTitle(title) {
   if (!title) return '';
   return title.split(/\s[|\-–—]\s/)[0].trim();
+}
+
+/**
+ * Pick the most likely business NAME from scrape signals (no Places match).
+ * Order: og:site_name → the <title> segment that matches the domain (the brand
+ * is usually the domain) → the shortest title segment (names are short,
+ * taglines long) → the domain. Avoids using a descriptive title as the name.
+ * @param {object} s - scrapeSignal
+ * @returns {string}
+ */
+function pickBusinessName(s = {}) {
+  if (s.siteName && s.siteName.trim()) return s.siteName.trim();
+
+  const segs = (s.title || '')
+    .split(/\s[|\-–—:•]\s/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  const domainCore = (s.domain || '').split('.')[0].replace(/[^a-z0-9]/gi, '').toLowerCase();
+  if (domainCore && segs.length) {
+    const hit = segs.find((seg) => seg.replace(/[^a-z0-9]/gi, '').toLowerCase().includes(domainCore));
+    if (hit) return hit;
+  }
+  if (segs.length) return segs.slice().sort((a, b) => a.length - b.length)[0];
+  return cleanTitle(s.title) || s.domain || '';
 }
 
 function domainFromUrl(url) {

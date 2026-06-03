@@ -133,15 +133,29 @@ async function runBuild(env, project, origin) {
     return;
   }
 
-  // Charge AI credits for the paid enrichment (the Google call succeeded).
+  // Charge AI credits for the paid enrichment (the Google call ran).
   await chargeCredits(env, env.DB, project.customer_email, CREDIT_COSTS.enrich);
 
-  if (!places.found) {
+  // Places may have found nothing, or found an UNVERIFIED match (its website
+  // domain didn't match the customer's — see google-places.js). Either way we
+  // don't trust its identity. If the scrape gave us real content, build from
+  // THAT (scrape-first); only fall back to manual entry when we have nothing.
+  const haveScrape =
+    scrapeSignal &&
+    (((scrapeSignal.headings || []).length > 0) ||
+      (scrapeSignal.sampleText && scrapeSignal.sampleText.length > 80) ||
+      (scrapeSignal.title && scrapeSignal.title.length > 0));
+
+  if (!places.found && !haveScrape) {
     await updateProject(env.DB, project.id, { enrichment_status: 'no_match' });
     return;
   }
+  if (!places.found) {
+    console.log(`Places unverified (${places.reason}${places.matched_name ? `: matched "${places.matched_name}"` : ''}); building scrape-first for ${project.website_url}`);
+  }
 
   // Build the site from the merged profile using the shared template pipeline.
+  // When places is unverified, buildProfile uses scrape-only identity.
   const profile = buildProfile(scrapeSignal, places);
   try {
     await generateAndStore(env, project, profile);
@@ -155,7 +169,7 @@ async function runBuild(env, project, origin) {
     status: 'preview_ready',
     enrichment_status: 'complete',
     template_generation_status: 'complete',
-    place_id: places.place_id,
+    place_id: places.place_id || null,
     company_profile_json: JSON.stringify(profile),
   });
 
