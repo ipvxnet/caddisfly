@@ -519,6 +519,36 @@ export async function handleAIBuilderCustomize(ctx) {
       padding: 0;
     }
 
+    #deploy-success { position: fixed; inset: 0; z-index: 10050; display: flex; align-items: center; justify-content: center; }
+    #deploy-success .ds-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.55); }
+    #deploy-success .ds-card {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem 2.25rem;
+      max-width: 460px;
+      width: calc(100% - 2rem);
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    }
+    #deploy-success .ds-emoji { font-size: 2.5rem; }
+    #deploy-success h2 { margin: 0.5rem 0 0.25rem; color: #1a202c; }
+    #deploy-success .ds-sub { color: #718096; font-size: 0.9rem; margin: 0 0 1rem; }
+    #deploy-success .ds-url {
+      display: block;
+      word-break: break-all;
+      font-weight: 600;
+      color: #7c3aed;
+      background: #faf5ff;
+      border: 1px solid #e9d8fd;
+      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      text-decoration: none;
+      margin-bottom: 1.25rem;
+    }
+    #deploy-success .ds-url:hover { text-decoration: underline; }
+    #deploy-success .ds-actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+
     .section-actions .template-variant-select {
       flex: 1;
       min-width: 0;
@@ -1176,13 +1206,42 @@ export async function handleAIBuilderCustomize(ctx) {
         const data = await response.json();
 
         if (data.success) {
-          alert('Website deployed successfully! Opening in new tab...');
-          window.open(data.deployed_url, '_blank');
+          showDeploySuccess(data.deployed_url || data.subdomain_url || data.site_url);
         } else {
           throw new Error(data.error || 'Deployment failed');
         }
       } catch (error) {
         alert('Deployment failed: ' + error.message);
+      }
+    }
+
+    // Success modal with a clickable link (no popup — browsers block window.open).
+    function showDeploySuccess(url) {
+      const safe = String(url || '');
+      closeDeploySuccess();
+      const wrap = document.createElement('div');
+      wrap.id = 'deploy-success';
+      wrap.innerHTML =
+        '<div class="ds-backdrop" onclick="closeDeploySuccess()"></div>'
+        + '<div class="ds-card" role="dialog" aria-modal="true">'
+        + '<div class="ds-emoji">🎉</div>'
+        + '<h2>Your site is live!</h2>'
+        + '<p class="ds-sub">It\\'s published and publicly accessible at:</p>'
+        + '<a class="ds-url" href="' + safe + '" target="_blank" rel="noopener">' + safe + '</a>'
+        + '<div class="ds-actions">'
+        + '<a class="btn btn-primary" href="' + safe + '" target="_blank" rel="noopener">Open site ↗</a>'
+        + '<button type="button" class="btn btn-secondary" onclick="copyDeployUrl(\\'' + safe + '\\')">Copy link</button>'
+        + '<button type="button" class="btn btn-secondary" onclick="closeDeploySuccess()">Close</button>'
+        + '</div></div>';
+      document.body.appendChild(wrap);
+    }
+    function closeDeploySuccess() {
+      const el = document.getElementById('deploy-success');
+      if (el) el.remove();
+    }
+    function copyDeployUrl(u) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(u).then(function () { showNotification('Link copied!', 'success'); }).catch(function () {});
       }
     }
 

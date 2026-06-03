@@ -140,10 +140,11 @@ export async function handleAIBuilderDeploy(ctx) {
 
     if (pageCount === 0) return json({ success: false, error: 'Nothing to deploy' }, 400);
 
-    // Canonical URL: the subdomain when SITES_BASE is configured (e.g. caddisfly.app),
-    // else the /site/:id route (used in preview where the apex isn't wired yet).
-    const sitesBase = env.SITES_BASE || '';
-    const subdomainUrl = sitesBase ? `https://${subdomain}.${sitesBase}` : '';
+    // Canonical URL: the subdomain on the sites domain. The sites worker serves
+    // *.caddisfly.app in BOTH preview and prod, so default to caddisfly.app when
+    // SITES_BASE is unset (matches the customize page's domains panel).
+    const sitesBase = env.SITES_BASE || 'caddisfly.app';
+    const subdomainUrl = `https://${subdomain}.${sitesBase}`;
     const siteUrl = `${appOrigin}/site/${publicId}`;
     const deployedUrl = subdomainUrl || siteUrl;
 
