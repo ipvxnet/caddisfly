@@ -207,6 +207,20 @@ export function generateSectionEditorModal(section, projectId) {
   border-radius: 8px;
   background: #fff;
 }
+.gallery-row.drag-over {
+  border-color: #7c3aed;
+  background: #faf5ff;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) inset;
+}
+.gallery-drag {
+  flex: 0 0 auto;
+  cursor: grab;
+  color: #a0aec0;
+  font-size: 1rem;
+  user-select: none;
+  padding: 0 0.1rem;
+}
+.gallery-drag:active { cursor: grabbing; }
 .gallery-thumb {
   width: 56px;
   height: 56px;
@@ -513,12 +527,11 @@ function galleryRender() {
     return;
   }
   wrap.innerHTML = imgs.map(function (img, i) {
-    return '<div class="gallery-row">'
+    return '<div class="gallery-row" data-gi="' + i + '" ondragover="galleryDragOver(event)" ondragleave="galleryDragLeave(event)" ondrop="galleryDrop(event,' + i + ')">'
+      + '<span class="gallery-drag" draggable="true" title="Drag to reorder" ondragstart="galleryDragStart(event,' + i + ')" ondragend="galleryDragEnd(event)">⋮⋮</span>'
       + '<img class="gallery-thumb" src="' + galleryEsc(img.url || '') + '" alt="">'
       + '<input class="gallery-alt" type="text" placeholder="Describe this photo (alt text)" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
       + '<div class="gallery-row-actions">'
-      + '<button type="button" title="Move up" onclick="galleryMove(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
-      + '<button type="button" title="Move down" onclick="galleryMove(' + i + ',1)"' + (i === imgs.length - 1 ? ' disabled' : '') + '>↓</button>'
       + '<button type="button" title="Replace photo" onclick="galleryReplace(' + i + ')">Replace</button>'
       + '<button type="button" class="gallery-del" title="Remove photo" onclick="galleryRemove(' + i + ')">🗑</button>'
       + '</div></div>';
@@ -526,11 +539,39 @@ function galleryRender() {
 }
 function gallerySetAlt(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].alt = val; galleryWrite(imgs); } }
 function galleryRemove(i) { const imgs = galleryRead(); imgs.splice(i, 1); galleryWrite(imgs); galleryRender(); }
-function galleryMove(i, dir) {
-  const imgs = galleryRead(); const j = i + dir;
-  if (j < 0 || j >= imgs.length) return;
-  const t = imgs[i]; imgs[i] = imgs[j]; imgs[j] = t;
-  galleryWrite(imgs); galleryRender();
+
+// Drag-to-reorder gallery photos.
+window.__galleryDragIndex = -1;
+function galleryDragStart(e, i) {
+  window.__galleryDragIndex = i;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(i)); } catch (_) {}
+}
+function galleryDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const row = e.currentTarget;
+  if (row && row.classList) row.classList.add('drag-over');
+}
+function galleryDragLeave(e) {
+  const row = e.currentTarget;
+  if (row && row.classList) row.classList.remove('drag-over');
+}
+function galleryDrop(e, target) {
+  e.preventDefault();
+  const from = window.__galleryDragIndex;
+  window.__galleryDragIndex = -1;
+  if (from < 0 || from === target) { galleryRender(); return; }
+  const imgs = galleryRead();
+  if (from >= imgs.length) { galleryRender(); return; }
+  const moved = imgs.splice(from, 1)[0];
+  imgs.splice(target, 0, moved);
+  galleryWrite(imgs);
+  galleryRender();
+}
+function galleryDragEnd() {
+  window.__galleryDragIndex = -1;
+  document.querySelectorAll('.gallery-row.drag-over').forEach(function (el) { el.classList.remove('drag-over'); });
 }
 window.__galleryReplaceIndex = -1;
 function galleryReplace(i) { window.__galleryReplaceIndex = i; document.getElementById('gallery-replace-input').click(); }
