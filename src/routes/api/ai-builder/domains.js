@@ -30,6 +30,7 @@ import {
   updateDomain,
   deleteDomain,
 } from '../../../db/custom-domains.js';
+import { canManageDomains } from '../../../middleware/project-access.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -48,6 +49,9 @@ const pointerKey = (hostname) => `domains/${hostname}`;
 /** POST … /domains — connect a custom domain. */
 export async function handleAddDomain(ctx) {
   const { env, request, params } = ctx;
+  if (ctx.projectRole && !canManageDomains(ctx.projectRole)) {
+    return json({ success: false, error: 'Only the owner and admins can manage custom domains.' }, 403);
+  }
   const proj = await resolveProject(env, params.project_id);
   if (!proj) return json({ success: false, error: 'Project not found' }, 404);
   if (!proj.subdomain) {
@@ -142,6 +146,9 @@ export async function handleDomainStatus(ctx) {
 /** DELETE … /domains/:id — disconnect a custom domain. */
 export async function handleRemoveDomain(ctx) {
   const { env, params } = ctx;
+  if (ctx.projectRole && !canManageDomains(ctx.projectRole)) {
+    return json({ success: false, error: 'Only the owner and admins can manage custom domains.' }, 403);
+  }
   const rec = await getDomainById(env.DB, parseInt(params.id));
   if (!rec) return json({ success: false, error: 'Domain not found' }, 404);
 

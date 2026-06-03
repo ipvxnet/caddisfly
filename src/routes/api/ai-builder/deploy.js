@@ -12,6 +12,7 @@ import { getUserTier } from '../../../utils/rate-limiter.js';
 import { countPublishedSites } from '../../../db/billing.js';
 import { PUBLISH_LIMITS } from '../../../utils/credits.js';
 import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
+import { canDeploy } from '../../../middleware/project-access.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -23,6 +24,12 @@ function json(body, status = 200) {
  */
 export async function handleAIBuilderDeploy(ctx) {
   const { env, params } = ctx;
+
+  // Role gate: owner, admins, and publishers can publish (members can't).
+  // ctx.projectRole is set by the projectAccess middleware ('link' when signed out).
+  if (ctx.projectRole && !canDeploy(ctx.projectRole)) {
+    return json({ success: false, error: 'Only the owner, admins, and publishers can publish this site.' }, 403);
+  }
 
   try {
     const publicId = params.project_id;

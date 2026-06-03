@@ -80,23 +80,26 @@ function siteCard(site, domainsBlock = '') {
 
 // A single member row. `owner` is the team's owner email (passed to actions so
 // an admin can manage a team they don't own). `canManage` toggles the controls.
+const ROLES = ['member', 'publisher', 'admin'];
+
 function memberRow(m, owner, canManage, viewer) {
   const isSelf = m.member_email === viewer;
-  const actions = canManage
-    ? `${m.role === 'admin'
-          ? `<button class="link-btn" onclick="setRole('${esc(owner)}','${esc(m.member_email)}','member')">Make member</button>`
-          : `<button class="link-btn" onclick="setRole('${esc(owner)}','${esc(m.member_email)}','admin')">Make admin</button>`}
-       <button class="link-btn danger" onclick="removeMember('${esc(owner)}','${esc(m.member_email)}')">${isSelf ? 'Leave' : 'Remove'}</button>`
-    : '';
+  const roleCtl = canManage
+    ? `<select class="role-select" onchange="setRole('${esc(owner)}','${esc(m.member_email)}', this.value)">
+         ${ROLES.map((r) => `<option value="${r}" ${m.role === r ? 'selected' : ''}>${r}</option>`).join('')}
+       </select>`
+    : `<span class="pill ${m.role === 'admin' ? 'ok' : ''}">${esc(m.role)}</span>`;
   return `
     <div class="member">
       <div class="m-main">
         <span class="m-email">${esc(m.member_email)}</span>
-        <span class="pill ${m.role === 'admin' ? 'ok' : ''}">${esc(m.role)}</span>
+        ${roleCtl}
         ${m.status === 'invited' ? '<span class="pill warn">invited</span>' : ''}
         ${isSelf ? '<span class="pill">you</span>' : ''}
       </div>
-      <div class="m-actions">${actions}</div>
+      <div class="m-actions">
+        ${canManage ? `<button class="link-btn danger" onclick="removeMember('${esc(owner)}','${esc(m.member_email)}')">${isSelf ? 'Leave' : 'Remove'}</button>` : ''}
+      </div>
     </div>`;
 }
 
@@ -129,6 +132,7 @@ async function renderTeamPanel(env, viewer, owner, viewerRole) {
     } else if (seats < limit) {
       invite = `<div class="invite">
           <input type="email" class="invite-email" placeholder="teammate@example.com">
+          <select class="invite-role" title="Role">${ROLES.map((r) => `<option value="${r}">${r}</option>`).join('')}</select>
           <button class="btn" data-owner="${esc(owner)}" onclick="invite(this)">Invite</button>
         </div>`;
     } else {
@@ -147,6 +151,7 @@ async function renderTeamPanel(env, viewer, owner, viewerRole) {
       <p class="muted">You're ${youAre === 'owner' ? 'the <strong>owner</strong> (admin)' : `${youAre === 'admin' ? 'an <strong>admin</strong>' : 'a <strong>member</strong>'}`} of this team.</p>
       <div class="members">${rows}</div>
       ${invite}
+      ${canManage ? '<p class="muted role-legend">Roles — <strong>member</strong>: edit content · <strong>publisher</strong>: edit + publish · <strong>admin</strong>: manage team &amp; domains</p>' : ''}
     </div>`;
 }
 
@@ -273,9 +278,11 @@ function pageShell(origin, inner, headerOpts = {}) {
     .m-email{font-weight:700;color:var(--ink);margin-right:.4rem}
     .link-btn{background:none;border:none;color:var(--p2);cursor:pointer;font-size:.85rem;font-weight:600;padding:0 .3rem}
     .link-btn.danger{color:#b91c1c}
-    .invite{display:flex;gap:.5rem;margin-top:1rem}
-    .invite input{flex:1;padding:.7rem .9rem;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:.95rem}
+    .invite{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+    .invite input{flex:1;min-width:160px;padding:.7rem .9rem;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:.95rem}
     .invite input:focus{outline:none;border-color:var(--p1)}
+    .invite-role,.role-select{padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.85rem;background:#fff;text-transform:capitalize;cursor:pointer}
+    .role-legend{font-size:.78rem;margin-top:.7rem}
     @media (max-width:560px){.site-top,.member{align-items:flex-start}}
   </style>
 </head>
@@ -292,11 +299,14 @@ function pageShell(origin, inner, headerOpts = {}) {
     }
     async function invite(btn) {
       const owner = btn.dataset.owner;
-      const input = btn.closest('.invite').querySelector('.invite-email');
+      const wrap = btn.closest('.invite');
+      const input = wrap.querySelector('.invite-email');
+      const roleSel = wrap.querySelector('.invite-role');
       const email = (input.value || '').trim();
+      const role = roleSel ? roleSel.value : 'member';
       if (!email) return;
       btn.disabled = true; btn.textContent = 'Inviting…';
-      try { await postTeam('/api/team/invite', { owner, email }); location.reload(); }
+      try { await postTeam('/api/team/invite', { owner, email, role }); location.reload(); }
       catch (e) { alert(e.message); btn.disabled = false; btn.textContent = 'Invite'; }
     }
     async function setRole(owner, email, role) {

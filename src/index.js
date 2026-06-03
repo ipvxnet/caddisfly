@@ -61,6 +61,7 @@ import { handleCreateTicket, handleReplyTicket } from './routes/api/support.js';
 import { handleAdminTickets, handleAdminTicketReply, handleAdminTicketStatus } from './routes/admin/tickets.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
+import { projectAccess } from './middleware/project-access.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
 
@@ -93,9 +94,9 @@ router.get('/preview-asset/:preview_id/:filename', handlePreviewAsset);
 
 // AI Builder public routes
 router.get('/ai-builder', handleAIBuilderLanding);
-router.get('/ai-builder/chat/:project_id', handleAIBuilderChat);
-router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating);
-router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize);
+router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, projectAccess]);
+router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
+router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
 router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
@@ -128,28 +129,32 @@ router.post('/api/track', handleTrack);
 
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);
-router.post('/api/ai-builder/:project_id/respond', handleAIBuilderRespond);
-router.post('/api/ai-builder/:project_id/generate-preview', handleAIBuilderGenerate);
-router.post('/api/ai-builder/:project_id/upload', handleAIBuilderUpload);
-router.get('/api/ai-builder/:project_id/sections/:section_id/editor', handleGetSectionEditor);
-router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit', handleAIEditPropose);
-router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit/apply', handleAIEditApply);
-router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate);
-router.put('/api/ai-builder/:project_id/sections/reorder', handleSectionsReorder);
-router.post('/api/ai-builder/:project_id/sections', handleAddSection);
-router.delete('/api/ai-builder/:project_id/sections/:section_id', handleDeleteSection);
-router.put('/api/ai-builder/:project_id/config/colors', handleUpdateColors);
-router.put('/api/ai-builder/:project_id/config/fonts', handleUpdateFonts);
-router.post('/api/ai-builder/:project_id/template', handleApplyTemplate);
-router.get('/api/ai-builder/:project_id/pages', handleListPages);
-router.post('/api/ai-builder/:project_id/pages', handleCreatePage);
-router.put('/api/ai-builder/:project_id/pages/reorder', handleReorderPages);
-router.put('/api/ai-builder/:project_id/pages/:page_id', handleUpdatePage);
-router.delete('/api/ai-builder/:project_id/pages/:page_id', handleDeletePage);
-router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy);
-router.post('/api/ai-builder/:project_id/domains', handleAddDomain);
-router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus);
-router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain);
+// All project-scoped editing routes are gated [billingAuth, projectAccess]:
+// signed-in non-members are blocked (cross-account); deploy/domains additionally
+// check ctx.projectRole inside their handlers.
+const PROJ = [billingAuth, projectAccess];
+router.post('/api/ai-builder/:project_id/respond', handleAIBuilderRespond, PROJ);
+router.post('/api/ai-builder/:project_id/generate-preview', handleAIBuilderGenerate, PROJ);
+router.post('/api/ai-builder/:project_id/upload', handleAIBuilderUpload, PROJ);
+router.get('/api/ai-builder/:project_id/sections/:section_id/editor', handleGetSectionEditor, PROJ);
+router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit', handleAIEditPropose, PROJ);
+router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit/apply', handleAIEditApply, PROJ);
+router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate, PROJ);
+router.put('/api/ai-builder/:project_id/sections/reorder', handleSectionsReorder, PROJ);
+router.post('/api/ai-builder/:project_id/sections', handleAddSection, PROJ);
+router.delete('/api/ai-builder/:project_id/sections/:section_id', handleDeleteSection, PROJ);
+router.put('/api/ai-builder/:project_id/config/colors', handleUpdateColors, PROJ);
+router.put('/api/ai-builder/:project_id/config/fonts', handleUpdateFonts, PROJ);
+router.post('/api/ai-builder/:project_id/template', handleApplyTemplate, PROJ);
+router.get('/api/ai-builder/:project_id/pages', handleListPages, PROJ);
+router.post('/api/ai-builder/:project_id/pages', handleCreatePage, PROJ);
+router.put('/api/ai-builder/:project_id/pages/reorder', handleReorderPages, PROJ);
+router.put('/api/ai-builder/:project_id/pages/:page_id', handleUpdatePage, PROJ);
+router.delete('/api/ai-builder/:project_id/pages/:page_id', handleDeletePage, PROJ);
+router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
+router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
+router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
+router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);
 
 // Billing API
 router.post('/api/billing/login', handleBillingLogin);

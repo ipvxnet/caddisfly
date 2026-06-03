@@ -39,7 +39,7 @@ export async function handleTeamInvite(ctx) {
   if (error) return error;
 
   const member = sanitizeEmail(body.email || '');
-  const role = body.role === 'admin' ? 'admin' : 'member';
+  const role = ['admin', 'publisher', 'member'].includes(body.role) ? body.role : 'member';
 
   if (!isValidEmail(member)) return json({ success: false, error: 'Enter a valid email address.' }, 400);
   if (member === owner) return json({ success: false, error: "That's the team owner's account." }, 400);
@@ -75,7 +75,7 @@ export async function handleTeamRole(ctx) {
   if (error) return error;
 
   const member = sanitizeEmail(body.email || '');
-  const role = body.role === 'admin' ? 'admin' : 'member';
+  const role = ['admin', 'publisher', 'member'].includes(body.role) ? body.role : 'member';
 
   const existing = await getMember(env.DB, owner, member);
   if (!existing) return json({ success: false, error: 'That person is not on this team.' }, 404);

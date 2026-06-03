@@ -12,6 +12,7 @@ import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
 import { renderDomainsPanel, DOMAINS_CSS, DOMAINS_JS } from '../../components/domains-panel.js';
+import { canDeploy, canManageDomains } from '../../middleware/project-access.js';
 import { getCreditState } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
@@ -23,6 +24,11 @@ import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
  */
 export async function handleAIBuilderCustomize(ctx) {
   const { env, params, query } = ctx;
+  // Role-aware UI: hide actions this viewer can't perform (publish/domains).
+  // projectAccess sets ctx.projectRole ('link' = signed-out, full access).
+  const role = ctx.projectRole || 'link';
+  const showDeploy = canDeploy(role);
+  const showDomains = canManageDomains(role);
 
   try {
     const { project_id } = params;
@@ -616,7 +622,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <a href="/dashboard" class="btn btn-secondary" title="Your websites &amp; team">🏠 Dashboard</a>
       <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="Traffic analytics for your published site">📊 Analytics</a>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">View Full Preview</a>
-      <button class="btn btn-primary" onclick="deployWebsite()">Deploy Website</button>
+      ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite()">Deploy Website</button>` : ''}
     </div>
   </div>
 
@@ -666,7 +672,7 @@ export async function handleAIBuilderCustomize(ctx) {
             ${generateFontPicker(config, project.project_id)}
           </div>
         </details>
-        ${domainsPanelBlock}
+        ${showDomains ? domainsPanelBlock : ''}
       </div>
 
       <div class="preview-frame">
