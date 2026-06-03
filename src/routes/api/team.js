@@ -5,12 +5,12 @@
 //   POST /api/team/remove  { email }
 
 import {
-  getTeamMembers,
   countTeamSeats,
   getMember,
   createInvite,
   setMemberRole,
   removeMember,
+  canManageTeam,
 } from '../../db/teams.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { isValidEmail, sanitizeEmail, sendTeamInviteEmail } from '../../utils/email.js';
@@ -19,18 +19,30 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
+// Resolve the team being managed (body.owner, defaulting to the caller's own
+// account) and confirm the caller may manage it (owner or active admin member).
+async function resolveTeam(ctx, body) {
+  const caller = ctx.billingEmail;
+  if (!caller) return { error: json({ success: false, error: 'Please sign in.' }, 401) };
+  const owner = sanitizeEmail(body.owner || caller) || caller;
+  if (!(await canManageTeam(ctx.env.DB, owner, caller))) {
+    return { error: json({ success: false, error: "You're not allowed to manage this team." }, 403) };
+  }
+  return { caller, owner };
+}
+
 /** POST /api/team/invite */
 export async function handleTeamInvite(ctx) {
   const { env, request, url } = ctx;
-  const owner = ctx.billingEmail;
-  if (!owner) return json({ success: false, error: 'Please sign in.' }, 401);
-
   const body = await request.json().catch(() => ({}));
+  const { owner, error } = await resolveTeam(ctx, body);
+  if (error) return error;
+
   const member = sanitizeEmail(body.email || '');
   const role = body.role === 'admin' ? 'admin' : 'member';
 
   if (!isValidEmail(member)) return json({ success: false, error: 'Enter a valid email address.' }, 400);
-  if (member === owner) return json({ success: false, error: "That's your own account — you're already the owner." }, 400);
+  if (member === owner) return json({ success: false, error: "That's the team owner's account." }, 400);
 
   const { tier } = await getCreditState(env.DB, owner);
   const limit = teamLimit(tier);
@@ -44,11 +56,11 @@ export async function handleTeamInvite(ctx) {
   if (!existing) {
     const seatsUsed = await countTeamSeats(env.DB, owner);
     if (seatsUsed >= limit) {
-      return json({ success: false, error: `Your plan allows ${limit} seats (including you). Upgrade to add more.`, billing_url: '/billing' }, 402);
+      return json({ success: false, error: `This plan allows ${limit} seats (including the owner). Upgrade to add more.`, billing_url: '/billing' }, 402);
     }
   }
 
-  const row = await createInvite(env.DB, { ownerEmail: owner, memberEmail: member, role, invitedBy: owner });
+  const row = await createInvite(env.DB, { ownerEmail: owner, memberEmail: member, role, invitedBy: ctx.billingEmail });
   const inviteUrl = `${url.origin}/team/accept/${row.invite_token}`;
   await sendTeamInviteEmail(env, member, inviteUrl, owner);
 
@@ -58,15 +70,15 @@ export async function handleTeamInvite(ctx) {
 /** POST /api/team/role */
 export async function handleTeamRole(ctx) {
   const { env, request } = ctx;
-  const owner = ctx.billingEmail;
-  if (!owner) return json({ success: false, error: 'Please sign in.' }, 401);
-
   const body = await request.json().catch(() => ({}));
+  const { owner, error } = await resolveTeam(ctx, body);
+  if (error) return error;
+
   const member = sanitizeEmail(body.email || '');
   const role = body.role === 'admin' ? 'admin' : 'member';
 
   const existing = await getMember(env.DB, owner, member);
-  if (!existing) return json({ success: false, error: 'That person is not on your team.' }, 404);
+  if (!existing) return json({ success: false, error: 'That person is not on this team.' }, 404);
 
   await setMemberRole(env.DB, owner, member, role);
   return json({ success: true, member: { email: member, role } });
@@ -75,14 +87,14 @@ export async function handleTeamRole(ctx) {
 /** POST /api/team/remove */
 export async function handleTeamRemove(ctx) {
   const { env, request } = ctx;
-  const owner = ctx.billingEmail;
-  if (!owner) return json({ success: false, error: 'Please sign in.' }, 401);
-
   const body = await request.json().catch(() => ({}));
+  const { owner, error } = await resolveTeam(ctx, body);
+  if (error) return error;
+
   const member = sanitizeEmail(body.email || '');
 
   const existing = await getMember(env.DB, owner, member);
-  if (!existing) return json({ success: false, error: 'That person is not on your team.' }, 404);
+  if (!existing) return json({ success: false, error: 'That person is not on this team.' }, 404);
 
   await removeMember(env.DB, owner, member);
   return json({ success: true });

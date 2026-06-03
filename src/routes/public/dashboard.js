@@ -6,7 +6,7 @@ import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getAIProjectsByEmail } from '../../db/ai-projects.js';
 import { getAllProjects } from '../../db/projects.js';
-import { getTeamMembers, countTeamSeats, getTeamsForMember } from '../../db/teams.js';
+import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 
 const SITES_BASE = 'caddisfly.app';
@@ -66,21 +66,75 @@ function siteCard(site) {
     </div>`;
 }
 
-function memberRow(m, ownerEmail) {
-  const isOwnerSelf = false;
+// A single member row. `owner` is the team's owner email (passed to actions so
+// an admin can manage a team they don't own). `canManage` toggles the controls.
+function memberRow(m, owner, canManage, viewer) {
+  const isSelf = m.member_email === viewer;
+  const actions = canManage
+    ? `${m.role === 'admin'
+          ? `<button class="link-btn" onclick="setRole('${esc(owner)}','${esc(m.member_email)}','member')">Make member</button>`
+          : `<button class="link-btn" onclick="setRole('${esc(owner)}','${esc(m.member_email)}','admin')">Make admin</button>`}
+       <button class="link-btn danger" onclick="removeMember('${esc(owner)}','${esc(m.member_email)}')">${isSelf ? 'Leave' : 'Remove'}</button>`
+    : '';
   return `
-    <div class="member" data-email="${esc(m.member_email)}">
+    <div class="member">
       <div class="m-main">
         <span class="m-email">${esc(m.member_email)}</span>
         <span class="pill ${m.role === 'admin' ? 'ok' : ''}">${esc(m.role)}</span>
         ${m.status === 'invited' ? '<span class="pill warn">invited</span>' : ''}
+        ${isSelf ? '<span class="pill">you</span>' : ''}
       </div>
-      <div class="m-actions">
-        ${m.role === 'admin'
-          ? `<button class="link-btn" onclick="setRole('${esc(m.member_email)}','member')">Make member</button>`
-          : `<button class="link-btn" onclick="setRole('${esc(m.member_email)}','admin')">Make admin</button>`}
-        <button class="link-btn danger" onclick="removeMember('${esc(m.member_email)}')">Remove</button>
+      <div class="m-actions">${actions}</div>
+    </div>`;
+}
+
+// A full team panel: the owner (implicit admin) + members, the owner's seat
+// limit, and management controls when the viewer is owner/admin of that team.
+async function renderTeamPanel(env, viewer, owner, viewerRole) {
+  const isOwn = owner === viewer;
+  const canManage = viewerRole === 'owner' || viewerRole === 'admin';
+  const members = await getTeamMembers(env.DB, owner);
+  const { tier } = await getCreditState(env.DB, owner);
+  const limit = teamLimit(tier);
+  const seats = 1 + members.length;
+  const limitTxt = limit === Infinity ? '∞' : limit;
+
+  const ownerRow = `
+    <div class="member">
+      <div class="m-main">
+        <span class="m-email">${esc(owner)}</span>
+        <span class="pill ok">owner</span>
+        ${isOwn ? '<span class="pill">you</span>' : ''}
       </div>
+      <div class="m-actions"></div>
+    </div>`;
+  const rows = ownerRow + members.map((m) => memberRow(m, owner, canManage, viewer)).join('');
+
+  let invite = '';
+  if (canManage) {
+    if (limit <= 1) {
+      invite = `<p class="muted" style="margin-top:1rem">Team members are a paid feature.${isOwn ? ' <a href="/billing">Upgrade</a>' : ''} (Starter 5 · Pro 15 · Agency 50).</p>`;
+    } else if (seats < limit) {
+      invite = `<div class="invite">
+          <input type="email" class="invite-email" placeholder="teammate@example.com">
+          <button class="btn" data-owner="${esc(owner)}" onclick="invite(this)">Invite</button>
+        </div>`;
+    } else {
+      invite = `<p class="muted" style="margin-top:.6rem">All seats are in use.${isOwn ? ' <a href="/billing">Upgrade</a> for more.' : ''}</p>`;
+    }
+  }
+
+  const heading = isOwn ? 'Your team' : `Team · owned by ${esc(owner)}`;
+  const youAre = isOwn ? 'owner' : esc(viewerRole);
+  return `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>${heading}</h2>
+        <span class="seats">${seats} / ${limitTxt} seats</span>
+      </div>
+      <p class="muted">You're ${youAre === 'owner' ? 'the <strong>owner</strong> (admin)' : `${youAre === 'admin' ? 'an <strong>admin</strong>' : 'a <strong>member</strong>'}`} of this team.</p>
+      <div class="members">${rows}</div>
+      ${invite}
     </div>`;
 }
 
@@ -100,50 +154,28 @@ export async function handleDashboard(ctx) {
     ...((refactorRes && refactorRes.projects) || []).map(normalizeRefactor),
   ];
 
-  // Team (the viewer's own account).
   const creditState = await getCreditState(env.DB, email);
-  const tier = creditState.tier;
-  const limit = teamLimit(tier);
-  const members = await getTeamMembers(env.DB, email);
-  const seatsUsed = await countTeamSeats(env.DB, email);
-  const canInvite = limit > 1 && seatsUsed < limit;
 
-  // Teams the viewer belongs to (as a member of someone else's account).
-  const shared = await getTeamsForMember(env.DB, email);
+  // Teams the viewer can access: their OWN account (owner) + any team they've
+  // joined (active membership of someone else's account).
+  const joined = await getTeamsForMember(env.DB, email);
+  const teamRefs = [{ owner: email, role: 'owner' }, ...joined.map((t) => ({ owner: t.owner_email, role: t.role }))];
+
+  // One panel per team, and (for joined teams) a "shared websites" panel.
+  let teamsHtml = '';
   let sharedHtml = '';
-  if (shared.length) {
-    const blocks = await Promise.all(
-      shared.map(async (t) => {
-        const [ai, ref] = await Promise.all([
-          getAIProjectsByEmail(env.DB, t.owner_email),
-          getAllProjects(env.DB, { customerEmail: t.owner_email, limit: 200 }),
-        ]);
-        const sites = [...(ai || []).map(normalizeAI), ...((ref && ref.projects) || []).map(normalizeRefactor)];
-        return `<div class="panel"><h2>Shared by ${esc(t.owner_email)} <span class="pill">${esc(t.role)}</span></h2>
-          ${sites.length ? sites.map(siteCard).join('') : '<p class="muted">No websites yet.</p>'}</div>`;
-      })
-    );
-    sharedHtml = blocks.join('');
+  for (const ref of teamRefs) {
+    teamsHtml += await renderTeamPanel(env, email, ref.owner, ref.role);
+    if (ref.owner !== email) {
+      const [ai, refp] = await Promise.all([
+        getAIProjectsByEmail(env.DB, ref.owner),
+        getAllProjects(env.DB, { customerEmail: ref.owner, limit: 200 }),
+      ]);
+      const sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)];
+      sharedHtml += `<div class="panel"><h2>Websites shared by ${esc(ref.owner)}</h2>
+        ${sites.length ? sites.map(siteCard).join('') : '<p class="muted">No websites yet.</p>'}</div>`;
+    }
   }
-
-  const teamPanel = `
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Team</h2>
-        <span class="seats">${seatsUsed} / ${limit === Infinity ? '∞' : limit} seats</span>
-      </div>
-      <p class="muted">You're the <strong>owner</strong> (admin). Invite teammates to collaborate on your websites.</p>
-      <div id="members">
-        ${members.length ? members.map((m) => memberRow(m, email)).join('') : '<p class="muted">No team members yet.</p>'}
-      </div>
-      ${limit <= 1
-        ? `<p class="muted" style="margin-top:1rem">Team members are a paid feature. <a href="/billing">Upgrade</a> to invite your team (Starter 5 · Pro 15 · Agency 50).</p>`
-        : `<div class="invite ${canInvite ? '' : 'disabled'}">
-            <input type="email" id="invite-email" placeholder="teammate@example.com" ${canInvite ? '' : 'disabled'}>
-            <button class="btn" id="invite-btn" onclick="invite()" ${canInvite ? '' : 'disabled'}>Invite</button>
-          </div>
-          ${canInvite ? '' : '<p class="muted" style="margin-top:.6rem">All seats are in use. <a href="/billing">Upgrade</a> for more.</p>'}`}
-    </div>`;
 
   const inner = `
     <div class="dhead">
@@ -159,7 +191,7 @@ export async function handleDashboard(ctx) {
     </div>
 
     ${sharedHtml}
-    ${teamPanel}
+    ${teamsHtml}
   `;
 
   return htmlResponse(pageShell(origin, inner, { credits: creditState.totalRemaining }));
@@ -220,22 +252,22 @@ function pageShell(origin, inner, headerOpts = {}) {
       if (!r.ok || !d.success) throw new Error((d && d.error) || 'Request failed');
       return d;
     }
-    async function invite() {
-      const el = document.getElementById('invite-email');
-      const email = (el.value || '').trim();
+    async function invite(btn) {
+      const owner = btn.dataset.owner;
+      const input = btn.closest('.invite').querySelector('.invite-email');
+      const email = (input.value || '').trim();
       if (!email) return;
-      const btn = document.getElementById('invite-btn');
       btn.disabled = true; btn.textContent = 'Inviting…';
-      try { await postTeam('/api/team/invite', { email }); location.reload(); }
+      try { await postTeam('/api/team/invite', { owner, email }); location.reload(); }
       catch (e) { alert(e.message); btn.disabled = false; btn.textContent = 'Invite'; }
     }
-    async function setRole(email, role) {
-      try { await postTeam('/api/team/role', { email, role }); location.reload(); }
+    async function setRole(owner, email, role) {
+      try { await postTeam('/api/team/role', { owner, email, role }); location.reload(); }
       catch (e) { alert(e.message); }
     }
-    async function removeMember(email) {
-      if (!confirm('Remove ' + email + ' from your team?')) return;
-      try { await postTeam('/api/team/remove', { email }); location.reload(); }
+    async function removeMember(owner, email) {
+      if (!confirm('Remove ' + email + ' from the team?')) return;
+      try { await postTeam('/api/team/remove', { owner, email }); location.reload(); }
       catch (e) { alert(e.message); }
     }
   </script>
