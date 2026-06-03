@@ -236,7 +236,7 @@ function dashboardView(email, account, creditState, query, env) {
 
   return `
     <h1>Your billing</h1>
-    <p class="sub">Signed in as <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
+    <p class="sub">Signed in as <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/dashboard">← Your websites &amp; team</a> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
     ${noticeFor(query)}
     ${notConfigured}
     ${continueBlock}

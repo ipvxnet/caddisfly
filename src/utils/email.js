@@ -235,6 +235,74 @@ function buildMagicLinkEmailHtml(linkUrl, email) {
 }
 
 /**
+ * Sends a team invitation. Clicking the link both joins the team and signs the
+ * member in (proves control of their email). Mirrors sendMagicLinkEmail: emails
+ * when a transport is configured, logs a stub otherwise (non-prod), reports
+ * false on a prod failure.
+ *
+ * @param {Object} env
+ * @param {string} memberEmail - Invited member
+ * @param {string} inviteUrl - Full accept URL (https://host/team/accept/<token>)
+ * @param {string} ownerEmail - Who invited them (their team)
+ * @returns {Promise<boolean>}
+ */
+export async function sendTeamInviteEmail(env, memberEmail, inviteUrl, ownerEmail) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  try {
+    const sent = await deliverEmail(env, {
+      to: memberEmail,
+      subject: `${ownerEmail} invited you to their Caddisfly team`,
+      html: buildTeamInviteEmailHtml(inviteUrl, memberEmail, ownerEmail),
+    });
+    if (sent) {
+      console.log(`Team invite sent to ${memberEmail} (team: ${ownerEmail})`);
+      return true;
+    }
+    if (isProduction) {
+      console.error('No email transport configured in production; cannot send team invite');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to send team invite email:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Team invite for ${memberEmail} (team ${ownerEmail}): ${inviteUrl}`);
+  return true;
+}
+
+/** HTML body for a team invitation email. */
+function buildTeamInviteEmailHtml(inviteUrl, memberEmail, ownerEmail) {
+  return `
+    <html>
+      <body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f5f6fa; padding: 32px;">
+        <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px;">
+          <h1 style="font-size: 22px; margin: 0 0 12px;">You've been invited to a Caddisfly team</h1>
+          <p style="color: #444; line-height: 1.6;">
+            <strong>${ownerEmail}</strong> invited <strong>${memberEmail}</strong> to collaborate on their
+            websites. Click below to join the team and sign in. This link expires in 7 days.
+          </p>
+          <p style="margin: 28px 0;">
+            <a href="${inviteUrl}"
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+                      text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;
+                      display: inline-block;">
+              Join the team
+            </a>
+          </p>
+          <p style="color: #888; font-size: 13px; line-height: 1.6;">
+            If the button doesn't work, paste this link into your browser:<br>
+            <a href="${inviteUrl}" style="color: #667eea;">${inviteUrl}</a>
+          </p>
+          <p style="color: #aaa; font-size: 12px; margin-top: 24px;">
+            Didn't expect this? You can safely ignore this email.
+          </p>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
  * Sends error notification email (for internal use)
  * @param {Object} env - Environment bindings
  * @param {string} subject - Email subject

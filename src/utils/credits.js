@@ -22,6 +22,14 @@ export const PUBLISH_LIMITS = { free_trial: 1, starter: 3, pro: 15, agency: Infi
 // Custom-domain cap per tier (free gets a subdomain only).
 export const DOMAIN_LIMITS = { free_trial: 0, starter: 1, pro: 5, agency: Infinity };
 
+// Team seats per tier — TOTAL seats including the owner (free = owner only).
+export const TEAM_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: 50 };
+
+/** Team seat cap for a tier (defaults to free). */
+export function teamLimit(tier) {
+  return TEAM_LIMITS[tier] != null ? TEAM_LIMITS[tier] : TEAM_LIMITS.free_trial;
+}
+
 /** Monthly allotment for a tier (defaults to free). */
 export function monthlyAllotment(tier) {
   return MONTHLY_CREDITS[tier] != null ? MONTHLY_CREDITS[tier] : MONTHLY_CREDITS.free_trial;

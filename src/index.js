@@ -52,6 +52,9 @@ import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './route
 // Billing (Stripe + magic-link) route handlers
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
 import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleCreditCheckout } from './routes/api/billing.js';
+import { handleDashboard } from './routes/public/dashboard.js';
+import { handleTeamAccept } from './routes/public/team-accept.js';
+import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
 import { handleTrack } from './routes/api/track.js';
@@ -100,6 +103,10 @@ router.get('/billing', handleBilling, [billingAuth]);
 router.get('/billing/verify/:token', handleBillingVerify);
 router.get('/billing/logout', handleBillingLogout);
 
+// Customer dashboard (websites + team) and team management
+router.get('/dashboard', handleDashboard, [billingAuth]);
+router.get('/team/accept/:token', handleTeamAccept);
+
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
 router.post('/api/preview/manual/:token', handleManualProfile);
@@ -139,6 +146,9 @@ router.post('/api/billing/login', handleBillingLogin);
 router.post('/api/billing/checkout', handleBillingCheckout, [billingAuth]);
 router.post('/api/billing/credits/checkout', handleCreditCheckout, [billingAuth]);
 router.post('/api/billing/portal', handleBillingPortal, [billingAuth]);
+router.post('/api/team/invite', handleTeamInvite, [billingAuth]);
+router.post('/api/team/role', handleTeamRole, [billingAuth]);
+router.post('/api/team/remove', handleTeamRemove, [billingAuth]);
 router.post('/api/stripe/webhook', handleStripeWebhook);
 
 // Protected admin routes
