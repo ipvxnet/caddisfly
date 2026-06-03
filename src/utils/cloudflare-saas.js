@@ -52,27 +52,37 @@ async function cfRequest(env, method, path, body) {
   return json.result;
 }
 
-// Pull the DNS-validation (DCV) record + ownership record out of a CF result.
+// Normalize a CF custom-hostname result. With HTTP DCV (our default) the
+// customer only needs the CNAME — Cloudflare validates + issues the cert over
+// HTTP automatically once the hostname points to us, so we surface NO DNS
+// validation record. (TXT method, if ever used, still exposes its record.)
 function extractRecords(result) {
   const ssl = result.ssl || {};
+  const method = ssl.method || 'http';
+  const useTxt = method === 'txt';
   const vr = (ssl.validation_records && ssl.validation_records[0]) || {};
   const ov = result.ownership_verification || {};
   return {
     cf_hostname_id: result.id,
     status: result.status || 'pending',
     ssl_status: ssl.status || 'pending_validation',
-    // Prefer the TXT DCV record; fall back to ownership_verification.
-    dcv_type: vr.txt_name ? 'TXT' : ov.type ? ov.type.toUpperCase() : null,
-    dcv_name: vr.txt_name || ov.name || null,
-    dcv_value: vr.txt_value || ov.value || null,
+    // Only TXT DCV needs a customer-added record; HTTP DCV needs none.
+    dcv_type: useTxt ? (vr.txt_name ? 'TXT' : ov.type ? ov.type.toUpperCase() : null) : null,
+    dcv_name: useTxt ? (vr.txt_name || ov.name || null) : null,
+    dcv_value: useTxt ? (vr.txt_value || ov.value || null) : null,
   };
 }
 
-/** Create a custom hostname (TXT DCV). Returns normalized state. */
+/**
+ * Create a custom hostname with HTTP DCV. The customer adds ONE record — a
+ * CNAME to our SaaS target — and Cloudflare issues + auto-renews the cert over
+ * HTTP with no further DNS records. Works across all DNS providers (GoDaddy,
+ * Namecheap, Route 53, Cloudflare, …) for subdomains.
+ */
 export async function createCustomHostname(env, hostname) {
   const result = await cfRequest(env, 'POST', '/custom_hostnames', {
     hostname,
-    ssl: { method: 'txt', type: 'dv', settings: { min_tls_version: '1.2' } },
+    ssl: { method: 'http', type: 'dv', settings: { min_tls_version: '1.2' } },
   });
   return { ...extractRecords(result), cname_target: cnameTarget(env) };
 }

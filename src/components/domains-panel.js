@@ -31,9 +31,10 @@ function domainRowHtml(d, sitesBase) {
         <div class="d-host"><strong>${esc(d.hostname)}</strong> <span class="d-badge ${active ? 'ok' : 'pending'}">${active ? 'Active' : 'Pending'}</span></div>
         ${active
           ? `<div class="d-live">Live at <a href="https://${esc(d.hostname)}" target="_blank" rel="noopener">https://${esc(d.hostname)}</a></div>`
-          : `<div class="d-dns"><p>Add ${d.dcv_name ? 'these two DNS records' : 'this DNS record'} at your domain registrar, then click <em>Check status</em>:</p>
+          : `<div class="d-dns"><p>Add this DNS record at your domain provider:</p>
                ${recordBlock('CNAME', d.hostname, d.cname_target || sitesBase)}
-               ${d.dcv_name ? recordBlock(d.dcv_type || 'TXT', d.dcv_name, d.dcv_value) : ''}
+               ${d.dcv_name ? `<p>…and this verification record:</p>${recordBlock(d.dcv_type || 'TXT', d.dcv_name, d.dcv_value)}` : ''}
+               <p class="d-auto">🔒 Your SSL certificate is issued automatically once the record is live — usually a few minutes. Then click <em>Check status</em>.</p>
              </div>`}
         <div class="d-actions">
           ${active ? '' : `<button class="d-btn" onclick="checkDomain(this,${d.id})">Check status</button>`}
@@ -56,7 +57,8 @@ export function renderDomainsPanel({ projectId, domains = [], subdomain = '', sa
          <input type="text" class="d-input" placeholder="www.yourbusiness.com" autocomplete="off">
          <button class="d-btn primary" type="submit">Connect domain</button>
          <div class="d-err"></div>
-       </form>`
+       </form>
+       <p class="d-hint">Tip: use a subdomain like <code>www.</code> or <code>shop.</code> — these work at any DNS provider. A bare root domain (<code>yourbusiness.com</code>) needs ALIAS / CNAME-flattening, which some providers (e.g. GoDaddy, Namecheap) don't support.</p>`
     : `<p class="d-empty">Publish your site first — then you can point a domain at it.</p>`;
   return `<div class="domains-panel" data-project="${esc(projectId)}">${note}<div class="domains-list">${list}</div>${form}</div>`;
 }
@@ -87,6 +89,9 @@ export const DOMAINS_CSS = `
     .d-btn.primary { background: #667eea; color: #fff; border-color: #667eea; }
     .d-btn.danger { color: #c53030; border-color: #fed7d7; }
     .d-empty, .d-note { font-size: .85rem; color: #718096; margin: .3rem 0; }
+    .d-auto { font-size: .8rem; color: #03543f; background: #f0fdf9; border: 1px solid #c6f6e5; border-radius: 8px; padding: .5rem .7rem; margin-top: .6rem; }
+    .d-hint { font-size: .78rem; color: #718096; margin: .55rem 0 0; line-height: 1.5; }
+    .d-hint code { background: #f1f5f9; border-radius: 4px; padding: 0 .25rem; font-size: .92em; }
     .d-form { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
     .d-input { flex: 1; min-width: 180px; padding: .5rem .7rem; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: .9rem; }
     .d-err { color: #c53030; font-size: .8rem; width: 100%; }
@@ -117,9 +122,10 @@ export const DOMAINS_JS = `
         var active = d.status === 'active';
         var dns = active
           ? '<div class="d-live">Live at <a href="https://'+dEsc(d.hostname)+'" target="_blank" rel="noopener">https://'+dEsc(d.hostname)+'</a></div>'
-          : '<div class="d-dns"><p>Add '+(d.dcv_name?'these two DNS records':'this DNS record')+' at your domain registrar, then click <em>Check status</em>:</p>'
+          : '<div class="d-dns"><p>Add this DNS record at your domain provider:</p>'
             + dRecord('CNAME', d.hostname, d.cname_target||SITES_BASE)
-            + (d.dcv_name ? dRecord(d.dcv_type||'TXT', d.dcv_name, d.dcv_value) : '')
+            + (d.dcv_name ? '<p>…and this verification record:</p>'+dRecord(d.dcv_type||'TXT', d.dcv_name, d.dcv_value) : '')
+            + '<p class="d-auto">🔒 Your SSL certificate is issued automatically once the record is live — usually a few minutes. Then click <em>Check status</em>.</p>'
             + '</div>';
         var actions = '<div class="d-actions">'
           + (active ? '' : '<button class="d-btn" onclick="checkDomain(this,'+d.id+')">Check status</button>')
