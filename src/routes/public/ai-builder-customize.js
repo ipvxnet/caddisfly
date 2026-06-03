@@ -655,6 +655,7 @@ export async function handleAIBuilderCustomize(ctx) {
     </div>
     <div class="header-actions">
       <a href="/billing" class="credit-chip" title="Caddi Credits — ${creditState.monthlyRemaining.toLocaleString()} monthly + ${creditState.purchased.toLocaleString()} purchased. Click to buy more.">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
+      <a href="/dashboard" class="btn btn-secondary" title="Your websites &amp; team">🏠 Dashboard</a>
       <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="Traffic analytics for your published site">📊 Analytics</a>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">View Full Preview</a>
       <button class="btn btn-primary" onclick="deployWebsite()">Deploy Website</button>

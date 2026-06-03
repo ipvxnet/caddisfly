@@ -39,6 +39,7 @@ export async function handleAIBuilderLanding(ctx) {
       z-index: 10;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       padding: 1.5rem 2rem;
     }
 
@@ -46,6 +47,16 @@ export async function handleAIBuilderLanding(ctx) {
       display: inline-flex;
       line-height: 0;
     }
+
+    .site-header .nav-link {
+      line-height: 1;
+      color: #fff;
+      font-weight: 600;
+      font-size: .95rem;
+      text-decoration: none;
+      opacity: .92;
+    }
+    .site-header .nav-link:hover { opacity: 1; text-decoration: underline; }
 
     .site-header .logo {
       height: 40px;
@@ -238,6 +249,7 @@ export async function handleAIBuilderLanding(ctx) {
         </text>
       </svg>
     </a>
+    <a class="nav-link" href="/dashboard">🏠 Dashboard</a>
   </header>
   <section class="hero">
     <div class="hero-content">
