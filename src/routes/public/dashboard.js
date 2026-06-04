@@ -11,6 +11,7 @@ import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
 import { renderDomainsPanel, DOMAINS_CSS, DOMAINS_JS } from '../../components/domains-panel.js';
+import { translator } from '../../i18n/index.js';
 
 const SITES_BASE = 'caddisfly.app';
 
@@ -54,24 +55,24 @@ function normalizeRefactor(p) {
 }
 const projectKeyFor = (site) => (site.kind === 'ai' ? { aiProjectId: site.dbId } : { projectId: site.dbId });
 
-function statusPill(s) {
+function statusPill(s, tr) {
   const ok = s === 'deployed';
-  return `<span class="pill ${ok ? 'ok' : ''}">${ok ? 'Live' : esc(s)}</span>`;
+  return `<span class="pill ${ok ? 'ok' : ''}">${ok ? tr('dash.live') : esc(s)}</span>`;
 }
 
-function siteCard(site, domainsBlock = '') {
+function siteCard(site, domainsBlock = '', tr) {
   const live = site.subdomain ? `https://${site.subdomain}.${SITES_BASE}` : '';
   return `
     <div class="site">
       <div class="site-top">
         <div class="site-main">
-          <div class="site-name">${esc(site.name)} ${statusPill(site.status)}</div>
-          ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}.${SITES_BASE}</a>` : '<span class="site-url muted">Not published yet</span>'}
+          <div class="site-name">${esc(site.name)} ${statusPill(site.status, tr)}</div>
+          ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}.${SITES_BASE}</a>` : `<span class="site-url muted">${tr('dash.not_published')}</span>`}
         </div>
         <div class="site-actions">
-          <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">Customize</a>
-          <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">Analytics</a>
-          ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">Open ↗</a>` : ''}
+          <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">${tr('dash.customize')}</a>
+          <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">${tr('dash.analytics')}</a>
+          ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
         </div>
       </div>
       ${domainsBlock}
@@ -82,30 +83,30 @@ function siteCard(site, domainsBlock = '') {
 // an admin can manage a team they don't own). `canManage` toggles the controls.
 const ROLES = ['member', 'publisher', 'admin'];
 
-function memberRow(m, owner, canManage, viewer) {
+function memberRow(m, owner, canManage, viewer, tr) {
   const isSelf = m.member_email === viewer;
   const roleCtl = canManage
     ? `<select class="role-select" onchange="setRole('${esc(owner)}','${esc(m.member_email)}', this.value)">
-         ${ROLES.map((r) => `<option value="${r}" ${m.role === r ? 'selected' : ''}>${r}</option>`).join('')}
+         ${ROLES.map((r) => `<option value="${r}" ${m.role === r ? 'selected' : ''}>${tr('dash.role_' + r)}</option>`).join('')}
        </select>`
-    : `<span class="pill ${m.role === 'admin' ? 'ok' : ''}">${esc(m.role)}</span>`;
+    : `<span class="pill ${m.role === 'admin' ? 'ok' : ''}">${tr('dash.role_' + m.role)}</span>`;
   return `
     <div class="member">
       <div class="m-main">
         <span class="m-email">${esc(m.member_email)}</span>
         ${roleCtl}
-        ${m.status === 'invited' ? '<span class="pill warn">invited</span>' : ''}
-        ${isSelf ? '<span class="pill">you</span>' : ''}
+        ${m.status === 'invited' ? `<span class="pill warn">${tr('dash.invited')}</span>` : ''}
+        ${isSelf ? `<span class="pill">${tr('dash.you')}</span>` : ''}
       </div>
       <div class="m-actions">
-        ${canManage ? `<button class="link-btn danger" onclick="removeMember('${esc(owner)}','${esc(m.member_email)}')">${isSelf ? 'Leave' : 'Remove'}</button>` : ''}
+        ${canManage ? `<button class="link-btn danger" onclick="removeMember('${esc(owner)}','${esc(m.member_email)}')">${isSelf ? tr('dash.leave') : tr('dash.remove')}</button>` : ''}
       </div>
     </div>`;
 }
 
 // A full team panel: the owner (implicit admin) + members, the owner's seat
 // limit, and management controls when the viewer is owner/admin of that team.
-async function renderTeamPanel(env, viewer, owner, viewerRole) {
+async function renderTeamPanel(env, viewer, owner, viewerRole, tr) {
   const isOwn = owner === viewer;
   const canManage = viewerRole === 'owner' || viewerRole === 'admin';
   const members = await getTeamMembers(env.DB, owner);
@@ -118,46 +119,49 @@ async function renderTeamPanel(env, viewer, owner, viewerRole) {
     <div class="member">
       <div class="m-main">
         <span class="m-email">${esc(owner)}</span>
-        <span class="pill ok">owner</span>
-        ${isOwn ? '<span class="pill">you</span>' : ''}
+        <span class="pill ok">${tr('dash.role_owner')}</span>
+        ${isOwn ? `<span class="pill">${tr('dash.you')}</span>` : ''}
       </div>
       <div class="m-actions"></div>
     </div>`;
-  const rows = ownerRow + members.map((m) => memberRow(m, owner, canManage, viewer)).join('');
+  const rows = ownerRow + members.map((m) => memberRow(m, owner, canManage, viewer, tr)).join('');
 
   let invite = '';
   if (canManage) {
     if (limit <= 1) {
-      invite = `<p class="muted" style="margin-top:1rem">Team members are a paid feature.${isOwn ? ' <a href="/billing">Upgrade</a>' : ''} (Starter 5 · Pro 15 · Agency 50).</p>`;
+      invite = `<p class="muted" style="margin-top:1rem">${tr('dash.paid_feature')}${isOwn ? ` <a href="/billing">${tr('dash.upgrade')}</a>` : ''} ${tr('dash.seat_caps')}</p>`;
     } else if (seats < limit) {
       invite = `<div class="invite">
-          <input type="email" class="invite-email" placeholder="teammate@example.com">
-          <select class="invite-role" title="Role">${ROLES.map((r) => `<option value="${r}">${r}</option>`).join('')}</select>
-          <button class="btn" data-owner="${esc(owner)}" onclick="invite(this)">Invite</button>
+          <input type="email" class="invite-email" placeholder="${tr('dash.invite_ph')}">
+          <select class="invite-role" title="Role">${ROLES.map((r) => `<option value="${r}">${tr('dash.role_' + r)}</option>`).join('')}</select>
+          <button class="btn" data-owner="${esc(owner)}" onclick="invite(this)">${tr('dash.invite_btn')}</button>
         </div>`;
     } else {
-      invite = `<p class="muted" style="margin-top:.6rem">All seats are in use.${isOwn ? ' <a href="/billing">Upgrade</a> for more.' : ''}</p>`;
+      invite = `<p class="muted" style="margin-top:.6rem">${tr('dash.seats_full')}${isOwn ? ` <a href="/billing">${tr('dash.upgrade')}</a> ${tr('dash.upgrade_more')}` : ''}</p>`;
     }
   }
 
-  const heading = isOwn ? 'Your team' : `Team · owned by ${esc(owner)}`;
-  const youAre = isOwn ? 'owner' : esc(viewerRole);
+  const heading = isOwn ? tr('dash.your_team') : tr('dash.team_owned_by', { owner: esc(owner) });
+  const youAre = isOwn ? 'owner' : viewerRole;
+  const whoLine = youAre === 'owner' ? tr('dash.you_are_owner') : youAre === 'admin' ? tr('dash.you_are_admin') : tr('dash.you_are_member');
   return `
     <div class="panel">
       <div class="panel-head">
         <h2>${heading}</h2>
-        <span class="seats">${seats} / ${limitTxt} seats</span>
+        <span class="seats">${tr('dash.seats', { seats, limit: limitTxt })}</span>
       </div>
-      <p class="muted">You're ${youAre === 'owner' ? 'the <strong>owner</strong> (admin)' : `${youAre === 'admin' ? 'an <strong>admin</strong>' : 'a <strong>member</strong>'}`} of this team.</p>
+      <p class="muted">${whoLine}</p>
       <div class="members">${rows}</div>
       ${invite}
-      ${canManage ? '<p class="muted role-legend">Roles — <strong>member</strong>: edit content · <strong>publisher</strong>: edit + publish · <strong>admin</strong>: manage team &amp; domains</p>' : ''}
+      ${canManage ? `<p class="muted role-legend">${tr('dash.roles_legend')}</p>` : ''}
     </div>`;
 }
 
 export async function handleDashboard(ctx) {
   const { env, url } = ctx;
   const origin = url.origin;
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   const email = ctx.billingEmail;
   if (!email) return redirect('/billing?next=/dashboard');
 
@@ -181,10 +185,10 @@ export async function handleDashboard(ctx) {
       if (s.subdomain) {
         const ds = await getDomainsByProject(env.DB, projectKeyFor(s));
         const badge = ds.length ? ` <span class="pill ${ds.some((d) => d.status === 'active') ? 'ok' : 'warn'}">${ds.length}</span>` : '';
-        block = `<details class="site-domains"><summary>🌐 Custom domain${badge}</summary>
+        block = `<details class="site-domains"><summary>🌐 ${tr('dash.custom_domain')}${badge}</summary>
           ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase })}</details>`;
       }
-      return siteCard(s, block);
+      return siteCard(s, block, tr);
     })
   );
   const ownCardsHtml = ownCards.join('');
@@ -200,45 +204,46 @@ export async function handleDashboard(ctx) {
   let teamsHtml = '';
   let sharedHtml = '';
   for (const ref of teamRefs) {
-    teamsHtml += await renderTeamPanel(env, email, ref.owner, ref.role);
+    teamsHtml += await renderTeamPanel(env, email, ref.owner, ref.role, tr);
     if (ref.owner !== email) {
       const [ai, refp] = await Promise.all([
         getAIProjectsByEmail(env.DB, ref.owner),
         getAllProjects(env.DB, { customerEmail: ref.owner, limit: 200 }),
       ]);
       const sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)];
-      sharedHtml += `<div class="panel"><h2>Websites shared by ${esc(ref.owner)}</h2>
-        ${sites.length ? sites.map(siteCard).join('') : '<p class="muted">No websites yet.</p>'}</div>`;
+      sharedHtml += `<div class="panel"><h2>${tr('dash.shared_by', { owner: esc(ref.owner) })}</h2>
+        ${sites.length ? sites.map((s) => siteCard(s, '', tr)).join('') : `<p class="muted">${tr('dash.no_sites_yet')}</p>`}</div>`;
     }
   }
 
   const inner = `
     <div class="dhead">
-      <h1>Your websites</h1>
-      <a class="btn ghost" href="/billing">Plan &amp; billing →</a>
+      <h1>${tr('dash.title')}</h1>
+      <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
     </div>
-    <p class="sub">Signed in as <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">Support</a> · <a class="muted-link" href="/help">Help</a> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
+    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
 
     <div class="panel">
       ${ownSites.length
         ? ownCardsHtml
-        : '<p class="muted">You have no websites yet. <a href="/ai-builder">Build one →</a></p>'}
+        : `<p class="muted">${tr('dash.no_sites')} <a href="/ai-builder">${tr('dash.build_one')}</a></p>`}
     </div>
 
     ${sharedHtml}
     ${teamsHtml}
   `;
 
-  return htmlResponse(pageShell(origin, inner, { credits: creditState.totalRemaining }));
+  return htmlResponse(pageShell(origin, inner, { credits: creditState.totalRemaining, lang }, tr));
 }
 
-function pageShell(origin, inner, headerOpts = {}) {
+function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
+  const lang = headerOpts.lang || 'en';
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Dashboard — Caddisfly', description: 'Your Caddisfly websites and team.', origin })}
+  ${headTags({ title: tr('dash.meta_title'), description: 'Your Caddisfly websites and team.', origin, path: '/dashboard' })}
   <meta name="robots" content="noindex">
   <style>
     ${baseCss()}
@@ -289,7 +294,7 @@ function pageShell(origin, inner, headerOpts = {}) {
 <body>
   ${siteHeader('/dashboard', headerOpts)}
   <main><div class="bwrap">${inner}</div></main>
-  ${siteFooter()}
+  ${siteFooter({ lang })}
   <script>
     async function postTeam(path, body) {
       const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -305,16 +310,16 @@ function pageShell(origin, inner, headerOpts = {}) {
       const email = (input.value || '').trim();
       const role = roleSel ? roleSel.value : 'member';
       if (!email) return;
-      btn.disabled = true; btn.textContent = 'Inviting…';
+      btn.disabled = true; btn.textContent = ${JSON.stringify(tr('dash.inviting'))};
       try { await postTeam('/api/team/invite', { owner, email, role }); location.reload(); }
-      catch (e) { alert(e.message); btn.disabled = false; btn.textContent = 'Invite'; }
+      catch (e) { alert(e.message); btn.disabled = false; btn.textContent = ${JSON.stringify(tr('dash.invite_btn'))}; }
     }
     async function setRole(owner, email, role) {
       try { await postTeam('/api/team/role', { owner, email, role }); location.reload(); }
       catch (e) { alert(e.message); }
     }
     async function removeMember(owner, email) {
-      if (!confirm('Remove ' + email + ' from the team?')) return;
+      if (!confirm(${JSON.stringify(tr('dash.remove_confirm', { email: '%E%' }))}.replace('%E%', email))) return;
       try { await postTeam('/api/team/remove', { owner, email }); location.reload(); }
       catch (e) { alert(e.message); }
     }
