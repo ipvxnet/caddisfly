@@ -95,6 +95,11 @@ export const DOMAINS_CSS = `
     .d-form { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
     .d-input { flex: 1; min-width: 180px; padding: .5rem .7rem; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: .9rem; }
     .d-err { color: #c53030; font-size: .8rem; width: 100%; }
+    .d-gate { width: 100%; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 10px; padding: .75rem .85rem; margin-top: .3rem; }
+    .d-gate-msg { color: #6b21a8; font-size: .84rem; font-weight: 600; margin-bottom: .55rem; line-height: 1.45; }
+    .d-gate-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .d-gate-actions a.d-btn { text-decoration: none; display: inline-block; }
+    .d-gate-note { font-size: .77rem; color: #7c6f93; margin-top: .55rem; line-height: 1.5; }
 `;
 
 /** Client JS for the domains panel (include once per page). Project-scoped. */
@@ -146,9 +151,24 @@ export const DOMAINS_JS = `
             var empty = list.querySelector('.d-empty'); if(empty) empty.remove();
             list.insertAdjacentHTML('beforeend', window.buildDomainRow(data.domain));
             input.value='';
+          } else if (data.billing_url || res.status === 402) {
+            err.innerHTML = window.domainGateHtml(data.error, data.billing_url);
           } else { err.textContent = data.error || 'Could not connect that domain.'; }
         }catch(_){ err.textContent='Network error. Please try again.'; }
         finally{ btn.disabled=false; }
+      };
+      // Plan-gate / signed-out case: show what to do (upgrade + dashboard +
+      // sign-in note) instead of a dead-end message.
+      window.domainGateHtml = function(msg, billingUrl){
+        var b = billingUrl || '/billing';
+        return '<div class="d-gate">'
+          + '<p class="d-gate-msg">'+dEsc(msg||'Custom domains are available on paid plans.')+'</p>'
+          + '<div class="d-gate-actions">'
+          +   '<a class="d-btn primary" href="'+dEsc(b)+'" target="_blank" rel="noopener">Upgrade your plan</a>'
+          +   '<a class="d-btn" href="/dashboard" target="_blank" rel="noopener">Go to dashboard</a>'
+          + '</div>'
+          + '<p class="d-gate-note">Signed out or new here? Log in with your email on that page, choose a paid plan, then come back to connect your domain.</p>'
+          + '</div>';
       };
       window.checkDomain = async function(btnEl, id){
         var panel = dPanel(btnEl), projectId = panel.dataset.project;
