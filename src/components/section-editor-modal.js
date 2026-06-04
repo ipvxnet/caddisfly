@@ -2,35 +2,38 @@
 // Generates an HTML modal for editing section content
 
 import { generateAIEditPanel } from './ai-edit-panel.js';
+import { translator } from '../i18n/index.js';
 
 /**
  * Generate section editor modal HTML
  * @param {object} section - Section data
  * @param {string} projectId - Project ID
+ * @param {string} lang - UI language
  * @returns {string} Modal HTML
  */
-export function generateSectionEditorModal(section, projectId) {
+export function generateSectionEditorModal(section, projectId, lang = 'en') {
+  const tr = translator(lang);
   const content = JSON.parse(section.content_json || '{}');
 
   return `
 <div id="section-editor-modal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
   <div class="modal-content" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <h2>Edit ${capitalizeFirstLetter(section.section_type)} Section</h2>
+      <h2>${tr('sed.edit_section')}</h2>
       <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
 
     <div class="modal-body">
-      ${generateAIEditPanel(section, projectId)}
+      ${generateAIEditPanel(section, projectId, lang)}
 
       <details class="manual-edit">
-        <summary>✏️ Edit fields manually</summary>
+        <summary>${tr('sed.edit_manual')}</summary>
         <form id="section-edit-form" onsubmit="saveSectionChanges(event)">
-          ${generateFormFields(section.section_type, content)}
+          ${generateFormFields(section.section_type, content, tr)}
 
           <div class="form-actions">
-            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn-primary" id="save-btn">Save Changes</button>
+            <button type="button" class="btn-secondary" onclick="closeModal()">${tr('sed.cancel')}</button>
+            <button type="submit" class="btn-primary" id="save-btn">${tr('sed.save')}</button>
           </div>
         </form>
       </details>
@@ -403,7 +406,7 @@ async function saveSectionChanges(event) {
   }
 
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
+  saveBtn.textContent = ${JSON.stringify(tr('sed.saving'))};
 
   try {
     const response = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${window.currentSectionId}\`, {
@@ -424,14 +427,14 @@ async function saveSectionChanges(event) {
       closeModal();
 
       // Show success message
-      showNotification('Section updated successfully!', 'success');
+      showNotification(${JSON.stringify(tr('sed.updated'))}, 'success');
     } else {
-      throw new Error(data.error || 'Failed to save changes');
+      throw new Error(data.error || ${JSON.stringify(tr('sed.save_failed'))});
     }
   } catch (error) {
-    alert('Failed to save: ' + error.message);
+    alert(${JSON.stringify(tr('sed.save_failed_p'))} + error.message);
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save Changes';
+    saveBtn.textContent = ${JSON.stringify(tr('sed.save'))};
   }
 }
 
@@ -443,7 +446,7 @@ async function uploadImage(input, fieldName) {
   uploadArea.classList.add('uploading');
 
   const progressDiv = uploadArea.querySelector('.upload-progress');
-  if (progressDiv) progressDiv.textContent = 'Uploading...';
+  if (progressDiv) progressDiv.textContent = ${JSON.stringify(tr('sed.uploading'))};
 
   const formData = new FormData();
   formData.append('file', file);
@@ -469,12 +472,12 @@ async function uploadImage(input, fieldName) {
         preview.style.display = 'block';
       }
 
-      if (progressDiv) progressDiv.textContent = 'Upload complete!';
+      if (progressDiv) progressDiv.textContent = ${JSON.stringify(tr('sed.upload_complete'))};
     } else {
-      throw new Error(data.error || 'Upload failed');
+      throw new Error(data.error || ${JSON.stringify(tr('sed.upload_failed'))});
     }
   } catch (error) {
-    alert('Upload failed: ' + error.message);
+    alert(${JSON.stringify(tr('sed.upload_failed_p'))} + error.message);
   } finally {
     uploadArea.classList.remove('uploading');
   }
@@ -523,17 +526,17 @@ function galleryRender() {
   if (!wrap) return;
   const imgs = galleryRead();
   if (!imgs.length) {
-    wrap.innerHTML = '<p style="color:#718096;font-size:.85rem;margin:.25rem 0">No photos yet — click “Add photo”.</p>';
+    wrap.innerHTML = '<p style="color:#718096;font-size:.85rem;margin:.25rem 0">' + ${JSON.stringify(tr('sed.no_photos'))} + '</p>';
     return;
   }
   wrap.innerHTML = imgs.map(function (img, i) {
     return '<div class="gallery-row" data-gi="' + i + '" ondragover="galleryDragOver(event)" ondragleave="galleryDragLeave(event)" ondrop="galleryDrop(event,' + i + ')">'
-      + '<span class="gallery-drag" draggable="true" title="Drag to reorder" ondragstart="galleryDragStart(event,' + i + ')" ondragend="galleryDragEnd(event)">⋮⋮</span>'
+      + '<span class="gallery-drag" draggable="true" title="' + ${JSON.stringify(tr('sed.g_drag'))} + '" ondragstart="galleryDragStart(event,' + i + ')" ondragend="galleryDragEnd(event)">⋮⋮</span>'
       + '<img class="gallery-thumb" src="' + galleryEsc(img.url || '') + '" alt="">'
-      + '<input class="gallery-alt" type="text" placeholder="Describe this photo (alt text)" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
+      + '<input class="gallery-alt" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_alt_ph'))} + '" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
       + '<div class="gallery-row-actions">'
-      + '<button type="button" title="Replace photo" onclick="galleryReplace(' + i + ')">Replace</button>'
-      + '<button type="button" class="gallery-del" title="Remove photo" onclick="galleryRemove(' + i + ')">🗑</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.g_replace_t'))} + '" onclick="galleryReplace(' + i + ')">' + ${JSON.stringify(tr('sed.g_replace'))} + '</button>'
+      + '<button type="button" class="gallery-del" title="' + ${JSON.stringify(tr('sed.g_remove_t'))} + '" onclick="galleryRemove(' + i + ')">🗑</button>'
       + '</div></div>';
   }).join('');
 }
@@ -581,19 +584,19 @@ async function galleryUploadFile(file) {
   fd.append('asset_type', 'gallery');
   const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/upload\`, { method: 'POST', body: fd });
   const data = await res.json();
-  if (!data.success) throw new Error(data.error || 'Upload failed');
+  if (!data.success) throw new Error(data.error || ${JSON.stringify(tr('sed.upload_failed'))});
   return data.url;
 }
 async function galleryAddImage(input) {
   const file = input.files[0]; if (!file) return; input.value = '';
   try { const url = await galleryUploadFile(file); const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); }
-  catch (e) { alert('Upload failed: ' + e.message); }
+  catch (e) { alert(${JSON.stringify(tr('sed.upload_failed_p'))} + e.message); }
 }
 async function galleryReplaceUpload(input) {
   const file = input.files[0]; if (!file) return; input.value = '';
   const i = window.__galleryReplaceIndex; if (i < 0) return;
   try { const url = await galleryUploadFile(file); const imgs = galleryRead(); if (imgs[i]) imgs[i].url = url; galleryWrite(imgs); galleryRender(); }
-  catch (e) { alert('Upload failed: ' + e.message); }
+  catch (e) { alert(${JSON.stringify(tr('sed.upload_failed_p'))} + e.message); }
 }
 
 // Initialise the gallery manager if this section has one (runs on inject).
@@ -605,57 +608,57 @@ galleryRender();
 /**
  * Generate form fields based on section type
  */
-function generateFormFields(sectionType, content) {
+function generateFormFields(sectionType, content, tr) {
   switch (sectionType) {
     case 'hero':
-      return generateHeroFields(content);
+      return generateHeroFields(content, tr);
     case 'about':
-      return generateAboutFields(content);
+      return generateAboutFields(content, tr);
     case 'services':
-      return generateServicesFields(content);
+      return generateServicesFields(content, tr);
     case 'testimonials':
-      return generateTestimonialsFields(content);
+      return generateTestimonialsFields(content, tr);
     case 'contact':
-      return generateContactFields(content);
+      return generateContactFields(content, tr);
     case 'gallery':
-      return generateGalleryFields(content);
+      return generateGalleryFields(content, tr);
     case 'footer':
-      return generateFooterFields(content);
+      return generateFooterFields(content, tr);
     default:
-      return '<p>Section type not supported for editing yet.</p>';
+      return `<p>${tr('sed.not_supported')}</p>`;
   }
 }
 
-function generateHeroFields(content) {
+function generateHeroFields(content, tr) {
   return `
     <div class="form-group">
-      <label for="heading">Heading</label>
+      <label for="heading">${tr('sed.heading')}</label>
       <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" required>
-      <small>Main headline (max 60 characters)</small>
+      <small>${tr('sed.hl_hint')}</small>
     </div>
 
     <div class="form-group">
-      <label for="subheading">Subheading</label>
+      <label for="subheading">${tr('sed.subheading')}</label>
       <textarea id="subheading" name="subheading" required>${escapeHtml(content.subheading || '')}</textarea>
-      <small>Supporting text (max 120 characters)</small>
+      <small>${tr('sed.sub_hint')}</small>
     </div>
 
     <div class="form-group">
-      <label for="cta_text">Button Text</label>
-      <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || 'Get Started')}" required>
+      <label for="cta_text">${tr('sed.button_text')}</label>
+      <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || tr('sed.ph_get_started'))}" required>
     </div>
 
     <div class="form-group">
-      <label for="cta_link">Button Link</label>
+      <label for="cta_link">${tr('sed.button_link')}</label>
       <input type="text" id="cta_link" name="cta_link" value="${escapeHtml(content.cta_link || '#contact')}">
     </div>
 
     <div class="form-group">
-      <label>Background Image</label>
+      <label>${tr('sed.bg_image')}</label>
       <input type="hidden" id="image_url" name="image_url" value="${escapeHtml(content.image_url || '')}">
       <div class="image-upload-area" onclick="document.getElementById('hero-image-input').click()">
-        <p>📸 Click to upload image</p>
-        <p style="font-size: 0.875rem; color: #718096;">JPG, PNG, WebP (max 5MB)</p>
+        <p>${tr('sed.click_upload')}</p>
+        <p style="font-size: 0.875rem; color: #718096;">${tr('sed.img_formats')}</p>
         <img src="${content.image_url || ''}" class="image-preview" style="display: ${content.image_url ? 'block' : 'none'}">
         <div class="upload-progress"></div>
       </div>
@@ -664,29 +667,29 @@ function generateHeroFields(content) {
   `;
 }
 
-function generateAboutFields(content) {
+function generateAboutFields(content, tr) {
   return `
     <div class="form-group">
-      <label for="heading">Section Heading</label>
-      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || 'About Us')}" required>
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || tr('sed.ph_about_us'))}" required>
     </div>
 
     <div class="form-group">
-      <label for="subheading">Subheading</label>
+      <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
     </div>
 
     <div class="form-group">
-      <label for="story">Your Story</label>
+      <label for="story">${tr('sed.your_story')}</label>
       <textarea id="story" name="story" rows="5" required>${escapeHtml(content.story || '')}</textarea>
-      <small>Tell your story (2-3 sentences)</small>
+      <small>${tr('sed.story_hint')}</small>
     </div>
 
     <div class="form-group">
-      <label>Image</label>
+      <label>${tr('sed.image')}</label>
       <input type="hidden" id="image_url" name="image_url" value="${escapeHtml(content.image_url || '')}">
       <div class="image-upload-area" onclick="document.getElementById('about-image-input').click()">
-        <p>📸 Click to upload image</p>
+        <p>${tr('sed.click_upload')}</p>
         <img src="${content.image_url || ''}" class="image-preview" style="display: ${content.image_url ? 'block' : 'none'}">
         <div class="upload-progress"></div>
       </div>
@@ -695,102 +698,102 @@ function generateAboutFields(content) {
   `;
 }
 
-function generateServicesFields(content) {
+function generateServicesFields(content, tr) {
   const services = content.services || [];
 
   return `
     <div class="form-group">
-      <label for="heading">Section Heading</label>
-      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || 'Our Services')}" required>
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || tr('sed.ph_our_services'))}" required>
     </div>
 
     <div class="form-group">
-      <label for="subheading">Subheading</label>
+      <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
     </div>
 
-    <p style="font-weight: 600; margin: 1.5rem 0 1rem;">Services (editing coming soon)</p>
+    <p style="font-weight: 600; margin: 1.5rem 0 1rem;">${tr('sed.services_soon')}</p>
     <p style="color: #718096; font-size: 0.875rem;">
-      Currently showing ${services.length} services. Full editing interface coming in next update.
+      ${tr('sed.services_count', { n: services.length })}
     </p>
   `;
 }
 
-function generateTestimonialsFields(content) {
+function generateTestimonialsFields(content, tr) {
   return `
     <div class="form-group">
-      <label for="heading">Section Heading</label>
-      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || 'Testimonials')}" required>
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || tr('sed.ph_testimonials'))}" required>
     </div>
 
     <div class="form-group">
-      <label for="subheading">Subheading</label>
+      <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
     </div>
 
     <p style="color: #718096; font-size: 0.875rem; margin-top: 1rem;">
-      Individual testimonial editing coming soon.
+      ${tr('sed.testimonials_soon')}
     </p>
   `;
 }
 
-function generateContactFields(content) {
+function generateContactFields(content, tr) {
   return `
     <div class="form-group">
-      <label for="heading">Section Heading</label>
-      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || 'Get In Touch')}" required>
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || tr('sed.ph_get_in_touch'))}" required>
     </div>
 
     <div class="form-group">
-      <label for="subheading">Subheading</label>
+      <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
     </div>
 
     <div class="form-group">
-      <label for="button_text">Submit Button Text</label>
-      <input type="text" id="button_text" name="button_text" value="${escapeHtml(content.button_text || 'Send Message')}" required>
+      <label for="button_text">${tr('sed.submit_button')}</label>
+      <input type="text" id="button_text" name="button_text" value="${escapeHtml(content.button_text || tr('sed.ph_send_message'))}" required>
     </div>
   `;
 }
 
-function generateGalleryFields(content) {
+function generateGalleryFields(content, tr) {
   const images = Array.isArray(content.images) ? content.images : [];
   return `
     <div class="form-group">
-      <label for="heading">Section Heading</label>
-      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || 'Gallery')}" required>
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || tr('sed.ph_gallery'))}" required>
     </div>
 
     <div class="form-group">
-      <label for="subheading">Subheading</label>
+      <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
 
     <div class="form-group">
-      <label>Photos <span style="color:#718096;font-weight:400;font-size:.8rem">· drag-free reorder, replace, or remove — no new AI images</span></label>
+      <label>${tr('sed.photos')} <span style="color:#718096;font-weight:400;font-size:.8rem">${tr('sed.photos_hint')}</span></label>
       <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
       <div id="gallery-manager" class="gallery-manager"></div>
-      <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">＋ Add photo</button>
+      <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">${tr('sed.add_photo')}</button>
       <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
       <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
     </div>
   `;
 }
 
-function generateFooterFields(content) {
+function generateFooterFields(content, tr) {
   return `
     <div class="form-group">
-      <label for="business_name">Business Name</label>
+      <label for="business_name">${tr('sed.business_name')}</label>
       <input type="text" id="business_name" name="business_name" value="${escapeHtml(content.business_name || '')}" required>
     </div>
 
     <div class="form-group">
-      <label for="tagline">Tagline</label>
+      <label for="tagline">${tr('sed.tagline')}</label>
       <input type="text" id="tagline" name="tagline" value="${escapeHtml(content.tagline || '')}" required>
     </div>
 
     <div class="form-group">
-      <label for="copyright">Copyright Text</label>
+      <label for="copyright">${tr('sed.copyright')}</label>
       <input type="text" id="copyright" name="copyright" value="${escapeHtml(content.copyright || '')}" required>
     </div>
   `;

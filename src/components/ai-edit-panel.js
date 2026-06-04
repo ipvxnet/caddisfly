@@ -6,13 +6,16 @@
 // window.currentSectionId, showNotification().
 
 import { imageTargetsFor } from '../utils/ai-edit.js';
+import { translator } from '../i18n/index.js';
 
 /**
  * @param {object} section - Section row (section_type, content_json)
  * @param {string} projectId
+ * @param {string} lang - UI language
  * @returns {string} HTML (panel + scoped styles + script)
  */
-export function generateAIEditPanel(section, projectId) {
+export function generateAIEditPanel(section, projectId, lang = 'en') {
+  const tr = translator(lang);
   const sectionType = section.section_type;
   const imageTargets = imageTargetsFor(sectionType);
   const canImage = imageTargets.length > 0;
@@ -25,30 +28,30 @@ export function generateAIEditPanel(section, projectId) {
   return `
 <div class="ai-edit-panel">
   <div class="ai-edit-head">
-    <span class="ai-edit-title">✨ AI Edit</span>
-    <span class="ai-edit-sub">Tell the AI what to change — it'll confirm before applying.</span>
+    <span class="ai-edit-title">${tr('aip.title')}</span>
+    <span class="ai-edit-sub">${tr('aip.sub')}</span>
   </div>
 
   <div id="ai-edit-log" class="ai-edit-log"></div>
 
   <div class="ai-edit-input-row">
     <input type="text" id="ai-edit-input" class="ai-edit-input"
-      placeholder="e.g. ${aiPlaceholder(sectionType, canImage)}"
+      placeholder="${aiPlaceholder(sectionType, canImage, tr)}"
       onkeydown="if(event.key==='Enter'){event.preventDefault();aiEditSend();}">
-    <button type="button" class="ai-edit-send" id="ai-edit-send-btn" onclick="aiEditSend()">Send</button>
+    <button type="button" class="ai-edit-send" id="ai-edit-send-btn" onclick="aiEditSend()">${tr('aip.send')}</button>
   </div>
 
   <details class="ai-edit-own">
-    <summary>📎 Use my own image${isHero ? ' / video' : ''} (upload or URL)</summary>
+    <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
-      <label class="ai-edit-own-label">Upload a file</label>
+      <label class="ai-edit-own-label">${tr('aip.upload_file')}</label>
       <input type="file" id="ai-edit-file" accept="image/*${isHero ? ',video/mp4,video/webm' : ''}" onchange="aiEditUpload(this)">
-      <label class="ai-edit-own-label">…or paste a URL</label>
+      <label class="ai-edit-own-label">${tr('aip.or_paste_url')}</label>
       <div class="ai-edit-url-row">
         <input type="text" id="ai-edit-url" class="ai-edit-input" placeholder="https://…">
-        <button type="button" class="ai-edit-send" onclick="aiEditApplyUrl()">Use</button>
+        <button type="button" class="ai-edit-send" onclick="aiEditApplyUrl()">${tr('aip.use')}</button>
       </div>
-      ${canRemove ? `<button type="button" class="ai-edit-remove" onclick="aiEditRemoveMedia()">🗑 Remove current image${isHero ? ' / video' : ''}</button>` : ''}
+      ${canRemove ? `<button type="button" class="ai-edit-remove" onclick="aiEditRemoveMedia()">${isHero ? tr('aip.remove_media_video') : tr('aip.remove_media')}</button>` : ''}
       <div id="ai-edit-own-status" class="ai-edit-own-status"></div>
     </div>
   </details>
@@ -118,7 +121,7 @@ async function aiEditSend() {
   const log = document.getElementById('ai-edit-log');
   const typing = document.createElement('div');
   typing.className = 'ai-edit-msg ai ai-edit-typing';
-  typing.textContent = 'Thinking…';
+  typing.textContent = ${JSON.stringify(tr('aip.thinking'))};
   log.appendChild(typing);
   log.scrollTop = log.scrollHeight;
 
@@ -131,15 +134,15 @@ async function aiEditSend() {
     const data = await res.json();
     typing.remove();
 
-    if (!data.success) throw new Error(data.error || 'Failed');
+    if (!data.success) throw new Error(data.error || ${JSON.stringify(tr('aip.failed'))});
 
-    aiEditAddMsg('ai', data.assistant_message || data.summary || 'Here is my proposal.');
+    aiEditAddMsg('ai', data.assistant_message || data.summary || ${JSON.stringify(tr('aip.my_proposal'))});
     window.aiEditHistory.push({ role: 'assistant', content: data.assistant_message || data.summary || '' });
 
     if (data.has_change) {
       aiEditRenderProposal(data);
     } else {
-      aiEditAddMsg('ai', "I couldn't find anything to change for that. Try rephrasing?");
+      aiEditAddMsg('ai', ${JSON.stringify(tr('aip.nothing'))});
     }
   } catch (error) {
     typing.remove();
@@ -156,14 +159,14 @@ function aiEditRenderProposal(data) {
   box.className = 'ai-edit-msg ai ai-edit-proposal';
   const changed = Object.keys(data.patch || {});
   const actionsNote = (data.actions || []).length
-    ? '<div class="actions-note">🖼️ Will generate ' + data.actions.length + ' image(s).</div>' : '';
+    ? '<div class="actions-note">' + ${JSON.stringify(tr('aip.will_generate', { n: '%N%' }))}.replace('%N%', data.actions.length) + '</div>' : '';
   box.innerHTML =
-    '<div class="summary">' + (data.summary || 'Proposed changes') + '</div>' +
+    '<div class="summary">' + (data.summary || ${JSON.stringify(tr('aip.proposed'))}) + '</div>' +
     (changed.length ? '<pre>' + escapeForHtml(JSON.stringify(data.patch, null, 2)) + '</pre>' : '') +
     actionsNote +
     '<div class="ai-edit-proposal-buttons">' +
-      '<button type="button" class="ai-edit-apply" onclick=\\'aiEditApply(this)\\'>Apply</button>' +
-      '<button type="button" class="ai-edit-discard" onclick="this.closest(\\'.ai-edit-proposal\\').remove()">Discard</button>' +
+      '<button type="button" class="ai-edit-apply" onclick=\\'aiEditApply(this)\\'>' + ${JSON.stringify(tr('aip.apply'))} + '</button>' +
+      '<button type="button" class="ai-edit-discard" onclick="this.closest(\\'.ai-edit-proposal\\').remove()">' + ${JSON.stringify(tr('aip.discard'))} + '</button>' +
     '</div>';
   box._proposal = { patch: data.patch || {}, actions: data.actions || [] };
   log.appendChild(box);
@@ -174,14 +177,14 @@ async function aiEditApply(btn) {
   const box = btn.closest('.ai-edit-proposal');
   const proposal = box._proposal || { patch: {}, actions: [] };
   btn.disabled = true;
-  btn.textContent = proposal.actions.length ? 'Generating…' : 'Applying…';
+  btn.textContent = proposal.actions.length ? ${JSON.stringify(tr('aip.generating'))} : ${JSON.stringify(tr('aip.applying'))};
   try {
     await aiEditPostApply({ patch: proposal.patch, actions: proposal.actions });
-    btn.textContent = '✓ Applied';
-    aiEditAddMsg('ai', 'Done — preview updated.');
+    btn.textContent = ${JSON.stringify(tr('aip.applied'))};
+    aiEditAddMsg('ai', ${JSON.stringify(tr('aip.done'))});
   } catch (error) {
     btn.disabled = false;
-    btn.textContent = 'Apply';
+    btn.textContent = ${JSON.stringify(tr('aip.apply'))};
     aiEditAddMsg('ai', '⚠️ ' + error.message);
   }
 }
@@ -193,7 +196,7 @@ async function aiEditPostApply(payload) {
     body: JSON.stringify(payload)
   });
   const data = await res.json();
-  if (!data.success) throw new Error(data.error || 'Failed to apply');
+  if (!data.success) throw new Error(data.error || ${JSON.stringify(tr('aip.failed_apply'))});
   const iframe = document.getElementById('preview-iframe');
   if (iframe) {
     const sid = window.currentSectionId;
@@ -204,7 +207,7 @@ async function aiEditPostApply(payload) {
     });
     iframe.contentWindow.location.reload();
   }
-  if (typeof showNotification === 'function') showNotification('Section updated!', 'success');
+  if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.section_updated'))}, 'success');
   return data;
 }
 
@@ -218,17 +221,17 @@ async function aiEditUpload(input) {
   const file = input.files[0];
   if (!file) return;
   const status = document.getElementById('ai-edit-own-status');
-  status.textContent = 'Uploading…';
+  status.textContent = ${JSON.stringify(tr('aip.uploading'))};
   const fd = new FormData();
   fd.append('file', file);
   fd.append('asset_type', 'section');
   try {
     const up = await fetch(\`/api/ai-builder/\${window.currentProjectId}/upload\`, { method: 'POST', body: fd });
     const updata = await up.json();
-    if (!updata.success) throw new Error(updata.error || 'Upload failed');
+    if (!updata.success) throw new Error(updata.error || ${JSON.stringify(tr('aip.upload_failed'))});
     const isVideo = (file.type || '').startsWith('video');
     await aiEditPostApply(aiEditMediaPayload(updata.url, isVideo));
-    status.textContent = '✓ Applied your ' + (isVideo ? 'video' : 'image') + '.';
+    status.textContent = ${JSON.stringify(tr('aip.applied_your', { media: '%M%' }))}.replace('%M%', isVideo ? ${JSON.stringify(tr('aip.video'))} : ${JSON.stringify(tr('aip.image'))});
   } catch (error) {
     status.textContent = '⚠️ ' + error.message;
   }
@@ -236,7 +239,7 @@ async function aiEditUpload(input) {
 
 async function aiEditRemoveMedia() {
   const status = document.getElementById('ai-edit-own-status');
-  status.textContent = 'Removing…';
+  status.textContent = ${JSON.stringify(tr('aip.removing'))};
   try {
     // Clear every field that could hold this section's image/video, regardless
     // of which variant is active (background_image vs image_url).
@@ -245,7 +248,7 @@ async function aiEditRemoveMedia() {
     if (fileInput) fileInput.value = '';
     const urlInput = document.getElementById('ai-edit-url');
     if (urlInput) urlInput.value = '';
-    status.textContent = '✓ Removed.';
+    status.textContent = ${JSON.stringify(tr('aip.removed'))};
   } catch (error) {
     status.textContent = '⚠️ ' + error.message;
   }
@@ -254,12 +257,12 @@ async function aiEditRemoveMedia() {
 async function aiEditApplyUrl() {
   const url = (document.getElementById('ai-edit-url').value || '').trim();
   const status = document.getElementById('ai-edit-own-status');
-  if (!/^https?:\\/\\//i.test(url)) { status.textContent = 'Enter a valid http(s) URL.'; return; }
-  status.textContent = 'Applying…';
+  if (!/^https?:\\/\\//i.test(url)) { status.textContent = ${JSON.stringify(tr('aip.invalid_url'))}; return; }
+  status.textContent = ${JSON.stringify(tr('aip.applying'))};
   try {
     const isVideo = /\\.(mp4|webm)(\\?|$)/i.test(url);
     await aiEditPostApply(aiEditMediaPayload(url, isVideo && window.aiEditIsHero));
-    status.textContent = '✓ Applied.';
+    status.textContent = ${JSON.stringify(tr('aip.applied_dot'))};
   } catch (error) {
     status.textContent = '⚠️ ' + error.message;
   }
@@ -273,16 +276,16 @@ function escapeForHtml(s) {
 }
 
 /** A helpful per-type placeholder for the chat input. */
-function aiPlaceholder(sectionType, canImage) {
+function aiPlaceholder(sectionType, canImage, tr) {
   const map = {
-    hero: 'Make the headline punchier' + (canImage ? ' · generate a new background image' : ''),
-    about: 'Rewrite the story to be warmer',
-    services: 'Add a service for emergency repairs',
-    features: 'Make the feature descriptions shorter',
-    testimonials: 'Fix the typo in the first quote',
-    contact: 'Change the button to "Book Now"',
-    gallery: canImage ? 'Generate a new photo of the storefront' : 'Update the gallery heading',
-    footer: 'Update the tagline',
+    hero: tr('aip.ph_hero') + (canImage ? ' · ' + tr('aip.ph_hero_img') : ''),
+    about: tr('aip.ph_about'),
+    services: tr('aip.ph_services'),
+    features: tr('aip.ph_features'),
+    testimonials: tr('aip.ph_testimonials'),
+    contact: tr('aip.ph_contact'),
+    gallery: canImage ? tr('aip.ph_gallery_img') : tr('aip.ph_gallery'),
+    footer: tr('aip.ph_footer'),
   };
-  return (map[sectionType] || 'Describe what to change').replace(/'/g, '');
+  return (map[sectionType] || tr('aip.ph_default')).replace(/"/g, '&quot;');
 }
