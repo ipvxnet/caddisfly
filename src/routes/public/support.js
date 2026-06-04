@@ -4,6 +4,7 @@
 import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getTicketsByEmail, getTicketByPublicId, getMessages } from '../../db/tickets.js';
+import { translator } from '../../i18n/index.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -12,15 +13,16 @@ function fmt(ts) {
   if (!ts) return '';
   try { return new Date(ts * 1000).toISOString().slice(0, 16).replace('T', ' '); } catch { return ''; }
 }
-function statusPill(s) {
+function statusPill(s, tr) {
   const cls = s === 'closed' ? '' : s === 'in_progress' ? 'warn' : 'ok';
-  const label = s === 'in_progress' ? 'in progress' : s;
-  return `<span class="pill ${cls}">${esc(label)}</span>`;
+  return `<span class="pill ${cls}">${esc(tr('sup.st_' + s))}</span>`;
 }
 
 export async function handleSupport(ctx) {
   const { env, url, query } = ctx;
   const origin = url.origin;
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   const email = ctx.billingEmail;
   if (!email) return redirect('/billing?next=/support');
 
@@ -28,33 +30,33 @@ export async function handleSupport(ctx) {
   if (query && query.t) {
     const ticket = await getTicketByPublicId(env.DB, query.t);
     if (!ticket || ticket.customer_email !== email) {
-      return htmlResponse(pageShell(origin, `<p class="muted">Ticket not found. <a href="/support">Back to support</a></p>`), 404);
+      return htmlResponse(pageShell(origin, `<p class="muted">${tr('sup.not_found')} <a href="/support">${tr('sup.back')}</a></p>`, 404, lang, tr), 404);
     }
     const messages = await getMessages(env.DB, ticket.id);
     const thread = messages
       .map(
         (m) => `<div class="msg ${m.is_staff ? 'staff' : ''}">
-          <div class="msg-head"><strong>${m.is_staff ? 'Caddisfly Support' : esc(m.author_email)}</strong> <span class="muted">${fmt(m.created_at)}</span></div>
+          <div class="msg-head"><strong>${m.is_staff ? tr('sup.staff') : esc(m.author_email)}</strong> <span class="muted">${fmt(m.created_at)}</span></div>
           <div class="msg-body">${esc(m.body)}</div>
         </div>`
       )
       .join('');
     const inner = `
-      <p><a class="muted-link" href="/support">← All tickets</a></p>
+      <p><a class="muted-link" href="/support">${tr('sup.all_tickets')}</a></p>
       <div class="thead">
         <h1>${esc(ticket.subject)}</h1>
-        <div>${statusPill(ticket.status)} <span class="pill">${esc(ticket.type)}</span></div>
+        <div>${statusPill(ticket.status, tr)} <span class="pill">${esc(tr('sup.ty_' + ticket.type))}</span></div>
       </div>
       <div class="thread">${thread}</div>
       ${ticket.status === 'closed'
-        ? `<p class="muted">This ticket is closed. Replying will re-open it.</p>`
+        ? `<p class="muted">${tr('sup.closed_note')}</p>`
         : ''}
       <form class="card" method="POST" action="/api/support/ticket/${esc(ticket.public_id)}/reply">
-        <label for="body">Add a reply</label>
-        <textarea id="body" name="body" rows="4" required placeholder="Type your reply…"></textarea>
-        <button class="btn btn-primary" type="submit">Send reply</button>
+        <label for="body">${tr('sup.add_reply')}</label>
+        <textarea id="body" name="body" rows="4" required placeholder="${tr('sup.reply_ph')}"></textarea>
+        <button class="btn btn-primary" type="submit">${tr('sup.send_reply')}</button>
       </form>`;
-    return htmlResponse(pageShell(origin, inner));
+    return htmlResponse(pageShell(origin, inner, 200, lang, tr));
   }
 
   // List + new-ticket form.
@@ -63,55 +65,55 @@ export async function handleSupport(ctx) {
     ? tickets
         .map(
           (t) => `<a class="trow" href="/support?t=${esc(t.public_id)}">
-            <div><div class="t-subj">${esc(t.subject)}</div><div class="muted t-meta">${esc(t.type)} · updated ${fmt(t.updated_at)}</div></div>
-            ${statusPill(t.status)}
+            <div><div class="t-subj">${esc(t.subject)}</div><div class="muted t-meta">${esc(tr('sup.ty_' + t.type))} · ${tr('sup.updated', { date: fmt(t.updated_at) })}</div></div>
+            ${statusPill(t.status, tr)}
           </a>`
         )
         .join('')
-    : '<p class="muted">You have no tickets yet.</p>';
+    : `<p class="muted">${tr('sup.no_tickets')}</p>`;
 
-  const sentNote = query && query.sent ? '<div class="note ok">✓ Your ticket was submitted — we\'ll reply by email.</div>' : '';
-  const repliedNote = query && query.replied ? '<div class="note ok">✓ Reply sent.</div>' : '';
+  const sentNote = query && query.sent ? `<div class="note ok">${tr('sup.sent')}</div>` : '';
+  const repliedNote = query && query.replied ? `<div class="note ok">${tr('sup.replied')}</div>` : '';
 
   const inner = `
     <div class="shead">
-      <h1>Support</h1>
-      <a class="muted-link" href="/help">Help &amp; docs →</a>
+      <h1>${tr('sup.title')}</h1>
+      <a class="muted-link" href="/help">${tr('sup.help_docs')}</a>
     </div>
-    <p class="sub">Signed in as <strong>${esc(email)}</strong>. Open a ticket and we'll reply by email.</p>
+    <p class="sub">${tr('sup.signed_in', { email: `<strong>${esc(email)}</strong>` })}</p>
     ${sentNote}${repliedNote}
 
     <div class="card">
-      <h2>Open a new ticket</h2>
+      <h2>${tr('sup.new_ticket')}</h2>
       <form method="POST" action="/api/support/ticket">
-        <label for="subject">Subject</label>
-        <input id="subject" name="subject" required placeholder="Briefly, what's going on?">
-        <label for="type">Type</label>
+        <label for="subject">${tr('sup.subject')}</label>
+        <input id="subject" name="subject" required placeholder="${tr('sup.subject_ph')}">
+        <label for="type">${tr('sup.type')}</label>
         <select id="type" name="type">
-          <option value="issue">Issue / bug</option>
-          <option value="request">Feature request</option>
+          <option value="issue">${tr('sup.type_issue')}</option>
+          <option value="request">${tr('sup.type_request')}</option>
         </select>
-        <label for="body">Details</label>
-        <textarea id="body" name="body" rows="5" required placeholder="Describe the issue or request. Include the site name / URL if relevant."></textarea>
-        <button class="btn btn-primary" type="submit">Submit ticket</button>
+        <label for="body">${tr('sup.details')}</label>
+        <textarea id="body" name="body" rows="5" required placeholder="${tr('sup.details_ph')}"></textarea>
+        <button class="btn btn-primary" type="submit">${tr('sup.submit')}</button>
       </form>
     </div>
 
     <div class="card">
-      <h2>Your tickets</h2>
+      <h2>${tr('sup.your_tickets')}</h2>
       <div class="tlist">${list}</div>
     </div>`;
 
-  return htmlResponse(pageShell(origin, inner));
+  return htmlResponse(pageShell(origin, inner, 200, lang, tr));
 }
 
-function pageShell(origin, inner, status = 200) {
+function pageShell(origin, inner, status = 200, lang = 'en', tr = (k) => k) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Support — Caddisfly', description: 'Get help and track your support tickets.', origin })}
+  ${headTags({ title: tr('sup.meta_title'), description: 'Get help and track your support tickets.', origin, path: '/support' })}
   <meta name="robots" content="noindex">
   <style>
     ${baseCss()}
@@ -144,9 +146,9 @@ function pageShell(origin, inner, status = 200) {
   </style>
 </head>
 <body>
-  ${siteHeader('/support')}
+  ${siteHeader('/support', { lang })}
   <main><div class="swrap">${inner}</div></main>
-  ${siteFooter()}
+  ${siteFooter({ lang })}
 </body>
 </html>`;
 }
