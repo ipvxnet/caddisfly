@@ -10,7 +10,7 @@ import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
-import { renderDomainsPanel, DOMAINS_CSS, DOMAINS_JS } from '../../components/domains-panel.js';
+import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
 import { translator } from '../../i18n/index.js';
 
 const SITES_BASE = 'caddisfly.app';
@@ -186,7 +186,7 @@ export async function handleDashboard(ctx) {
         const ds = await getDomainsByProject(env.DB, projectKeyFor(s));
         const badge = ds.length ? ` <span class="pill ${ds.some((d) => d.status === 'active') ? 'ok' : 'warn'}">${ds.length}</span>` : '';
         block = `<details class="site-domains"><summary>🌐 ${tr('dash.custom_domain')}${badge}</summary>
-          ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase })}</details>`;
+          ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase, lang })}</details>`;
       }
       return siteCard(s, block, tr);
     })
@@ -323,7 +323,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
       try { await postTeam('/api/team/remove', { owner, email }); location.reload(); }
       catch (e) { alert(e.message); }
     }
-    ${DOMAINS_JS}
+    ${domainsJs(lang)}
   </script>
 </body>
 </html>`;
