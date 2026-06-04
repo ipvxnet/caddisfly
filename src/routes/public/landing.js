@@ -262,6 +262,7 @@ export async function handleLanding(ctx) {
         <div class="sec-head"><h2>Everything you need to ship</h2></div>
         <div class="feats">
           <div class="feat"><div class="ic">🗂️</div><h4>Multi-page sites</h4><p>Home, About, Services, Contact &amp; more — with real navigation.</p></div>
+          <div class="feat"><div class="ic">🔎</div><h4>Auto-SEO</h4><p>Every site ships search-ready — page titles, meta descriptions, social cards, sitemaps &amp; Google business markup, generated automatically. Tweak any page, or let it run on autopilot.</p></div>
           <div class="feat"><div class="ic">✨</div><h4>AI section editing</h4><p>Chat to rewrite copy or generate new images, right in the editor.</p></div>
           <div class="feat"><div class="ic">🎨</div><h4>Themes &amp; fonts</h4><p>Switch the whole look — light, dark, gold — in a single click.</p></div>
           <div class="feat"><div class="ic">🖼️</div><h4>Real photos</h4><p>On-brand imagery pulled in automatically, or generate your own.</p></div>
