@@ -234,6 +234,14 @@ export async function handleLanding(ctx) {
                 <input type="text" id="website" name="website" placeholder="https://yourbusiness.com" autocomplete="url">
                 <div class="err" id="website-err"></div>
               </div>
+              <div class="field">
+                <label for="refactor-lang">${tr('builder.lang_label')}</label>
+                <select id="refactor-lang" name="refactor-lang">
+                  <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+                  <option value="es"${lang === 'es' ? ' selected' : ''}>Español</option>
+                  <option value="pt"${lang === 'pt' ? ' selected' : ''}>Português</option>
+                </select>
+              </div>
               <div class="field" style="display:flex;align-items:flex-start;gap:.5rem">
                 <input type="checkbox" id="refactor-agree" style="width:auto;margin-top:.25rem;flex:none">
                 <label for="refactor-agree" style="font-weight:500;margin:0;cursor:pointer;font-size:.9rem">${tr('landing.refactor_agree', { terms: `<a href="/terms" target="_blank">${tr('footer.terms')}</a>`, privacy: `<a href="/privacy" target="_blank">${tr('footer.privacy')}</a>` })}</label>
@@ -334,7 +342,7 @@ export async function handleLanding(ctx) {
         try {
           var res = await fetch('/api/preview/create', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true })
+            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true, language: (document.getElementById('refactor-lang') || {}).value || 'en' })
           });
           var data = await res.json();
           if (data.success) {

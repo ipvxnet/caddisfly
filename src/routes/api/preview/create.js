@@ -33,6 +33,8 @@ export async function handlePreviewCreate(ctx) {
     const body = await request.json();
     const { email, website, use_templates } = body;
     const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
+    const I18N_LANGS = ['en', 'es', 'pt'];
+    const language = I18N_LANGS.includes(body.language) ? body.language : (I18N_LANGS.includes(ctx.lang) ? ctx.lang : 'en');
 
     // Require Terms/Privacy acceptance before building.
     if (!acceptedTerms) {
@@ -78,6 +80,7 @@ export async function handlePreviewCreate(ctx) {
       customer_email: sanitizedEmail,
       website_url: normalizedWebsite,
       status: 'preview_pending',
+      language,
     });
 
     projectId = project.id;
