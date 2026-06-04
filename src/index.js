@@ -59,6 +59,7 @@ import { handleHelp } from './routes/public/help.js';
 import { handleSupport } from './routes/public/support.js';
 import { handleCreateTicket, handleReplyTicket } from './routes/api/support.js';
 import { handleAdminTickets, handleAdminTicketReply, handleAdminTicketStatus } from './routes/admin/tickets.js';
+import { handleAdminLegal, handleAdminLegalSave } from './routes/admin/legal.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
 import { projectAccess } from './middleware/project-access.js';
@@ -172,6 +173,8 @@ router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
 router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
+router.get('/admin/legal', handleAdminLegal, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/legal/:slug', handleAdminLegalSave, [authMiddleware, adminMiddleware]);
 
 /**
  * Main fetch handler
