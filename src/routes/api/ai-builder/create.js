@@ -108,7 +108,7 @@ export async function handleAIBuilderCreate(ctx) {
 
     // Create initial conversation entry
     const firstStep = getFirstStep();
-    const firstQuestion = formatStepForResponse(firstStep);
+    const firstQuestion = formatStepForResponse(firstStep, language);
 
     await createConversationEntry(env.DB, {
       ai_project_id: project.id,
@@ -135,7 +135,7 @@ export async function handleAIBuilderCreate(ctx) {
 
     // Determine next question
     const nextStep = 'business_info';
-    const nextQuestion = formatStepForResponse(nextStep);
+    const nextQuestion = formatStepForResponse(nextStep, language);
 
     // Return response with next question
     return new Response(

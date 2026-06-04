@@ -1,5 +1,7 @@
 // AI Conversation State Machine
 
+import { t } from '../i18n/index.js';
+
 /**
  * Conversation steps definition
  * Each step defines a question, type, and next step
@@ -211,7 +213,7 @@ export function getAllSteps() {
  * @param {string} stepName - Step name
  * @returns {object} Formatted step data
  */
-export function formatStepForResponse(stepName) {
+export function formatStepForResponse(stepName, lang = 'en') {
   const stepConfig = getStepConfig(stepName);
 
   if (!stepConfig) {
@@ -220,21 +222,23 @@ export function formatStepForResponse(stepName) {
 
   const response = {
     step: stepName,
-    question: stepConfig.question,
+    // Localized display text (option VALUES stay constant; only labels translate).
+    question: t(lang, `convo.q.${stepName}`),
     type: stepConfig.type,
   };
 
-  // Add options if present
   if (stepConfig.options) {
-    response.options = stepConfig.options;
+    response.options = stepConfig.options.map((opt) => ({
+      value: opt.value,
+      label: t(lang, `convo.opt.${opt.value}_l`),
+      description: t(lang, `convo.opt.${opt.value}_d`),
+    }));
   }
 
-  // Add placeholder if present
   if (stepConfig.placeholder) {
-    response.placeholder = stepConfig.placeholder;
+    response.placeholder = t(lang, `convo.ph.${stepName}`);
   }
 
-  // Add progress
   response.progress = getConversationProgress(stepName);
 
   return response;
