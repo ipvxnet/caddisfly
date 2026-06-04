@@ -209,4 +209,131 @@ export const pt = {
     roles_legend: 'Funções — <strong>membro</strong>: edita conteúdo · <strong>editor com publicação</strong>: edita + publica · <strong>administrador</strong>: gerencia equipe e domínios',
     remove_confirm: 'Remover {email} da equipe?',
   },
+
+  sup: {
+    meta_title: 'Suporte — Caddisfly',
+    title: 'Suporte', help_docs: 'Ajuda e guias →',
+    signed_in: 'Sessão iniciada como {email}. Abra um ticket e responderemos por e-mail.',
+    sent: '✓ O seu ticket foi enviado — responderemos por e-mail.',
+    replied: '✓ Resposta enviada.',
+    new_ticket: 'Abrir um novo ticket',
+    subject: 'Assunto', subject_ph: 'Em resumo, o que está acontecendo?',
+    type: 'Tipo', type_issue: 'Problema / erro', type_request: 'Pedido de recurso',
+    details: 'Detalhes', details_ph: 'Descreva o problema ou pedido. Inclua o nome ou URL do site se for relevante.',
+    submit: 'Enviar ticket',
+    your_tickets: 'Os seus tickets', no_tickets: 'Você ainda não tem tickets.', updated: 'atualizado {date}',
+    not_found: 'Ticket não encontrado.', back: 'Voltar ao suporte', all_tickets: '← Todos os tickets',
+    staff: 'Suporte da Caddisfly',
+    closed_note: 'Este ticket está fechado. Se responder, ele será reaberto.',
+    add_reply: 'Adicionar uma resposta', reply_ph: 'Escreva a sua resposta…', send_reply: 'Enviar resposta',
+    st_open: 'aberto', st_in_progress: 'em andamento', st_closed: 'fechado',
+    ty_issue: 'problema', ty_request: 'pedido',
+  },
+
+  bill: {
+    meta_title: 'Faturação — Caddisfly',
+    manage_billing: 'Gerir faturação',
+    intent_plan: 'Inicie sessão para continuar ao pagamento de {plan}. Enviaremos um link de uso único por e-mail — sem senha.',
+    intent_default: 'Digite o seu e-mail e enviaremos um link de acesso de uso único — sem senha.',
+    email_label: 'E-mail', email_btn: 'Enviar-me um link de acesso',
+    same_email: 'Use o mesmo e-mail com que criou o seu site para que o seu plano se aplique a ele.',
+    n_checkout_ok: '✓ Assinatura ativa — obrigado! Pode levar alguns segundos para aparecer abaixo.',
+    n_checkout_cancel: 'Pagamento cancelado. Nenhuma cobrança foi feita.',
+    n_credits_ok: '✓ Créditos comprados — obrigado! O seu saldo é atualizado abaixo em alguns segundos.',
+    n_credits_cancel: 'Compra de créditos cancelada. Nenhuma cobrança foi feita.',
+    n_sent: '✓ Verifique o seu e-mail para o link de acesso (expira em 15 min).',
+    n_expired: 'Esse link de acesso é inválido ou expirou. Solicite um novo abaixo.',
+    your_billing: 'A sua faturação',
+    your_sites_team: '← Os seus sites e equipe', sign_out: 'Sair',
+    not_configured: 'A faturação ainda não está habilitada neste ambiente. As mudanças de plano estão temporariamente indisponíveis.',
+    two_months_free: '(2 meses grátis)', continue_checkout: 'Continuar ao pagamento →',
+    manage_sub: 'Gerir assinatura',
+    manage_sub_sub: 'Atualize o seu cartão, troque de plano ou cancele — no portal seguro da Stripe.',
+    open_portal: 'Abrir o portal de faturação →',
+    upgrade: 'Fazer upgrade', upgrade_sub: 'Anual = 2 meses grátis. Cancele quando quiser.',
+    monthly: 'Mensal', annual: 'Anual',
+    credits_label: '✨ Créditos Caddi', available: 'disponíveis',
+    credits_breakdown: '{m} de {a} mensais + {p} comprados', monthly_resets: ' · reinicia em {date}',
+    buy_more: 'Comprar mais →', credits_unit: '{n} créditos', buy: 'Comprar',
+    buy_credits: 'Comprar créditos Caddi',
+    buy_credits_sub: 'Uma recarga única para quando você precisa de mais IA no meio da construção — os créditos comprados nunca expiram (50 créditos / $1).',
+    current_plan: 'Plano atual', k_plan: 'Plano', k_status: 'Estado', k_billing: 'Faturação',
+    renews_on: 'Renova em', cancels_on: 'Cancela em',
+  },
+
+  help: {
+    meta_title: 'Ajuda e guias — Caddisfly',
+    h1: 'Ajuda e documentação',
+    sub: 'Tudo o que precisa para criar, personalizar, publicar e crescer o seu site. Travado? {support}.',
+    open_ticket: 'Abra um ticket de suporte',
+    cta_q: 'Não encontrou o que precisava?', cta_btn: 'Abrir um ticket de suporte →',
+    toc: [
+      ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
+      ['publishing', 'Publicar'], ['seo', 'SEO e aparecer no Google'],
+      ['custom-domains', 'Domínios próprios e DNS'], ['plans', 'Planos, créditos e faturação'],
+      ['team', 'Membros da equipe'], ['faq', 'Perguntas frequentes'],
+    ],
+    sections: [
+      ['getting-started', 'Primeiros passos', `
+        <p>Há duas formas de criar um site:</p>
+        <ul>
+          <li><strong>Criar com IA</strong> — descreva o seu negócio e a IA gera um site completo e alinhado à sua marca. Comece em <a href="/ai-builder">Criar com IA</a>.</li>
+          <li><strong>Renovar um site existente</strong> — informe o URL do seu site atual e nós o reconstruímos mais limpo. Você confirma o seu e-mail e geramos uma pré-visualização.</li>
+        </ul>
+        <p>As duas levam você ao editor <strong>Personalizar</strong> com pré-visualização ao vivo.</p>`],
+      ['customizing', 'Personalizar o seu site', `
+        <ul>
+          <li><strong>Seções</strong> — clique numa seção para selecioná-la e depois <strong>✨ Editar</strong> (texto, imagens ou mudanças com IA). Arraste o controle ⋮⋮ para reordenar.</li>
+          <li><strong>Adicionar / remover</strong> — <strong>+ Adicionar seção</strong> adiciona uma seção e deixa você escolher o layout; o botão 🗑 remove. O cabeçalho e o rodapé são de todo o site.</li>
+          <li><strong>Páginas</strong> — adicione páginas com a aba <strong>+ Página</strong> e mova seções entre elas.</li>
+          <li><strong>Galeria</strong> — abra o editor de uma galeria para reordenar (arrastar), substituir, remover ou adicionar fotos individuais (sem regerar com IA).</li>
+          <li><strong>Design</strong> — o painel 🎨 Design troca o tema, as cores e as fontes de todo o site de uma vez.</li>
+        </ul>`],
+      ['publishing', 'Publicar', `
+        <p>Clique em <strong>Publicar site</strong> no Personalizar. O seu site fica no ar num endereço gratuito como <code>seunegocio.caddisfly.app</code> e mostramos um link. Republique quando quiser após mudanças — republicar num plano pago também remove o selo “Built with Caddisfly”.</p>`],
+      ['seo', 'SEO e aparecer no Google', `
+        <p>Cada site que você publica fica <strong>pronto para buscadores desde o início</strong> — sem configuração. A Caddisfly adiciona automaticamente:</p>
+        <ul>
+          <li><strong>Títulos e meta descrições</strong> de cada página, a partir do nome do seu negócio e do conteúdo.</li>
+          <li><strong>Cartões de compartilhamento</strong> (Open Graph / Twitter) para os links ficarem bonitos.</li>
+          <li><strong>Dados de negócio do Google</strong> (dados estruturados LocalBusiness) com o seu nome, descrição, telefone e endereço quando disponíveis.</li>
+          <li>Um <strong>URL canônico</strong>, um <code>robots.txt</code> por site e um <code>sitemap.xml</code> para os buscadores rastrearem cada página. Num domínio próprio, o seu domínio é tratado como o canônico.</li>
+        </ul>
+        <p><strong>Ajuste qualquer página:</strong> abra <strong>Personalizar</strong> → o painel <strong>🔎 SEO</strong>. Edite o título e a meta descrição (com pré-visualização do resultado do Google) e defina uma imagem de compartilhamento de todo o site. Deixe algo em branco e usamos os valores automáticos. As mudanças se aplicam na próxima publicação.</p>
+        <p>Após publicar, envie o seu <code>sitemap.xml</code> no <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a> para indexar mais rápido.</p>`],
+      ['custom-domains', 'Domínios próprios e DNS', `
+        <p>Num plano pago você pode apontar o seu próprio domínio para o site. Abra <strong>🌐 Domínio próprio</strong> (no Personalizar ou no seu <a href="/dashboard">Painel</a>) e informe um domínio.</p>
+        <ol>
+          <li><strong>Use um subdomínio</strong> como <code>www.seunegocio.com</code> — funciona em qualquer provedor de DNS.</li>
+          <li>Adicione o único registro <strong>CNAME</strong> que mostramos no seu provedor de DNS (GoDaddy, Namecheap, Route 53, Cloudflare, etc.): <br><code>www</code> &nbsp;→&nbsp; <code>sites.caddisfly.app</code></li>
+          <li>Pronto — o seu <strong>certificado SSL é emitido automaticamente</strong> quando o registro estiver ativo (geralmente alguns minutos). Clique em <strong>Verificar status</strong>; quando aparecer <strong>Ativo</strong>, você está no ar por HTTPS.</li>
+        </ol>
+        <p><strong>Domínios raiz:</strong> um <code>seunegocio.com</code> puro não pode usar um CNAME pelas regras de DNS. Se o seu provedor oferecer ALIAS/ANAME ou flattening de CNAME (Cloudflare, Route 53, DNSimple) você pode usá-lo; caso contrário, aponte <code>www</code> para nós e redirecione a raiz para <code>www</code> no seu registrador.</p>`],
+      ['plans', 'Planos, créditos e faturação', `
+        <ul>
+          <li><strong>Planos</strong> — Free, Starter, Pro, Agency. Planos maiores adicionam sites, créditos de IA, domínios próprios e vagas de equipe. Ver <a href="/pricing">Preços</a>.</li>
+          <li><strong>Créditos Caddi</strong> — gastos em ações de IA. Cada plano inclui uma cota mensal (reinicia todo mês); recargas únicas nunca expiram.</li>
+          <li><strong>Gerenciar</strong> — faça upgrade, troque de plano ou cancele quando quiser em <a href="/billing">Faturação</a>.</li>
+        </ul>`],
+      ['team', 'Membros da equipe', `
+        <p>Convide a sua equipe pelo seu <a href="/dashboard">Painel</a> → <strong>Equipe</strong>. Eles recebem um link por e-mail que os identifica e os adiciona à sua equipe, onde podem trabalhar nos seus sites.</p>
+        <ul>
+          <li><strong>Funções</strong> — o proprietário é administrador; administradores podem convidar, promover (membro ↔ administrador) e remover membros.</li>
+          <li><strong>Vagas</strong> (incluindo você): Starter 5 · Pro 15 · Agency 50.</li>
+        </ul>`],
+    ],
+    faqs: [
+      ['A Caddisfly é grátis?', 'Sim — você pode criar e pré-visualizar um site de graça e publicar um site num subdomínio gratuito <code>*.caddisfly.app</code>. Planos pagos adicionam mais sites, créditos de IA, domínios próprios e vagas de equipe.'],
+      ['Como edito o texto e as imagens do meu site?', 'Abra <strong>Personalizar</strong> no seu site, clique numa seção e depois <strong>✨ Editar</strong>. Você pode editar o texto direto, enviar as suas imagens ou descrever uma mudança para a IA aplicar. As fotos da galeria podem ser reordenadas (arrastar), substituídas ou removidas uma a uma.'],
+      ['Posso adicionar ou remover seções?', 'Sim. No Personalizar, use <strong>+ Adicionar seção</strong> para adicionar uma (e escolher o layout), ou selecione uma seção e use o botão 🗑 para removê-la. O cabeçalho e o rodapé são compartilhados em todas as páginas e não podem ser removidos.'],
+      ['Como conecto o meu próprio domínio?', 'Num site publicado, abra <strong>🌐 Domínio próprio</strong> (no Personalizar ou no seu Painel), informe um subdomínio como <code>www.seunegocio.com</code> e adicione o único registro <strong>CNAME</strong> que mostramos no seu provedor de DNS. O seu certificado SSL é emitido automaticamente — ver <a href="#custom-domains">Domínios próprios e DNS</a>.'],
+      ['Por que usar um subdomínio (www) em vez do meu domínio raiz?', 'Um subdomínio (<code>www.</code>, <code>shop.</code>, etc.) funciona em todo provedor de DNS com um simples CNAME. Um domínio raiz puro (<code>seunegocio.com</code>) não pode usar um CNAME pelas regras de DNS — precisa de ALIAS/flattening de CNAME, que alguns provedores (ex.: GoDaddy, Namecheap) não oferecem. Se você só tem a raiz, aponte <code>www</code> para nós e redirecione a raiz para <code>www</code>.'],
+      ['Quanto tempo até o meu domínio próprio funcionar?', 'Depois de adicionar o CNAME, a propagação de DNS e a emissão do SSL costumam levar alguns minutos. Clique em <strong>Verificar status</strong> no painel do domínio; quando mostrar <strong>Ativo</strong>, o seu site está no ar por HTTPS.'],
+      ['O que são créditos Caddi?', 'Os créditos são gastos em ações de IA (gerar conteúdo, criar imagens com IA, edições com IA). Cada plano inclui uma cota mensal que reinicia todo mês, e você ainda pode comprar recargas únicas que nunca expiram.'],
+      ['Como funcionam os membros da equipe?', 'Convide a sua equipe por e-mail pelo seu <strong>Painel</strong>. Eles recebem um link que os identifica e os adiciona à sua equipe, onde podem acessar os seus sites. Você (o proprietário) e os administradores podem convidar, promover ou remover membros. Vagas: Starter 5, Pro 15, Agency 50 (incluindo você).'],
+      ['O meu site é bom para SEO? Preciso configurar algo?', 'Cada site publicado fica pronto para buscadores automaticamente — títulos, meta descrições, cartões de compartilhamento, dados de negócio do Google (LocalBusiness), um URL canônico, <code>robots.txt</code> e um <code>sitemap.xml</code>, tudo gerado para você. Para personalizar uma página, abra <strong>Personalizar → 🔎 SEO</strong> e edite o título e a descrição com pré-visualização do resultado do Google. Ver <a href="#seo">SEO e aparecer no Google</a>.'],
+      ['Posso pedir reembolso?', 'As assinaturas podem ser canceladas quando quiser em <strong>Faturação</strong> (você mantém o acesso até o fim do período). Cancelamentos por conveniência são proporcionais conforme os nossos <a href="/terms">Termos</a>.'],
+      ['Preciso de ajuda ou encontrei um erro.', 'Abra um ticket em <a href="/support">Suporte</a> — descreva o problema ou pedido e responderemos por e-mail.'],
+    ],
+  },
 };

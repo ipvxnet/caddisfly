@@ -14,6 +14,7 @@ import {
 } from '../../db/billing.js';
 import { isStripeConfigured, CREDIT_PACKS } from '../../utils/stripe.js';
 import { getCreditState } from '../../utils/credits.js';
+import { translator } from '../../i18n/index.js';
 
 const NEXT_COOKIE = 'cf_billing_next';
 
@@ -34,13 +35,14 @@ function fmtDate(ts) {
   }
 }
 
-function pageShell(origin, inner, headerOpts = {}) {
+function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
+  const lang = headerOpts.lang || 'en';
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Billing — Caddisfly', description: 'Manage your Caddisfly plan and billing.', origin })}
+  ${headTags({ title: tr('bill.meta_title'), description: 'Manage your Caddisfly plan and billing.', origin, path: '/billing' })}
   <meta name="robots" content="noindex">
   <style>
     ${baseCss()}
@@ -82,27 +84,23 @@ function pageShell(origin, inner, headerOpts = {}) {
 <body>
   ${siteHeader('/pricing', headerOpts)}
   <main><div class="bwrap">${inner}</div></main>
-  ${siteFooter()}
+  ${siteFooter({ lang })}
 </body>
 </html>`;
 }
 
-function noticeFor(query) {
+function noticeFor(query, tr) {
   switch (query.checkout) {
-    case 'success':
-      return `<div class="notice ok">✓ Subscription active — thank you! It may take a few seconds to reflect below.</div>`;
-    case 'cancelled':
-      return `<div class="notice warn">Checkout cancelled. No charge was made.</div>`;
+    case 'success': return `<div class="notice ok">${tr('bill.n_checkout_ok')}</div>`;
+    case 'cancelled': return `<div class="notice warn">${tr('bill.n_checkout_cancel')}</div>`;
   }
   switch (query.credits) {
-    case 'success':
-      return `<div class="notice ok">✓ Credits purchased — thank you! Your balance updates below in a few seconds.</div>`;
-    case 'cancelled':
-      return `<div class="notice warn">Credit purchase cancelled. No charge was made.</div>`;
+    case 'success': return `<div class="notice ok">${tr('bill.n_credits_ok')}</div>`;
+    case 'cancelled': return `<div class="notice warn">${tr('bill.n_credits_cancel')}</div>`;
   }
-  if (query.sent) return `<div class="notice ok">✓ Check your email for a sign-in link (expires in 15 min).</div>`;
+  if (query.sent) return `<div class="notice ok">${tr('bill.n_sent')}</div>`;
   if (query.error) return `<div class="notice err">${escapeHtml(query.error)}</div>`;
-  if (query.expired) return `<div class="notice warn">That sign-in link was invalid or expired. Request a new one below.</div>`;
+  if (query.expired) return `<div class="notice warn">${tr('bill.n_expired')}</div>`;
   return '';
 }
 
@@ -110,31 +108,31 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function signInView(query) {
+function signInView(query, tr) {
   const plan = query.plan && UPGRADE_PLANS.includes(query.plan) ? query.plan : '';
   const interval = query.interval === 'yr' ? 'yr' : 'mo';
   const next = plan
     ? `/billing?plan=${plan}&interval=${interval}`
     : query.next === '/dashboard' ? '/dashboard' : '/billing';
   const intent = plan
-    ? `<p class="sub">Sign in to continue to <strong>${TIERS[plan].name}</strong> checkout. We'll email you a one-time link — no password.</p>`
-    : `<p class="sub">Enter your email and we'll send a one-time sign-in link — no password needed.</p>`;
+    ? `<p class="sub">${tr('bill.intent_plan', { plan: `<strong>${TIERS[plan].name}</strong>` })}</p>`
+    : `<p class="sub">${tr('bill.intent_default')}</p>`;
   return `
-    <h1>Manage billing</h1>
+    <h1>${tr('bill.manage_billing')}</h1>
     ${intent}
-    ${noticeFor(query)}
+    ${noticeFor(query, tr)}
     <div class="panel">
       <form method="POST" action="/api/billing/login">
-        <label for="email">Email address</label>
+        <label for="email">${tr('bill.email_label')}</label>
         <input id="email" name="email" type="email" required placeholder="you@example.com" autocomplete="email">
         <input type="hidden" name="next" value="${escapeHtml(next)}">
-        <button class="btn btn-primary" type="submit">Email me a sign-in link</button>
+        <button class="btn btn-primary" type="submit">${tr('bill.email_btn')}</button>
       </form>
     </div>
-    <p class="muted-link">Use the same email you used to build your site so your plan applies to it.</p>`;
+    <p class="muted-link">${tr('bill.same_email')}</p>`;
 }
 
-function dashboardView(email, account, creditState, query, env) {
+function dashboardView(email, account, creditState, query, env, tr) {
   const tierKey = (account && account.pricing_tier) || 'free_trial';
   const tier = TIERS[tierKey] || TIERS.free_trial;
   const status = (account && account.subscription_status) || (tierKey === 'free_trial' ? 'free' : '—');
@@ -145,12 +143,12 @@ function dashboardView(email, account, creditState, query, env) {
 
   const periodRow =
     account && account.current_period_end
-      ? `<div class="row"><span class="k">${account.cancel_at_period_end ? 'Cancels on' : 'Renews on'}</span><span class="v">${fmtDate(account.current_period_end)}</span></div>`
+      ? `<div class="row"><span class="k">${account.cancel_at_period_end ? tr('bill.cancels_on') : tr('bill.renews_on')}</span><span class="v">${fmtDate(account.current_period_end)}</span></div>`
       : '';
 
   let notConfigured = configured
     ? ''
-    : `<div class="notice warn">Billing isn't enabled in this environment yet. Plan changes are temporarily unavailable.</div>`;
+    : `<div class="notice warn">${tr('bill.not_configured')}</div>`;
 
   // "Continue to checkout" if arriving from a pricing CTA for a plan they're not already on
   let continueBlock = '';
@@ -159,11 +157,11 @@ function dashboardView(email, account, creditState, query, env) {
     const price = selInterval === 'yr' ? `$${t.yr}/yr` : `$${t.mo}/mo`;
     continueBlock = `
       <div class="cont">
-        <div><strong>${t.name}</strong> — ${price} ${selInterval === 'yr' ? '(2 months free)' : ''}</div>
+        <div><strong>${t.name}</strong> — ${price} ${selInterval === 'yr' ? tr('bill.two_months_free') : ''}</div>
         <form method="POST" action="/api/billing/checkout">
           <input type="hidden" name="plan" value="${selected}">
           <input type="hidden" name="interval" value="${selInterval}">
-          <button class="btn btn-primary" type="submit">Continue to checkout →</button>
+          <button class="btn btn-primary" type="submit">${tr('bill.continue_checkout')}</button>
         </form>
       </div>`;
   }
@@ -172,10 +170,10 @@ function dashboardView(email, account, creditState, query, env) {
   if (configured && isPaid) {
     actions = `
       <div class="panel">
-        <h2>Manage subscription</h2>
-        <p class="sub" style="margin-bottom:1rem">Update your card, switch plans, or cancel — in the secure Stripe portal.</p>
+        <h2>${tr('bill.manage_sub')}</h2>
+        <p class="sub" style="margin-bottom:1rem">${tr('bill.manage_sub_sub')}</p>
         <form method="POST" action="/api/billing/portal">
-          <button class="btn btn-ghost" type="submit">Open billing portal →</button>
+          <button class="btn btn-ghost" type="submit">${tr('bill.open_portal')}</button>
         </form>
       </div>`;
   } else if (configured && !isPaid) {
@@ -187,18 +185,18 @@ function dashboardView(email, account, creditState, query, env) {
           <div class="pr">$${t.mo}/mo · $${t.yr}/yr</div>
           <form method="POST" action="/api/billing/checkout">
             <input type="hidden" name="plan" value="${key}"><input type="hidden" name="interval" value="mo">
-            <button class="btn btn-primary" type="submit">Monthly</button>
+            <button class="btn btn-primary" type="submit">${tr('bill.monthly')}</button>
           </form>
           <form method="POST" action="/api/billing/checkout">
             <input type="hidden" name="plan" value="${key}"><input type="hidden" name="interval" value="yr">
-            <button class="btn btn-ghost" type="submit">Annual</button>
+            <button class="btn btn-ghost" type="submit">${tr('bill.annual')}</button>
           </form>
         </div>`;
     };
     actions = `
       <div class="panel">
-        <h2>Upgrade</h2>
-        <p class="sub" style="margin-bottom:1rem">Annual = 2 months free. Cancel anytime.</p>
+        <h2>${tr('bill.upgrade')}</h2>
+        <p class="sub" style="margin-bottom:1rem">${tr('bill.upgrade_sub')}</p>
         <div class="grid">${UPGRADE_PLANS.map(card).join('')}</div>
       </div>`;
   }
@@ -209,46 +207,46 @@ function dashboardView(email, account, creditState, query, env) {
   let creditsBlock = '';
   if (configured) {
     const cs = creditState || { totalRemaining: 0, monthlyRemaining: 0, allotment: 0, purchased: 0, resetAt: null };
-    const resetTxt = cs.resetAt ? ` · monthly resets ${fmtDate(cs.resetAt)}` : '';
+    const resetTxt = cs.resetAt ? tr('bill.monthly_resets', { date: fmtDate(cs.resetAt) }) : '';
     creditsHero = `
       <div class="credits-hero">
         <div>
-          <div class="ch-label">✨ Caddi Credits</div>
-          <div class="ch-bal">${cs.totalRemaining.toLocaleString()}<small>available</small></div>
-          <div class="ch-sub">${cs.monthlyRemaining.toLocaleString()} of ${cs.allotment.toLocaleString()} monthly + ${cs.purchased.toLocaleString()} purchased${resetTxt}</div>
+          <div class="ch-label">${tr('bill.credits_label')}</div>
+          <div class="ch-bal">${cs.totalRemaining.toLocaleString()}<small>${tr('bill.available')}</small></div>
+          <div class="ch-sub">${tr('bill.credits_breakdown', { m: cs.monthlyRemaining.toLocaleString(), a: cs.allotment.toLocaleString(), p: cs.purchased.toLocaleString() })}${resetTxt}</div>
         </div>
-        <a class="btn" href="#buy-credits">Buy more →</a>
+        <a class="btn" href="#buy-credits">${tr('bill.buy_more')}</a>
       </div>`;
     const packCard = (p) => `
       <div class="pcard">
         <h3>$${p.usd}</h3>
-        <div class="pr">${p.credits.toLocaleString()} credits</div>
+        <div class="pr">${tr('bill.credits_unit', { n: p.credits.toLocaleString() })}</div>
         <form method="POST" action="/api/billing/credits/checkout">
           <input type="hidden" name="pack" value="${p.usd}">
-          <button class="btn btn-ghost" type="submit">Buy</button>
+          <button class="btn btn-ghost" type="submit">${tr('bill.buy')}</button>
         </form>
       </div>`;
     creditsBlock = `
       <div class="panel" id="buy-credits">
-        <h2>Buy Caddi Credits</h2>
-        <p class="sub" style="margin-bottom:1rem">A one-time top-up for when you need more AI mid-build — purchased credits never expire (flat 50 credits / $1).</p>
+        <h2>${tr('bill.buy_credits')}</h2>
+        <p class="sub" style="margin-bottom:1rem">${tr('bill.buy_credits_sub')}</p>
         <div class="grid">${CREDIT_PACKS.map(packCard).join('')}</div>
       </div>`;
   }
 
   return `
-    <h1>Your billing</h1>
-    <p class="sub">Signed in as <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/dashboard">← Your websites &amp; team</a> · <a class="muted-link" href="/billing/logout">Sign out</a></p>
-    ${noticeFor(query)}
+    <h1>${tr('bill.your_billing')}</h1>
+    <p class="sub">${tr('dash.signed_in_as')} <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/dashboard">${tr('bill.your_sites_team')}</a> · <a class="muted-link" href="/billing/logout">${tr('bill.sign_out')}</a></p>
+    ${noticeFor(query, tr)}
     ${notConfigured}
     ${continueBlock}
     ${creditsHero}
     ${creditsBlock}
     <div class="panel">
-      <h2>Current plan</h2>
-      <div class="row"><span class="k">Plan</span><span class="v"><span class="pill">${tier.name}</span></span></div>
-      <div class="row"><span class="k">Status</span><span class="v">${escapeHtml(status)}</span></div>
-      ${account && account.plan_interval ? `<div class="row"><span class="k">Billing</span><span class="v">${account.plan_interval === 'year' ? 'Annual' : 'Monthly'}</span></div>` : ''}
+      <h2>${tr('bill.current_plan')}</h2>
+      <div class="row"><span class="k">${tr('bill.k_plan')}</span><span class="v"><span class="pill">${tier.name}</span></span></div>
+      <div class="row"><span class="k">${tr('bill.k_status')}</span><span class="v">${escapeHtml(status)}</span></div>
+      ${account && account.plan_interval ? `<div class="row"><span class="k">${tr('bill.k_billing')}</span><span class="v">${account.plan_interval === 'year' ? tr('bill.annual') : tr('bill.monthly')}</span></div>` : ''}
       ${periodRow}
     </div>
     ${actions}`;
@@ -258,15 +256,17 @@ function dashboardView(email, account, creditState, query, env) {
 export async function handleBilling(ctx) {
   const { env, query, url } = ctx;
   const origin = url.origin;
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   if (!ctx.billingEmail) {
-    return htmlResponse(pageShell(origin, signInView(query || {})));
+    return htmlResponse(pageShell(origin, signInView(query || {}, tr), { lang }, tr));
   }
   const configured = isStripeConfigured(env);
   // getCreditState ensures the account row + rolls the monthly window first.
   const creditState = configured ? await getCreditState(env.DB, ctx.billingEmail) : null;
   const account = await getBillingAccount(env.DB, ctx.billingEmail);
-  const headerOpts = creditState ? { credits: creditState.totalRemaining } : {};
-  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, creditState, query || {}, env), headerOpts));
+  const headerOpts = creditState ? { credits: creditState.totalRemaining, lang } : { lang };
+  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, creditState, query || {}, env, tr), headerOpts, tr));
 }
 
 /** GET /billing/verify/:token — consume magic link, set session cookie. */
