@@ -208,6 +208,7 @@ export async function handleLanding(ctx) {
               <li>Multi-page with real navigation</li>
               <li>Live editing &amp; AI tweaks per section</li>
               <li>Themes, fonts &amp; colors in a click</li>
+              <li>🔎 Auto-SEO — titles, descriptions &amp; markup written for you</li>
             </ul>
             <div class="spacer"></div>
             <a class="btn btn-primary btn-full" href="/ai-builder">Start building →</a>
@@ -217,7 +218,7 @@ export async function handleLanding(ctx) {
           <div class="card" id="refactor">
             <span class="tag alt">Refactor</span>
             <h3>Refactor your site</h3>
-            <p class="lead">Already have a website? Paste your URL and we'll rebuild it into a clean, modern design using your real business details.</p>
+            <p class="lead">Already have a website? Paste your URL and we'll rebuild it into a clean, modern design using your real business details — with SEO generated automatically.</p>
             <form id="refactor-form" novalidate>
               <div class="field">
                 <label for="email">Your email</label>

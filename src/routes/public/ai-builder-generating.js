@@ -219,6 +219,10 @@ export async function handleAIBuilderGenerating(ctx) {
         </div>
         <div class="step" id="step-5">
           <div class="step-icon"></div>
+          <div>Optimizing for search (SEO)</div>
+        </div>
+        <div class="step" id="step-6">
+          <div class="step-icon"></div>
           <div>Finalizing your website</div>
         </div>
       </div>
@@ -239,6 +243,7 @@ export async function handleAIBuilderGenerating(ctx) {
       'Generating content with AI...',
       'Creating design system...',
       'Building website sections...',
+      'Optimizing for search (SEO)...',
       'Finalizing your website...',
       'Complete! Redirecting...'
     ];
@@ -256,7 +261,7 @@ export async function handleAIBuilderGenerating(ctx) {
       document.getElementById('status-text').textContent = steps[currentStep];
 
       // Update step indicators
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 6; i++) {
         const stepEl = document.getElementById(\`step-\${i}\`);
         stepEl.classList.remove('active', 'complete');
 
