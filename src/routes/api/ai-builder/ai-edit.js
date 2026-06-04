@@ -40,7 +40,7 @@ async function resolveSection(env, project_id, section_id) {
     return { error: json({ success: false, error: 'Section does not belong to this project' }, 403) };
   }
 
-  return { section, email: (aiProject || regularProject).customer_email };
+  return { section, email: (aiProject || regularProject).customer_email, language: (aiProject || regularProject).language || 'en' };
 }
 
 /**
@@ -53,7 +53,7 @@ export async function handleAIEditPropose(ctx) {
     const { project_id, section_id } = params;
     const resolved = await resolveSection(env, project_id, section_id);
     if (resolved.error) return resolved.error;
-    const { section } = resolved;
+    const { section, language } = resolved;
 
     const body = await request.json();
     const message = (body.message || '').toString().trim();
@@ -63,7 +63,7 @@ export async function handleAIEditPropose(ctx) {
     if (!screen.allowed) return json(policyError(screen), 422);
 
     const content = JSON.parse(section.content_json || '{}');
-    const { system_message, prompt } = buildEditPrompt(section.section_type, content, message, body.history || []);
+    const { system_message, prompt } = buildEditPrompt(section.section_type, content, message, body.history || [], language);
 
     let proposal;
     try {

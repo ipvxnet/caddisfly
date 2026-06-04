@@ -147,6 +147,7 @@ export async function handleAIBuilderDeploy(ctx) {
         hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
         trackId: publicId, // cookieless analytics beacon on published pages
         appOrigin, // absolute beacon target (works on both serving surfaces)
+        lang: (aiProject && aiProject.language) || (regularProjectRow && regularProjectRow.language) || 'en',
         // SEO: per-page overrides + site social image + business identity.
         seoTitle: page.seo_title || null,
         seoDescription: page.seo_description || null,

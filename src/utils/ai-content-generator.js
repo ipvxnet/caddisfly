@@ -171,11 +171,18 @@ export async function generateContentWithRetry(env, prompt, maxRetries = 2) {
  * @param {object} context - Conversation context
  * @returns {Promise<object>} Generated content
  */
+// English names so the model reliably understands the target language.
+const LANG_FULL = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
+
 export async function generateSectionContent(env, sectionType, context) {
   // Import prompts dynamically to avoid circular dependencies
   const { getContentPrompt } = await import('./ai-prompts.js');
 
-  const prompt = getContentPrompt(sectionType, context);
+  let prompt = getContentPrompt(sectionType, context);
+  const lang = context && context.language;
+  if (lang && lang !== 'en' && LANG_FULL[lang]) {
+    prompt += `\n\nIMPORTANT: Write ALL text — headings, body copy, button labels, everything — in natural, native ${LANG_FULL[lang]}. Do not use English.`;
+  }
   return generateContentWithRetry(env, prompt);
 }
 
@@ -258,6 +265,7 @@ export function buildContext(project, conversations) {
     style: 'modern',
     content_source: 'ai_generate',
     selected_sections: [],
+    language: project.language || 'en', // AI writes the site copy in this language
   };
 
   // Extract answers from conversations

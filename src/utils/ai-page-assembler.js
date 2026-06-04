@@ -31,10 +31,11 @@ export function assemblePage(sections, config, project, opts = {}) {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
     hideBadge = false, trackId = null, appOrigin = '',
     seoTitle = null, seoDescription = null, socialImage = null, canonicalUrl = null, pageTitle = null, business = null,
+    lang = 'en',
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates ignore it).
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin };
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.
@@ -121,7 +122,7 @@ function seoHead(seo, fallbackTitle) {
  * @returns {string} Complete HTML document
  */
 export function buildHTMLDocument({ title, body, config, seo = null }) {
-  const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '' } = config;
+  const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '', lang = 'en' } = config;
 
   // Dark themes carry surface tokens; inject a global override layer when active.
   const theme = getTheme(config.style_theme);
@@ -131,7 +132,7 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
   const fontsHref = `https://fonts.googleapis.com/css2?${fontFamilyParam(font_heading, '400;600;700')}&${fontFamilyParam(font_body, '400;500;600')}&display=swap`;
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escapeHtml(lang)}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

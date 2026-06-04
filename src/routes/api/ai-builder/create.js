@@ -22,6 +22,9 @@ export async function handleAIBuilderCreate(ctx) {
     const body = await request.json();
     const { email, initial_prompt } = body;
     const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
+    // Site language: explicit selector → UI language → English.
+    const LANGS = ['en', 'es', 'pt'];
+    const language = LANGS.includes(body.language) ? body.language : (LANGS.includes(ctx.lang) ? ctx.lang : 'en');
 
     // Require Terms/Privacy acceptance before building.
     if (!acceptedTerms) {
@@ -93,6 +96,7 @@ export async function handleAIBuilderCreate(ctx) {
       status: 'conversation',
       conversation_step: 'initial_prompt',
       pricing_tier: 'free_trial',
+      language,
     });
 
     // Record Terms/Privacy acceptance.

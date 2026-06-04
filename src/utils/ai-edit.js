@@ -82,14 +82,22 @@ export function imageTargetsFor(sectionType) {
  * @param {Array<{role:string,content:string}>} history - Prior turns (capped by caller)
  * @returns {{ system_message: string, prompt: string }}
  */
-export function buildEditPrompt(sectionType, content, message, history = []) {
+const EDIT_LANG_FULL = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
+
+export function buildEditPrompt(sectionType, content, message, history = [], language = 'en') {
   const spec = SECTION_FIELDS[sectionType] || { text: Object.keys(content || {}), images: [] };
   const targets = imageTargetsFor(sectionType);
+
+  const langRule =
+    language && language !== 'en' && EDIT_LANG_FULL[language]
+      ? `Write all copy in the "patch" in natural, native ${EDIT_LANG_FULL[language]} (the site's language). `
+      : '';
 
   const system_message =
     'You are a website section editor. You receive a section\'s current content as JSON and a ' +
     'user request, and you return ONLY a JSON object describing the change. Never include prose ' +
     'outside the JSON. Keep copy concise and on-brand. Do not invent image URLs. ' +
+    langRule +
     POLICY_INSTRUCTION;
 
   const historyText = history

@@ -116,7 +116,7 @@ export async function updateProjectStatus(db, projectId, status) {
  */
 export async function updateProject(db, projectId, updates) {
   const allowedFields = [
-    'status', 'pricing_tier', 'portfolio_included', 'dns_zone_id',
+    'status', 'pricing_tier', 'language', 'portfolio_included', 'dns_zone_id',
     'dns_status', 'github_repo_url', 'github_username', 'purchased_at', 'activated_at',
     'use_templates', 'template_generation_status', 'config_id',
     // Email verification + Google Places enrichment (migration 006)

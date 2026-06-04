@@ -7,6 +7,7 @@
  * @returns {Response} HTTP response
  */
 export async function handleAIBuilderLanding(ctx) {
+  const lang = (ctx && ctx.lang) || 'en';
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -269,6 +270,14 @@ export async function handleAIBuilderLanding(ctx) {
             <label for="prompt">What kind of website do you need?</label>
             <textarea id="prompt" name="prompt" required placeholder="e.g., I need a website for my bakery with an online menu and contact form..."></textarea>
           </div>
+          <div class="form-group">
+            <label for="site-lang">Language of your website</label>
+            <select id="site-lang" name="site-lang" style="width:100%;padding:.75rem;border:2px solid #e2e8f0;border-radius:10px;font:inherit;background:#fff">
+              <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+              <option value="es"${lang === 'es' ? ' selected' : ''}>Español</option>
+              <option value="pt"${lang === 'pt' ? ' selected' : ''}>Português</option>
+            </select>
+          </div>
           <div class="form-group consent" style="display:flex;align-items:flex-start;gap:.55rem">
             <input type="checkbox" id="agree" name="agree" required style="width:auto;margin-top:.25rem;flex:none">
             <label for="agree" style="font-weight:500;margin:0;cursor:pointer">I agree to the <a href="/terms" target="_blank" style="color:#764ba2;font-weight:700">Terms of Service</a> and <a href="/privacy" target="_blank" style="color:#764ba2;font-weight:700">Privacy Policy</a>.</label>
@@ -311,6 +320,7 @@ export async function handleAIBuilderLanding(ctx) {
 
       const email = document.getElementById('email').value;
       const prompt = document.getElementById('prompt').value;
+      const siteLang = document.getElementById('site-lang').value;
       const agreed = document.getElementById('agree').checked;
 
       if (!agreed) {
@@ -337,6 +347,7 @@ export async function handleAIBuilderLanding(ctx) {
             email: email,
             initial_prompt: prompt,
             accepted_terms: true,
+            language: siteLang,
           }),
         });
 
