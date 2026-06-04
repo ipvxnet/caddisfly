@@ -16,6 +16,7 @@ import { canDeploy, canManageDomains } from '../../middleware/project-access.js'
 import { getCreditState } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
+import { translator } from '../../i18n/index.js';
 
 /**
  * Handle customization interface
@@ -24,6 +25,8 @@ import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
  */
 export async function handleAIBuilderCustomize(ctx) {
   const { env, params, query } = ctx;
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   // Role-aware UI: hide actions this viewer can't perform (publish/domains).
   // projectAccess sets ctx.projectRole ('link' = signed-out, full access).
   const role = ctx.projectRole || 'link';
@@ -137,33 +140,33 @@ export async function handleAIBuilderCustomize(ctx) {
               ondragend="handleDragEnd(event)"
             >
               <div class="section-header">
-                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                <span class="drag-handle" title="${tr('cust.drag_reorder')}">⋮⋮</span>
                 <span class="section-type">${section.section_type}</span>
                 <button
                   class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
                   data-section-id="${section.id}"
                   data-visible="${section.is_visible ? '1' : '0'}"
                   onclick="toggleVisibility(event)"
-                  title="${section.is_visible ? 'Hide section' : 'Show section'}"
+                  title="${section.is_visible ? tr('cust.hide_section') : tr('cust.show_section')}"
                 >${section.is_visible ? '👁️' : '👁️‍🗨️'}</button>
               </div>
               <div class="section-actions">
-                <button class="ai-edit-btn" onclick="editSection(${section.id})" title="Edit this section with AI">✨ Edit</button>
-                <select class="template-variant-select" data-section-id="${section.id}" onchange="switchTemplate(event)" onclick="event.stopPropagation()" title="Layout / template variant">
+                <button class="ai-edit-btn" onclick="editSection(${section.id})" title="${tr('cust.edit_title')}">${tr('cust.edit')}</button>
+                <select class="template-variant-select" data-section-id="${section.id}" onchange="switchTemplate(event)" onclick="event.stopPropagation()" title="${tr('cust.layout_title')}">
                   ${getAvailableVariants(section.section_type)
                     .map((variant) => `<option value="${variant}" ${section.html_template === variant ? 'selected' : ''}>${variant.replace('-', ' ')}</option>`)
                     .join('')}
                 </select>
-                ${siteWide ? '' : `<select class="move-page-select" onchange="moveSectionToPage(${section.id}, this.value)" onclick="event.stopPropagation()" title="Move to another page">
+                ${siteWide ? '' : `<select class="move-page-select" onchange="moveSectionToPage(${section.id}, this.value)" onclick="event.stopPropagation()" title="${tr('cust.move_title')}">
                   ${pages.map((p) => `<option value="${p.id}" ${section.page_id === p.id ? 'selected' : ''}>→ ${esc(p.nav_label || p.slug)}</option>`).join('')}
                 </select>
-                <button class="del-section-btn" onclick="removeSection(event, ${section.id})" title="Delete this section">🗑</button>`}
+                <button class="del-section-btn" onclick="removeSection(event, ${section.id})" title="${tr('cust.delete_section_title')}">🗑</button>`}
               </div>
             </div>`;
 
     const html = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -629,46 +632,46 @@ export async function handleAIBuilderCustomize(ctx) {
       ${siteSubtitle ? `<p class="site-subtitle"><a href="${siteSubtitle}" target="_blank" rel="noopener">${siteSubtitle}</a></p>` : ''}
     </div>
     <div class="header-actions">
-      <a href="/billing" class="credit-chip" title="Caddi Credits — ${creditState.monthlyRemaining.toLocaleString()} monthly + ${creditState.purchased.toLocaleString()} purchased. Click to buy more.">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
-      <a href="/dashboard" class="btn btn-secondary" title="Your websites &amp; team">🏠 Dashboard</a>
-      <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="Traffic analytics for your published site">📊 Analytics</a>
-      <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">View Full Preview</a>
-      ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite()">Deploy Website</button>` : ''}
+      <a href="/billing" class="credit-chip" title="${tr('cust.credits_title', { m: creditState.monthlyRemaining.toLocaleString(), p: creditState.purchased.toLocaleString() })}">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
+      <a href="/dashboard" class="btn btn-secondary" title="${tr('cust.dashboard_title')}">${tr('cust.dashboard')}</a>
+      <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
+      <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
+      ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite()">${tr('cust.deploy')}</button>` : ''}
     </div>
   </div>
 
   <div class="container">
     <div class="split-view">
       <div class="sections-panel">
-        <h2 style="margin-bottom: 0.5rem;">Pages</h2>
+        <h2 style="margin-bottom: 0.5rem;">${tr('cust.pages')}</h2>
         <div class="page-tabs">
           ${pages
             .map((p) => `<button class="page-tab ${p.slug === currentSlug ? 'active' : ''}" onclick="switchPage('${p.slug}')">${p.is_home ? '🏠 ' : ''}${esc(p.nav_label || p.slug)}</button>`)
             .join('')}
-          <button class="page-tab page-tab-add" onclick="addPage()" title="Add a page">+ Page</button>
+          <button class="page-tab page-tab-add" onclick="addPage()" title="${tr('cust.add_page_title')}">${tr('cust.add_page')}</button>
         </div>
         <div class="page-toolbar">
           ${currentPage && !currentPage.is_home
-            ? `<button class="link-btn" onclick="renamePage(${currentPage.id}, '${esc(currentPage.nav_label || '').replace(/'/g, "\\'")}')">Rename</button>
-               <button class="link-btn danger" onclick="deletePage(${currentPage.id})">Delete page</button>`
-            : `<span class="muted">Home page</span>`}
+            ? `<button class="link-btn" onclick="renamePage(${currentPage.id}, '${esc(currentPage.nav_label || '').replace(/'/g, "\\'")}')">${tr('cust.rename')}</button>
+               <button class="link-btn danger" onclick="deletePage(${currentPage.id})">${tr('cust.delete_page')}</button>`
+            : `<span class="muted">${tr('cust.home_page')}</span>`}
         </div>
 
         ${siteSections.length
-          ? `<h3 class="group-title">Site-wide <span class="muted">· shown on every page</span></h3>
+          ? `<h3 class="group-title">${tr('cust.sitewide')} <span class="muted">${tr('cust.sitewide_note')}</span></h3>
              <div class="sections-list">${siteSections.map((s) => renderTile(s, true)).join('')}</div>`
           : ''}
 
-        <h3 class="group-title">${esc((currentPage && currentPage.nav_label) || 'Home')} sections</h3>
+        <h3 class="group-title">${tr('cust.sections_of', { page: esc((currentPage && currentPage.nav_label) || 'Home') })}</h3>
         <p style="font-size: 0.875rem; color: #718096; margin-bottom: 1rem;">
-          Click a section to select it, then <strong>✨ Edit</strong> — drag to reorder, or move it to another page.
+          ${tr('cust.sections_hint')}
         </p>
         <div id="sections-list">
-          ${sections.map((s) => renderTile(s)).join('') || '<p class="muted">No sections on this page yet.</p>'}
+          ${sections.map((s) => renderTile(s)).join('') || `<p class="muted">${tr('cust.no_sections')}</p>`}
         </div>
 
         <div class="add-section-wrap">
-          <button class="add-section-btn" onclick="toggleAddSection()" title="Add a new section to this page">+ Add section</button>
+          <button class="add-section-btn" onclick="toggleAddSection()" title="${tr('cust.add_section_title')}">${tr('cust.add_section')}</button>
           <div class="add-section-menu" id="add-section-menu" hidden>
             ${ADDABLE_SECTIONS.map((s) => `<button class="add-section-option" onclick="pickSectionType('${s.type}')">${s.emoji} ${esc(s.label)}</button>`).join('')}
           </div>
@@ -676,7 +679,7 @@ export async function handleAIBuilderCustomize(ctx) {
         </div>
 
         <details class="design-group">
-          <summary>🎨 Design — theme, colors &amp; fonts</summary>
+          <summary>${tr('cust.design_summary')}</summary>
           <div class="design-group-body">
             ${generateTemplatePicker(config.style_theme)}
             ${generateColorPicker(config, project.project_id)}
@@ -685,17 +688,17 @@ export async function handleAIBuilderCustomize(ctx) {
         </details>
 
         <details class="design-group" id="seo-group">
-          <summary>🔎 SEO — Google &amp; social preview</summary>
+          <summary>${tr('cust.seo_summary')}</summary>
           <div class="design-group-body">
-            <p class="seo-hint">Auto-filled from your business info — every site is SEO-ready. Override this page below; changes apply next time you publish.</p>
-            <label class="seo-label">Page title <span class="seo-count" id="seo-title-count"></span></label>
+            <p class="seo-hint">${tr('cust.seo_hint')}</p>
+            <label class="seo-label">${tr('cust.seo_page_title')} <span class="seo-count" id="seo-title-count"></span></label>
             <input type="text" id="seo-title" class="seo-input" maxlength="120" oninput="seoSync()"
-              placeholder="${esc((currentPage && (currentPage.title || currentPage.nav_label)) || 'Home')} | Your business"
+              placeholder="${esc((currentPage && (currentPage.title || currentPage.nav_label)) || 'Home')} | ${tr('cust.seo_title_ph_suffix')}"
               value="${esc((currentPage && currentPage.seo_title) || '')}">
-            <label class="seo-label">Meta description <span class="seo-count" id="seo-desc-count"></span></label>
+            <label class="seo-label">${tr('cust.seo_meta_desc')} <span class="seo-count" id="seo-desc-count"></span></label>
             <textarea id="seo-desc" class="seo-input" rows="3" maxlength="320" oninput="seoSync()"
-              placeholder="A short, compelling summary of this page for search results.">${esc((currentPage && currentPage.seo_description) || '')}</textarea>
-            <label class="seo-label">Social share image URL <span class="seo-sub">(site-wide)</span></label>
+              placeholder="${tr('cust.seo_desc_ph')}">${esc((currentPage && currentPage.seo_description) || '')}</textarea>
+            <label class="seo-label">${tr('cust.seo_social')} <span class="seo-sub">${tr('cust.seo_sitewide')}</span></label>
             <input type="text" id="seo-social" class="seo-input" placeholder="https://…/share-image.jpg"
               value="${esc(config.social_image || '')}">
             <div class="serp-preview">
@@ -703,8 +706,8 @@ export async function handleAIBuilderCustomize(ctx) {
               <div class="serp-title" id="serp-title"></div>
               <div class="serp-desc" id="serp-desc"></div>
             </div>
-            <button class="link-btn" id="seo-save" onclick="saveSeo(this)" style="font-weight:700">Save SEO</button>
-            <span class="seo-saved" id="seo-saved" hidden>Saved ✓</span>
+            <button class="link-btn" id="seo-save" onclick="saveSeo(this)" style="font-weight:700">${tr('cust.save_seo')}</button>
+            <span class="seo-saved" id="seo-saved" hidden>${tr('cust.saved')}</span>
           </div>
         </details>
         ${showDomains ? domainsPanelBlock : ''}
@@ -745,8 +748,8 @@ export async function handleAIBuilderCustomize(ctx) {
         });
         const d = await r.json();
         if (d.success) { const s = document.getElementById('seo-saved'); s.hidden = false; setTimeout(() => { s.hidden = true; }, 2200); }
-        else alert(d.error || 'Could not save SEO.');
-      } catch (_) { alert('Network error. Please try again.'); }
+        else alert(d.error || ${JSON.stringify(tr('cust.could_not_save_seo'))});
+      } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; }
     }
     seoSync();
@@ -769,7 +772,7 @@ export async function handleAIBuilderCustomize(ctx) {
         });
         const d = await r.json();
         if (d.success) gotoPage(d.page.slug); else alert(d.error || 'Failed to add page');
-      } catch (e) { alert('Failed to add page: ' + e.message); }
+      } catch (e) { alert(${JSON.stringify(tr('cust.err_add_page'))} + e.message); }
     }
 
     // ---- Add / remove sections ----
@@ -791,8 +794,8 @@ export async function handleAIBuilderCustomize(ctx) {
       const v = document.getElementById('add-variant-menu');
       const label = addableLabels[type] || type;
       v.innerHTML =
-        '<div class="variant-head"><button class="variant-back" onclick="backToTypes()">← Back</button>'
-        + '<span>Choose a ' + label + ' layout</span></div>'
+        '<div class="variant-head"><button class="variant-back" onclick="backToTypes()">' + ${JSON.stringify(tr('cust.back'))} + '</button>'
+        + '<span>' + ${JSON.stringify(tr('cust.choose_layout', { label: '%L%' }))}.replace('%L%', label) + '</span></div>'
         + variants.map(function (vr) {
             return '<button class="add-section-option" onclick="doAddSection(\\'' + type + '\\',\\'' + vr + '\\')">'
               + vr.replace(/-/g, ' ') + '</button>';
@@ -816,7 +819,7 @@ export async function handleAIBuilderCustomize(ctx) {
         });
         const d = await r.json();
         if (d.success) location.reload(); else alert(d.error || 'Failed to add section');
-      } catch (e) { alert('Failed to add section: ' + e.message); }
+      } catch (e) { alert(${JSON.stringify(tr('cust.err_add_section'))} + e.message); }
     }
 
     async function removeSection(event, id) {
@@ -826,7 +829,7 @@ export async function handleAIBuilderCustomize(ctx) {
         const r = await fetch(\`/api/ai-builder/\${projectId}/sections/\${id}\`, { method: 'DELETE' });
         const d = await r.json();
         if (d.success) location.reload(); else alert(d.error || 'Failed to delete section');
-      } catch (e) { alert('Failed to delete section: ' + e.message); }
+      } catch (e) { alert(${JSON.stringify(tr('cust.err_del_section'))} + e.message); }
     }
 
     async function renamePage(id, current) {
@@ -839,7 +842,7 @@ export async function handleAIBuilderCustomize(ctx) {
         });
         const d = await r.json();
         if (d.success) location.reload(); else alert(d.error || 'Failed to rename');
-      } catch (e) { alert('Failed to rename: ' + e.message); }
+      } catch (e) { alert(${JSON.stringify(tr('cust.err_rename'))} + e.message); }
     }
 
     async function deletePage(id) {
@@ -848,7 +851,7 @@ export async function handleAIBuilderCustomize(ctx) {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, { method: 'DELETE' });
         const d = await r.json();
         if (d.success) gotoPage('home'); else alert(d.error || 'Failed to delete');
-      } catch (e) { alert('Failed to delete: ' + e.message); }
+      } catch (e) { alert(${JSON.stringify(tr('cust.err_del'))} + e.message); }
     }
 
     async function moveSectionToPage(sectionId, pageId) {
@@ -859,7 +862,7 @@ export async function handleAIBuilderCustomize(ctx) {
         });
         const d = await r.json();
         if (d.success) gotoPage(currentPageSlug); else alert(d.error || 'Failed to move section');
-      } catch (e) { alert('Failed to move section: ' + e.message); }
+      } catch (e) { alert(${JSON.stringify(tr('cust.err_move'))} + e.message); }
     }
 
     function handleDragStart(e) {
@@ -953,7 +956,7 @@ export async function handleAIBuilderCustomize(ctx) {
           throw new Error(data.error || 'Failed to update order');
         }
       } catch (error) {
-        alert('Failed to update section order: ' + error.message);
+        alert(${JSON.stringify(tr('cust.err_order'))} + error.message);
         // Reload page to restore correct order
         location.reload();
       }
@@ -1007,7 +1010,7 @@ export async function handleAIBuilderCustomize(ctx) {
         button.classList.toggle('hidden', !currentlyVisible);
         sectionItem.classList.toggle('section-hidden', currentlyVisible);
 
-        alert('Failed to toggle visibility: ' + error.message);
+        alert(${JSON.stringify(tr('cust.err_visibility'))} + error.message);
       }
     }
 
@@ -1116,7 +1119,7 @@ export async function handleAIBuilderCustomize(ctx) {
           old.remove();
         });
       } catch (error) {
-        alert('Failed to load editor: ' + error.message);
+        alert(${JSON.stringify(tr('cust.err_load_editor'))} + error.message);
       }
     }
 
@@ -1155,7 +1158,7 @@ export async function handleAIBuilderCustomize(ctx) {
         // Revert to previous value on error
         select.value = previousValue;
         select.dataset.previousValue = previousValue;
-        alert('Failed to switch template: ' + error.message);
+        alert(${JSON.stringify(tr('cust.err_switch_tpl'))} + error.message);
       }
     }
 
@@ -1185,7 +1188,7 @@ export async function handleAIBuilderCustomize(ctx) {
         }
       } catch (error) {
         if (card) card.classList.remove('applying');
-        alert('Failed to apply template: ' + error.message);
+        alert(${JSON.stringify(tr('cust.err_apply_tpl'))} + error.message);
       }
     }
 
@@ -1208,7 +1211,7 @@ export async function handleAIBuilderCustomize(ctx) {
           throw new Error(data.error || 'Deployment failed');
         }
       } catch (error) {
-        alert('Deployment failed: ' + error.message);
+        alert(${JSON.stringify(tr('cust.err_deploy'))} + error.message);
       }
     }
 
@@ -1222,13 +1225,13 @@ export async function handleAIBuilderCustomize(ctx) {
         '<div class="ds-backdrop" onclick="closeDeploySuccess()"></div>'
         + '<div class="ds-card" role="dialog" aria-modal="true">'
         + '<div class="ds-emoji">🎉</div>'
-        + '<h2>Your site is live!</h2>'
-        + '<p class="ds-sub">It\\'s published and publicly accessible at:</p>'
+        + '<h2>' + ${JSON.stringify(tr('cust.site_live'))} + '</h2>'
+        + '<p class="ds-sub">' + ${JSON.stringify(tr('cust.site_live_sub'))} + '</p>'
         + '<a class="ds-url" href="' + safe + '" target="_blank" rel="noopener">' + safe + '</a>'
         + '<div class="ds-actions">'
-        + '<a class="btn btn-primary" href="' + safe + '" target="_blank" rel="noopener">Open site ↗</a>'
-        + '<button type="button" class="btn btn-secondary" onclick="copyDeployUrl(\\'' + safe + '\\')">Copy link</button>'
-        + '<button type="button" class="btn btn-secondary" onclick="closeDeploySuccess()">Close</button>'
+        + '<a class="btn btn-primary" href="' + safe + '" target="_blank" rel="noopener">' + ${JSON.stringify(tr('cust.open_site'))} + '</a>'
+        + '<button type="button" class="btn btn-secondary" onclick="copyDeployUrl(\\'' + safe + '\\')">' + ${JSON.stringify(tr('cust.copy_link'))} + '</button>'
+        + '<button type="button" class="btn btn-secondary" onclick="closeDeploySuccess()">' + ${JSON.stringify(tr('cust.close'))} + '</button>'
         + '</div></div>';
       document.body.appendChild(wrap);
     }
@@ -1238,7 +1241,7 @@ export async function handleAIBuilderCustomize(ctx) {
     }
     function copyDeployUrl(u) {
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(u).then(function () { showNotification('Link copied!', 'success'); }).catch(function () {});
+        navigator.clipboard.writeText(u).then(function () { showNotification(${JSON.stringify(tr('cust.link_copied'))}, 'success'); }).catch(function () {});
       }
     }
 
