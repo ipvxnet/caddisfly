@@ -1,0 +1,211 @@
+// Service Cards Template
+// Services displayed as hoverable cards with icons
+
+export function servicesCardsTemplate(data, config) {
+  const { heading, description = '', services } = data;
+  const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
+
+  // Default services if not provided
+  const serviceList = services || [
+    {
+      title: 'Consulting',
+      description: 'Expert advice tailored to your unique needs and goals',
+      icon: '💡',
+    },
+    {
+      title: 'Implementation',
+      description: 'Seamless execution from planning to deployment',
+      icon: '⚙️',
+    },
+    {
+      title: 'Support',
+      description: '24/7 assistance to keep your operations running smoothly',
+      icon: '🛟',
+    },
+    {
+      title: 'Training',
+      description: 'Comprehensive training programs for your team',
+      icon: '📚',
+    },
+  ];
+
+  return `
+<section class="services-cards">
+  <div class="services-cards-container">
+    <div class="services-cards-header">
+      <h2 style="font-family: ${fontHeading};">${heading}</h2>
+      <p style="font-family: ${fontBody};">${description}</p>
+    </div>
+
+    <div class="services-grid">
+      ${serviceList
+        .map(
+          (service, index) => `
+        <div class="service-card" data-index="${index}">
+          <div class="service-card-inner">
+            <div class="service-icon" style="background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});">
+              ${service.icon}
+            </div>
+            <h3 class="service-title">${service.title}</h3>
+            <p class="service-description">${service.description}</p>
+            <div class="service-arrow" style="color: ${primaryColor};">→</div>
+          </div>
+        </div>
+      `
+        )
+        .join('')}
+    </div>
+  </div>
+</section>
+
+<style>
+.services-cards {
+  padding: 6rem 2rem;
+  background: white;
+}
+
+.services-cards-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.services-cards-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.services-cards-header h2 {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 1rem 0;
+}
+
+.services-cards-header p {
+  font-size: 1.25rem;
+  color: #4a5568;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.service-card {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.service-card:nth-child(1) { animation-delay: 0.1s; }
+.service-card:nth-child(2) { animation-delay: 0.2s; }
+.service-card:nth-child(3) { animation-delay: 0.3s; }
+.service-card:nth-child(4) { animation-delay: 0.4s; }
+
+.service-card-inner {
+  height: 100%;
+  padding: 2.5rem;
+  background: #f7fafc;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.service-card:hover .service-card-inner {
+  background: white;
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.service-card:hover .service-card-inner::before {
+  opacity: 1;
+}
+
+.service-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.service-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 1rem 0;
+}
+
+.service-description {
+  font-size: 1rem;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+}
+
+.service-arrow {
+  font-size: 1.5rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s;
+}
+
+.service-card:hover .service-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .services-cards {
+    padding: 4rem 1.5rem;
+  }
+
+  .services-cards-header h2 {
+    font-size: 2rem;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .service-card-inner {
+    padding: 2rem;
+  }
+}
+</style>
+  `;
+}

@@ -3,3 +3,9 @@ node_modules/
 .dev.vars
 dist/
 .env
+.stripe-rk
+.stripe-rk-live
+.stripe-prices.env
+.whsec
+.whsec-live
+.cf-token

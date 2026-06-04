@@ -6,7 +6,7 @@
  * @param {object} profile - Google profile data
  * @returns {object} Created user
  */
-export async function createUser(db, profile) {
+export async function createUser(db, profile, role = 'user') {
   const { email, sub: googleId, name, picture: avatarUrl } = profile;
 
   const result = await db
@@ -15,7 +15,7 @@ export async function createUser(db, profile) {
        VALUES (?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(email, googleId, name, avatarUrl, 'admin', Math.floor(Date.now() / 1000))
+    .bind(email, googleId, name, avatarUrl, role === 'admin' ? 'admin' : 'user', Math.floor(Date.now() / 1000))
     .first();
 
   return result;
@@ -94,7 +94,7 @@ export async function updateUserLastLogin(db, userId) {
  * @returns {object} Updated user
  */
 export async function updateUser(db, userId, updates) {
-  const allowedFields = ['name', 'avatar_url', 'email'];
+  const allowedFields = ['name', 'avatar_url', 'email', 'role'];
   const fields = [];
   const values = [];
 

@@ -10,26 +10,30 @@ import { generateToken } from '../utils/crypto.js';
  */
 export async function createProject(db, data) {
   const {
-    customerEmail,
-    originalUrl,
+    preview_id,
+    customer_email,
+    website_url,
     status = 'preview_pending',
-    pricingTier = null,
-    portfolioIncluded = 0,
+    pricing_tier = null,
+    portfolio_included = 0,
+    use_templates = 0,
+    template_generation_status = null,
+    config_id = null,
   } = data;
 
-  // Generate unique preview ID
-  const previewId = generateToken(16);
+  // Use provided preview_id or generate one
+  const previewId = preview_id || generateToken(16);
 
   const result = await db
     .prepare(
       `INSERT INTO projects (
-         preview_id, customer_email, original_url, status,
-         pricing_tier, portfolio_included
+         preview_id, customer_email, website_url, original_url, status,
+         pricing_tier, portfolio_included, use_templates, template_generation_status, config_id
        )
-       VALUES (?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(previewId, customerEmail, originalUrl, status, pricingTier, portfolioIncluded)
+    .bind(previewId, customer_email, website_url, website_url, status, pricing_tier, portfolio_included, use_templates, template_generation_status, config_id)
     .first();
 
   return result;
@@ -66,6 +70,23 @@ export async function getProjectByPreviewId(db, previewId) {
 }
 
 /**
+ * Get project by single-use email verification token
+ * @param {object} db - D1 database instance
+ * @param {string} token - Verification token
+ * @returns {object|null} Project object or null
+ */
+export async function getProjectByVerificationToken(db, token) {
+  if (!token) return null;
+
+  const project = await db
+    .prepare('SELECT * FROM projects WHERE verification_token = ?')
+    .bind(token)
+    .first();
+
+  return project;
+}
+
+/**
  * Update project status
  * @param {object} db - D1 database instance
  * @param {number} projectId - Project ID
@@ -96,7 +117,15 @@ export async function updateProjectStatus(db, projectId, status) {
 export async function updateProject(db, projectId, updates) {
   const allowedFields = [
     'status', 'pricing_tier', 'portfolio_included', 'dns_zone_id',
-    'dns_status', 'github_repo_url', 'github_username', 'purchased_at', 'activated_at'
+    'dns_status', 'github_repo_url', 'github_username', 'purchased_at', 'activated_at',
+    'use_templates', 'template_generation_status', 'config_id',
+    // Email verification + Google Places enrichment (migration 006)
+    'email_verified', 'verification_token', 'verification_sent_at', 'verified_at',
+    'enrichment_status', 'place_id', 'company_profile_json',
+    // Terms acceptance (migration 010)
+    'terms_accepted_at',
+    // Subdomain hosting (migration 012)
+    'subdomain'
   ];
 
   const fields = [];

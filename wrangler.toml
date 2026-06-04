@@ -1,17 +1,38 @@
 name = "caddisfly"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
 
-# D1 Database binding
+# D1 Database binding — default/top-level targets the `caddisfly` worker (== production),
+# so it points at the PRODUCTION database. Preview overrides this in [env.preview] below.
 [[d1_databases]]
 binding = "DB"
-database_name = "caddisfly-db"
-database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
+database_name = "caddisfly-db-prod"
+database_id = "eae91748-f3a9-4f78-9662-067ca2197181"
 
-# R2 Storage binding
+# R2 Storage binding (production)
 [[r2_buckets]]
 binding = "STORAGE"
-bucket_name = "caddisfly-storage"
+bucket_name = "caddisfly-storage-prod"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Browser Rendering binding
+[browser]
+binding = "BROWSER"
+
+# Email transport: Resend HTTP API (preferred). Set the secret per environment:
+#   npx wrangler secret put RESEND_API_KEY --env preview
+#   npx wrangler secret put RESEND_API_KEY --env production
+# The send-from domain (EMAIL_FROM, default noreply@caddisfly.ai) must be a
+# verified domain in Resend (add their SPF/DKIM DNS records). Without the secret,
+# dev/preview logs the verify link to the console (stub mode).
+#
+# Optional fallback: Cloudflare Email Workers binding (verified destinations only).
+# [[send_email]]
+# name = "SEND_EMAIL"
 
 # Environment variables
 [vars]
@@ -19,11 +40,15 @@ ENVIRONMENT = "development"
 APP_URL = "http://localhost:8787"
 GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/google/callback"
 SESSION_DURATION_HOURS = "168"
+PREVIEW_PAGE_LIMIT = "2"
+EMAIL_FROM = "noreply@caddisfly.ai"
+MAX_HTML_SIZE_MB = "5"
+SCRAPE_TIMEOUT_SECONDS = "30"
 
 # Preview environment (dev branch)
 [env.preview]
 name = "caddisfly-preview"
-vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30" }
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -34,22 +59,63 @@ database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
 binding = "STORAGE"
 bucket_name = "caddisfly-storage"
 
+[env.preview.ai]
+binding = "AI"
+
+[env.preview.browser]
+binding = "BROWSER"
+
+# [[env.preview.send_email]]
+# name = "SEND_EMAIL"
+
 # Production environment (main branch)
 [env.production]
 name = "caddisfly"
-vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168" }
+vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app" }
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "caddisfly-db"
-database_id = "8406777e-c7d1-4bf9-9a14-e554f8a5021a"
+database_name = "caddisfly-db-prod"
+database_id = "eae91748-f3a9-4f78-9662-067ca2197181"
 
 [[env.production.r2_buckets]]
 binding = "STORAGE"
-bucket_name = "caddisfly-storage"
+bucket_name = "caddisfly-storage-prod"
+
+[env.production.ai]
+binding = "AI"
+
+[env.production.browser]
+binding = "BROWSER"
+
+# [[env.production.send_email]]
+# name = "SEND_EMAIL"
 
 # Secrets (set via CLI):
 # Preview: npx wrangler secret put GOOGLE_CLIENT_ID --env preview
 # Preview: npx wrangler secret put GOOGLE_CLIENT_SECRET --env preview
+# Preview: npx wrangler secret put GOOGLE_PLACES_API_KEY --env preview
 # Production: npx wrangler secret put GOOGLE_CLIENT_ID --env production
 # Production: npx wrangler secret put GOOGLE_CLIENT_SECRET --env production
+# Production: npx wrangler secret put GOOGLE_PLACES_API_KEY --env production
+#
+# Stripe billing (all set as secrets so test vs live IDs aren't committed; the
+# code reads them from env regardless of var-vs-secret). Set per environment —
+# use sk_test_…/test price IDs on preview, sk_live_…/live price IDs on prod:
+#   STRIPE_SECRET_KEY            (sk_test_… / sk_live_…)
+#   STRIPE_WEBHOOK_SECRET        (whsec_…, from the webhook endpoint you create
+#                                 pointing at <APP_URL>/api/stripe/webhook)
+#   STRIPE_PRICE_STARTER_MONTHLY  STRIPE_PRICE_STARTER_ANNUAL
+#   STRIPE_PRICE_PRO_MONTHLY      STRIPE_PRICE_PRO_ANNUAL
+#   STRIPE_PRICE_AGENCY_MONTHLY   STRIPE_PRICE_AGENCY_ANNUAL
+# e.g. npx wrangler secret put STRIPE_SECRET_KEY --env preview
+#
+# Custom domains (Cloudflare for SaaS — Custom Hostnames). Until set, the
+# "Custom domain" UI shows but registration is disabled. Enable Cloudflare for
+# SaaS on the caddisfly.app zone first.
+#   CF_API_TOKEN      (token scoped to the caddisfly.app zone: SSL and
+#                      Certificates = Edit; lets us create custom hostnames)
+#   CF_ZONE_ID        (the caddisfly.app zone id)
+#   SAAS_CNAME_TARGET (hostname customers CNAME to, e.g. sites.caddisfly.app —
+#                      the SaaS fallback origin/target)
+# e.g. npx wrangler secret put CF_API_TOKEN --env preview

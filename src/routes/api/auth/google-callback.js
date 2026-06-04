@@ -3,6 +3,7 @@
 import { redirect, badRequest, internalServerError } from '../../../utils/response.js';
 import { getConfig } from '../../../utils/constants.js';
 import { getUserByGoogleId, createUser, updateUserLastLogin } from '../../../db/users.js';
+import { isAllowedAdmin } from '../../../middleware/auth.js';
 import { createSession } from '../../../db/sessions.js';
 import { setCookie } from '../../../utils/crypto.js';
 
@@ -96,8 +97,11 @@ export async function handleGoogleCallback(ctx) {
 
     if (!user) {
       console.log('[OAuth] User not found, creating new user');
-      user = await createUser(env.DB, profile);
-      console.log('[OAuth] User created:', user.id);
+      // Role is granted only to allowlisted owner emails (ADMIN_EMAILS); everyone
+      // else is a non-admin 'user' and cannot reach the SaaS admin dashboard.
+      const role = isAllowedAdmin(env, profile.email) ? 'admin' : 'user';
+      user = await createUser(env.DB, profile, role);
+      console.log('[OAuth] User created:', user.id, 'role:', role);
     } else {
       console.log('[OAuth] User found, updating last login');
       user = await updateUserLastLogin(env.DB, user.id);
