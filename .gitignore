@@ -7,4 +7,5 @@ dist/
 .stripe-rk-live
 .stripe-prices.env
 .whsec
+.whsec-live
 .cf-token
