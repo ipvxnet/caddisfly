@@ -45,6 +45,57 @@ export async function handleWebmanifest() {
   });
 }
 
+function appOrigin(ctx) {
+  return (ctx.url && ctx.url.origin) || (ctx.env && ctx.env.APP_URL) || 'https://caddisfly.ai';
+}
+
+/** GET /robots.txt — allow public pages, keep private/app surfaces out of the index. */
+export async function handleRobots(ctx) {
+  const body =
+    [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /admin',
+      'Disallow: /api',
+      'Disallow: /billing',
+      'Disallow: /dashboard',
+      'Disallow: /support',
+      'Disallow: /logout',
+      'Disallow: /auth',
+      '',
+      `Sitemap: ${appOrigin(ctx)}/sitemap.xml`,
+      '',
+    ].join('\n');
+  return new Response(body, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=86400' },
+  });
+}
+
+// Public, indexable marketing/product pages.
+const APP_PAGES = [
+  { path: '/', priority: '1.0' },
+  { path: '/ai-builder', priority: '0.9' },
+  { path: '/pricing', priority: '0.8' },
+  { path: '/help', priority: '0.6' },
+  { path: '/terms', priority: '0.3' },
+  { path: '/privacy', priority: '0.3' },
+];
+
+/** GET /sitemap.xml — the app's own public pages (customer sites have their own). */
+export async function handleSitemap(ctx) {
+  const origin = appOrigin(ctx);
+  const urls = APP_PAGES.map(
+    (p) => `  <url><loc>${origin}${p.path}</loc><changefreq>weekly</changefreq><priority>${p.priority}</priority></url>`
+  ).join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
+  return new Response(xml, {
+    headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=86400' },
+  });
+}
+
 // 1200x630 branded share card. White mark on the brand gradient.
 const OG_HTML = `<!doctype html><html><head><meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

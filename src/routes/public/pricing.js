@@ -50,7 +50,27 @@ export async function handlePricing(ctx) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Pricing — Caddisfly', description: 'Simple, honest pricing. More storage, way cheaper than the big builders — powered by AI. Free to start.', origin })}
+  ${headTags({
+    title: 'Pricing — Caddisfly',
+    description: 'Simple, honest pricing. More storage, way cheaper than the big builders — powered by AI. Free to start.',
+    origin,
+    path: '/pricing',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Caddisfly',
+      applicationCategory: 'WebApplication',
+      operatingSystem: 'Web',
+      description: 'AI website builder — build or refactor a site and publish it in minutes.',
+      offers: PLANS.map((p) => ({
+        '@type': 'Offer',
+        name: `${p.name} plan`,
+        price: String(p.mo),
+        priceCurrency: 'USD',
+        url: `${origin}/billing?plan=${p.key}`,
+      })),
+    },
+  })}
   <style>
     ${baseCss()}
     .hero{text-align:center;padding:4.5rem 0 1rem;position:relative;overflow:hidden}

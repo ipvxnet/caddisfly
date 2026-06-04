@@ -108,7 +108,21 @@ function pageShell(origin, inner) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Help & Docs — Caddisfly', description: 'Guides and FAQ for building, customizing, publishing, custom domains, plans, and teams on Caddisfly.', origin })}
+  ${headTags({
+    title: 'Help & Docs — Caddisfly',
+    description: 'Guides and FAQ for building, customizing, publishing, custom domains, plans, and teams on Caddisfly.',
+    origin,
+    path: '/help',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQS.map(([q, a]) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() },
+      })),
+    },
+  })}
   <style>
     ${baseCss()}
     main{min-height:60vh}

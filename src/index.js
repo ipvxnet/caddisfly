@@ -32,7 +32,7 @@ import { handleAIBuilderGenerating } from './routes/public/ai-builder-generating
 import { handleAIBuilderCustomize } from './routes/public/ai-builder-customize.js';
 import { handleAIPreview } from './routes/public/ai-preview.js';
 import { handlePublishedSite } from './routes/public/published-site.js';
-import { handleStaticAsset, handleWebmanifest, handleOgImage } from './routes/public/static-assets.js';
+import { handleStaticAsset, handleWebmanifest, handleOgImage, handleRobots, handleSitemap } from './routes/public/static-assets.js';
 import { handleAIBuilderCreate } from './routes/api/ai-builder/create.js';
 import { handleAIBuilderRespond } from './routes/api/ai-builder/respond.js';
 import { handleAIBuilderGenerate } from './routes/api/ai-builder/generate.js';
@@ -86,6 +86,8 @@ router.get('/android-chrome-192x192.png', handleStaticAsset);
 router.get('/android-chrome-512x512.png', handleStaticAsset);
 router.get('/site.webmanifest', handleWebmanifest);
 router.get('/og.png', handleOgImage);
+router.get('/robots.txt', handleRobots);
+router.get('/sitemap.xml', handleSitemap);
 router.get('/login', handleLogin);
 router.get('/auth/google/callback', handleGoogleCallback);
 router.get('/preview/:preview_id', handlePreviewView);
