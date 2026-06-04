@@ -55,12 +55,26 @@ export function t(lang, key, vars) {
 }
 
 function lookup(dict, key) {
+  const v = lookupRaw(dict, key);
+  return typeof v === 'string' ? v : null;
+}
+
+function lookupRaw(dict, key) {
   let cur = dict;
   for (const part of key.split('.')) {
-    if (cur == null || typeof cur !== 'object') return null;
+    if (cur == null || typeof cur !== 'object') return undefined;
     cur = cur[part];
   }
-  return typeof cur === 'string' ? cur : null;
+  return cur;
+}
+
+/** Look up a list-valued key (e.g. a feature list), falling back to English then []. */
+export function tArr(lang, key) {
+  const dict = DICTS[lang] || en;
+  const v = lookupRaw(dict, key);
+  if (Array.isArray(v)) return v;
+  const fb = lookupRaw(en, key);
+  return Array.isArray(fb) ? fb : [];
 }
 
 /** Convenience: bind t() to a language for a page handler — const tr = translator(ctx.lang). */
