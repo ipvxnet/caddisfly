@@ -254,7 +254,7 @@ export async function handleAIBuilderLanding(ctx) {
   <section class="hero">
     <div class="hero-content">
       <h1>Build Your Website with AI</h1>
-      <p class="subtitle">Just describe your business. AI handles the rest. Get a professional website in minutes.</p>
+      <p class="subtitle">Just describe your business. AI handles the rest — design, copy, and automatic SEO. Get a professional, search-ready website in minutes.</p>
 
       <div class="cta-form">
         <h2>Get Started Now</h2>

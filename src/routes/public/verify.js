@@ -253,7 +253,7 @@ function buildingPage(previewId, token, joke) {
   <div class="wrap">
     <div class="logo">${brandMark('build-logo', '', true)}</div>
     <h1>Building your site…</h1>
-    <p class="sub">We're identifying your business and assembling your pages. Hang tight — this usually takes under a minute.</p>
+    <p class="sub">We're identifying your business, assembling your pages, and optimizing everything for search — AI writes your titles, descriptions &amp; SEO automatically. Hang tight — this usually takes under a minute.</p>
     <p class="joke-label">😄 A joke while you wait</p>
     <div class="joke-card" id="joke">${escapeHtml(joke)}</div>
     <div class="dots"><i></i><i></i><i></i></div>
