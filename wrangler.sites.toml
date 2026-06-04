@@ -3,15 +3,14 @@
 # read-only, no DB/secrets/AI. Reads what the app's deploy step writes
 # (sites/<subdomain>/<slug>.html, assets/<id>/<file>).
 #
-# Deploy (preview, for live testing — owns the *.caddisfly.app route today):
+# Deploy (preview, tests via workers.dev URL — no zone route as of cutover):
 #   npx wrangler deploy -c wrangler.sites.toml --env preview
-# Deploy (production — move the route here at cutover; reads the prod bucket):
+# Deploy (production — owns *.caddisfly.app/*, reads the prod bucket):
 #   npx wrangler deploy -c wrangler.sites.toml
 #
-# NOTE: a route can belong to only ONE worker. Today the PREVIEW worker owns
-# *.caddisfly.app/*. At prod cutover, remove the route from [env.preview] (or
-# redeploy preview without it) before deploying production, or the deploy will
-# conflict.
+# NOTE: a route can belong to only ONE worker. As of the 2026-06-04 cutover the
+# PRODUCTION worker owns *.caddisfly.app/*; preview's route was removed first so
+# production could claim it without conflict.
 
 name = "caddisfly-sites"
 main = "src/sites-worker.js"
@@ -27,14 +26,12 @@ routes = [
 binding = "STORAGE"
 bucket_name = "caddisfly-storage-prod"
 
-# Preview: caddisfly-sites-preview, reads the PREVIEW bucket, and currently owns
-# the *.caddisfly.app route for live testing.
+# Preview: caddisfly-sites-preview, reads the PREVIEW bucket. As of the 2026-06-04
+# prod cutover the PRODUCTION worker owns *.caddisfly.app/* (top-level route above);
+# preview no longer claims that route and tests via its workers.dev URL (?host=).
 [env.preview]
 name = "caddisfly-sites-preview"
-workers_dev = true   # keep the workers.dev URL for ?site=/?host= testing alongside the route
-routes = [
-  { pattern = "*.caddisfly.app/*", zone_name = "caddisfly.app" },
-]
+workers_dev = true   # workers.dev URL for ?site=/?host= testing (no zone route)
 
 [[env.preview.r2_buckets]]
 binding = "STORAGE"
