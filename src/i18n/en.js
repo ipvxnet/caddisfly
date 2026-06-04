@@ -296,6 +296,16 @@ export const en = {
     err_apply_tpl: 'Failed to apply template: ', err_deploy: 'Deployment failed: ',
   },
 
+  pick: {
+    tpl_title: '🧩 Choose a Template', tpl_hint: 'Restyle the whole site at once. Your text and colors are kept.',
+    font_title: '🔤 Fonts', font_hint: 'Swap the typeface. Sizes and layout stay the same.',
+    fonts_updated: 'Fonts updated! Preview refreshing…', fonts_failed: 'Failed to update fonts',
+    col_title: '🎨 Website Colors', primary_color: 'Primary Color', secondary_color: 'Secondary Color',
+    preview_gradient: 'Preview Gradient', preset_palettes: 'Preset Palettes',
+    reset_default: 'Reset to Default', apply_colors: 'Apply Colors', applying: 'Applying…',
+    colors_updated: 'Colors updated! Preview refreshing…', colors_failed: 'Failed to save colors',
+  },
+
   dom: {
     type: 'Type', name: 'Name', value: 'Value', copy: 'Copy', copied: 'Copied!',
     active: 'Active', pending: 'Pending', live_at: 'Live at',

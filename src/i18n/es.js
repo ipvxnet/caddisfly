@@ -296,6 +296,16 @@ export const es = {
     err_apply_tpl: 'No se pudo aplicar la plantilla: ', err_deploy: 'La publicación falló: ',
   },
 
+  pick: {
+    tpl_title: '🧩 Elige una plantilla', tpl_hint: 'Cambia el estilo de todo el sitio de una vez. Tu texto y colores se conservan.',
+    font_title: '🔤 Fuentes', font_hint: 'Cambia la tipografía. Los tamaños y el diseño no cambian.',
+    fonts_updated: '¡Fuentes actualizadas! Actualizando vista previa…', fonts_failed: 'No se pudieron actualizar las fuentes',
+    col_title: '🎨 Colores del sitio', primary_color: 'Color primario', secondary_color: 'Color secundario',
+    preview_gradient: 'Degradado de vista previa', preset_palettes: 'Paletas predefinidas',
+    reset_default: 'Restablecer', apply_colors: 'Aplicar colores', applying: 'Aplicando…',
+    colors_updated: '¡Colores actualizados! Actualizando vista previa…', colors_failed: 'No se pudieron guardar los colores',
+  },
+
   dom: {
     type: 'Tipo', name: 'Nombre', value: 'Valor', copy: 'Copiar', copied: '¡Copiado!',
     active: 'Activo', pending: 'Pendiente', live_at: 'En línea en',

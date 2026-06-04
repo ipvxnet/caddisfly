@@ -296,6 +296,16 @@ export const pt = {
     err_apply_tpl: 'Falha ao aplicar o modelo: ', err_deploy: 'A publicação falhou: ',
   },
 
+  pick: {
+    tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.',
+    font_title: '🔤 Fontes', font_hint: 'Troque a tipografia. Os tamanhos e o layout permanecem.',
+    fonts_updated: 'Fontes atualizadas! Atualizando a pré-visualização…', fonts_failed: 'Não foi possível atualizar as fontes',
+    col_title: '🎨 Cores do site', primary_color: 'Cor primária', secondary_color: 'Cor secundária',
+    preview_gradient: 'Gradiente de pré-visualização', preset_palettes: 'Paletas predefinidas',
+    reset_default: 'Restaurar padrão', apply_colors: 'Aplicar cores', applying: 'Aplicando…',
+    colors_updated: 'Cores atualizadas! Atualizando a pré-visualização…', colors_failed: 'Não foi possível salvar as cores',
+  },
+
   dom: {
     type: 'Tipo', name: 'Nome', value: 'Valor', copy: 'Copiar', copied: 'Copiado!',
     active: 'Ativo', pending: 'Pendente', live_at: 'No ar em',

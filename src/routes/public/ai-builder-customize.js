@@ -681,9 +681,9 @@ export async function handleAIBuilderCustomize(ctx) {
         <details class="design-group">
           <summary>${tr('cust.design_summary')}</summary>
           <div class="design-group-body">
-            ${generateTemplatePicker(config.style_theme)}
-            ${generateColorPicker(config, project.project_id)}
-            ${generateFontPicker(config, project.project_id)}
+            ${generateTemplatePicker(config.style_theme, lang)}
+            ${generateColorPicker(config, project.project_id, lang)}
+            ${generateFontPicker(config, project.project_id, lang)}
           </div>
         </details>
 
