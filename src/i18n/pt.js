@@ -296,6 +296,28 @@ export const pt = {
     err_apply_tpl: 'Falha ao aplicar o modelo: ', err_deploy: 'A publicação falhou: ',
   },
 
+  dom: {
+    type: 'Tipo', name: 'Nome', value: 'Valor', copy: 'Copiar', copied: 'Copiado!',
+    active: 'Ativo', pending: 'Pendente', live_at: 'No ar em',
+    add_record: 'Adicione este registro DNS no seu provedor de domínio:',
+    and_verification: '…e este registro de verificação:',
+    ssl_note: '🔒 O seu certificado SSL é emitido automaticamente quando o registro estiver ativo — geralmente alguns minutos. Depois clique em <em>Verificar status</em>.',
+    check_status: 'Verificar status', remove: 'Remover',
+    none_yet: 'Ainda não há nenhum domínio próprio conectado.',
+    not_enabled: 'Os domínios próprios ainda não estão habilitados neste ambiente — o formulário está aqui para a configuração.',
+    connect: 'Conectar domínio',
+    tip: 'Dica: use um subdomínio como <code>www.</code> ou <code>shop.</code> — funcionam em qualquer provedor de DNS. Um domínio raiz puro (<code>seunegocio.com</code>) precisa de ALIAS / flattening de CNAME, que alguns provedores (ex.: GoDaddy, Namecheap) não suportam.',
+    publish_first: 'Publique o seu site primeiro — depois você poderá apontar um domínio para ele.',
+    could_not_connect: 'Não foi possível conectar esse domínio.', network_err: 'Erro de rede. Tente novamente.',
+    gate_default: 'Os domínios próprios estão disponíveis nos planos pagos.',
+    gate_upgrade: 'Faça upgrade do seu plano', gate_dashboard: 'Ir para o painel',
+    gate_note: 'Sem sessão ou novo aqui? Inicie sessão com o seu e-mail nessa página, escolha um plano pago e volte para conectar o seu domínio.',
+    still_pending: 'Ainda pendente — o DNS e o SSL podem levar alguns minutos para validar após você adicionar os registros. Verifique novamente em breve.',
+    could_not_check: 'Não foi possível verificar o status agora.',
+    disconnect_confirm: 'Desconectar este domínio do seu site?',
+    could_not_remove: 'Não foi possível remover o domínio.',
+  },
+
   help: {
     meta_title: 'Ajuda e guias — Caddisfly',
     h1: 'Ajuda e documentação',

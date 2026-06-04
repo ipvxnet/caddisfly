@@ -296,6 +296,28 @@ export const es = {
     err_apply_tpl: 'No se pudo aplicar la plantilla: ', err_deploy: 'La publicación falló: ',
   },
 
+  dom: {
+    type: 'Tipo', name: 'Nombre', value: 'Valor', copy: 'Copiar', copied: '¡Copiado!',
+    active: 'Activo', pending: 'Pendiente', live_at: 'En línea en',
+    add_record: 'Añade este registro DNS en tu proveedor de dominio:',
+    and_verification: '…y este registro de verificación:',
+    ssl_note: '🔒 Tu certificado SSL se emite automáticamente una vez que el registro esté activo — normalmente unos minutos. Luego haz clic en <em>Comprobar estado</em>.',
+    check_status: 'Comprobar estado', remove: 'Quitar',
+    none_yet: 'Aún no hay ningún dominio propio conectado.',
+    not_enabled: 'Los dominios propios aún no están habilitados en este entorno — el formulario está aquí para la configuración.',
+    connect: 'Conectar dominio',
+    tip: 'Consejo: usa un subdominio como <code>www.</code> o <code>shop.</code> — funcionan en cualquier proveedor de DNS. Un dominio raíz a secas (<code>tunegocio.com</code>) necesita ALIAS / aplanamiento de CNAME, que algunos proveedores (p. ej. GoDaddy, Namecheap) no admiten.',
+    publish_first: 'Publica tu sitio primero — luego podrás apuntarle un dominio.',
+    could_not_connect: 'No se pudo conectar ese dominio.', network_err: 'Error de red. Inténtalo de nuevo.',
+    gate_default: 'Los dominios propios están disponibles en los planes de pago.',
+    gate_upgrade: 'Mejora tu plan', gate_dashboard: 'Ir al panel',
+    gate_note: '¿Sin sesión o nuevo aquí? Inicia sesión con tu correo en esa página, elige un plan de pago y vuelve para conectar tu dominio.',
+    still_pending: 'Aún pendiente — el DNS y el SSL pueden tardar unos minutos en validarse tras añadir los registros. Vuelve a comprobar en breve.',
+    could_not_check: 'No se pudo comprobar el estado ahora mismo.',
+    disconnect_confirm: '¿Desconectar este dominio de tu sitio?',
+    could_not_remove: 'No se pudo quitar el dominio.',
+  },
+
   help: {
     meta_title: 'Ayuda y guías — Caddisfly',
     h1: 'Ayuda y documentación',

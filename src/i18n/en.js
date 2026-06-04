@@ -296,6 +296,28 @@ export const en = {
     err_apply_tpl: 'Failed to apply template: ', err_deploy: 'Deployment failed: ',
   },
 
+  dom: {
+    type: 'Type', name: 'Name', value: 'Value', copy: 'Copy', copied: 'Copied!',
+    active: 'Active', pending: 'Pending', live_at: 'Live at',
+    add_record: 'Add this DNS record at your domain provider:',
+    and_verification: '…and this verification record:',
+    ssl_note: '🔒 Your SSL certificate is issued automatically once the record is live — usually a few minutes. Then click <em>Check status</em>.',
+    check_status: 'Check status', remove: 'Remove',
+    none_yet: 'No custom domain connected yet.',
+    not_enabled: 'Custom domains aren’t enabled in this environment yet — the form is here for setup.',
+    connect: 'Connect domain',
+    tip: 'Tip: use a subdomain like <code>www.</code> or <code>shop.</code> — these work at any DNS provider. A bare root domain (<code>yourbusiness.com</code>) needs ALIAS / CNAME-flattening, which some providers (e.g. GoDaddy, Namecheap) don’t support.',
+    publish_first: 'Publish your site first — then you can point a domain at it.',
+    could_not_connect: 'Could not connect that domain.', network_err: 'Network error. Please try again.',
+    gate_default: 'Custom domains are available on paid plans.',
+    gate_upgrade: 'Upgrade your plan', gate_dashboard: 'Go to dashboard',
+    gate_note: 'Signed out or new here? Log in with your email on that page, choose a paid plan, then come back to connect your domain.',
+    still_pending: 'Still pending — DNS and SSL can take a few minutes to validate after you add the records. Check again shortly.',
+    could_not_check: 'Could not check status right now.',
+    disconnect_confirm: 'Disconnect this domain from your site?',
+    could_not_remove: 'Could not remove the domain.',
+  },
+
   help: {
     meta_title: 'Help & Docs — Caddisfly',
     h1: 'Help & documentation',

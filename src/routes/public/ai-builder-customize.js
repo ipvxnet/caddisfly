@@ -11,7 +11,7 @@ import { generateTemplatePicker } from '../../components/template-picker.js';
 import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
-import { renderDomainsPanel, DOMAINS_CSS, DOMAINS_JS } from '../../components/domains-panel.js';
+import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
 import { canDeploy, canManageDomains } from '../../middleware/project-access.js';
 import { getCreditState } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
@@ -101,7 +101,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <details class="design-group" id="domains-group"${domains.length ? ' open' : ''}>
         <summary>🌐 Custom domain</summary>
         <div class="design-group-body">
-          ${renderDomainsPanel({ projectId: project.project_id, domains, subdomain: currentSubdomain, saasOn, sitesBase })}
+          ${renderDomainsPanel({ projectId: project.project_id, domains, subdomain: currentSubdomain, saasOn, sitesBase, lang })}
         </div>
       </details>`;
 
@@ -1163,7 +1163,7 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     // ---- Custom domains (shared component) ----
-    ${DOMAINS_JS}
+    ${domainsJs(lang)}
 
     // Apply a whole-site theme: re-skins every section + fonts at once,
     // preserving content and colors. Reload the page so the section dropdowns
