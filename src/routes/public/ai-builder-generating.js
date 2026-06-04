@@ -2,6 +2,7 @@
 // Shows generation progress and triggers preview generation
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
+import { translator } from '../../i18n/index.js';
 
 /**
  * Handle generation progress page
@@ -13,6 +14,8 @@ export async function handleAIBuilderGenerating(ctx) {
 
   try {
     const { project_id } = params;
+    const lang = (ctx && ctx.lang) || 'en';
+    const tr = translator(lang);
 
     // Get project
     const project = await getAIProjectByProjectId(env.DB, project_id);
@@ -26,7 +29,7 @@ export async function handleAIBuilderGenerating(ctx) {
 
     const html = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -193,8 +196,8 @@ export async function handleAIBuilderGenerating(ctx) {
 </head>
 <body>
   <div class="container">
-    <h1>🎨 Creating Your Website</h1>
-    <p class="subtitle">AI is generating your personalized website...</p>
+    <h1>${tr('loading.generating_title')}</h1>
+    <p class="subtitle">${tr('loading.generating_sub')}</p>
 
     <div class="progress-container" id="progress-container">
       <div class="spinner"></div>
@@ -203,27 +206,27 @@ export async function handleAIBuilderGenerating(ctx) {
       <div class="steps">
         <div class="step" id="step-1">
           <div class="step-icon"></div>
-          <div>Analyzing your requirements</div>
+          <div>${tr('loading.step_analyzing')}</div>
         </div>
         <div class="step" id="step-2">
           <div class="step-icon"></div>
-          <div>Generating content with AI</div>
+          <div>${tr('loading.step_generating')}</div>
         </div>
         <div class="step" id="step-3">
           <div class="step-icon"></div>
-          <div>Creating design system</div>
+          <div>${tr('loading.step_design')}</div>
         </div>
         <div class="step" id="step-4">
           <div class="step-icon"></div>
-          <div>Building website sections</div>
+          <div>${tr('loading.step_sections')}</div>
         </div>
         <div class="step" id="step-5">
           <div class="step-icon"></div>
-          <div>Optimizing for search (SEO)</div>
+          <div>${tr('loading.step_seo')}</div>
         </div>
         <div class="step" id="step-6">
           <div class="step-icon"></div>
-          <div>Finalizing your website</div>
+          <div>${tr('loading.step_finalizing')}</div>
         </div>
       </div>
     </div>
@@ -239,13 +242,13 @@ export async function handleAIBuilderGenerating(ctx) {
     const projectId = '${project.project_id}';
     let currentStep = 0;
     const steps = [
-      'Analyzing your requirements...',
-      'Generating content with AI...',
-      'Creating design system...',
-      'Building website sections...',
-      'Optimizing for search (SEO)...',
-      'Finalizing your website...',
-      'Complete! Redirecting...'
+      ${JSON.stringify(tr('loading.step_analyzing') + '…')},
+      ${JSON.stringify(tr('loading.step_generating') + '…')},
+      ${JSON.stringify(tr('loading.step_design') + '…')},
+      ${JSON.stringify(tr('loading.step_sections') + '…')},
+      ${JSON.stringify(tr('loading.step_seo') + '…')},
+      ${JSON.stringify(tr('loading.step_finalizing') + '…')},
+      ${JSON.stringify(tr('loading.status_complete'))}
     ];
 
     // Simulate progress animation

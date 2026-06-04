@@ -1,7 +1,8 @@
 // Landing / home page — marketing home with two paths: Build with AI + Refactor.
 
 import { htmlResponse } from '../../utils/response.js';
-import { headTags } from '../../components/brand.js';
+import { headTags, langSwitcher } from '../../components/brand.js';
+import { translator } from '../../i18n/index.js';
 
 // Inline brand mark (continuous-wing "C", brand gradient). Reused in header/hero/footer.
 function brandMark(id, cls = '', animated = false) {
@@ -37,8 +38,10 @@ const FAVICON =
  */
 export async function handleLanding(ctx) {
   const origin = (ctx && ctx.url && ctx.url.origin) || (ctx && ctx.env && ctx.env.APP_URL) || '';
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -168,11 +171,12 @@ export async function handleLanding(ctx) {
     <div class="wrap nav">
       <a class="brand" href="/">${brandMark('m-hd')}<span>caddisfly<span class="ai">.ai</span></span></a>
       <nav class="nav-links">
-        <a href="#paths">How it works</a>
-        <a href="/pricing">Pricing</a>
-        <a href="#features">Features</a>
-        <a href="/dashboard">Dashboard</a>
-        <a class="btn btn-primary" href="/ai-builder">Build with AI →</a>
+        <a href="#paths">${tr('nav.how_it_works')}</a>
+        <a href="/pricing">${tr('nav.pricing')}</a>
+        <a href="#features">${tr('nav.features')}</a>
+        <a href="/dashboard">${tr('nav.dashboard')}</a>
+        ${langSwitcher(lang)}
+        <a class="btn btn-primary" href="/ai-builder">${tr('nav.build')} →</a>
       </nav>
     </div>
   </header>
@@ -181,64 +185,72 @@ export async function handleLanding(ctx) {
     <section class="hero">
       <div class="wrap">
         <div class="mark">${brandMark('m-hero', '', true)}</div>
-        <span class="eyebrow">AI website builder</span>
-        <h1>Launch a <span class="grad-text">beautiful website</span><br>in minutes — with AI.</h1>
-        <p class="sub">Chat with AI to build a brand-new, multi-page site — or instantly refactor your existing website into a clean, modern design. On-brand, customizable, ready to publish.</p>
+        <span class="eyebrow">${tr('landing.eyebrow')}</span>
+        <h1>${tr('landing.hero_h1_html')}</h1>
+        <p class="sub">${tr('landing.hero_sub')}</p>
         <div class="hero-cta">
-          <a class="btn btn-primary" href="/ai-builder">✨ Build with AI</a>
-          <a class="btn btn-ghost" href="#refactor">Refactor my site</a>
+          <a class="btn btn-primary" href="/ai-builder">${tr('landing.cta_build')}</a>
+          <a class="btn btn-ghost" href="#refactor">${tr('landing.cta_refactor')}</a>
         </div>
-        <div class="trust">No code. No templates to wrestle with. Free preview.</div>
+        <div class="trust">${tr('landing.trust')}</div>
       </div>
     </section>
 
     <section id="paths" class="block">
       <div class="wrap">
         <div class="sec-head">
-          <h2>Two ways to get a great site</h2>
-          <p>Start from a conversation, or start from your current site. Either way you get a modern, editable result.</p>
+          <h2>${tr('landing.paths_title')}</h2>
+          <p>${tr('landing.paths_sub')}</p>
         </div>
         <div class="paths">
           <div class="card">
-            <span class="tag">Showcase</span>
-            <h3>Build with AI</h3>
-            <p class="lead">Describe your business in plain words. AI asks a few smart questions, then generates a full multi-page website — copy, layout, and real photos included.</p>
+            <span class="tag">${tr('landing.build_tag')}</span>
+            <h3>${tr('landing.build_title')}</h3>
+            <p class="lead">${tr('landing.build_lead')}</p>
             <ul>
-              <li>Conversational, no forms to fill in</li>
-              <li>Multi-page with real navigation</li>
-              <li>Live editing &amp; AI tweaks per section</li>
-              <li>Themes, fonts &amp; colors in a click</li>
-              <li>🔎 Auto-SEO — titles, descriptions &amp; markup written for you</li>
+              <li>${tr('landing.build_li1')}</li>
+              <li>${tr('landing.build_li2')}</li>
+              <li>${tr('landing.build_li3')}</li>
+              <li>${tr('landing.build_li4')}</li>
+              <li>${tr('landing.build_li_seo')}</li>
             </ul>
             <div class="spacer"></div>
-            <a class="btn btn-primary btn-full" href="/ai-builder">Start building →</a>
-            <p class="form-note">Takes about a minute to first preview.</p>
+            <a class="btn btn-primary btn-full" href="/ai-builder">${tr('landing.build_cta')}</a>
+            <p class="form-note">${tr('landing.build_note')}</p>
           </div>
 
           <div class="card" id="refactor">
-            <span class="tag alt">Refactor</span>
-            <h3>Refactor your site</h3>
-            <p class="lead">Already have a website? Paste your URL and we'll rebuild it into a clean, modern design using your real business details — with SEO generated automatically.</p>
+            <span class="tag alt">${tr('landing.refactor_tag')}</span>
+            <h3>${tr('landing.refactor_title')}</h3>
+            <p class="lead">${tr('landing.refactor_lead')}</p>
             <form id="refactor-form" novalidate>
               <div class="field">
-                <label for="email">Your email</label>
-                <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+                <label for="email">${tr('landing.refactor_email')}</label>
+                <input type="email" id="email" name="email" placeholder="${tr('builder.email_ph')}" autocomplete="email">
                 <div class="err" id="email-err"></div>
               </div>
               <div class="field">
-                <label for="website">Your website URL</label>
+                <label for="website">${tr('landing.refactor_url')}</label>
                 <input type="text" id="website" name="website" placeholder="https://yourbusiness.com" autocomplete="url">
                 <div class="err" id="website-err"></div>
               </div>
+              <div class="field">
+                <label for="refactor-lang">${tr('builder.lang_label')}</label>
+                <select id="refactor-lang" name="refactor-lang">
+                  <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+                  <option value="es"${lang === 'es' ? ' selected' : ''}>Español</option>
+                  <option value="pt"${lang === 'pt' ? ' selected' : ''}>Português</option>
+                </select>
+              </div>
               <div class="field" style="display:flex;align-items:flex-start;gap:.5rem">
                 <input type="checkbox" id="refactor-agree" style="width:auto;margin-top:.25rem;flex:none">
-                <label for="refactor-agree" style="font-weight:500;margin:0;cursor:pointer;font-size:.9rem">I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</label>
+                <label for="refactor-agree" style="font-weight:500;margin:0;cursor:pointer;font-size:.9rem">${tr('landing.refactor_agree', { terms: `<a href="/terms" target="_blank">${tr('footer.terms')}</a>`, privacy: `<a href="/privacy" target="_blank">${tr('footer.privacy')}</a>` })}</label>
               </div>
               <button type="submit" class="btn btn-primary btn-full" id="refactor-btn">
-                <span id="refactor-label">Get my free preview</span>
+                <span id="refactor-label">${tr('landing.refactor_btn')}</span>
                 <span class="spin" id="refactor-spin"></span>
               </button>
-              <p class="form-note">We'll email you a link to confirm and build your preview.</p>
+              <p class="form-note">${tr('landing.refactor_note')}</p>
             </form>
             <div class="alert ok" id="refactor-ok"></div>
             <div class="alert bad" id="refactor-bad"></div>
@@ -249,26 +261,26 @@ export async function handleLanding(ctx) {
 
     <section class="block">
       <div class="wrap">
-        <div class="sec-head"><h2>How it works</h2></div>
+        <div class="sec-head"><h2>${tr('landing.how_title')}</h2></div>
         <div class="steps">
-          <div class="step"><div class="n">1</div><h4>Tell us about you</h4><p>Answer a few questions, or paste your existing site.</p></div>
-          <div class="step"><div class="n">2</div><h4>AI builds your pages</h4><p>A full multi-page site with on-brand copy, layout &amp; images.</p></div>
-          <div class="step"><div class="n">3</div><h4>Customize &amp; publish</h4><p>Tweak anything with live AI editing, then go live in one click.</p></div>
+          <div class="step"><div class="n">1</div><h4>${tr('landing.step1_t')}</h4><p>${tr('landing.step1_d')}</p></div>
+          <div class="step"><div class="n">2</div><h4>${tr('landing.step2_t')}</h4><p>${tr('landing.step2_d')}</p></div>
+          <div class="step"><div class="n">3</div><h4>${tr('landing.step3_t')}</h4><p>${tr('landing.step3_d')}</p></div>
         </div>
       </div>
     </section>
 
     <section id="features" class="block">
       <div class="wrap">
-        <div class="sec-head"><h2>Everything you need to ship</h2></div>
+        <div class="sec-head"><h2>${tr('landing.feats_title')}</h2></div>
         <div class="feats">
-          <div class="feat"><div class="ic">🗂️</div><h4>Multi-page sites</h4><p>Home, About, Services, Contact &amp; more — with real navigation.</p></div>
-          <div class="feat"><div class="ic">🔎</div><h4>Auto-SEO</h4><p>Every site ships search-ready — page titles, meta descriptions, social cards, sitemaps &amp; Google business markup, generated automatically. Tweak any page, or let it run on autopilot.</p></div>
-          <div class="feat"><div class="ic">✨</div><h4>AI section editing</h4><p>Chat to rewrite copy or generate new images, right in the editor.</p></div>
-          <div class="feat"><div class="ic">🎨</div><h4>Themes &amp; fonts</h4><p>Switch the whole look — light, dark, gold — in a single click.</p></div>
-          <div class="feat"><div class="ic">🖼️</div><h4>Real photos</h4><p>On-brand imagery pulled in automatically, or generate your own.</p></div>
-          <div class="feat"><div class="ic">📱</div><h4>Responsive</h4><p>Looks sharp on every screen, out of the box.</p></div>
-          <div class="feat"><div class="ic">🚀</div><h4>One-click publish</h4><p>Push your site live to a shareable URL when you're ready.</p></div>
+          <div class="feat"><div class="ic">🗂️</div><h4>${tr('landing.feat_multipage_t')}</h4><p>${tr('landing.feat_multipage_d')}</p></div>
+          <div class="feat"><div class="ic">🔎</div><h4>${tr('landing.feat_seo_t')}</h4><p>${tr('landing.feat_seo_d')}</p></div>
+          <div class="feat"><div class="ic">✨</div><h4>${tr('landing.feat_aiedit_t')}</h4><p>${tr('landing.feat_aiedit_d')}</p></div>
+          <div class="feat"><div class="ic">🎨</div><h4>${tr('landing.feat_themes_t')}</h4><p>${tr('landing.feat_themes_d')}</p></div>
+          <div class="feat"><div class="ic">🖼️</div><h4>${tr('landing.feat_photos_t')}</h4><p>${tr('landing.feat_photos_d')}</p></div>
+          <div class="feat"><div class="ic">📱</div><h4>${tr('landing.feat_responsive_t')}</h4><p>${tr('landing.feat_responsive_d')}</p></div>
+          <div class="feat"><div class="ic">🚀</div><h4>${tr('landing.feat_publish_t')}</h4><p>${tr('landing.feat_publish_d')}</p></div>
         </div>
       </div>
     </section>
@@ -276,9 +288,9 @@ export async function handleLanding(ctx) {
     <section class="block">
       <div class="wrap">
         <div class="cta-band">
-          <h2>Ready to build?</h2>
-          <p>Start with AI in under a minute — completely free to preview.</p>
-          <a class="btn" href="/ai-builder">✨ Build with AI</a>
+          <h2>${tr('landing.cta_band_title')}</h2>
+          <p>${tr('landing.cta_band_sub')}</p>
+          <a class="btn" href="/ai-builder">${tr('landing.cta_band_btn')}</a>
         </div>
       </div>
     </section>
@@ -287,8 +299,8 @@ export async function handleLanding(ctx) {
   <footer class="site">
     <div class="wrap foot">
       <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
-      <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/billing">Billing</a></span>
-      <span>© 2026 Caddisfly. Build beautiful websites with AI.</span>
+      <span class="foot-links"><a href="/pricing">${tr('footer.pricing')}</a> · <a href="/terms">${tr('footer.terms')}</a> · <a href="/privacy">${tr('footer.privacy')}</a> · <a href="/billing">${tr('footer.billing')}</a></span>
+      <span>${tr('footer.rights', { year: 2026 })}</span>
     </div>
   </footer>
 
@@ -330,7 +342,7 @@ export async function handleLanding(ctx) {
         try {
           var res = await fetch('/api/preview/create', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true })
+            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true, language: (document.getElementById('refactor-lang') || {}).value || 'en' })
           });
           var data = await res.json();
           if (data.success) {

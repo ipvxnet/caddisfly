@@ -4,6 +4,7 @@
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getConversationsByProjectId } from '../../db/ai-conversations.js';
 import { formatStepForResponse } from '../../utils/ai-conversation.js';
+import { translator } from '../../i18n/index.js';
 
 /**
  * Handle AI builder chat interface
@@ -30,7 +31,7 @@ export async function handleAIBuilderChat(ctx) {
     const conversations = await getConversationsByProjectId(env.DB, project.id);
 
     // Get current question
-    const currentStep = formatStepForResponse(project.conversation_step);
+    const currentStep = formatStepForResponse(project.conversation_step, project.language || 'en');
 
     // Build conversation history for display
     const conversationHistory = conversations
@@ -64,13 +65,15 @@ export async function handleAIBuilderChat(ctx) {
  * Build chat UI HTML
  */
 function buildChatUI(project, conversationHistory, currentStep, isComplete) {
+  const lang = (project && project.language) || 'en';
+  const tr = translator(lang);
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Your Website - Caddisfly</title>
+  <title>${tr('convo.ui.title')} - Caddisfly</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -414,17 +417,17 @@ function buildChatUI(project, conversationHistory, currentStep, isComplete) {
   <div class="chat-container">
     <div class="chat-header">
       <h1>${project.project_name || 'Create Your Website'}</h1>
-      <p class="progress-text">Step ${currentStep?.progress?.current || 0} of ${currentStep?.progress?.total || 7}</p>
+      <p class="progress-text">${tr('convo.ui.step_of', { current: currentStep?.progress?.current || 0, total: currentStep?.progress?.total || 7 })}</p>
       <div class="progress-bar">
         <div class="progress-fill" style="width: ${currentStep?.progress?.percentage || 0}%"></div>
       </div>
     </div>
 
     <div class="chat-messages" id="chat-messages">
-      ${buildConversationHTML(conversationHistory, currentStep, isComplete)}
+      ${buildConversationHTML(conversationHistory, currentStep, isComplete, lang)}
     </div>
 
-    ${!isComplete ? buildInputArea(currentStep) : ''}
+    ${!isComplete ? buildInputArea(currentStep, lang) : ''}
   </div>
 
   <script>
@@ -436,14 +439,15 @@ function buildChatUI(project, conversationHistory, currentStep, isComplete) {
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    ${!isComplete ? buildChatScript() : buildCompletionScript()}
+    ${!isComplete ? buildChatScript(lang) : buildCompletionScript()}
   </script>
 </body>
 </html>
   `;
 }
 
-function buildConversationHTML(history, currentStep, isComplete) {
+function buildConversationHTML(history, currentStep, isComplete, lang = 'en') {
+  const tr = translator(lang);
   let html = '';
 
   // Show conversation history
@@ -486,7 +490,7 @@ function buildConversationHTML(history, currentStep, isComplete) {
         <h2>🎉 All set!</h2>
         <p>I'm generating your website now. This will take about 10-15 seconds.</p>
         <div class="spinner"></div>
-        <p id="status-text">Generating content...</p>
+        <p id="status-text">${tr('convo.ui.generating')}</p>
       </div>
     `;
   }
@@ -494,7 +498,8 @@ function buildConversationHTML(history, currentStep, isComplete) {
   return html;
 }
 
-function buildInputArea(currentStep) {
+function buildInputArea(currentStep, lang = 'en') {
+  const tr = translator(lang);
   if (!currentStep) return '';
 
   const { type, options, placeholder } = currentStep;
@@ -507,12 +512,12 @@ function buildInputArea(currentStep) {
           <textarea
             class="chat-textarea"
             id="chat-input"
-            placeholder="${escapeHtml(placeholder || 'Type your answer...')}"
+            placeholder="${escapeHtml(placeholder || tr('convo.ui.type_answer'))}"
             rows="3"
           ></textarea>
         </div>
         <button class="send-button" id="send-button" onclick="sendAnswer()">
-          Send Answer →
+          ${tr('convo.ui.send')}
         </button>
       </div>
     `;
@@ -559,7 +564,7 @@ function buildInputArea(currentStep) {
           ${optionsHTML}
         </div>
         <button class="send-button" id="send-button" onclick="sendMultipleChoices()" style="margin-top: 1rem; width: 100%;">
-          Continue →
+          ${tr('convo.ui.continue')}
         </button>
       </div>
     `;
@@ -568,7 +573,8 @@ function buildInputArea(currentStep) {
   return '';
 }
 
-function buildChatScript() {
+function buildChatScript(lang = 'en') {
+  const tr = translator(lang);
   return `
     const selectedOptions = new Set();
 
@@ -580,14 +586,14 @@ function buildChatScript() {
       const answer = input.value.trim();
 
       if (!answer) {
-        errorDiv.textContent = 'Please enter an answer';
+        errorDiv.textContent = ${JSON.stringify(tr('convo.ui.err_enter'))};
         errorDiv.style.display = 'block';
         return;
       }
 
       errorDiv.style.display = 'none';
       button.disabled = true;
-      button.textContent = 'Sending...';
+      button.textContent = ${JSON.stringify(tr('convo.ui.sending'))};
 
       try {
         const response = await fetch(\`/api/ai-builder/\${projectId}/respond\`, {
@@ -613,7 +619,7 @@ function buildChatScript() {
         errorDiv.textContent = error.message;
         errorDiv.style.display = 'block';
         button.disabled = false;
-        button.textContent = 'Send Answer →';
+        button.textContent = ${JSON.stringify(tr('convo.ui.send'))};
       }
     }
 
@@ -667,14 +673,14 @@ function buildChatScript() {
       const button = document.getElementById('send-button');
 
       if (selectedOptions.size === 0) {
-        errorDiv.textContent = 'Please select at least one option';
+        errorDiv.textContent = ${JSON.stringify(tr('convo.ui.err_select'))};
         errorDiv.style.display = 'block';
         return;
       }
 
       errorDiv.style.display = 'none';
       button.disabled = true;
-      button.textContent = 'Sending...';
+      button.textContent = ${JSON.stringify(tr('convo.ui.sending'))};
 
       try {
         const response = await fetch(\`/api/ai-builder/\${projectId}/respond\`, {
@@ -698,7 +704,7 @@ function buildChatScript() {
         errorDiv.textContent = error.message;
         errorDiv.style.display = 'block';
         button.disabled = false;
-        button.textContent = 'Continue →';
+        button.textContent = ${JSON.stringify(tr('convo.ui.continue'))};
       }
     }
 

@@ -23,6 +23,7 @@ import { sendPreviewEmail } from '../../utils/email.js';
 import { htmlResponse, redirect, badRequest } from '../../utils/response.js';
 import { brandMark } from '../../components/brand.js';
 import { cannedJoke } from '../../utils/jokes.js';
+import { translator } from '../../i18n/index.js';
 
 const TOKEN_TTL_SECONDS = 24 * 60 * 60;
 
@@ -48,7 +49,7 @@ export async function handleVerify(ctx) {
   }
   if (project.enrichment_status === 'running') {
     // Build already in flight — show the fun page; it polls until ready.
-    return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(Date.now())));
+    return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(Date.now()), (ctx && ctx.lang) || 'en'));
   }
   if (project.enrichment_status === 'failed') {
     return htmlResponse(
@@ -105,7 +106,7 @@ export async function handleVerify(ctx) {
     return redirect(`/ai-preview/${project.preview_id}`);
   }
 
-  return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(now)));
+  return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(now), (ctx && ctx.lang) || 'en'));
 }
 
 /**
@@ -216,11 +217,12 @@ function statusPage(title, message) {
   return pageShell(title, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><p><a href="/">Back to homepage</a></p>`);
 }
 
-function buildingPage(previewId, token, joke) {
+function buildingPage(previewId, token, joke, lang = 'en') {
   const pid = JSON.stringify(previewId);
   const tok = JSON.stringify(token);
+  const tr = translator(lang);
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -252,9 +254,9 @@ function buildingPage(previewId, token, joke) {
 <body>
   <div class="wrap">
     <div class="logo">${brandMark('build-logo', '', true)}</div>
-    <h1>Building your site…</h1>
-    <p class="sub">We're identifying your business, assembling your pages, and optimizing everything for search — AI writes your titles, descriptions &amp; SEO automatically. Hang tight — this usually takes under a minute.</p>
-    <p class="joke-label">😄 A joke while you wait</p>
+    <h1>${tr('loading.building_title')}</h1>
+    <p class="sub">${tr('loading.building_sub')}</p>
+    <p class="joke-label">${tr('loading.joke_label')}</p>
     <div class="joke-card" id="joke">${escapeHtml(joke)}</div>
     <div class="dots"><i></i><i></i><i></i></div>
     <div class="err" id="err">

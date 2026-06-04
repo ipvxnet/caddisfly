@@ -154,7 +154,7 @@ export async function handleAIBuilderRespond(ctx) {
     }
 
     // Check if next step is an info-type step (doesn't need answer) - treat as complete
-    const nextStepConfig = formatStepForResponse(nextStepName);
+    const nextStepConfig = formatStepForResponse(nextStepName, project.language || 'en');
     if (nextStepConfig && nextStepConfig.type === 'info') {
       // Don't create conversation entry for info steps, just mark complete
       await updateAIProject(env.DB, project.id, {

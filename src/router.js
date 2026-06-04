@@ -1,6 +1,8 @@
 // Router for Cloudflare Workers
 // Supports route registration, path parameters, and middleware
 
+import { resolveLang } from './i18n/index.js';
+
 export class Router {
   constructor() {
     this.routes = [];
@@ -103,6 +105,7 @@ export class Router {
         url,
         pathname,
         query: Object.fromEntries(url.searchParams),
+        lang: resolveLang(request), // resolved once: cf_lang cookie → Accept-Language → 'en'
       };
 
       try {

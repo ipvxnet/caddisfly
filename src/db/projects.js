@@ -19,6 +19,7 @@ export async function createProject(db, data) {
     use_templates = 0,
     template_generation_status = null,
     config_id = null,
+    language = 'en',
   } = data;
 
   // Use provided preview_id or generate one
@@ -28,12 +29,12 @@ export async function createProject(db, data) {
     .prepare(
       `INSERT INTO projects (
          preview_id, customer_email, website_url, original_url, status,
-         pricing_tier, portfolio_included, use_templates, template_generation_status, config_id
+         pricing_tier, portfolio_included, use_templates, template_generation_status, config_id, language
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(previewId, customer_email, website_url, website_url, status, pricing_tier, portfolio_included, use_templates, template_generation_status, config_id)
+    .bind(previewId, customer_email, website_url, website_url, status, pricing_tier, portfolio_included, use_templates, template_generation_status, config_id, language)
     .first();
 
   return result;
@@ -116,7 +117,7 @@ export async function updateProjectStatus(db, projectId, status) {
  */
 export async function updateProject(db, projectId, updates) {
   const allowedFields = [
-    'status', 'pricing_tier', 'portfolio_included', 'dns_zone_id',
+    'status', 'pricing_tier', 'language', 'portfolio_included', 'dns_zone_id',
     'dns_status', 'github_repo_url', 'github_username', 'purchased_at', 'activated_at',
     'use_templates', 'template_generation_status', 'config_id',
     // Email verification + Google Places enrichment (migration 006)

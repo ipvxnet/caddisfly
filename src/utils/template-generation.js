@@ -55,8 +55,9 @@ export async function generateAndStore(env, project, profile) {
     (t) => (t !== 'gallery' || photoPool.length >= 3) && (t !== 'testimonials' || !!factSections.testimonials)
   );
 
-  // 3. Generate each section's content.
+  // 3. Generate each section's content (in the project's chosen language).
   const context = profileToContext(profile, recipe, industry);
+  context.language = (project && project.language) || 'en';
   const sections = [];
   let order = 0;
 

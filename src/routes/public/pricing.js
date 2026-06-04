@@ -3,6 +3,7 @@
 
 import { htmlResponse } from '../../utils/response.js';
 import { brandMark, headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
+import { translator, tArr } from '../../i18n/index.js';
 
 const PLANS = [
   {
@@ -29,24 +30,28 @@ const PLANS = [
 
 export async function handlePricing(ctx) {
   const origin = (ctx && ctx.url && ctx.url.origin) || (ctx && ctx.env && ctx.env.APP_URL) || '';
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
+  const perMo = tr('pricing.per_mo');
+  const perYr = tr('pricing.per_yr');
 
   const card = (p) => `
     <div class="plan${p.highlight ? ' featured' : ''}">
-      ${p.highlight ? '<span class="badge">Most popular</span>' : ''}
-      <h3>${p.name}</h3>
-      <p class="tag">${p.tagline}</p>
+      ${p.highlight ? `<span class="badge">${tr('pricing.most_popular')}</span>` : ''}
+      <h3>${tr(`pricing.${p.key}_name`)}</h3>
+      <p class="tag">${tr(`pricing.${p.key}_tag`)}</p>
       <div class="price">
-        <span class="cur">$</span><span class="amt" data-mo="${p.mo}" data-yr="${p.yr}">${p.mo}</span><span class="per" data-mo="/mo" data-yr="/yr">/mo</span>
+        <span class="cur">$</span><span class="amt" data-mo="${p.mo}" data-yr="${p.yr}">${p.mo}</span><span class="per" data-mo="${perMo}" data-yr="${perYr}">${perMo}</span>
       </div>
-      <p class="billed" data-mo="&nbsp;" data-yr="${p.mo > 0 ? '2 months free' : '&nbsp;'}">&nbsp;</p>
+      <p class="billed" data-mo="&nbsp;" data-yr="${p.mo > 0 ? tr('pricing.months_free') : '&nbsp;'}">&nbsp;</p>
       ${p.mo > 0
-        ? `<a class="btn ${p.highlight ? 'btn-primary' : 'btn-ghost'} btn-full plan-cta" data-plan="${p.key}" href="/billing?plan=${p.key}&amp;interval=mo">${p.cta}</a>`
-        : `<a class="btn btn-ghost btn-full" href="/ai-builder">${p.cta}</a>`}
-      <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
+        ? `<a class="btn ${p.highlight ? 'btn-primary' : 'btn-ghost'} btn-full plan-cta" data-plan="${p.key}" href="/billing?plan=${p.key}&amp;interval=mo">${tr(`pricing.${p.key}_cta`)}</a>`
+        : `<a class="btn btn-ghost btn-full" href="/ai-builder">${tr(`pricing.${p.key}_cta`)}</a>`}
+      <ul>${tArr(lang, `pricing.features.${p.key}`).map((f) => `<li>${f}</li>`).join('')}</ul>
     </div>`;
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -114,44 +119,40 @@ export async function handlePricing(ctx) {
   </style>
 </head>
 <body>
-  ${siteHeader('/pricing')}
+  ${siteHeader('/pricing', { lang })}
   <main>
     <section class="hero"><div class="wrap">
-      <h1>Simple pricing. <span class="grad-text">More for less.</span></h1>
-      <p>AI builds your site — and you get far more storage for far less than the big builders. Start free, upgrade when you grow.</p>
+      <h1>${tr('pricing.h1')} <span class="grad-text">${tr('pricing.h1_accent')}</span></h1>
+      <p>${tr('pricing.hero_p')}</p>
       <div class="toggle" role="group" aria-label="Billing period">
-        <button id="t-mo" class="on" onclick="setBilling('mo')">Monthly</button>
-        <button id="t-yr" onclick="setBilling('yr')">Annual <span class="save">2 months free</span></button>
+        <button id="t-mo" class="on" onclick="setBilling('mo')">${tr('pricing.monthly')}</button>
+        <button id="t-yr" onclick="setBilling('yr')">${tr('pricing.annual')} <span class="save">${tr('pricing.months_free')}</span></button>
       </div>
     </div></section>
 
     <section><div class="wrap">
       <div class="plans">${PLANS.map(card).join('')}</div>
       <div class="vs">
-        <div class="big"><span class="grad-text">25 GB for $9</span></div>
-        <div class="small">— where the big builders give you <strong>2 GB for $17</strong>. Built on Cloudflare R2, so storage is cheap and we pass it on.</div>
+        <div class="big"><span class="grad-text">${tr('pricing.vs_big')}</span></div>
+        <div class="small">${tr('pricing.vs_small')}</div>
       </div>
-      <p class="note">All plans include the AI builder, multi-page sites, live editing, themes &amp; one-click publish. Cancel anytime.</p>
+      <p class="note">${tr('pricing.note')}</p>
     </div></section>
 
     <section><div class="wrap faq">
-      <h2>Questions</h2>
-      <details><summary>What's an “AI credit”?</summary><p>Credits cover the AI work behind your site. Roughly: a full AI site build ≈ 20 credits, an AI text edit ≈ 1, an AI-generated image ≈ 5, refactoring an existing site ≈ 10. Your monthly allotment resets each cycle.</p></details>
-      <details><summary>Is there really a free plan?</summary><p>Yes — build and publish 1 site on a caddisfly subdomain with a small monthly AI allotment, free forever. No card required.</p></details>
-      <details><summary>Can I use my own domain?</summary><p>Custom domains are included on paid plans (1 on Starter, 5 on Pro, unlimited on Agency). Free sites get a caddisfly subdomain. <em>Custom-domain connection is rolling out soon.</em></p></details>
-      <details><summary>How is this cheaper than Wix &amp; co?</summary><p>We're AI-native and run on Cloudflare's edge — storage and bandwidth cost us a fraction, so we give you more and charge less. We don't bundle e-commerce add-ons you may not need.</p></details>
-      <details><summary>Can I cancel or switch plans?</summary><p>Anytime — upgrade, downgrade, or cancel from your account. No long-term contracts.</p></details>
+      <h2>${tr('pricing.faq_title')}</h2>
+      ${tArr(lang, 'pricing.faqs').map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}
     </div></section>
 
     <section><div class="wrap">
       <div style="background:var(--grad);border-radius:24px;padding:3rem 2rem;text-align:center;color:#fff;margin:1rem 0 2rem">
-        <h2 style="font-size:clamp(1.7rem,3.2vw,2.3rem);font-weight:800;margin-bottom:.5rem">Start building — free</h2>
-        <p style="opacity:.92;margin-bottom:1.6rem;font-size:1.05rem">Your first site is a minute away.</p>
-        <a class="btn" style="background:#fff;color:var(--p2)" href="/ai-builder">✨ Build with AI</a>
+        <h2 style="font-size:clamp(1.7rem,3.2vw,2.3rem);font-weight:800;margin-bottom:.5rem">${tr('pricing.cta_title')}</h2>
+        <p style="opacity:.92;margin-bottom:1.6rem;font-size:1.05rem">${tr('pricing.cta_sub')}</p>
+        <a class="btn" style="background:#fff;color:var(--p2)" href="/ai-builder">${tr('pricing.cta_btn')}</a>
       </div>
     </div></section>
   </main>
-  ${siteFooter()}
+  ${siteFooter({ lang })}
   <script>
     function setBilling(mode){
       document.getElementById('t-mo').classList.toggle('on', mode==='mo');

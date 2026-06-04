@@ -16,6 +16,7 @@ export async function createAIProject(db, data) {
     status = 'conversation',
     conversation_step = 'initial_prompt',
     pricing_tier = 'free_trial',
+    language = 'en',
   } = data;
 
   // Use provided project_id or generate one
@@ -25,12 +26,12 @@ export async function createAIProject(db, data) {
     .prepare(
       `INSERT INTO ai_projects (
          project_id, customer_email, project_name, status,
-         conversation_step, pricing_tier
+         conversation_step, pricing_tier, language
        )
-       VALUES (?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(projectId, customer_email, project_name, status, conversation_step, pricing_tier)
+    .bind(projectId, customer_email, project_name, status, conversation_step, pricing_tier, language)
     .first();
 
   return result;
@@ -94,6 +95,7 @@ export async function updateAIProject(db, id, data) {
     'status',
     'conversation_step',
     'pricing_tier',
+    'language',
     'deployed_at',
     'deployed_url',
     'terms_accepted_at',

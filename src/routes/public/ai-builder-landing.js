@@ -1,15 +1,19 @@
 // GET /ai-builder
 // Landing page for AI website builder
 
+import { translator } from '../../i18n/index.js';
+
 /**
  * Handle AI builder landing page
  * @param {object} ctx - Request context
  * @returns {Response} HTTP response
  */
 export async function handleAIBuilderLanding(ctx) {
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   const html = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -253,27 +257,35 @@ export async function handleAIBuilderLanding(ctx) {
   </header>
   <section class="hero">
     <div class="hero-content">
-      <h1>Build Your Website with AI</h1>
-      <p class="subtitle">Just describe your business. AI handles the rest — design, copy, and automatic SEO. Get a professional, search-ready website in minutes.</p>
+      <h1>${tr('builder.title')}</h1>
+      <p class="subtitle">${tr('builder.subtitle')}</p>
 
       <div class="cta-form">
-        <h2>Get Started Now</h2>
+        <h2>${tr('builder.get_started')}</h2>
         <div id="error" class="error"></div>
         <div id="success" class="success"></div>
         <form id="start-form">
           <div class="form-group">
-            <label for="email">Your Email</label>
-            <input type="email" id="email" name="email" required placeholder="you@example.com">
+            <label for="email">${tr('builder.email_label')}</label>
+            <input type="email" id="email" name="email" required placeholder="${tr('builder.email_ph')}">
           </div>
           <div class="form-group">
-            <label for="prompt">What kind of website do you need?</label>
-            <textarea id="prompt" name="prompt" required placeholder="e.g., I need a website for my bakery with an online menu and contact form..."></textarea>
+            <label for="prompt">${tr('builder.prompt_label')}</label>
+            <textarea id="prompt" name="prompt" required placeholder="${tr('builder.prompt_ph')}"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="site-lang">${tr('builder.lang_label')}</label>
+            <select id="site-lang" name="site-lang" style="width:100%;padding:.75rem;border:2px solid #e2e8f0;border-radius:10px;font:inherit;background:#fff">
+              <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+              <option value="es"${lang === 'es' ? ' selected' : ''}>Español</option>
+              <option value="pt"${lang === 'pt' ? ' selected' : ''}>Português</option>
+            </select>
           </div>
           <div class="form-group consent" style="display:flex;align-items:flex-start;gap:.55rem">
             <input type="checkbox" id="agree" name="agree" required style="width:auto;margin-top:.25rem;flex:none">
-            <label for="agree" style="font-weight:500;margin:0;cursor:pointer">I agree to the <a href="/terms" target="_blank" style="color:#764ba2;font-weight:700">Terms of Service</a> and <a href="/privacy" target="_blank" style="color:#764ba2;font-weight:700">Privacy Policy</a>.</label>
+            <label for="agree" style="font-weight:500;margin:0;cursor:pointer">${tr('landing.refactor_agree', { terms: `<a href="/terms" target="_blank" style="color:#764ba2;font-weight:700">${tr('footer.terms')}</a>`, privacy: `<a href="/privacy" target="_blank" style="color:#764ba2;font-weight:700">${tr('footer.privacy')}</a>` })}</label>
           </div>
-          <button type="submit" class="submit-btn" id="submit-btn">Start Building →</button>
+          <button type="submit" class="submit-btn" id="submit-btn">${tr('builder.submit')}</button>
         </form>
       </div>
     </div>
@@ -311,6 +323,7 @@ export async function handleAIBuilderLanding(ctx) {
 
       const email = document.getElementById('email').value;
       const prompt = document.getElementById('prompt').value;
+      const siteLang = document.getElementById('site-lang').value;
       const agreed = document.getElementById('agree').checked;
 
       if (!agreed) {
@@ -337,6 +350,7 @@ export async function handleAIBuilderLanding(ctx) {
             email: email,
             initial_prompt: prompt,
             accepted_terms: true,
+            language: siteLang,
           }),
         });
 

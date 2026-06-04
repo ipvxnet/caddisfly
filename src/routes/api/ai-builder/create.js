@@ -22,6 +22,9 @@ export async function handleAIBuilderCreate(ctx) {
     const body = await request.json();
     const { email, initial_prompt } = body;
     const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
+    // Site language: explicit selector → UI language → English.
+    const LANGS = ['en', 'es', 'pt'];
+    const language = LANGS.includes(body.language) ? body.language : (LANGS.includes(ctx.lang) ? ctx.lang : 'en');
 
     // Require Terms/Privacy acceptance before building.
     if (!acceptedTerms) {
@@ -93,6 +96,7 @@ export async function handleAIBuilderCreate(ctx) {
       status: 'conversation',
       conversation_step: 'initial_prompt',
       pricing_tier: 'free_trial',
+      language,
     });
 
     // Record Terms/Privacy acceptance.
@@ -104,7 +108,7 @@ export async function handleAIBuilderCreate(ctx) {
 
     // Create initial conversation entry
     const firstStep = getFirstStep();
-    const firstQuestion = formatStepForResponse(firstStep);
+    const firstQuestion = formatStepForResponse(firstStep, language);
 
     await createConversationEntry(env.DB, {
       ai_project_id: project.id,
@@ -131,7 +135,7 @@ export async function handleAIBuilderCreate(ctx) {
 
     // Determine next question
     const nextStep = 'business_info';
-    const nextQuestion = formatStepForResponse(nextStep);
+    const nextQuestion = formatStepForResponse(nextStep, language);
 
     // Return response with next question
     return new Response(

@@ -1,5 +1,7 @@
 // Shared brand assets for public marketing pages (landing, pricing).
 
+import { t, LANGS, LANG_NAMES } from '../i18n/index.js';
+
 /** Inline brand mark (continuous-wing "C", brand gradient). Unique id per use. */
 export function brandMark(id, cls = '', animated = false) {
   const anim = animated
@@ -119,6 +121,8 @@ export function baseCss() {
 /** Shared sticky header. activePath highlights the matching nav link.
  * opts.credits (number) renders a "✨ N" Caddi-Credits pill linking to /billing. */
 export function siteHeader(activePath = '', opts = {}) {
+  const lang = (opts && opts.lang) || 'en';
+  const tr = (k, v) => t(lang, k, v);
   const a = (path) => (activePath === path ? ' class="active"' : '');
   const pill =
     opts && opts.credits != null
@@ -127,21 +131,35 @@ export function siteHeader(activePath = '', opts = {}) {
   return `<header class="site"><div class="wrap nav">
     <a class="brand" href="/">${brandMark('m-hd')}<span>caddisfly<span class="ai">.ai</span></span></a>
     <nav class="nav-links">
-      <a href="/#paths"${a('/#paths')}>How it works</a>
-      <a href="/pricing"${a('/pricing')}>Pricing</a>
-      <a href="/#features">Features</a>
-      <a href="/dashboard"${a('/dashboard')}>Dashboard</a>
+      <a href="/#paths"${a('/#paths')}>${tr('nav.how_it_works')}</a>
+      <a href="/pricing"${a('/pricing')}>${tr('nav.pricing')}</a>
+      <a href="/#features">${tr('nav.features')}</a>
+      <a href="/dashboard"${a('/dashboard')}>${tr('nav.dashboard')}</a>
+      ${langSwitcher(lang)}
       ${pill}
-      <a class="btn btn-primary" href="/ai-builder">Build with AI →</a>
+      <a class="btn btn-primary" href="/ai-builder">${tr('nav.build')} →</a>
     </nav>
   </div></header>`;
 }
 
-/** Shared footer. */
-export function siteFooter() {
+/** Compact language switcher — sets cf_lang via /api/lang and returns to the page.
+ * The trailing script self-corrects the selected option from the cf_lang cookie so
+ * it's always accurate even on pages that render with the default (English) chrome. */
+export function langSwitcher(lang = 'en') {
+  const opts = LANGS.map((l) => `<option value="${l}"${l === lang ? ' selected' : ''}>${LANG_NAMES[l]}</option>`).join('');
+  return `<select class="lang-select" aria-label="${t(lang, 'lang.label')}"
+    style="font:inherit;font-size:.8rem;padding:.25rem .45rem;border:1px solid var(--line,#e9ecf5);border-radius:8px;background:#fff;color:var(--body,#475067);cursor:pointer"
+    onchange="location.href='/api/lang?to='+this.value+'&next='+encodeURIComponent(location.pathname+location.search)">${opts}</select>` +
+    `<script>(function(){var m=document.cookie.match(/(?:^|; )cf_lang=([a-z]{2})/);var s=document.currentScript.previousElementSibling;if(m&&s&&s.tagName==='SELECT')s.value=m[1];})();</script>`;
+}
+
+/** Shared footer. opts.lang localizes the links + copyright. */
+export function siteFooter(opts = {}) {
+  const lang = (opts && opts.lang) || 'en';
+  const tr = (k, v) => t(lang, k, v);
   return `<footer class="site"><div class="wrap foot">
     <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
-    <span class="foot-links"><a href="/pricing">Pricing</a> · <a href="/help">Help</a> · <a href="/support">Support</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/billing">Billing</a></span>
-    <span>© 2026 Caddisfly. Build beautiful websites with AI.</span>
+    <span class="foot-links"><a href="/pricing">${tr('footer.pricing')}</a> · <a href="/help">${tr('footer.help')}</a> · <a href="/support">${tr('footer.support')}</a> · <a href="/terms">${tr('footer.terms')}</a> · <a href="/privacy">${tr('footer.privacy')}</a> · <a href="/billing">${tr('footer.billing')}</a></span>
+    <span>${tr('footer.rights', { year: 2026 })}</span>
   </div></footer>`;
 }
