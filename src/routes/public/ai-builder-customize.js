@@ -352,6 +352,17 @@ export async function handleAIBuilderCustomize(ctx) {
     .design-group > summary::before { content: '▸ '; color: #a0aec0; }
     .design-group[open] > summary::before { content: '▾ '; }
     .design-group-body { padding-top: 1rem; }
+    .seo-hint { font-size: .8rem; color: #718096; margin-bottom: .9rem; line-height: 1.5; }
+    .seo-label { display: block; font-size: .8rem; font-weight: 700; color: #4a5568; margin: .7rem 0 .3rem; }
+    .seo-sub { font-weight: 500; color: #a0aec0; }
+    .seo-count { float: right; font-weight: 500; color: #a0aec0; }
+    .seo-input { width: 100%; box-sizing: border-box; padding: .5rem .6rem; border: 1px solid #cbd5e0; border-radius: 8px; font: inherit; font-size: .85rem; }
+    textarea.seo-input { resize: vertical; }
+    .serp-preview { margin: 1rem 0 .6rem; padding: .7rem .8rem; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+    .serp-url { color: #1a7f37; font-size: .76rem; word-break: break-all; }
+    .serp-title { color: #1a0dab; font-size: 1rem; font-weight: 500; margin: .15rem 0; line-height: 1.3; }
+    .serp-desc { color: #4d5156; font-size: .82rem; line-height: 1.45; }
+    .seo-saved { color: #03894a; font-size: .82rem; font-weight: 700; margin-left: .6rem; }
     ${DOMAINS_CSS}
 
     .page-tabs {
@@ -672,6 +683,30 @@ export async function handleAIBuilderCustomize(ctx) {
             ${generateFontPicker(config, project.project_id)}
           </div>
         </details>
+
+        <details class="design-group" id="seo-group">
+          <summary>🔎 SEO — Google &amp; social preview</summary>
+          <div class="design-group-body">
+            <p class="seo-hint">Auto-filled from your business info — every site is SEO-ready. Override this page below; changes apply next time you publish.</p>
+            <label class="seo-label">Page title <span class="seo-count" id="seo-title-count"></span></label>
+            <input type="text" id="seo-title" class="seo-input" maxlength="120" oninput="seoSync()"
+              placeholder="${esc((currentPage && (currentPage.title || currentPage.nav_label)) || 'Home')} | Your business"
+              value="${esc((currentPage && currentPage.seo_title) || '')}">
+            <label class="seo-label">Meta description <span class="seo-count" id="seo-desc-count"></span></label>
+            <textarea id="seo-desc" class="seo-input" rows="3" maxlength="320" oninput="seoSync()"
+              placeholder="A short, compelling summary of this page for search results.">${esc((currentPage && currentPage.seo_description) || '')}</textarea>
+            <label class="seo-label">Social share image URL <span class="seo-sub">(site-wide)</span></label>
+            <input type="text" id="seo-social" class="seo-input" placeholder="https://…/share-image.jpg"
+              value="${esc(config.social_image || '')}">
+            <div class="serp-preview">
+              <div class="serp-url">${esc(currentSubdomain ? `${currentSubdomain}.${sitesBase}` : `yoursite.${sitesBase}`)}${currentPage && currentPage.is_home ? '' : '/' + esc((currentPage && currentPage.slug) || '')}</div>
+              <div class="serp-title" id="serp-title"></div>
+              <div class="serp-desc" id="serp-desc"></div>
+            </div>
+            <button class="link-btn" id="seo-save" onclick="saveSeo(this)" style="font-weight:700">Save SEO</button>
+            <span class="seo-saved" id="seo-saved" hidden>Saved ✓</span>
+          </div>
+        </details>
         ${showDomains ? domainsPanelBlock : ''}
       </div>
 
@@ -684,7 +719,37 @@ export async function handleAIBuilderCustomize(ctx) {
   <script>
     const projectId = '${project.project_id}';
     const currentPageSlug = '${currentSlug}';
+    const seoPageId = ${currentPage ? currentPage.id : 'null'};
     let draggedElement = null;
+
+    // ---- SEO panel (live preview + save) ----
+    function seoSync() {
+      const t = document.getElementById('seo-title'), d = document.getElementById('seo-desc');
+      if (!t || !d) return;
+      document.getElementById('seo-title-count').textContent = t.value.length + '/60';
+      document.getElementById('seo-desc-count').textContent = d.value.length + '/160';
+      document.getElementById('serp-title').textContent = t.value || t.placeholder;
+      document.getElementById('serp-desc').textContent = d.value || d.placeholder;
+    }
+    async function saveSeo(btn) {
+      btn.disabled = true;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/seo\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pageId: seoPageId,
+            seo_title: document.getElementById('seo-title').value,
+            seo_description: document.getElementById('seo-desc').value,
+            social_image: document.getElementById('seo-social').value,
+          }),
+        });
+        const d = await r.json();
+        if (d.success) { const s = document.getElementById('seo-saved'); s.hidden = false; setTimeout(() => { s.hidden = true; }, 2200); }
+        else alert(d.error || 'Could not save SEO.');
+      } catch (_) { alert('Network error. Please try again.'); }
+      finally { btn.disabled = false; }
+    }
+    seoSync();
 
     // ---- Pages (multi-page) ----
     function gotoPage(slug) {

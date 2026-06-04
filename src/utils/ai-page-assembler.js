@@ -27,7 +27,11 @@ function fontFamilyParam(name, weights) {
  * @returns {string} Complete HTML document
  */
 export function assemblePage(sections, config, project, opts = {}) {
-  const { pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false, hideBadge = false, trackId = null, appOrigin = '' } = opts;
+  const {
+    pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
+    hideBadge = false, trackId = null, appOrigin = '',
+    seoTitle = null, seoDescription = null, socialImage = null, canonicalUrl = null, pageTitle = null, business = null,
+  } = opts;
 
   // Inject nav context so the navbar can render page links (other templates ignore it).
   const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin };
@@ -58,9 +62,57 @@ export function assemblePage(sections, config, project, opts = {}) {
     title: project.project_name || 'My Website',
     body: renderedSections,
     config: renderConfig,
+    seo: { seoTitle, seoDescription, socialImage, canonicalUrl, pageTitle, business },
   });
 
   return html;
+}
+
+/**
+ * Build the SEO <head> block for a published page: title, meta description,
+ * canonical, Open Graph / Twitter cards, and a LocalBusiness JSON-LD when real
+ * contact data is present. Everything falls back to the business name / tagline
+ * so a site is SEO-ready with zero input; `seoTitle`/`seoDescription`/`socialImage`
+ * (set in the customize SEO panel) override the auto values.
+ */
+function seoHead(seo, fallbackTitle) {
+  const s = seo || {};
+  const biz = s.business || {};
+  const e = escapeHtml;
+  const bizName = biz.name || fallbackTitle || 'My Website';
+  const pageTitle = s.pageTitle || fallbackTitle || bizName;
+  const metaTitle = s.seoTitle || (pageTitle && pageTitle !== bizName ? `${pageTitle} | ${bizName}` : bizName);
+  const metaDesc = s.seoDescription || biz.description || `${bizName} — official website.`;
+  const ogImage = s.socialImage || biz.logo || '';
+  const canonical = s.canonicalUrl || '';
+
+  const tags = [
+    `<title>${e(metaTitle)}</title>`,
+    `<meta name="description" content="${e(metaDesc)}">`,
+    canonical ? `<link rel="canonical" href="${e(canonical)}">` : '',
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:site_name" content="${e(bizName)}">`,
+    `<meta property="og:title" content="${e(metaTitle)}">`,
+    `<meta property="og:description" content="${e(metaDesc)}">`,
+    canonical ? `<meta property="og:url" content="${e(canonical)}">` : '',
+    ogImage ? `<meta property="og:image" content="${e(ogImage)}">` : '',
+    `<meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}">`,
+    `<meta name="twitter:title" content="${e(metaTitle)}">`,
+    `<meta name="twitter:description" content="${e(metaDesc)}">`,
+    ogImage ? `<meta name="twitter:image" content="${e(ogImage)}">` : '',
+  ];
+
+  let ld = '';
+  if (biz.name && (biz.address || biz.phone)) {
+    const obj = { '@context': 'https://schema.org', '@type': 'LocalBusiness', name: biz.name };
+    if (metaDesc) obj.description = metaDesc;
+    if (canonical) obj.url = canonical;
+    if (ogImage) obj.image = ogImage;
+    if (biz.phone) obj.telephone = biz.phone;
+    if (biz.address) obj.address = { '@type': 'PostalAddress', streetAddress: biz.address };
+    ld = `\n  <script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+  }
+  return tags.filter(Boolean).join('\n  ') + ld;
 }
 
 /**
@@ -68,7 +120,7 @@ export function assemblePage(sections, config, project, opts = {}) {
  * @param {object} options - Document options
  * @returns {string} Complete HTML document
  */
-export function buildHTMLDocument({ title, body, config }) {
+export function buildHTMLDocument({ title, body, config, seo = null }) {
   const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '' } = config;
 
   // Dark themes carry surface tokens; inject a global override layer when active.
@@ -84,8 +136,7 @@ export function buildHTMLDocument({ title, body, config }) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${escapeHtml(title)}</title>
-  <meta name="description" content="${escapeHtml(title)} - Built with Caddisfly">
+  ${seoHead(seo, title)}
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

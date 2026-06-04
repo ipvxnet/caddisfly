@@ -97,7 +97,7 @@ export async function createPage(db, data) {
 
 /** Update editable page fields. */
 export async function updatePage(db, id, data) {
-  const allowed = ['slug', 'title', 'nav_label', 'page_order', 'is_visible'];
+  const allowed = ['slug', 'title', 'nav_label', 'page_order', 'is_visible', 'seo_title', 'seo_description'];
   const updates = [];
   const values = [];
   Object.keys(data).forEach((k) => {

@@ -8,6 +8,7 @@ const TOC = [
   ['getting-started', 'Getting started'],
   ['customizing', 'Customizing your site'],
   ['publishing', 'Publishing'],
+  ['seo', 'SEO & getting found'],
   ['custom-domains', 'Custom domains & DNS'],
   ['plans', 'Plans, credits & billing'],
   ['team', 'Team members'],
@@ -23,6 +24,7 @@ const FAQS = [
   ['How long until my custom domain works?', 'After you add the CNAME, DNS propagation and SSL issuance usually take a few minutes. Click <strong>Check status</strong> in the domain panel; once it shows <strong>Active</strong>, your site is live over HTTPS.'],
   ['What are Caddi Credits?', 'Credits are spent on AI actions (generating content, AI image creation, AI edits). Each plan includes a monthly allotment that resets every month, plus you can buy one-time top-up credits that never expire.'],
   ['How do team members work?', 'Invite teammates by email from your <strong>Dashboard</strong>. They get a link that signs them in and joins your team, where they can access your websites. You (the owner) and any admins can invite, promote, or remove members. Seat limits: Starter 5, Pro 15, Agency 50 (including you).'],
+  ['Is my site good for SEO? Do I need to set anything up?', 'Every published site is search-ready automatically — page titles, meta descriptions, social share cards, Google business (LocalBusiness) markup, a canonical URL, <code>robots.txt</code>, and a <code>sitemap.xml</code>, all generated for you. To customize a page, open <strong>Customize → 🔎 SEO</strong> and edit the title and description with a live Google-result preview. See <a href="#seo">SEO &amp; getting found</a>.'],
   ['Can I get a refund?', 'Subscriptions can be cancelled anytime from <strong>Billing</strong> (you keep access until the period ends). For-convenience terminations are pro-rated per our <a href="/terms">Terms</a>.'],
   ['I need help or found a bug.', 'Open a ticket from <a href="/support">Support</a> — describe the issue or request and we\'ll get back to you by email.'],
 ];
@@ -67,6 +69,17 @@ export function handleHelp(ctx) {
     ${section('publishing', 'Publishing', `
       <p>Click <strong>Deploy Website</strong> in Customize. Your site goes live on a free address like <code>yourbusiness.caddisfly.app</code>, and we show you a clickable link. Re-deploy any time after making changes — re-publishing on a paid plan also removes the "Built with Caddisfly" badge.</p>`)}
 
+    ${section('seo', 'SEO & getting found', `
+      <p>Every site you publish is <strong>search-ready out of the box</strong> — no setup required. Caddisfly automatically adds:</p>
+      <ul>
+        <li><strong>Page titles &amp; meta descriptions</strong> for each page, drawn from your business name and content.</li>
+        <li><strong>Social share cards</strong> (Open Graph / Twitter) so links look great when shared.</li>
+        <li><strong>Google business markup</strong> (LocalBusiness structured data) using your name, description, phone, and address when available.</li>
+        <li>A <strong>canonical URL</strong>, a per-site <code>robots.txt</code>, and a <code>sitemap.xml</code> so search engines can crawl every page. On a custom domain, your own domain is treated as the canonical one.</li>
+      </ul>
+      <p><strong>Fine-tune any page:</strong> open <strong>Customize</strong> → the <strong>🔎 SEO</strong> panel. Edit the page title and meta description (with a live Google-result preview), and set a site-wide social share image. Leave anything blank and we use the smart auto values. Changes apply the next time you publish.</p>
+      <p>After publishing, submit your <code>sitemap.xml</code> in <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a> to get indexed faster.</p>`)}
+
     ${section('custom-domains', 'Custom domains & DNS', `
       <p>On a paid plan you can point your own domain at your site. Open <strong>🌐 Custom domain</strong> (in Customize or on your <a href="/dashboard">Dashboard</a>) and enter a domain.</p>
       <ol>
@@ -108,7 +121,21 @@ function pageShell(origin, inner) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Help & Docs — Caddisfly', description: 'Guides and FAQ for building, customizing, publishing, custom domains, plans, and teams on Caddisfly.', origin })}
+  ${headTags({
+    title: 'Help & Docs — Caddisfly',
+    description: 'Guides and FAQ for building, customizing, publishing, custom domains, plans, and teams on Caddisfly.',
+    origin,
+    path: '/help',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQS.map(([q, a]) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() },
+      })),
+    },
+  })}
   <style>
     ${baseCss()}
     main{min-height:60vh}

@@ -318,7 +318,7 @@ export function renderLegalPage({ slug, body, origin }) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: meta.title, description: meta.description, origin })}
+  ${headTags({ title: meta.title, description: meta.description, origin, path: meta.nav })}
   <style>
     ${baseCss()}
 ${LEGAL_CSS}

@@ -28,23 +28,48 @@ export function brandMark(id, cls = '', animated = false) {
 export const FAVICON =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23667eea'/%3E%3Cstop offset='.55' stop-color='%23764ba2'/%3E%3Cstop offset='1' stop-color='%23f093fb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M88 34 C 58 18, 26 34, 26 64 C 26 92, 56 104, 84 92' fill='none' stroke='url(%23g)' stroke-width='9' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='30' r='6.5' fill='url(%23g)'/%3E%3Cpath d='M92 24 C 96 14, 102 11, 108 11' fill='none' stroke='url(%23g)' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E";
 
-/** Shared <head> tags (fonts, favicons, OG/Twitter). */
-export function headTags({ title, description, origin }) {
+/** Serialize a JSON-LD object safely for inline <script>. */
+function ldScript(obj) {
+  return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+}
+
+/**
+ * Shared <head> tags (canonical, fonts, favicons, OG/Twitter, JSON-LD).
+ * @param {object} o - { title, description, origin, path='/', jsonLd=null }
+ *   path: the page's path for canonical + og:url (e.g. '/pricing').
+ *   jsonLd: an extra schema.org object (or array) appended after the org block.
+ */
+export function headTags({ title, description, origin, path = '/', jsonLd = null }) {
+  const base = origin || 'https://caddisfly.ai';
+  const url = `${base}${path}`;
+  const org = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Caddisfly',
+    url: base,
+    logo: `${base}/og.png`,
+    description: 'AI website builder — build a new site or refactor your existing one, then publish in minutes.',
+  };
+  const extra = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+  const ld = [org, ...extra].map(ldScript).join('\n  ');
   return `
   <title>${title}</title>
   <meta name="description" content="${description}">
+  <link rel="canonical" href="${url}">
+  <meta property="og:site_name" content="Caddisfly">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="${origin}/">
-  <meta property="og:image" content="${origin}/og.png">
+  <meta property="og:url" content="${url}">
+  <meta property="og:image" content="${base}/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${origin}/og.png">
+  <meta name="twitter:image" content="${base}/og.png">
   <meta name="theme-color" content="#764ba2">
+  ${ld}
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">

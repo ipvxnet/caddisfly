@@ -32,7 +32,7 @@ import { handleAIBuilderGenerating } from './routes/public/ai-builder-generating
 import { handleAIBuilderCustomize } from './routes/public/ai-builder-customize.js';
 import { handleAIPreview } from './routes/public/ai-preview.js';
 import { handlePublishedSite } from './routes/public/published-site.js';
-import { handleStaticAsset, handleWebmanifest, handleOgImage } from './routes/public/static-assets.js';
+import { handleStaticAsset, handleWebmanifest, handleOgImage, handleRobots, handleSitemap } from './routes/public/static-assets.js';
 import { handleAIBuilderCreate } from './routes/api/ai-builder/create.js';
 import { handleAIBuilderRespond } from './routes/api/ai-builder/respond.js';
 import { handleAIBuilderGenerate } from './routes/api/ai-builder/generate.js';
@@ -47,6 +47,7 @@ import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
 import { handleAIEditPropose, handleAIEditApply } from './routes/api/ai-builder/ai-edit.js';
 import { handleListPages, handleCreatePage, handleReorderPages, handleUpdatePage, handleDeletePage } from './routes/api/ai-builder/pages.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
+import { handleUpdateSeo } from './routes/api/ai-builder/seo.js';
 import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './routes/api/ai-builder/domains.js';
 
 // Billing (Stripe + magic-link) route handlers
@@ -86,6 +87,8 @@ router.get('/android-chrome-192x192.png', handleStaticAsset);
 router.get('/android-chrome-512x512.png', handleStaticAsset);
 router.get('/site.webmanifest', handleWebmanifest);
 router.get('/og.png', handleOgImage);
+router.get('/robots.txt', handleRobots);
+router.get('/sitemap.xml', handleSitemap);
 router.get('/login', handleLogin);
 router.get('/auth/google/callback', handleGoogleCallback);
 router.get('/preview/:preview_id', handlePreviewView);
@@ -152,6 +155,7 @@ router.post('/api/ai-builder/:project_id/pages', handleCreatePage, PROJ);
 router.put('/api/ai-builder/:project_id/pages/reorder', handleReorderPages, PROJ);
 router.put('/api/ai-builder/:project_id/pages/:page_id', handleUpdatePage, PROJ);
 router.delete('/api/ai-builder/:project_id/pages/:page_id', handleDeletePage, PROJ);
+router.put('/api/ai-builder/:project_id/seo', handleUpdateSeo, PROJ);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);

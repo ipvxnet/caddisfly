@@ -1,6 +1,7 @@
 // Landing / home page — marketing home with two paths: Build with AI + Refactor.
 
 import { htmlResponse } from '../../utils/response.js';
+import { headTags } from '../../components/brand.js';
 
 // Inline brand mark (continuous-wing "C", brand gradient). Reused in header/hero/footer.
 function brandMark(id, cls = '', animated = false) {
@@ -41,29 +42,12 @@ export async function handleLanding(ctx) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caddisfly — Build a beautiful website with AI</title>
-  <meta name="description" content="Build a brand-new website by chatting with AI, or instantly refactor your existing site into a clean, modern design. Multi-page, on-brand, ready to publish.">
-  <meta property="og:title" content="Caddisfly — Build a beautiful website with AI">
-  <meta property="og:description" content="Chat to build a new site, or refactor your existing one. Modern, multi-page, ready to publish.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="${origin}/">
-  <meta property="og:image" content="${origin}/og.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Caddisfly — Build a beautiful website with AI">
-  <meta name="twitter:description" content="Chat to build a new site, or refactor your existing one.">
-  <meta name="twitter:image" content="${origin}/og.png">
-  <meta name="theme-color" content="#764ba2">
-  <link rel="icon" type="image/svg+xml" href="${FAVICON}">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  ${headTags({
+    title: 'Caddisfly — Build a beautiful website with AI',
+    description: 'Build a brand-new website by chatting with AI, or instantly refactor your existing site into a clean, modern design. Multi-page, on-brand, SEO-ready, and ready to publish.',
+    origin,
+    path: '/',
+  })}
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
@@ -278,6 +262,7 @@ export async function handleLanding(ctx) {
         <div class="sec-head"><h2>Everything you need to ship</h2></div>
         <div class="feats">
           <div class="feat"><div class="ic">🗂️</div><h4>Multi-page sites</h4><p>Home, About, Services, Contact &amp; more — with real navigation.</p></div>
+          <div class="feat"><div class="ic">🔎</div><h4>Auto-SEO</h4><p>Every site ships search-ready — page titles, meta descriptions, social cards, sitemaps &amp; Google business markup, generated automatically. Tweak any page, or let it run on autopilot.</p></div>
           <div class="feat"><div class="ic">✨</div><h4>AI section editing</h4><p>Chat to rewrite copy or generate new images, right in the editor.</p></div>
           <div class="feat"><div class="ic">🎨</div><h4>Themes &amp; fonts</h4><p>Switch the whole look — light, dark, gold — in a single click.</p></div>
           <div class="feat"><div class="ic">🖼️</div><h4>Real photos</h4><p>On-brand imagery pulled in automatically, or generate your own.</p></div>
