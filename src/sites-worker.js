@@ -56,6 +56,44 @@ async function serveAsset(env, pathname) {
   });
 }
 
+// Per-site robots.txt (host-aware so custom domains advertise their own sitemap).
+function robotsTxt(host) {
+  const body = `User-agent: *\nAllow: /\nSitemap: https://${host}/sitemap.xml\n`;
+  return new Response(body, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+// Per-site sitemap.xml built by listing the site's pages in R2, using the
+// REQUEST host so a custom domain gets a sitemap of its own URLs.
+async function sitemapXml(env, sub, host) {
+  const prefix = `sites/${sub}/`;
+  const listed = await env.STORAGE.list({ prefix });
+  const slugs = (listed.objects || [])
+    .map((o) => o.key.slice(prefix.length).replace(/\.html$/, ''))
+    .filter((s) => s && s !== 'index');
+  const paths = ['/'].concat(slugs.map((s) => `/${s}`));
+  const urls = [...new Set(paths)].map((p) => `  <url><loc>https://${host}${p}</loc></url>`).join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
+  return new Response(xml, {
+    headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+// When a page is served on a CUSTOM domain, the baked canonical/og:url point at
+// the .caddisfly.app subdomain. Rewrite them to the custom host so the customer's
+// own domain ranks as itself (host-aware self-canonical).
+function rewriteCanonicalHost(resp, host, slug) {
+  const canonical = `https://${host}${slug === 'index' ? '/' : `/${slug}`}`;
+  return new HTMLRewriter()
+    .on('link[rel="canonical"]', { element(el) { el.setAttribute('href', canonical); } })
+    .on('meta[property="og:url"]', { element(el) { el.setAttribute('content', canonical); } })
+    .transform(resp);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -77,16 +115,24 @@ export default {
     const sub = safeLabel(await resolveSubdomain(env, url, host));
     if (!sub) return notFound();
 
+    const hostNoPort = host.split(':')[0].toLowerCase();
+    const isCustomDomain = !hostNoPort.endsWith('.caddisfly.app');
+
+    // Per-site SEO files (built from R2 listing; host-aware).
+    if (url.pathname === '/robots.txt') return robotsTxt(hostNoPort);
+    if (url.pathname === '/sitemap.xml') return await sitemapXml(env, sub, hostNoPort);
+
     // "/" -> index; "/slug" -> slug (no DB; home was written as index.html).
     let slug = url.pathname.replace(/^\/+|\/+$/g, '');
     if (!slug) slug = 'index';
     if (!/^[a-z0-9-]{1,60}$/.test(slug)) return notFound();
 
     let html = await env.STORAGE.get(`sites/${sub}/${slug}.html`);
-    if (!html) html = await env.STORAGE.get(`sites/${sub}/index.html`); // unknown slug -> home
+    let servedSlug = slug;
+    if (!html) { html = await env.STORAGE.get(`sites/${sub}/index.html`); servedSlug = 'index'; } // unknown slug -> home
     if (!html) return notFound();
 
-    return new Response(html.body, {
+    const resp = new Response(html.body, {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
@@ -95,5 +141,7 @@ export default {
         'Referrer-Policy': 'strict-origin-when-cross-origin',
       },
     });
+    // On a custom domain, rewrite canonical/og:url to that host.
+    return isCustomDomain ? rewriteCanonicalHost(resp, hostNoPort, servedSlug) : resp;
   },
 };

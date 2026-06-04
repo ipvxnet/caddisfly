@@ -86,7 +86,7 @@ export async function getWebsiteConfigByProjectId(db, aiProjectId) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfigById(db, configId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image'];
 
   const updates = [];
   const values = [];
@@ -121,7 +121,7 @@ export async function updateWebsiteConfigById(db, configId, data) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfig(db, aiProjectId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image'];
 
   const updates = [];
   const values = [];

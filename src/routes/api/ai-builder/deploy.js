@@ -38,12 +38,14 @@ export async function handleAIBuilderDeploy(ctx) {
     // config, and a view object for the page <title>.
     const aiProject = await getAIProjectByProjectId(env.DB, publicId);
     let projectKey, config, projectView, email, regularProjectRow = null;
+    let business = {}; // SEO/JSON-LD identity: name + (refactor) Places contact data
 
     if (aiProject) {
       projectKey = { aiProjectId: aiProject.id };
       config = await getWebsiteConfigByAIProjectId(env.DB, aiProject.id);
       projectView = { project_name: aiProject.project_name || 'My Website', project_id: publicId, id: aiProject.id };
       email = aiProject.customer_email;
+      business = { name: projectView.project_name };
     } else {
       const regularProject = await getProjectByPreviewId(env.DB, publicId);
       if (!regularProject) return json({ success: false, error: 'Project not found' }, 404);
@@ -52,7 +54,14 @@ export async function handleAIBuilderDeploy(ctx) {
       try {
         const profile = JSON.parse(regularProject.company_profile_json || '{}');
         if (profile && profile.name) businessName = profile.name;
-      } catch { /* keep url */ }
+        business = {
+          name: profile.name || businessName,
+          description: profile.description || '',
+          address: profile.address || profile.location || '',
+          phone: profile.phone || '',
+          logo: profile.logo || '',
+        };
+      } catch { business = { name: businessName }; }
       projectKey = { projectId: regularProject.id };
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
       projectView = { project_name: businessName, project_id: publicId, id: regularProject.id };
@@ -96,6 +105,12 @@ export async function handleAIBuilderDeploy(ctx) {
     const existingSub = aiProject ? aiProject.subdomain : regularProjectRow && regularProjectRow.subdomain;
     const subdomain = await ensureUniqueSubdomain(env.DB, projectKey, projectView.project_name, existingSub);
 
+    // Canonical base for SEO tags: the site's subdomain on the sites domain. The
+    // sites worker rewrites this host → a custom domain when one is connected, so
+    // each public host self-canonicalizes.
+    const sitesBaseDomain = env.SITES_BASE || 'caddisfly.app';
+    const subdomainBase = `https://${subdomain}.${sitesBaseDomain}`;
+
     // Clean previous output (both the /site/:id copy and the subdomain copy) so
     // deleted/renamed pages don't linger.
     for (const prefix of [`published/${publicId}/`, `sites/${subdomain}/`]) {
@@ -121,6 +136,10 @@ export async function handleAIBuilderDeploy(ctx) {
       const combined = [...header, ...body, ...footer];
       if (combined.length === 0) continue;
 
+      // Canonical points at the subdomain for every copy (consolidates ranking;
+      // the sites worker swaps the host for custom domains at serve time).
+      const canonicalUrl = subdomainBase + (page.is_home ? '/' : `/${page.slug}`);
+
       const common = {
         pages: navPages,
         currentSlug: page.slug,
@@ -128,6 +147,13 @@ export async function handleAIBuilderDeploy(ctx) {
         hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
         trackId: publicId, // cookieless analytics beacon on published pages
         appOrigin, // absolute beacon target (works on both serving surfaces)
+        // SEO: per-page overrides + site social image + business identity.
+        seoTitle: page.seo_title || null,
+        seoDescription: page.seo_description || null,
+        socialImage: config.social_image || null,
+        canonicalUrl,
+        pageTitle: page.title || null,
+        business,
       };
 
       // /site/:id copy (app worker).
