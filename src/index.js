@@ -76,6 +76,24 @@ import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
   handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
 } from './routes/api/ai-builder/blog.js';
+import {
+  handleSnapshotList, handleSnapshotCreate, handleSnapshotRestore, handleSnapshotDelete,
+  handleSnapshotAutoToggle,
+} from './routes/api/ai-builder/snapshots.js';
+import { autoSnapshotAfterEdit } from './utils/site-snapshot.js';
+
+// Hourly auto-save, edit-driven: wrap state-changing project routes so a
+// successful edit kicks maybeAutoSnapshot off the response path (waitUntil).
+// "Changes were made" is implicit — it only ever fires from a real edit.
+const autoSnap = (handler) => async (ctx) => {
+  const res = await handler(ctx);
+  try {
+    if (res && res.status >= 200 && res.status < 300 && ctx.params && ctx.params.project_id && ctx.ctx && typeof ctx.ctx.waitUntil === 'function') {
+      ctx.ctx.waitUntil(autoSnapshotAfterEdit(ctx.env, ctx.params.project_id).catch((e) => console.error('auto-snapshot:', e.message)));
+    }
+  } catch { /* never block the response */ }
+  return res;
+};
 
 // Initialize router
 const router = new Router();
@@ -164,20 +182,20 @@ router.post('/api/ai-builder/:project_id/generate-preview', handleAIBuilderGener
 router.post('/api/ai-builder/:project_id/upload', handleAIBuilderUpload, PROJ);
 router.get('/api/ai-builder/:project_id/sections/:section_id/editor', handleGetSectionEditor, PROJ);
 router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit', handleAIEditPropose, PROJ);
-router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit/apply', handleAIEditApply, PROJ);
-router.put('/api/ai-builder/:project_id/sections/:section_id', handleAIBuilderSectionUpdate, PROJ);
-router.put('/api/ai-builder/:project_id/sections/reorder', handleSectionsReorder, PROJ);
-router.post('/api/ai-builder/:project_id/sections', handleAddSection, PROJ);
-router.delete('/api/ai-builder/:project_id/sections/:section_id', handleDeleteSection, PROJ);
-router.put('/api/ai-builder/:project_id/config/colors', handleUpdateColors, PROJ);
-router.put('/api/ai-builder/:project_id/config/fonts', handleUpdateFonts, PROJ);
-router.post('/api/ai-builder/:project_id/template', handleApplyTemplate, PROJ);
+router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit/apply', autoSnap(handleAIEditApply), PROJ);
+router.put('/api/ai-builder/:project_id/sections/:section_id', autoSnap(handleAIBuilderSectionUpdate), PROJ);
+router.put('/api/ai-builder/:project_id/sections/reorder', autoSnap(handleSectionsReorder), PROJ);
+router.post('/api/ai-builder/:project_id/sections', autoSnap(handleAddSection), PROJ);
+router.delete('/api/ai-builder/:project_id/sections/:section_id', autoSnap(handleDeleteSection), PROJ);
+router.put('/api/ai-builder/:project_id/config/colors', autoSnap(handleUpdateColors), PROJ);
+router.put('/api/ai-builder/:project_id/config/fonts', autoSnap(handleUpdateFonts), PROJ);
+router.post('/api/ai-builder/:project_id/template', autoSnap(handleApplyTemplate), PROJ);
 router.get('/api/ai-builder/:project_id/pages', handleListPages, PROJ);
-router.post('/api/ai-builder/:project_id/pages', handleCreatePage, PROJ);
-router.put('/api/ai-builder/:project_id/pages/reorder', handleReorderPages, PROJ);
-router.put('/api/ai-builder/:project_id/pages/:page_id', handleUpdatePage, PROJ);
-router.delete('/api/ai-builder/:project_id/pages/:page_id', handleDeletePage, PROJ);
-router.put('/api/ai-builder/:project_id/seo', handleUpdateSeo, PROJ);
+router.post('/api/ai-builder/:project_id/pages', autoSnap(handleCreatePage), PROJ);
+router.put('/api/ai-builder/:project_id/pages/reorder', autoSnap(handleReorderPages), PROJ);
+router.put('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleUpdatePage), PROJ);
+router.delete('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleDeletePage), PROJ);
+router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
@@ -196,6 +214,13 @@ router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
+
+// Site version snapshots (save / restore / delete / auto-save toggle)
+router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);
+router.post('/api/ai-builder/:project_id/snapshots', handleSnapshotCreate, PROJ);
+router.put('/api/ai-builder/:project_id/snapshots/auto', handleSnapshotAutoToggle, PROJ);
+router.post('/api/ai-builder/:project_id/snapshots/:snapshot_id/restore', handleSnapshotRestore, PROJ);
+router.delete('/api/ai-builder/:project_id/snapshots/:snapshot_id', handleSnapshotDelete, PROJ);
 router.delete('/api/ai-builder/:project_id/blog/:post_id', handleBlogDelete, PROJ);
 
 // Billing API
