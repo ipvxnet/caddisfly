@@ -17,7 +17,7 @@ export async function createSnapshotRow(db, projectKey, { label, trigger_type, r
       projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
       projectKey.projectId != null ? projectKey.projectId : null,
       (label || '').slice(0, 120),
-      trigger_type === 'pre_restore' ? 'pre_restore' : 'manual',
+      ['pre_restore', 'auto', 'manual'].includes(trigger_type) ? trigger_type : 'manual',
       r2_path,
       size_bytes || 0
     )
@@ -55,4 +55,24 @@ export async function snapshotsBeyondCap(db, projectKey, keep) {
     .bind(k.val, keep)
     .all();
   return results || [];
+}
+
+/** Unix seconds of the most recent 'auto' snapshot (0 when none) — hourly throttle. */
+export async function latestAutoSnapshotAt(db, projectKey) {
+  const k = keyWhere(projectKey);
+  const r = await db
+    .prepare(`SELECT created_at FROM ai_snapshots WHERE ${k.sql} AND trigger_type = 'auto' ORDER BY created_at DESC LIMIT 1`)
+    .bind(k.val)
+    .first();
+  return (r && r.created_at) || 0;
+}
+
+/** Count of MANUAL snapshots — autos never evict these (see takeSnapshot). */
+export async function countManualSnapshots(db, projectKey) {
+  const k = keyWhere(projectKey);
+  const r = await db
+    .prepare(`SELECT COUNT(*) AS n FROM ai_snapshots WHERE ${k.sql} AND trigger_type = 'manual'`)
+    .bind(k.val)
+    .first();
+  return (r && r.n) || 0;
 }

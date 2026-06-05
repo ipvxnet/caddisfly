@@ -342,6 +342,7 @@ export const es = {
     save_btn: '💾 Guardar versión', saving: 'Guardando…',
     loading: 'Cargando…', empty: 'Aún no hay versiones guardadas.', err: 'No se pudieron cargar las versiones.',
     unnamed: 'Versión sin nombre', auto_backup: '⛑ Copia automática (antes de restaurar)',
+    auto_save: '⏱ Guardado automático', auto_toggle: 'Guardar automáticamente cada hora mientras edito',
     restore: 'Restaurar', restoring: 'Restaurando…',
     restore_confirm: '¿Restaurar esta versión? Tus páginas, secciones y diseño actuales serán reemplazados. (Antes se guarda una copia automática, y tu sitio publicado solo cambia cuando publicas.)',
     delete: 'Eliminar', delete_confirm: '¿Eliminar esta versión guardada? No se puede deshacer.',

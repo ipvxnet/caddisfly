@@ -10,7 +10,13 @@
 
 import { uploadToR2, getFromR2 } from './r2-storage.js';
 import { SNAPSHOT_LIMITS } from './credits.js';
-import { createSnapshotRow, snapshotsBeyondCap, deleteSnapshotRow } from '../db/snapshots.js';
+import {
+  createSnapshotRow, deleteSnapshotRow, getSnapshotsByProject,
+  latestAutoSnapshotAt, countManualSnapshots,
+} from '../db/snapshots.js';
+import { getAIProjectByProjectId } from '../db/ai-projects.js';
+import { getProjectByPreviewId } from '../db/projects.js';
+import { getUserTier } from './rate-limiter.js';
 
 const SNAPSHOT_VERSION = 1;
 const MAX_PAGES = 200;
@@ -51,8 +57,10 @@ export async function serializeSiteState(db, projectKey) {
 }
 
 /**
- * Take a snapshot: serialize → R2 blob → metadata row → prune beyond the
- * tier's retention cap (oldest first; R2 blobs deleted best-effort).
+ * Take a snapshot: serialize → R2 blob → metadata row → prune to the tier's
+ * retention cap. Eviction is CLASS-AWARE: auto/pre_restore snapshots are
+ * evicted (oldest first) before any user-named manual save — a manual version
+ * is only pruned by newer manual saves, never by the hourly auto-saver.
  * @returns {Promise<{row: object, pruned: number}>}
  */
 export async function takeSnapshot(env, projectKey, publicId, { label = '', trigger = 'manual', tier = 'free_trial' } = {}) {
@@ -68,12 +76,72 @@ export async function takeSnapshot(env, projectKey, publicId, { label = '', trig
   });
 
   const keep = SNAPSHOT_LIMITS[tier] != null ? SNAPSHOT_LIMITS[tier] : SNAPSHOT_LIMITS.free_trial;
-  const excess = await snapshotsBeyondCap(env.DB, projectKey, keep);
-  for (const s of excess) {
-    try { await env.STORAGE.delete(s.r2_path); } catch (e) { console.error('snapshot prune (blob):', e.message); }
-    await deleteSnapshotRow(env.DB, projectKey, s.id);
+  const all = await getSnapshotsByProject(env.DB, projectKey); // newest first
+  let excessCount = all.length - keep;
+  let pruned = 0;
+  if (excessCount > 0) {
+    const isAutoClass = (s) => s.trigger_type === 'auto' || s.trigger_type === 'pre_restore';
+    // Oldest-first victims: auto-class first, manuals only as a last resort —
+    // and never the row we just created.
+    const oldestFirst = all.slice().reverse().filter((s) => s.id !== row.id);
+    const victims = [
+      ...oldestFirst.filter(isAutoClass),
+      ...oldestFirst.filter((s) => !isAutoClass(s)),
+    ].slice(0, excessCount);
+    for (const s of victims) {
+      try { await env.STORAGE.delete(s.r2_path); } catch (e) { console.error('snapshot prune (blob):', e.message); }
+      await deleteSnapshotRow(env.DB, projectKey, s.id);
+      pruned++;
+    }
   }
-  return { row, pruned: excess.length };
+  return { row, pruned };
+}
+
+/**
+ * Edit-driven hourly auto-save. Called (via waitUntil) after successful
+ * state-changing edits — so "changes were made" is implicit and no cron is
+ * needed. Skips when: the project/config is missing, the per-site toggle is
+ * off, an auto snapshot ran within the past hour, or manual saves already
+ * fill the tier cap (autos never evict manuals).
+ */
+export async function maybeAutoSnapshot(env, projectKey, publicId, { email, tier } = {}) {
+  const k = keyWhere(projectKey);
+  const config = await env.DB
+    .prepare(`SELECT auto_snapshot FROM ai_website_configs WHERE ${k.sql}`)
+    .bind(k.val)
+    .first();
+  if (!config || config.auto_snapshot === 0) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  const lastAuto = await latestAutoSnapshotAt(env.DB, projectKey);
+  if (now - lastAuto < 3600) return null;
+
+  const keep = SNAPSHOT_LIMITS[tier] != null ? SNAPSHOT_LIMITS[tier] : SNAPSHOT_LIMITS.free_trial;
+  const manuals = await countManualSnapshots(env.DB, projectKey);
+  if (manuals >= keep) return null; // no room without touching named saves
+
+  return takeSnapshot(env, projectKey, publicId, { label: '', trigger: 'auto', tier });
+}
+
+/**
+ * Fire-and-forget entry for the autoSnap route wrapper (index.js): resolves
+ * the project + tier from the public id, then defers to maybeAutoSnapshot.
+ * Runs inside waitUntil — never throws into the response path.
+ */
+export async function autoSnapshotAfterEdit(env, publicId) {
+  const aiProject = await getAIProjectByProjectId(env.DB, publicId);
+  let projectKey, email;
+  if (aiProject) {
+    projectKey = { aiProjectId: aiProject.id };
+    email = aiProject.customer_email;
+  } else {
+    const regular = await getProjectByPreviewId(env.DB, publicId);
+    if (!regular) return null;
+    projectKey = { projectId: regular.id };
+    email = regular.customer_email;
+  }
+  const tier = await getUserTier(env.DB, email);
+  return maybeAutoSnapshot(env, projectKey, publicId, { email, tier });
 }
 
 /**

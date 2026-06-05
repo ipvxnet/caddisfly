@@ -347,6 +347,7 @@ export const en = {
     save_btn: '💾 Save version', saving: 'Saving…',
     loading: 'Loading…', empty: 'No saved versions yet.', err: 'Could not load versions.',
     unnamed: 'Unnamed version', auto_backup: '⛑ Auto-backup (before restore)',
+    auto_save: '⏱ Auto-save', auto_toggle: 'Auto-save hourly while I’m editing',
     restore: 'Restore', restoring: 'Restoring…',
     restore_confirm: 'Restore this version? Your current pages, sections and design will be replaced. (A backup of the current state is saved automatically, and your published site only changes when you publish.)',
     delete: 'Delete', delete_confirm: 'Delete this saved version? This cannot be undone.',

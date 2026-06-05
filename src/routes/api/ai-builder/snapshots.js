@@ -14,6 +14,7 @@ import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSnapshotsByProject, getSnapshotById, deleteSnapshotRow } from '../../../db/snapshots.js';
 import { takeSnapshot, restoreSnapshot } from '../../../utils/site-snapshot.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
+import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId, updateWebsiteConfigById } from '../../../db/ai-config.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -71,6 +72,26 @@ export async function handleSnapshotRestore(ctx) {
   } catch (e) {
     console.error('snapshot restore error:', e);
     return json({ success: false, error: e.message || 'Restore failed' }, 500);
+  }
+}
+
+/** PUT /api/ai-builder/:project_id/snapshots/auto — per-site auto-save toggle. */
+export async function handleSnapshotAutoToggle(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (r.error) return r.error;
+    const body = await request.json().catch(() => ({}));
+    const enabled = body.enabled !== false ? 1 : 0;
+    const config = r.projectKey.aiProjectId != null
+      ? await getWebsiteConfigByAIProjectId(env.DB, r.projectKey.aiProjectId)
+      : await getWebsiteConfigByRegularProjectId(env.DB, r.projectKey.projectId);
+    if (!config) return json({ success: false, error: 'Website configuration not found' }, 400);
+    await updateWebsiteConfigById(env.DB, config.id, { auto_snapshot: enabled });
+    return json({ success: true, auto_snapshot: enabled });
+  } catch (e) {
+    console.error('snapshot auto-toggle error:', e);
+    return json({ success: false, error: 'Failed to update auto-save setting' }, 500);
   }
 }
 

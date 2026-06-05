@@ -360,6 +360,7 @@ export async function handleAIBuilderCustomize(ctx) {
     .snap-name { font-weight: 700; color: #2d3748; font-size: .88rem; }
     .snap-meta { color: #a0aec0; font-size: .78rem; flex: 1; }
     .snap-acts { display: flex; gap: .7rem; }
+    .snap-auto { display: flex; align-items: center; gap: .45rem; font-size: .82rem; color: #4a5568; margin: 0 0 .7rem; cursor: pointer; }
     .design-group[open] > summary::before { content: '▾ '; }
     .design-group-body { padding-top: 1rem; }
     .seo-hint { font-size: .8rem; color: #718096; margin-bottom: .9rem; line-height: 1.5; }
@@ -727,6 +728,7 @@ export async function handleAIBuilderCustomize(ctx) {
               <input type="text" id="snap-label" class="seo-input" maxlength="120" placeholder="${tr('snap.label_ph')}">
               <button class="add-section-btn" id="snap-save-btn" onclick="saveSnapshot(this)">${tr('snap.save_btn')}</button>
             </div>
+            <label class="snap-auto"><input type="checkbox" id="snap-auto-cb" ${config.auto_snapshot === 0 ? '' : 'checked'} onchange="toggleAutoSnap(this)"> ${tr('snap.auto_toggle')}</label>
             <div id="snap-list"><p class="seo-hint">${tr('snap.loading')}</p></div>
           </div>
         </details>
@@ -751,6 +753,7 @@ export async function handleAIBuilderCustomize(ctx) {
       err: tr('snap.err'),
       unnamed: tr('snap.unnamed'),
       auto_backup: tr('snap.auto_backup'),
+      auto_save: tr('snap.auto_save'),
       restore: tr('snap.restore'),
       restore_confirm: tr('snap.restore_confirm'),
       del: tr('snap.delete'),
@@ -774,7 +777,7 @@ export async function handleAIBuilderCustomize(ctx) {
         rows.forEach(function (s) {
           const div = document.createElement('div'); div.className = 'snap-row';
           const name = document.createElement('span'); name.className = 'snap-name';
-          name.textContent = s.label || (s.trigger_type === 'pre_restore' ? SNAP_T.auto_backup : SNAP_T.unnamed);
+          name.textContent = s.label || (s.trigger_type === 'pre_restore' ? SNAP_T.auto_backup : s.trigger_type === 'auto' ? SNAP_T.auto_save : SNAP_T.unnamed);
           const meta = document.createElement('span'); meta.className = 'snap-meta';
           meta.textContent = new Date(s.created_at * 1000).toLocaleString(SNAP_LANG, { dateStyle: 'medium', timeStyle: 'short' })
             + ' · ' + Math.max(1, Math.round((s.size_bytes || 0) / 1024)) + ' KB';
@@ -813,6 +816,16 @@ export async function handleAIBuilderCustomize(ctx) {
         if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
         location.reload();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = SNAP_T.restore; }
+    }
+    async function toggleAutoSnap(cb) {
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/snapshots/auto', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: cb.checked })
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
+      } catch (e) { alert(e.message); cb.checked = !cb.checked; }
     }
     async function deleteSnapshot(id) {
       if (!confirm(SNAP_T.delete_confirm)) return;
