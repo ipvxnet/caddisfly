@@ -4,19 +4,22 @@
 // across the whole site; colors and content are preserved.
 
 import { listThemes } from '../utils/site-themes.js';
+import { translator } from '../i18n/index.js';
 
 /**
  * Generate the whole-site template picker UI.
  * @param {string} currentTheme - The currently applied theme key (config.style_theme)
+ * @param {string} lang - UI language
  * @returns {string} Template picker HTML (+ scoped styles)
  */
-export function generateTemplatePicker(currentTheme) {
+export function generateTemplatePicker(currentTheme, lang = 'en') {
   const themes = listThemes();
+  const tr = translator(lang);
 
   return `
 <div class="template-picker-panel">
-  <h3 class="picker-title">🧩 Choose a Template</h3>
-  <p class="template-hint">Restyle the whole site at once. Your text and colors are kept.</p>
+  <h3 class="picker-title">${tr('pick.tpl_title')}</h3>
+  <p class="template-hint">${tr('pick.tpl_hint')}</p>
 
   <div class="template-grid">
     ${themes

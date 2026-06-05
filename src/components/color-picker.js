@@ -1,13 +1,17 @@
 // Color Picker Component
 // Allows users to customize website colors with live preview
 
+import { translator } from '../i18n/index.js';
+
 /**
  * Generate color picker UI
  * @param {object} config - Current website config
  * @param {string} projectId - Project ID
+ * @param {string} lang - UI language
  * @returns {string} Color picker HTML
  */
-export function generateColorPicker(config, projectId) {
+export function generateColorPicker(config, projectId, lang = 'en') {
+  const tr = translator(lang);
   const presetPalettes = [
     { name: 'Modern Purple', primary: '#667eea', secondary: '#764ba2', accent: '#f093fb' },
     { name: 'Ocean Blue', primary: '#2196F3', secondary: '#0D47A1', accent: '#64B5F6' },
@@ -21,11 +25,11 @@ export function generateColorPicker(config, projectId) {
 
   return `
 <div class="color-picker-panel">
-  <h3 class="picker-title">🎨 Website Colors</h3>
+  <h3 class="picker-title">${tr('pick.col_title')}</h3>
 
   <div class="color-inputs">
     <div class="color-input-group">
-      <label for="primary-color">Primary Color</label>
+      <label for="primary-color">${tr('pick.primary_color')}</label>
       <div class="color-input-wrapper">
         <input type="color" id="primary-color" value="${config.primary_color}" onchange="updateColor('primary', this.value)">
         <input type="text" id="primary-color-text" value="${config.primary_color}" onchange="updateColorFromText('primary', this.value)" placeholder="#667eea">
@@ -33,7 +37,7 @@ export function generateColorPicker(config, projectId) {
     </div>
 
     <div class="color-input-group">
-      <label for="secondary-color">Secondary Color</label>
+      <label for="secondary-color">${tr('pick.secondary_color')}</label>
       <div class="color-input-wrapper">
         <input type="color" id="secondary-color" value="${config.secondary_color}" onchange="updateColor('secondary', this.value)">
         <input type="text" id="secondary-color-text" value="${config.secondary_color}" onchange="updateColorFromText('secondary', this.value)" placeholder="#764ba2">
@@ -43,11 +47,11 @@ export function generateColorPicker(config, projectId) {
 
   <div class="color-preview">
     <div class="preview-gradient" id="preview-gradient" style="background: linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%);"></div>
-    <p class="preview-label">Preview Gradient</p>
+    <p class="preview-label">${tr('pick.preview_gradient')}</p>
   </div>
 
   <div class="preset-palettes">
-    <h4 class="presets-title">Preset Palettes</h4>
+    <h4 class="presets-title">${tr('pick.preset_palettes')}</h4>
     <div class="palette-grid">
       ${presetPalettes
         .map(
@@ -66,8 +70,8 @@ export function generateColorPicker(config, projectId) {
   </div>
 
   <div class="picker-actions">
-    <button class="btn-secondary" onclick="resetColors()">Reset to Default</button>
-    <button class="btn-primary" onclick="saveColors()" id="save-colors-btn">Apply Colors</button>
+    <button class="btn-secondary" onclick="resetColors()">${tr('pick.reset_default')}</button>
+    <button class="btn-primary" onclick="saveColors()" id="save-colors-btn">${tr('pick.apply_colors')}</button>
   </div>
 </div>
 
@@ -269,7 +273,7 @@ function resetColors() {
 async function saveColors() {
   const btn = document.getElementById('save-colors-btn');
   btn.disabled = true;
-  btn.textContent = 'Applying...';
+  btn.textContent = ${JSON.stringify(tr('pick.applying'))};
 
   try {
     const response = await fetch(\`/api/ai-builder/\${window.colorPickerProjectId}/config/colors\`, {
@@ -291,17 +295,17 @@ async function saveColors() {
       }
 
       // Show success notification
-      showNotification('Colors updated! Preview refreshing...', 'success');
+      showNotification(${JSON.stringify(tr('pick.colors_updated'))}, 'success');
 
-      btn.textContent = 'Apply Colors';
+      btn.textContent = ${JSON.stringify(tr('pick.apply_colors'))};
       btn.disabled = false;
     } else {
-      throw new Error(data.error || 'Failed to save colors');
+      throw new Error(data.error || ${JSON.stringify(tr('pick.colors_failed'))});
     }
   } catch (error) {
-    alert('Failed to save colors: ' + error.message);
+    alert(${JSON.stringify(tr('pick.colors_failed'))} + ': ' + error.message);
     btn.disabled = false;
-    btn.textContent = 'Apply Colors';
+    btn.textContent = ${JSON.stringify(tr('pick.apply_colors'))};
   }
 }
 

@@ -4,14 +4,17 @@
 // Mirrors color-picker.js; reuses the global showNotification() it defines.
 
 import { listFontPairings, findPairing } from '../utils/font-pairings.js';
+import { translator } from '../i18n/index.js';
 
 /**
  * Generate the font picker UI.
  * @param {object} config - Current website config (font_heading/font_body)
  * @param {string} projectId - Project ID
+ * @param {string} lang - UI language
  * @returns {string} Font picker HTML (+ styles + script)
  */
-export function generateFontPicker(config, projectId) {
+export function generateFontPicker(config, projectId, lang = 'en') {
+  const tr = translator(lang);
   const pairings = listFontPairings();
   const selected = findPairing(config.font_heading, config.font_body);
   const selectedKey = selected ? selected.key : '';
@@ -27,8 +30,8 @@ export function generateFontPicker(config, projectId) {
   return `
 <link href="${fontsHref}" rel="stylesheet">
 <div class="font-picker-panel">
-  <h3 class="picker-title">🔤 Fonts</h3>
-  <p class="font-hint">Swap the typeface. Sizes and layout stay the same.</p>
+  <h3 class="picker-title">${tr('pick.font_title')}</h3>
+  <p class="font-hint">${tr('pick.font_hint')}</p>
 
   <div class="font-grid">
     ${pairings
@@ -138,13 +141,13 @@ async function applyFonts(heading, body, card) {
       const previewIframe = document.getElementById('preview-iframe');
       if (previewIframe) previewIframe.contentWindow.location.reload();
 
-      showNotification('Fonts updated! Preview refreshing...', 'success');
+      showNotification(${JSON.stringify(tr('pick.fonts_updated'))}, 'success');
     } else {
-      throw new Error(data.error || 'Failed to update fonts');
+      throw new Error(data.error || ${JSON.stringify(tr('pick.fonts_failed'))});
     }
   } catch (error) {
     if (card) card.classList.remove('applying');
-    alert('Failed to update fonts: ' + error.message);
+    alert(${JSON.stringify(tr('pick.fonts_failed'))} + ': ' + error.message);
   }
 }
 </script>

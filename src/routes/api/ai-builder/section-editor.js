@@ -40,8 +40,8 @@ export async function handleGetSectionEditor(ctx) {
       return new Response('Section does not belong to this project', { status: 403 });
     }
 
-    // Generate modal HTML
-    const html = generateSectionEditorModal(section, projectPreviewId);
+    // Generate modal HTML (in the viewer's UI language)
+    const html = generateSectionEditorModal(section, projectPreviewId, (ctx && ctx.lang) || 'en');
 
     return new Response(html, {
       status: 200,

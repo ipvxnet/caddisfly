@@ -6,22 +6,17 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getSiteAnalytics } from '../../db/analytics.js';
+import { translator } from '../../i18n/index.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-const REGION = (() => {
+function countryName(code, lang, unknownLabel) {
+  if (!code) return unknownLabel;
   try {
-    return new Intl.DisplayNames(['en'], { type: 'region' });
-  } catch {
-    return null;
-  }
-})();
-function countryName(code) {
-  if (!code) return 'Unknown';
-  try {
-    return (REGION && REGION.of(code)) || code;
+    const dn = new Intl.DisplayNames([lang, 'en'], { type: 'region' });
+    return dn.of(code) || code;
   } catch {
     return code;
   }
@@ -29,6 +24,8 @@ function countryName(code) {
 
 export async function handleSiteAnalytics(ctx) {
   const { env, params, url } = ctx;
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = translator(lang);
   const publicId = params.project_id;
 
   const aiProject = await getAIProjectByProjectId(env.DB, publicId);
@@ -50,27 +47,27 @@ export async function handleSiteAnalytics(ctx) {
     ? a.byDay
         .map(
           (d) =>
-            `<div class="bar" title="${d.day}: ${d.views} views · ${d.uniques} visitors"><span style="height:${Math.round((d.views / maxDay) * 100)}%"></span></div>`
+            `<div class="bar" title="${d.day}: ${d.views} · ${d.uniques}"><span style="height:${Math.round((d.views / maxDay) * 100)}%"></span></div>`
         )
         .join('')
-    : '<p class="empty">No visits in the last 30 days yet. Share your site to start seeing traffic here.</p>';
+    : `<p class="empty">${tr('ana.no_visits')}</p>`;
 
-  const list = (rows, keyField, label) => {
-    if (!rows.length) return `<p class="empty">No ${label} yet.</p>`;
+  const list = (rows, keyField, emptyMsg) => {
+    if (!rows.length) return `<p class="empty">${emptyMsg}</p>`;
     const max = Math.max(...rows.map((r) => r.views));
     return rows
       .map((r) => {
-        const key = keyField === 'country' ? countryName(r[keyField]) : r[keyField] || '(direct)';
+        const key = keyField === 'country' ? countryName(r[keyField], lang, tr('ana.unknown')) : r[keyField] || tr('ana.direct');
         return `<div class="lrow"><div class="lbar" style="width:${Math.round((r.views / max) * 100)}%"></div><span class="lk">${esc(key)}</span><span class="lv">${r.views}</span></div>`;
       })
       .join('');
   };
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: `Analytics — ${esc(name)}`, description: 'Traffic for your published site.', origin: url.origin })}
+  ${headTags({ title: tr('ana.meta_title', { name: esc(name) }), description: 'Traffic for your published site.', origin: url.origin })}
   <meta name="robots" content="noindex">
   <style>
     ${baseCss()}
@@ -99,39 +96,39 @@ export async function handleSiteAnalytics(ctx) {
   </style>
 </head>
 <body>
-  ${siteHeader('')}
+  ${siteHeader('', { lang })}
   <main><div class="awrap">
     <div class="ahead">
       <div>
         <h1>${esc(name)}</h1>
-        <div class="sub">Traffic · last 30 days · cookieless &amp; privacy-first</div>
+        <div class="sub">${tr('ana.sub')}</div>
       </div>
       <div class="acts">
-        <a class="btn btn-ghost" href="/ai-builder/customize/${esc(publicId)}">← Customize</a>
-        <a class="btn btn-primary" href="${esc(deployedUrl)}" target="_blank">View site ↗</a>
+        <a class="btn btn-ghost" href="/ai-builder/customize/${esc(publicId)}">${tr('ana.customize')}</a>
+        <a class="btn btn-primary" href="${esc(deployedUrl)}" target="_blank">${tr('ana.view_site')}</a>
       </div>
     </div>
 
     <div class="stats">
-      <div class="stat"><div class="n">${a.totals.views.toLocaleString()}</div><div class="l">Page views</div></div>
-      <div class="stat"><div class="n">${a.totals.uniques.toLocaleString()}</div><div class="l">Visitors</div></div>
-      <div class="stat"><div class="n">${a.byDay.length}</div><div class="l">Active days</div></div>
+      <div class="stat"><div class="n">${a.totals.views.toLocaleString()}</div><div class="l">${tr('ana.page_views')}</div></div>
+      <div class="stat"><div class="n">${a.totals.uniques.toLocaleString()}</div><div class="l">${tr('ana.visitors')}</div></div>
+      <div class="stat"><div class="n">${a.byDay.length}</div><div class="l">${tr('ana.active_days')}</div></div>
     </div>
 
     <div class="panel">
-      <h2>Views per day</h2>
+      <h2>${tr('ana.views_per_day')}</h2>
       <div class="chart">${bars}</div>
     </div>
 
     <div class="cols">
-      <div class="panel"><h2>Top pages</h2>${list(a.topPaths, 'path', 'pages')}</div>
-      <div class="panel"><h2>Referrers</h2>${list(a.topReferrers, 'referrer_host', 'referrers')}</div>
+      <div class="panel"><h2>${tr('ana.top_pages')}</h2>${list(a.topPaths, 'path', tr('ana.no_pages'))}</div>
+      <div class="panel"><h2>${tr('ana.referrers')}</h2>${list(a.topReferrers, 'referrer_host', tr('ana.no_referrers'))}</div>
     </div>
-    <div class="panel"><h2>Countries</h2>${list(a.topCountries, 'country', 'countries')}</div>
+    <div class="panel"><h2>${tr('ana.countries')}</h2>${list(a.topCountries, 'country', tr('ana.no_countries'))}</div>
 
-    <p class="note">No cookies, no cross-site tracking, and no IP addresses are stored — visitor counts use a daily, per-site anonymous key. See our <a href="/privacy" style="color:var(--p2);font-weight:600">Privacy Policy</a>.</p>
+    <p class="note">${tr('ana.privacy_note', { privacy: `<a href="/privacy" style="color:var(--p2);font-weight:600">${tr('ana.privacy_link')}</a>` })}</p>
   </div></main>
-  ${siteFooter()}
+  ${siteFooter({ lang })}
 </body>
 </html>`;
 
