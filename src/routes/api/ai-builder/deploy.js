@@ -115,9 +115,12 @@ export async function handleAIBuilderDeploy(ctx) {
 
     // Canonical base for SEO tags: the site's subdomain on the sites domain. The
     // sites worker rewrites this host → a custom domain when one is connected, so
-    // each public host self-canonicalizes.
+    // each public host self-canonicalizes. In the preview env the public host
+    // carries the -preview suffix (`<sub>-preview.caddisfly.app`, route owned by
+    // the preview sites worker) — bake it so preview canonicals match reality.
     const sitesBaseDomain = env.SITES_BASE || 'caddisfly.app';
-    const subdomainBase = `https://${subdomain}.${sitesBaseDomain}`;
+    const hostLabel = `${subdomain}${env.SITES_PREVIEW_SUFFIX || ''}`;
+    const subdomainBase = `https://${hostLabel}.${sitesBaseDomain}`;
 
     // Clean previous output (both the /site/:id copy and the subdomain copy) so
     // deleted/renamed pages don't linger.
@@ -230,7 +233,7 @@ export async function handleAIBuilderDeploy(ctx) {
     // *.caddisfly.app in BOTH preview and prod, so default to caddisfly.app when
     // SITES_BASE is unset (matches the customize page's domains panel).
     const sitesBase = env.SITES_BASE || 'caddisfly.app';
-    const subdomainUrl = `https://${subdomain}.${sitesBase}`;
+    const subdomainUrl = `https://${hostLabel}.${sitesBase}`;
     const siteUrl = `${appOrigin}/site/${publicId}`;
     const deployedUrl = subdomainUrl || siteUrl;
 

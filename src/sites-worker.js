@@ -28,7 +28,13 @@ async function resolveSubdomain(env, url, host) {
   if (!host) return null;
   const h = host.split(':')[0].toLowerCase();
   if (APEX_HOSTS.has(h)) return null; // apex/www handled by the caller
-  if (h.endsWith('.caddisfly.app')) return h.slice(0, -'.caddisfly.app'.length).split('.')[0];
+  if (h.endsWith('.caddisfly.app')) {
+    let label = h.slice(0, -'.caddisfly.app'.length).split('.')[0];
+    // Preview-env convention: <sub>-preview.caddisfly.app (route owned by the
+    // preview worker) resolves to the same R2 layout as <sub> in its bucket.
+    if (label.endsWith('-preview')) label = label.slice(0, -'-preview'.length);
+    return label;
+  }
   // Custom domain — look up the pointer written when the domain went active.
   const ptr = await env.STORAGE.get(`domains/${h}`);
   if (ptr) return (await ptr.text()).trim();

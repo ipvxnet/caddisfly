@@ -27,11 +27,17 @@ binding = "STORAGE"
 bucket_name = "caddisfly-storage-prod"
 
 # Preview: caddisfly-sites-preview, reads the PREVIEW bucket. As of the 2026-06-04
-# prod cutover the PRODUCTION worker owns *.caddisfly.app/* (top-level route above);
-# preview no longer claims that route and tests via its workers.dev URL (?host=).
+# prod cutover the PRODUCTION worker owns *.caddisfly.app/* (top-level route above).
+# Preview owns the SUFFIX convention `<sub>-preview.caddisfly.app` — Cloudflare
+# picks the most specific route, so these hosts hit the preview worker while
+# everything else stays on prod. Single-level labels keep Universal SSL valid
+# (a real `*.preview.caddisfly.app` sub-zone would need ACM, ~$10/mo).
 [env.preview]
 name = "caddisfly-sites-preview"
-workers_dev = true   # workers.dev URL for ?site=/?host= testing (no zone route)
+workers_dev = true   # keep the workers.dev URL for ?site=/?host= testing
+routes = [
+  { pattern = "*-preview.caddisfly.app/*", zone_name = "caddisfly.app" },
+]
 
 [[env.preview.r2_buckets]]
 binding = "STORAGE"
