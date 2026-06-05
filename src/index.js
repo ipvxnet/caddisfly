@@ -19,6 +19,7 @@ import { handleAdminDashboard } from './routes/admin/dashboard.js';
 import { handlePreviewCreate } from './routes/api/preview/create.js';
 import { handleManualProfile } from './routes/api/preview/manual.js';
 import { handlePreviewStatus } from './routes/api/preview/status.js';
+import { handleRunBuild } from './routes/api/preview/run-build.js';
 import { handleJoke } from './routes/api/fun.js';
 import { handlePreviewView } from './routes/public/preview.js';
 import { handlePreviewHtml } from './routes/public/preview-html.js';
@@ -67,6 +68,8 @@ import { billingAuth } from './middleware/billing-auth.js';
 import { projectAccess } from './middleware/project-access.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
+import { handleFormSubmit, handleFormDelete } from './routes/api/forms.js';
+import { handleFormsInbox } from './routes/public/forms-inbox.js';
 
 // Initialize router
 const router = new Router();
@@ -128,10 +131,16 @@ router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingA
 router.post('/api/preview/create', handlePreviewCreate);
 router.post('/api/preview/manual/:token', handleManualProfile);
 router.get('/api/preview/:preview_id/status', handlePreviewStatus);
+// Build executor for the refactor flow — called by the /verify building page;
+// the build runs inside this (long-lived) request, not via waitUntil.
+router.post('/api/preview/run-build/:token', handleRunBuild);
 router.get('/api/fun/joke', handleJoke);
 
 // Analytics beacon (public, cookieless)
 router.post('/api/track', handleTrack);
+
+// Contact-form submissions from published sites (public, cross-origin like /api/track)
+router.post('/api/forms/submit', handleFormSubmit);
 
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);
@@ -162,6 +171,10 @@ router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);
+
+// Contact-form inbox (owner-facing; same access model as customize)
+router.get('/ai-builder/forms/:project_id', handleFormsInbox, PROJ);
+router.delete('/api/ai-builder/:project_id/forms/:id', handleFormDelete, PROJ);
 
 // Billing API
 router.post('/api/billing/login', handleBillingLogin);

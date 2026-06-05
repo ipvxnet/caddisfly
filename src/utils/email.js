@@ -17,11 +17,11 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
  *      verified in Email Routing; kept as a fallback.
  *
  * @param {Object} env - Environment bindings
- * @param {{to: string, subject: string, html: string}} message
+ * @param {{to: string, subject: string, html: string, replyTo?: string}} message
  * @returns {Promise<boolean>} true if a transport accepted the message, false if
  *   none is configured. Throws if a configured transport rejects the send.
  */
-async function deliverEmail(env, { to, subject, html }) {
+async function deliverEmail(env, { to, subject, html, replyTo }) {
   const from = env.EMAIL_FROM || 'noreply@caddisfly.ai';
 
   if (env.RESEND_API_KEY) {
@@ -31,7 +31,7 @@ async function deliverEmail(env, { to, subject, html }) {
         Authorization: `Bearer ${env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from, to, subject, html }),
+      body: JSON.stringify({ from, to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
@@ -333,6 +333,49 @@ export async function sendTicketEmail(env, { to, subject, heading, intro, body, 
     if (isProduction) return false;
   }
   console.warn(`[email stub] Ticket email to ${to}: ${subject} ${linkUrl || ''}`);
+  return true;
+}
+
+/**
+ * Notifies a site owner of a new contact-form submission on their published
+ * site. Reply-To is set to the visitor so the owner can answer directly.
+ * Best-effort like sendTicketEmail: emails when a transport is configured,
+ * logs a stub otherwise (non-prod).
+ * @param {Object} env
+ * @param {Object} opts - { to, siteName, fromName, fromEmail, message, pagePath, inboxUrl }
+ * @returns {Promise<boolean>}
+ */
+export async function sendFormSubmissionEmail(env, { to, siteName, fromName, fromEmail, message, pagePath, inboxUrl }) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">New message from your website</h1>
+        <p style="color:#444;line-height:1.6;">Someone filled out the contact form on <strong>${esc(siteName)}</strong>${pagePath ? ` (page ${esc(pagePath)})` : ''}.</p>
+        <p style="color:#444;line-height:1.6;margin:14px 0 4px;"><strong>${esc(fromName)}</strong> &lt;${esc(fromEmail)}&gt;</p>
+        <blockquote style="border-left:3px solid #cbd5e0;margin:6px 0 14px;padding:6px 14px;color:#555;white-space:pre-wrap;">${esc(message)}</blockquote>
+        <p style="color:#666;font-size:13px;">Reply to this email to answer them directly.</p>
+        ${inboxUrl ? `<p style="margin:24px 0 0;"><a href="${inboxUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Open inbox</a></p>` : ''}
+      </div>
+    </body></html>`;
+  try {
+    const sent = await deliverEmail(env, {
+      to,
+      subject: `New message from ${siteName}`,
+      html,
+      replyTo: fromEmail || undefined,
+    });
+    if (sent) return true;
+    if (isProduction) {
+      console.error('No email transport in production; cannot send form-submission email');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to send form-submission email:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Form submission email to ${to} for ${siteName}`);
   return true;
 }
 

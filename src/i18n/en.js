@@ -192,7 +192,7 @@ export const en = {
     support: 'Support', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet',
-    customize: 'Customize', analytics: 'Analytics', open: 'Open ↗',
+    customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', open: 'Open ↗',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',
     your_team: 'Your team', team_owned_by: 'Team · owned by {owner}',
@@ -306,6 +306,27 @@ export const en = {
     direct: '(direct)', unknown: 'Unknown',
     privacy_note: 'No cookies, no cross-site tracking, and no IP addresses are stored — visitor counts use a daily, per-site anonymous key. See our {privacy}.',
     privacy_link: 'Privacy Policy',
+  },
+
+  // Published-site contact-form widget. Status strings are baked into pages at
+  // render time in the SITE's language; err_* come back from the submit API in
+  // the visitor's language.
+  formw: {
+    sending: 'Sending…',
+    success: '✓ Message sent — thank you!',
+    error: 'Something went wrong. Please try again.',
+    preview: 'The contact form becomes active when you publish your site.',
+    err_fields: 'Please fill out your name, a valid email, and a message.',
+    err_rate: 'Too many messages — please try again later.',
+  },
+
+  finbox: {
+    meta_title: 'Inbox — {name}',
+    sub: 'Messages from your site’s contact form',
+    customize: '← Customize', analytics: 'Analytics', view_site: 'View site ↗',
+    total: '{n} messages', unread: '{n} new', new: 'new',
+    reply: 'Reply', delete: 'Delete', delete_confirm: 'Delete this message?',
+    empty: 'No messages yet. When visitors submit the contact form on your published site, their messages appear here.',
   },
 
   sed: {
