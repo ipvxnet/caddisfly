@@ -353,6 +353,13 @@ export async function handleAIBuilderCustomize(ctx) {
     }
     .design-group > summary::-webkit-details-marker { display: none; }
     .design-group > summary::before { content: '▸ '; color: #a0aec0; }
+    .snap-save { display: flex; gap: .5rem; align-items: center; margin-bottom: .8rem; }
+    .snap-save input { flex: 1; }
+    .snap-row { display: flex; align-items: baseline; gap: .6rem; padding: .45rem 0; border-bottom: 1px solid #edf2f7; flex-wrap: wrap; }
+    .snap-row:last-child { border-bottom: none; }
+    .snap-name { font-weight: 700; color: #2d3748; font-size: .88rem; }
+    .snap-meta { color: #a0aec0; font-size: .78rem; flex: 1; }
+    .snap-acts { display: flex; gap: .7rem; }
     .design-group[open] > summary::before { content: '▾ '; }
     .design-group-body { padding-top: 1rem; }
     .seo-hint { font-size: .8rem; color: #718096; margin-bottom: .9rem; line-height: 1.5; }
@@ -711,6 +718,18 @@ export async function handleAIBuilderCustomize(ctx) {
             <span class="seo-saved" id="seo-saved" hidden>${tr('cust.saved')}</span>
           </div>
         </details>
+
+        <details class="design-group" id="versions-group" ontoggle="if(this.open) loadSnapshots()">
+          <summary>${tr('snap.summary')}</summary>
+          <div class="design-group-body">
+            <p class="seo-hint">${tr('snap.hint')}</p>
+            <div class="snap-save">
+              <input type="text" id="snap-label" class="seo-input" maxlength="120" placeholder="${tr('snap.label_ph')}">
+              <button class="add-section-btn" id="snap-save-btn" onclick="saveSnapshot(this)">${tr('snap.save_btn')}</button>
+            </div>
+            <div id="snap-list"><p class="seo-hint">${tr('snap.loading')}</p></div>
+          </div>
+        </details>
         ${showDomains ? domainsPanelBlock : ''}
       </div>
 
@@ -725,6 +744,85 @@ export async function handleAIBuilderCustomize(ctx) {
     const currentPageSlug = '${currentSlug}';
     const seoPageId = ${currentPage ? currentPage.id : 'null'};
     let draggedElement = null;
+
+    // ---- Versions panel (snapshots: save / restore / delete) ----
+    const SNAP_T = ${JSON.stringify({
+      empty: tr('snap.empty'),
+      err: tr('snap.err'),
+      unnamed: tr('snap.unnamed'),
+      auto_backup: tr('snap.auto_backup'),
+      restore: tr('snap.restore'),
+      restore_confirm: tr('snap.restore_confirm'),
+      del: tr('snap.delete'),
+      delete_confirm: tr('snap.delete_confirm'),
+      saving: tr('snap.saving'),
+      save_btn: tr('snap.save_btn'),
+      restoring: tr('snap.restoring'),
+    })};
+    const SNAP_LANG = ${JSON.stringify(lang)};
+    let snapsLoaded = false;
+    async function loadSnapshots(force) {
+      if (snapsLoaded && !force) return;
+      snapsLoaded = true;
+      const box = document.getElementById('snap-list');
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/snapshots');
+        const d = await r.json();
+        const rows = (d && d.snapshots) || [];
+        box.innerHTML = '';
+        if (!rows.length) { box.innerHTML = '<p class="seo-hint">' + SNAP_T.empty + '</p>'; return; }
+        rows.forEach(function (s) {
+          const div = document.createElement('div'); div.className = 'snap-row';
+          const name = document.createElement('span'); name.className = 'snap-name';
+          name.textContent = s.label || (s.trigger_type === 'pre_restore' ? SNAP_T.auto_backup : SNAP_T.unnamed);
+          const meta = document.createElement('span'); meta.className = 'snap-meta';
+          meta.textContent = new Date(s.created_at * 1000).toLocaleString(SNAP_LANG, { dateStyle: 'medium', timeStyle: 'short' })
+            + ' · ' + Math.max(1, Math.round((s.size_bytes || 0) / 1024)) + ' KB';
+          const acts = document.createElement('span'); acts.className = 'snap-acts';
+          const rb = document.createElement('button'); rb.className = 'link-btn'; rb.style.fontWeight = '700';
+          rb.textContent = SNAP_T.restore; rb.onclick = function () { restoreSnapshot(s.id, rb); };
+          const del = document.createElement('button'); del.className = 'link-btn'; del.style.color = '#b91c1c';
+          del.textContent = SNAP_T.del; del.onclick = function () { deleteSnapshot(s.id); };
+          acts.appendChild(rb); acts.appendChild(del);
+          div.appendChild(name); div.appendChild(meta); div.appendChild(acts);
+          box.appendChild(div);
+        });
+      } catch (e) { box.innerHTML = '<p class="seo-hint">' + SNAP_T.err + '</p>'; }
+    }
+    async function saveSnapshot(btn) {
+      const input = document.getElementById('snap-label');
+      btn.disabled = true; btn.textContent = SNAP_T.saving;
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/snapshots', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ label: input.value || '' })
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
+        input.value = '';
+        await loadSnapshots(true);
+      } catch (e) { alert(e.message); }
+      btn.disabled = false; btn.textContent = SNAP_T.save_btn;
+    }
+    async function restoreSnapshot(id, btn) {
+      if (!confirm(SNAP_T.restore_confirm)) return;
+      btn.disabled = true; btn.textContent = SNAP_T.restoring;
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/snapshots/' + id + '/restore', { method: 'POST' });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
+        location.reload();
+      } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = SNAP_T.restore; }
+    }
+    async function deleteSnapshot(id) {
+      if (!confirm(SNAP_T.delete_confirm)) return;
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/snapshots/' + id, { method: 'DELETE' });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
+        await loadSnapshots(true);
+      } catch (e) { alert(e.message); }
+    }
 
     // ---- SEO panel (live preview + save) ----
     function seoSync() {

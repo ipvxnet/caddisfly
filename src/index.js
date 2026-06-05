@@ -76,6 +76,9 @@ import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
   handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
 } from './routes/api/ai-builder/blog.js';
+import {
+  handleSnapshotList, handleSnapshotCreate, handleSnapshotRestore, handleSnapshotDelete,
+} from './routes/api/ai-builder/snapshots.js';
 
 // Initialize router
 const router = new Router();
@@ -196,6 +199,12 @@ router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
+
+// Site version snapshots (save / restore / delete)
+router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);
+router.post('/api/ai-builder/:project_id/snapshots', handleSnapshotCreate, PROJ);
+router.post('/api/ai-builder/:project_id/snapshots/:snapshot_id/restore', handleSnapshotRestore, PROJ);
+router.delete('/api/ai-builder/:project_id/snapshots/:snapshot_id', handleSnapshotDelete, PROJ);
 router.delete('/api/ai-builder/:project_id/blog/:post_id', handleBlogDelete, PROJ);
 
 // Billing API

@@ -335,6 +335,18 @@ export const es = {
     no_posts: 'Aún no hay publicaciones — ¡vuelve pronto!',
   },
 
+  snap: {
+    summary: '🕘 Versiones — guardar y restaurar',
+    hint: 'Guarda una versión de tu sitio antes de hacer grandes cambios. Restaurar reemplaza tus páginas, secciones y diseño actuales (antes se guarda automáticamente una copia del estado actual). El sitio publicado se actualiza cuando publicas.',
+    label_ph: 'Nombre de la versión (opcional)',
+    save_btn: '💾 Guardar versión', saving: 'Guardando…',
+    loading: 'Cargando…', empty: 'Aún no hay versiones guardadas.', err: 'No se pudieron cargar las versiones.',
+    unnamed: 'Versión sin nombre', auto_backup: '⛑ Copia automática (antes de restaurar)',
+    restore: 'Restaurar', restoring: 'Restaurando…',
+    restore_confirm: '¿Restaurar esta versión? Tus páginas, secciones y diseño actuales serán reemplazados. (Antes se guarda una copia automática, y tu sitio publicado solo cambia cuando publicas.)',
+    delete: 'Eliminar', delete_confirm: '¿Eliminar esta versión guardada? No se puede deshacer.',
+  },
+
   blogm: {
     meta_title: 'Blog — {name}',
     title_sub: 'Escribe con IA, publica en tu sitio, comparte en todas partes',

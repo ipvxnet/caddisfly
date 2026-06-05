@@ -25,6 +25,9 @@ export const DOMAIN_LIMITS = { free_trial: 0, starter: 1, pro: 5, agency: Infini
 // Team seats per tier — TOTAL seats including the owner (free = owner only).
 export const TEAM_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: 50 };
 
+// Saved site versions kept per tier (oldest pruned beyond the cap).
+export const SNAPSHOT_LIMITS = { free_trial: 2, starter: 5, pro: 10, agency: 30 };
+
 /** Team seat cap for a tier (defaults to free). */
 export function teamLimit(tier) {
   return TEAM_LIMITS[tier] != null ? TEAM_LIMITS[tier] : TEAM_LIMITS.free_trial;
