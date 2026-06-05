@@ -123,6 +123,8 @@ export async function updateProject(db, projectId, updates) {
     // Email verification + Google Places enrichment (migration 006)
     'email_verified', 'verification_token', 'verification_sent_at', 'verified_at',
     'enrichment_status', 'place_id', 'company_profile_json',
+    // Build claim timestamp (migration 020)
+    'enrichment_started_at',
     // Terms acceptance (migration 010)
     'terms_accepted_at',
     // Subdomain hosting (migration 012)
@@ -156,6 +158,31 @@ export async function updateProject(db, projectId, updates) {
     .first();
 
   return result;
+}
+
+/**
+ * Atomically claim the enrichment build for a project. Succeeds when the build
+ * is 'pending', or when a previous claim went STALE (a build that died without
+ * writing a terminal status — e.g. cancelled worker). Exactly one caller wins,
+ * so concurrent "building" tabs can't double-run the paid build.
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Project ID
+ * @param {number} now - Current unix seconds (recorded as enrichment_started_at)
+ * @param {number} staleBefore - Claims older than this are considered dead
+ * @returns {Promise<boolean>} true if THIS caller won the claim
+ */
+export async function claimEnrichmentBuild(db, projectId, now, staleBefore) {
+  const r = await db
+    .prepare(
+      `UPDATE projects
+       SET enrichment_status = 'running', status = 'enriching', enrichment_started_at = ?
+       WHERE id = ?
+         AND (enrichment_status = 'pending'
+              OR (enrichment_status = 'running' AND COALESCE(enrichment_started_at, 0) < ?))`
+    )
+    .bind(now, projectId, staleBefore)
+    .run();
+  return !!(r && r.meta && r.meta.changes === 1);
 }
 
 /**

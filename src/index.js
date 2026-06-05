@@ -19,6 +19,7 @@ import { handleAdminDashboard } from './routes/admin/dashboard.js';
 import { handlePreviewCreate } from './routes/api/preview/create.js';
 import { handleManualProfile } from './routes/api/preview/manual.js';
 import { handlePreviewStatus } from './routes/api/preview/status.js';
+import { handleRunBuild } from './routes/api/preview/run-build.js';
 import { handleJoke } from './routes/api/fun.js';
 import { handlePreviewView } from './routes/public/preview.js';
 import { handlePreviewHtml } from './routes/public/preview-html.js';
@@ -130,6 +131,9 @@ router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingA
 router.post('/api/preview/create', handlePreviewCreate);
 router.post('/api/preview/manual/:token', handleManualProfile);
 router.get('/api/preview/:preview_id/status', handlePreviewStatus);
+// Build executor for the refactor flow — called by the /verify building page;
+// the build runs inside this (long-lived) request, not via waitUntil.
+router.post('/api/preview/run-build/:token', handleRunBuild);
 router.get('/api/fun/joke', handleJoke);
 
 // Analytics beacon (public, cookieless)

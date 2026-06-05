@@ -2,12 +2,17 @@
  * GET /verify/:token
  *
  * The email-verification gate. Clicking this link confirms the user's email and
- * triggers the PAID Google Places enrichment + site generation. This is the only
- * place paid Google calls happen for the refactoring flow.
+ * serves the "building" page, which then drives the PAID Google Places
+ * enrichment + site generation through POST /api/preview/run-build/:token
+ * (see routes/api/preview/run-build.js). The build runs INSIDE that live
+ * request — running it via ctx.waitUntil after this response got it cancelled
+ * by the runtime (~30s post-invocation cap), wedging enrichment_status at
+ * 'running' forever.
  *
  * State machine (projects.enrichment_status):
- *   pending  -> first click: verify, enrich, generate
- *   running  -> in progress (double-click): show building page
+ *   pending  -> first click: verify, serve building page (page claims + builds)
+ *   running  -> build in flight: show building page (stale claims are
+ *               re-claimable by run-build after BUILD_STALE_SECONDS)
  *   complete -> redirect to the finished preview (idempotent)
  *   no_match -> Places found nothing: show manual-entry page
  *   failed   -> show retryable error
@@ -28,7 +33,7 @@ import { translator } from '../../i18n/index.js';
 const TOKEN_TTL_SECONDS = 24 * 60 * 60;
 
 export async function handleVerify(ctx) {
-  const { env, params, request } = ctx;
+  const { env, params } = ctx;
   const token = params.token;
 
   if (!token) {
@@ -83,38 +88,26 @@ export async function handleVerify(ctx) {
     );
   }
 
-  // Mark verified + running BEFORE the paid call so the attempt is counted and
-  // a quick double-click lands on the "building" page instead of paying twice.
+  // Mark verified, then hand off to the building page. The page POSTs
+  // run-build, which atomically claims the job (so reloads/extra tabs can't
+  // double-run the paid build) and runs it inside a LIVE request — the client
+  // connection keeps the worker alive for the full build, unlike waitUntil.
   await updateProject(env.DB, project.id, {
     email_verified: 1,
     verified_at: now,
     status: 'enriching',
-    enrichment_status: 'running',
   });
-
-  // Run the (slow, paid) enrichment + generation in the background so we can
-  // return a delightful "building your site" page immediately. The page polls
-  // /api/preview/:id/status and redirects when the build finishes. waitUntil
-  // keeps the worker alive for the task after the response is sent.
-  const origin = new URL(request.url).origin;
-  const buildTask = runBuild(env, project, origin);
-  if (ctx.ctx && typeof ctx.ctx.waitUntil === 'function') {
-    ctx.ctx.waitUntil(buildTask);
-  } else {
-    // No execution context (e.g. some test harnesses) — fall back to blocking.
-    await buildTask;
-    return redirect(`/ai-preview/${project.preview_id}`);
-  }
 
   return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(now), (ctx && ctx.lang) || 'en'));
 }
 
 /**
  * The actual paid build: Google Places enrichment + template generation.
- * Runs in the background (waitUntil); communicates only via project status:
+ * Called by POST /api/preview/run-build/:token (inside a live request, AFTER a
+ * successful claim); communicates only via project status:
  *   running -> complete | no_match | failed
  */
-async function runBuild(env, project, origin) {
+export async function runBuild(env, project, origin) {
   // Recover the interim scrape signal stored at create time.
   let scrapeSignal = null;
   try {
@@ -272,15 +265,28 @@ function buildingPage(previewId, token, joke, lang = 'en') {
       }).catch(function(){});
     }
     var jokeTimer=setInterval(rotateJoke,12000);
+    function done(s){
+      if(s==='complete'){clearInterval(jokeTimer);location.href='/ai-preview/'+encodeURIComponent(previewId);return true;}
+      if(s==='no_match'){clearInterval(jokeTimer);location.href='/verify/'+encodeURIComponent(token);return true;}
+      if(s==='failed'){clearInterval(jokeTimer);errEl.style.display='block';return true;}
+      return false;
+    }
+    // Drive the build: this request stays open for the whole build (the worker
+    // needs a live client). The server claims the job atomically, so extra
+    // tabs/reloads get {status:'running'} and just wait on the poller below.
+    function kickBuild(){
+      fetch('/api/preview/run-build/'+encodeURIComponent(token),{method:'POST'}).then(function(r){return r.json()}).then(function(d){
+        done(d&&d.status);
+      }).catch(function(){setTimeout(kickBuild,5000);});
+    }
+    kickBuild();
     var tries=0;
     function poll(){
       tries++;
       fetch('/api/preview/'+encodeURIComponent(previewId)+'/status').then(function(r){return r.json()}).then(function(d){
-        var s=d&&d.status;
-        if(s==='complete'){clearInterval(jokeTimer);location.href='/ai-preview/'+encodeURIComponent(previewId);return;}
-        if(s==='no_match'){clearInterval(jokeTimer);location.href='/verify/'+encodeURIComponent(token);return;}
-        if(s==='failed'){clearInterval(jokeTimer);errEl.style.display='block';return;}
-        if(tries>72){errEl.style.display='block';return;}  // ~3 min safety net
+        if(done(d&&d.status))return;
+        if(tries===72){errEl.style.display='block';}  // ~3 min: surface the escape hatch, keep polling
+        if(tries>240){return;}                        // ~10 min: give up
         setTimeout(poll,2500);
       }).catch(function(){setTimeout(poll,3000);});
     }
