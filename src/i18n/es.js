@@ -192,7 +192,7 @@ export const es = {
     support: 'Soporte', help: 'Ayuda', sign_out: 'Cerrar sesión',
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
     live: 'En línea', not_published: 'Aún no publicado',
-    customize: 'Personalizar', analytics: 'Estadísticas', open: 'Abrir ↗',
+    customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', open: 'Abrir ↗',
     custom_domain: 'Dominio propio',
     shared_by: 'Sitios compartidos por {owner}', no_sites_yet: 'Aún no hay sitios web.',
     your_team: 'Tu equipo', team_owned_by: 'Equipo · de {owner}',
@@ -306,6 +306,24 @@ export const es = {
     direct: '(directo)', unknown: 'Desconocido',
     privacy_note: 'No se guardan cookies, ni seguimiento entre sitios, ni direcciones IP — los recuentos de visitantes usan una clave anónima diaria por sitio. Consulta nuestra {privacy}.',
     privacy_link: 'Política de Privacidad',
+  },
+
+  formw: {
+    sending: 'Enviando…',
+    success: '✓ Mensaje enviado. ¡Gracias!',
+    error: 'Algo salió mal. Inténtalo de nuevo.',
+    preview: 'El formulario de contacto se activa cuando publicas tu sitio.',
+    err_fields: 'Completa tu nombre, un email válido y un mensaje.',
+    err_rate: 'Demasiados mensajes — inténtalo de nuevo más tarde.',
+  },
+
+  finbox: {
+    meta_title: 'Mensajes — {name}',
+    sub: 'Mensajes del formulario de contacto de tu sitio',
+    customize: '← Personalizar', analytics: 'Estadísticas', view_site: 'Ver sitio ↗',
+    total: '{n} mensajes', unread: '{n} nuevos', new: 'nuevo',
+    reply: 'Responder', delete: 'Eliminar', delete_confirm: '¿Eliminar este mensaje?',
+    empty: 'Aún no hay mensajes. Cuando los visitantes envíen el formulario de contacto de tu sitio publicado, sus mensajes aparecerán aquí.',
   },
 
   sed: {

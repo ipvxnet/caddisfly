@@ -192,7 +192,7 @@ export const pt = {
     support: 'Suporte', help: 'Ajuda', sign_out: 'Sair',
     no_sites: 'Você ainda não tem sites.', build_one: 'Crie um →',
     live: 'No ar', not_published: 'Ainda não publicado',
-    customize: 'Personalizar', analytics: 'Estatísticas', open: 'Abrir ↗',
+    customize: 'Personalizar', analytics: 'Estatísticas', inbox: 'Mensagens', open: 'Abrir ↗',
     custom_domain: 'Domínio próprio',
     shared_by: 'Sites compartilhados por {owner}', no_sites_yet: 'Ainda não há sites.',
     your_team: 'A sua equipe', team_owned_by: 'Equipe · de {owner}',
@@ -306,6 +306,24 @@ export const pt = {
     direct: '(direto)', unknown: 'Desconhecido',
     privacy_note: 'Não são guardados cookies, nem rastreamento entre sites, nem endereços IP — as contagens de visitantes usam uma chave anônima diária por site. Veja a nossa {privacy}.',
     privacy_link: 'Política de Privacidade',
+  },
+
+  formw: {
+    sending: 'Enviando…',
+    success: '✓ Mensagem enviada. Obrigado!',
+    error: 'Algo deu errado. Tente novamente.',
+    preview: 'O formulário de contato é ativado quando você publica o seu site.',
+    err_fields: 'Preencha o seu nome, um e-mail válido e uma mensagem.',
+    err_rate: 'Muitas mensagens — tente novamente mais tarde.',
+  },
+
+  finbox: {
+    meta_title: 'Mensagens — {name}',
+    sub: 'Mensagens do formulário de contato do seu site',
+    customize: '← Personalizar', analytics: 'Estatísticas', view_site: 'Ver site ↗',
+    total: '{n} mensagens', unread: '{n} novas', new: 'nova',
+    reply: 'Responder', delete: 'Excluir', delete_confirm: 'Excluir esta mensagem?',
+    empty: 'Ainda não há mensagens. Quando os visitantes enviarem o formulário de contato do seu site publicado, as mensagens aparecerão aqui.',
   },
 
   sed: {

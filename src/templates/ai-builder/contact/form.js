@@ -1,5 +1,7 @@
 // Contact Section with Form
 
+import { t } from '../../../i18n/index.js';
+
 /**
  * Generates a contact section with form
  * @param {object} data - Content data
@@ -16,6 +18,15 @@ export function contactFormTemplate(data, config) {
     email = '',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
+
+  // Real submissions (published pages only): the assembler threads trackId +
+  // appOrigin + lang through renderConfig, so the form bakes its endpoint and
+  // localized status messages at render time. Previews (no trackId) show a
+  // "form activates on publish" note instead of posting.
+  const lang = config.lang || 'en';
+  const siteId = config.trackId || '';
+  const endpoint = `${config.appOrigin || ''}/api/forms/submit`;
+  const attr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
   // Real business contact details (e.g. from Google Places) shown only when present.
   const infoItems = [
@@ -35,7 +46,9 @@ export function contactFormTemplate(data, config) {
       <p class="contact-subheading">${subheading}</p>
     </div>
     ${contactInfo}
-    <form class="contact-form" onsubmit="event.preventDefault(); alert('Form submission not configured yet. Connect to your backend!');">
+    <form class="contact-form" data-cf-site="${attr(siteId)}" data-cf-endpoint="${attr(endpoint)}"
+      data-msg-sending="${attr(t(lang, 'formw.sending'))}" data-msg-success="${attr(t(lang, 'formw.success'))}"
+      data-msg-error="${attr(t(lang, 'formw.error'))}" data-msg-preview="${attr(t(lang, 'formw.preview'))}">
       <div class="form-row">
         <div class="form-group">
           <label for="name">Your Name</label>
@@ -50,10 +63,48 @@ export function contactFormTemplate(data, config) {
         <label for="message">Message</label>
         <textarea id="message" name="message" rows="5" required></textarea>
       </div>
+      <!-- Honeypot: humans never see it; bots that fill it are silently dropped -->
+      <input class="cf-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
       <button type="submit" class="contact-submit">${button_text}</button>
+      <p class="contact-form-status" role="status" aria-live="polite"></p>
     </form>
   </div>
 </section>
+
+<script>
+(function () {
+  if (window.__cfFormInit) return; window.__cfFormInit = 1;
+  // Delegated so multiple contact sections share one handler and the script
+  // stays idempotent across re-injected previews.
+  document.addEventListener('submit', function (e) {
+    var form = e.target && e.target.closest ? e.target.closest('form.contact-form') : null;
+    if (!form) return;
+    e.preventDefault();
+    var status = form.querySelector('.contact-form-status');
+    var btn = form.querySelector('.contact-submit');
+    var show = function (msg, ok) {
+      if (status) { status.textContent = msg || ''; status.className = 'contact-form-status ' + (ok ? 'ok' : 'err'); }
+    };
+    if (!form.dataset.cfSite) { show(form.dataset.msgPreview, true); return; }
+    var hp = form.querySelector('.cf-hp');
+    var val = function (n) { var el = form.querySelector('[name=' + n + ']'); return el ? el.value : ''; };
+    if (btn) btn.disabled = true;
+    show(form.dataset.msgSending, true);
+    fetch(form.dataset.cfEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ s: form.dataset.cfSite, p: location.pathname, name: val('name'), email: val('email'), message: val('message'), hp: hp ? hp.value : '' })
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok && d.success, d: d }; }); })
+      .then(function (res) {
+        if (res.ok) { show(form.dataset.msgSuccess, true); form.reset(); }
+        else { show((res.d && res.d.error) || form.dataset.msgError, false); }
+        if (btn) btn.disabled = false;
+      })
+      .catch(function () { show(form.dataset.msgError, false); if (btn) btn.disabled = false; });
+  });
+})();
+</script>
 
 <style>
 .contact-section {
@@ -177,6 +228,40 @@ a.contact-info-item:hover {
 .contact-submit:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.contact-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
+.contact-form-status {
+  margin-top: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.contact-form-status:empty {
+  display: none;
+}
+
+.contact-form-status.ok {
+  color: #2f855a;
+}
+
+.contact-form-status.err {
+  color: #c53030;
+}
+
+/* Honeypot — moved off-screen, not display:none (some bots skip hidden fields) */
+.cf-hp {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 @media (max-width: 768px) {

@@ -67,6 +67,8 @@ import { billingAuth } from './middleware/billing-auth.js';
 import { projectAccess } from './middleware/project-access.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
+import { handleFormSubmit, handleFormDelete } from './routes/api/forms.js';
+import { handleFormsInbox } from './routes/public/forms-inbox.js';
 
 // Initialize router
 const router = new Router();
@@ -133,6 +135,9 @@ router.get('/api/fun/joke', handleJoke);
 // Analytics beacon (public, cookieless)
 router.post('/api/track', handleTrack);
 
+// Contact-form submissions from published sites (public, cross-origin like /api/track)
+router.post('/api/forms/submit', handleFormSubmit);
+
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);
 // All project-scoped editing routes are gated [billingAuth, projectAccess]:
@@ -162,6 +167,10 @@ router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);
+
+// Contact-form inbox (owner-facing; same access model as customize)
+router.get('/ai-builder/forms/:project_id', handleFormsInbox, PROJ);
+router.delete('/api/ai-builder/:project_id/forms/:id', handleFormDelete, PROJ);
 
 // Billing API
 router.post('/api/billing/login', handleBillingLogin);

@@ -9,6 +9,7 @@ import { getAllProjects } from '../../db/projects.js';
 import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
+import { countUnread } from '../../db/form-submissions.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
 import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
 import { translator } from '../../i18n/index.js';
@@ -60,7 +61,7 @@ function statusPill(s, tr) {
   return `<span class="pill ${ok ? 'ok' : ''}">${ok ? tr('dash.live') : esc(s)}</span>`;
 }
 
-function siteCard(site, domainsBlock = '', tr) {
+function siteCard(site, domainsBlock = '', tr, unread = 0) {
   const live = site.subdomain ? `https://${site.subdomain}.${SITES_BASE}` : '';
   return `
     <div class="site">
@@ -72,6 +73,7 @@ function siteCard(site, domainsBlock = '', tr) {
         <div class="site-actions">
           <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">${tr('dash.customize')}</a>
           <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">${tr('dash.analytics')}</a>
+          <a class="btn ghost" href="/ai-builder/forms/${esc(site.id)}">${tr('dash.inbox')}${unread ? ` <span class="pill warn">${unread}</span>` : ''}</a>
           ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
         </div>
       </div>
@@ -188,7 +190,8 @@ export async function handleDashboard(ctx) {
         block = `<details class="site-domains"><summary>🌐 ${tr('dash.custom_domain')}${badge}</summary>
           ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase, lang })}</details>`;
       }
-      return siteCard(s, block, tr);
+      const unread = await countUnread(env.DB, s.id);
+      return siteCard(s, block, tr, unread);
     })
   );
   const ownCardsHtml = ownCards.join('');
