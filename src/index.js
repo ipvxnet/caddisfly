@@ -74,7 +74,7 @@ import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
 import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
-  handleBlogPublish, handleBlogSocial, handleBlogDelete,
+  handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
 } from './routes/api/ai-builder/blog.js';
 
 // Initialize router
@@ -195,6 +195,7 @@ router.post('/api/ai-builder/:project_id/blog/ai-draft', handleBlogAIDraft, PROJ
 router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
+router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
 router.delete('/api/ai-builder/:project_id/blog/:post_id', handleBlogDelete, PROJ);
 
 // Billing API

@@ -151,10 +151,11 @@ export async function handleAIEditApply(ctx) {
 
 /**
  * Generate an image with Workers AI, store it in R2, and return its served URL.
- * Flux-schnell returns { image: <base64 jpeg> }.
+ * Flux-schnell returns { image: <base64 jpeg> }. (Also used by the blog cover
+ * generator — routes/api/ai-builder/blog.js.)
  * @returns {Promise<string>} `/preview-asset/<id>/ai-<token>.jpg`
  */
-async function generateImageToR2(env, id, prompt) {
+export async function generateImageToR2(env, id, prompt) {
   if (!env.AI) throw new Error('AI binding not available');
   const result = await env.AI.run(IMAGE_MODEL, { prompt, steps: 6 });
   const b64 = result && result.image;

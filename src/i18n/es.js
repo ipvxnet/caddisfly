@@ -359,6 +359,8 @@ export const es = {
     seo_title_label: 'Título SEO (opcional)', seo_desc_label: 'Descripción SEO (opcional)',
     republish_note: '✓ Guardado. Vuelve a publicar tu sitio (Deploy) para que el cambio aparezca en tu sitio publicado.',
     republish_link: 'Abrir personalizar →',
+    gen_cover: '🖼 Portada IA', gen_cover_busy: 'Generando…',
+    gen_cover_title: 'Genera una imagen de portada con IA (~5 créditos)',
     social_x: '𝕏 / Twitter', social_ig: 'Instagram', social_li: 'LinkedIn',
     copy: 'Copiar', copied: 'Copiado ✓', share: 'Compartir ↗',
     ig_note: 'Pégalo como tu descripción — Instagram no tiene enlace de compartir prellenado.',

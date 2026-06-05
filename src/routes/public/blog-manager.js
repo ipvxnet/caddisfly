@@ -58,6 +58,7 @@ export async function handleBlogManager(ctx) {
     return `
     <div class="post" data-id="${p.id}" data-slug="${esc(p.slug)}">
       <div class="post-top">
+        ${p.cover_image ? `<img class="post-thumb" src="${esc(p.cover_image)}" alt="" loading="lazy">` : ''}
         <div class="post-main">
           <div class="post-title">${esc(p.title)} <span class="pill ${isPub ? 'ok' : ''}">${isPub ? tr('blogm.st_published') : tr('blogm.st_draft')}</span></div>
           <div class="post-meta">${isPub && p.published_at ? `${tr('blogm.published_on')} ${fmtDate(p.published_at, lang)}` : `${tr('blogm.updated_on')} ${fmtDate(p.updated_at || p.created_at, lang)}`}</div>
@@ -67,6 +68,7 @@ export async function handleBlogManager(ctx) {
           <button class="btn ghost" onclick="toggleEdit(${p.id})">${tr('blogm.edit')}</button>
           <button class="btn ghost" onclick="togglePublish(${p.id}, ${isPub ? 'false' : 'true'})">${isPub ? tr('blogm.unpublish') : tr('blogm.publish')}</button>
           <button class="btn ghost" onclick="loadSocial(${p.id}, this)">${tr('blogm.social')}</button>
+          <button class="btn ghost" onclick="genCover(${p.id}, this)" title="${tr('blogm.gen_cover_title')}">${tr('blogm.gen_cover')}</button>
           <button class="link-btn danger" onclick="delPost(${p.id})">${tr('blogm.delete')}</button>
         </div>
       </div>
@@ -124,6 +126,7 @@ export async function handleBlogManager(ctx) {
     .post{padding:1rem 0;border-bottom:1px solid var(--line)}
     .post:last-child{border-bottom:none}
     .post-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+    .post-thumb{width:84px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
     .post-title{font-weight:800;color:var(--ink)}
     .post-meta{color:var(--muted);font-size:.82rem;margin-top:.2rem}
     .post-actions{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
@@ -217,6 +220,11 @@ export async function handleBlogManager(ctx) {
         if (DEPLOYED) { sessionStorage.setItem('cf_republish', '1'); }
         location.reload();
       } catch (e) { alert(e.message); }
+    }
+    async function genCover(id, btn) {
+      btn.disabled = true; var was = btn.textContent; btn.textContent = ${JSON.stringify(tr('blogm.gen_cover_busy'))};
+      try { await api('POST', '/' + id + '/cover', {}); location.reload(); }
+      catch (e) { alert(e.message); btn.disabled = false; btn.textContent = was; }
     }
     async function delPost(id) {
       if (!confirm(${JSON.stringify(tr('blogm.delete_confirm'))})) return;

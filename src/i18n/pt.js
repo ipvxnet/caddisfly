@@ -359,6 +359,8 @@ export const pt = {
     seo_title_label: 'Título SEO (opcional)', seo_desc_label: 'Descrição SEO (opcional)',
     republish_note: '✓ Salvo. Republique o seu site (Deploy) para a mudança aparecer no site publicado.',
     republish_link: 'Abrir personalizar →',
+    gen_cover: '🖼 Capa IA', gen_cover_busy: 'Gerando…',
+    gen_cover_title: 'Gere uma imagem de capa com IA (~5 créditos)',
     social_x: '𝕏 / Twitter', social_ig: 'Instagram', social_li: 'LinkedIn',
     copy: 'Copiar', copied: 'Copiado ✓', share: 'Compartilhar ↗',
     ig_note: 'Cole como a sua legenda — o Instagram não tem link de compartilhamento pré-preenchido.',

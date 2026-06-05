@@ -223,7 +223,11 @@ export async function handleAIBuilderDeploy(ctx) {
             pageTitle: post.title,
             seoTitle: post.seo_title || null,
             seoDescription: post.seo_description || post.excerpt || null,
-            socialImage: post.cover_image || config.social_image || null,
+            // og:image must be absolute for crawlers; covers are stored as
+            // relative /preview-asset/ URLs.
+            socialImage: post.cover_image
+              ? (post.cover_image.startsWith('/') ? `${subdomainBase}${post.cover_image}` : post.cover_image)
+              : config.social_image || null,
           }
         );
       }

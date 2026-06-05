@@ -364,6 +364,8 @@ export const en = {
     seo_title_label: 'SEO title (optional)', seo_desc_label: 'SEO description (optional)',
     republish_note: '✓ Saved. Republish your site (Deploy) so the change goes live on your published site.',
     republish_link: 'Open customize →',
+    gen_cover: '🖼 AI cover', gen_cover_busy: 'Generating…',
+    gen_cover_title: 'Generate a cover image with AI (~5 credits)',
     social_x: '𝕏 / Twitter', social_ig: 'Instagram', social_li: 'LinkedIn',
     copy: 'Copy', copied: 'Copied ✓', share: 'Share ↗',
     ig_note: 'Paste as your caption — Instagram has no pre-filled share link.',

@@ -22,6 +22,7 @@ import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { mdLiteExcerpt } from '../../../utils/md-lite.js';
+import { generateImageToR2 } from './ai-edit.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -237,6 +238,41 @@ export async function handleBlogDelete(ctx) {
   if (r.error) return r.error;
   const ok = await deletePost(env.DB, r.projectKey, parseInt(params.post_id, 10));
   return ok ? json({ success: true }) : json({ success: false, error: 'Post not found' }, 404);
+}
+
+/**
+ * AI cover image: Flux-generated tile from the post's title/excerpt/industry.
+ * Same model + R2 path as AI-edit image gen; charged as a normal image (5).
+ * Diffusion models render text poorly, so the prompt explicitly forbids
+ * words/typography — we want a clean photographic tile, not a fake headline.
+ */
+export async function handleBlogCover(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (r.error) return r.error;
+    const post = await getPostById(env.DB, r.projectKey, parseInt(params.post_id, 10));
+    if (!post) return json({ success: false, error: 'Post not found' }, 404);
+
+    const afford = await canAfford(env, env.DB, r.email, CREDIT_COSTS.image);
+    if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI image generation').error }, 402);
+
+    const excerpt = post.excerpt || mdLiteExcerpt(post.content, 200);
+    const prompt =
+      `Professional editorial cover photograph for a business blog article titled "${post.title}". ` +
+      `${excerpt} ` +
+      `${r.industry ? `Industry: ${r.industry}. ` : ''}` +
+      `Photorealistic, high quality, wide 16:9 composition, soft natural lighting, modern and clean. ` +
+      `Strictly NO text, NO words, NO letters, NO typography, NO logos, NO watermarks.`;
+
+    const url = await generateImageToR2(env, params.project_id, prompt);
+    await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.image);
+    const updated = await updatePost(env.DB, r.projectKey, post.id, { cover_image: url });
+    return json({ success: true, cover_image: url, post: updated });
+  } catch (e) {
+    console.error('blog cover error:', e);
+    return json({ success: false, error: 'Cover generation failed — please try again.' }, 500);
+  }
 }
 
 /** AI social pack: X + Instagram + LinkedIn variants for a post. */
