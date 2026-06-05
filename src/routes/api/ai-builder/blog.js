@@ -18,7 +18,7 @@ import { getProjectByPreviewId } from '../../../db/projects.js';
 import {
   createPost, getPostsByProject, getPostById, updatePost, deletePost, uniquePostSlug,
 } from '../../../db/blog-posts.js';
-import { callWorkersAI, extractJSON } from '../../../utils/ai-content-generator.js';
+import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { mdLiteExcerpt } from '../../../utils/md-lite.js';
@@ -28,6 +28,28 @@ function json(body, status = 200) {
 }
 
 const LANG_NAMES = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
+
+/**
+ * Parse a LABEL-delimited AI response into { label: text }. We deliberately do
+ * NOT ask the model for JSON here — multi-paragraph content with raw newlines
+ * inside JSON string literals is invalid JSON and small models emit exactly
+ * that. Labels must be UPPERCASE and appear at line start, in order.
+ */
+function parseLabeled(raw, labels) {
+  const text = String(raw || '').replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '');
+  const out = {};
+  for (let i = 0; i < labels.length; i++) {
+    const start = text.search(new RegExp(`^${labels[i]}:`, 'm'));
+    if (start === -1) return null;
+    let end = text.length;
+    for (let j = i + 1; j < labels.length; j++) {
+      const next = text.slice(start + labels[i].length).search(new RegExp(`^${labels[j]}:`, 'm'));
+      if (next !== -1) { end = start + labels[i].length + next; break; }
+    }
+    out[labels[i].toLowerCase()] = text.slice(start + labels[i].length + 1, end).trim();
+  }
+  return out;
+}
 
 /** Resolve :project_id to { projectKey, project } (ai-first, like pages.js). */
 async function resolveProject(env, project_id) {
@@ -122,13 +144,16 @@ ${brief}
 Write an engaging, SEO-friendly blog post of 400-700 words based on the brief. Write ALL text in ${langName}.
 Format the post body in simple markdown: "## " for section headings, "- " for bullet list items, "**bold**" for emphasis, blank lines between paragraphs. Do NOT use any other markdown syntax. Do not invent specific facts, prices, dates or statistics the brief doesn't mention.
 
-Respond with ONLY a JSON object (no commentary):
-{"title": "post title, max 70 chars", "excerpt": "1-2 sentence summary, max 160 chars", "content": "the post body in the markdown described above"}
+Respond in EXACTLY this format (plain text, no JSON, no commentary, keep the uppercase labels):
+TITLE: the post title, max 70 characters
+EXCERPT: a 1-2 sentence summary, max 160 characters
+CONTENT:
+the full post body in the markdown described above
 ${POLICY_INSTRUCTION}`;
 
     const raw = await callWorkersAI(env, prompt, { max_tokens: 2048, temperature: 0.6, system_message: 'You are a professional content writer for small-business websites.' });
-    const draft = extractJSON(raw);
-    if (!draft || typeof draft !== 'object' || !draft.title || !draft.content) {
+    const draft = parseLabeled(raw, ['TITLE', 'EXCERPT', 'CONTENT']);
+    if (!draft || !draft.title || !draft.content) {
       return json({ success: false, error: 'The AI draft came back malformed — please try again.' }, 502);
     }
     const outScreen = screenContent(`${draft.title}\n${draft.content}`);
@@ -236,23 +261,28 @@ Summary: ${post.excerpt || mdLiteExcerpt(post.content)}
 ${postUrl ? `Link: ${postUrl}` : ''}
 
 Write social media posts announcing it, ALL in ${langName}:
-1. "x": for X/Twitter — max 240 characters including the link placeholder {URL}, punchy, no hashtag spam (max 2).
-2. "instagram": a caption — 2-4 short lines, friendly, 3-5 relevant hashtags at the end, mention "link in bio".
-3. "linkedin": professional tone, 2-3 short paragraphs, ends with the link placeholder {URL}.
+1. XPOST: for X/Twitter — max 240 characters including the link placeholder {URL}, punchy, no hashtag spam (max 2).
+2. INSTAGRAM: a caption — 2-4 short lines, friendly, 3-5 relevant hashtags at the end, mention "link in bio".
+3. LINKEDIN: professional tone, 2-3 short paragraphs, ends with the link placeholder {URL}.
 
-Respond with ONLY a JSON object: {"x": "...", "instagram": "...", "linkedin": "..."}
+Respond in EXACTLY this format (plain text, no JSON, no commentary, keep the uppercase labels):
+XPOST: the X/Twitter post
+INSTAGRAM:
+the Instagram caption
+LINKEDIN:
+the LinkedIn post
 ${POLICY_INSTRUCTION}`;
 
     const raw = await callWorkersAI(env, prompt, { max_tokens: 900, temperature: 0.7, system_message: 'You are a social media copywriter for small businesses.' });
-    const pack = extractJSON(raw);
-    if (!pack || typeof pack !== 'object' || !pack.x) {
+    const pack = parseLabeled(raw, ['XPOST', 'INSTAGRAM', 'LINKEDIN']);
+    if (!pack || !pack.xpost) {
       return json({ success: false, error: 'The AI came back malformed — please try again.' }, 502);
     }
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.social_pack);
 
     const fill = (s) => String(s || '').replace(/\{URL\}/g, postUrl || '').trim();
-    return json({ success: true, social: { x: fill(pack.x), instagram: fill(pack.instagram), linkedin: fill(pack.linkedin) } });
+    return json({ success: true, social: { x: fill(pack.xpost), instagram: fill(pack.instagram), linkedin: fill(pack.linkedin) } });
   } catch (e) {
     console.error('blog social error:', e);
     return json({ success: false, error: 'Social generation failed — please try again.' }, 500);
