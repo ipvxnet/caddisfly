@@ -28,7 +28,13 @@ async function resolveSubdomain(env, url, host) {
   if (!host) return null;
   const h = host.split(':')[0].toLowerCase();
   if (APEX_HOSTS.has(h)) return null; // apex/www handled by the caller
-  if (h.endsWith('.caddisfly.app')) return h.slice(0, -'.caddisfly.app'.length).split('.')[0];
+  if (h.endsWith('.caddisfly.app')) {
+    let label = h.slice(0, -'.caddisfly.app'.length).split('.')[0];
+    // Preview-env convention: <sub>-preview.caddisfly.app (route owned by the
+    // preview worker) resolves to the same R2 layout as <sub> in its bucket.
+    if (label.endsWith('-preview')) label = label.slice(0, -'-preview'.length);
+    return label;
+  }
   // Custom domain — look up the pointer written when the domain went active.
   const ptr = await env.STORAGE.get(`domains/${h}`);
   if (ptr) return (await ptr.text()).trim();
@@ -123,9 +129,10 @@ export default {
     if (url.pathname === '/sitemap.xml') return await sitemapXml(env, sub, hostNoPort);
 
     // "/" -> index; "/slug" -> slug (no DB; home was written as index.html).
+    // One nested level is allowed for blog posts ("/blog/<post-slug>").
     let slug = url.pathname.replace(/^\/+|\/+$/g, '');
     if (!slug) slug = 'index';
-    if (!/^[a-z0-9-]{1,60}$/.test(slug)) return notFound();
+    if (!/^[a-z0-9-]{1,60}(\/[a-z0-9-]{1,60})?$/.test(slug)) return notFound();
 
     let html = await env.STORAGE.get(`sites/${sub}/${slug}.html`);
     let servedSlug = slug;

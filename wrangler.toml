@@ -48,7 +48,7 @@ SCRAPE_TIMEOUT_SECONDS = "30"
 # Preview environment (dev branch)
 [env.preview]
 name = "caddisfly-preview"
-vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30" }
+vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app", SITES_PREVIEW_SUFFIX = "-preview" }
 
 [[env.preview.d1_databases]]
 binding = "DB"

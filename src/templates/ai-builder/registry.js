@@ -40,6 +40,11 @@ import { featuresGridTemplate } from './features/grid.js';
 import { ctaBannerTemplate } from './cta/banner.js';
 import { statsNumbersTemplate } from './stats/numbers.js';
 
+// Blog (rendered from synthetic sections built at deploy/preview time — not
+// user-addable; see ADDABLE_TYPES in api/ai-builder/section-create.js)
+import { blogListTemplate } from './blog/list.js';
+import { blogPostTemplate } from './blog/post.js';
+
 /**
  * Template registry
  * Maps section types to their available template variants
@@ -101,6 +106,12 @@ export const TEMPLATE_REGISTRY = {
   stats: {
     numbers: statsNumbersTemplate,
     default: statsNumbersTemplate,
+  },
+  blog_list: {
+    default: blogListTemplate,
+  },
+  blog_post: {
+    default: blogPostTemplate,
   },
 };
 

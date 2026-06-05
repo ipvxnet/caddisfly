@@ -61,19 +61,20 @@ function statusPill(s, tr) {
   return `<span class="pill ${ok ? 'ok' : ''}">${ok ? tr('dash.live') : esc(s)}</span>`;
 }
 
-function siteCard(site, domainsBlock = '', tr, unread = 0) {
-  const live = site.subdomain ? `https://${site.subdomain}.${SITES_BASE}` : '';
+function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
+  const live = site.subdomain ? `https://${site.subdomain}${hostSuffix}.${SITES_BASE}` : '';
   return `
     <div class="site">
       <div class="site-top">
         <div class="site-main">
           <div class="site-name">${esc(site.name)} ${statusPill(site.status, tr)}</div>
-          ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}.${SITES_BASE}</a>` : `<span class="site-url muted">${tr('dash.not_published')}</span>`}
+          ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}${hostSuffix}.${SITES_BASE}</a>` : `<span class="site-url muted">${tr('dash.not_published')}</span>`}
         </div>
         <div class="site-actions">
           <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">${tr('dash.customize')}</a>
           <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">${tr('dash.analytics')}</a>
           <a class="btn ghost" href="/ai-builder/forms/${esc(site.id)}">${tr('dash.inbox')}${unread ? ` <span class="pill warn">${unread}</span>` : ''}</a>
+          <a class="btn ghost" href="/ai-builder/blog/${esc(site.id)}">${tr('dash.blog')}</a>
           ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
         </div>
       </div>
@@ -191,7 +192,7 @@ export async function handleDashboard(ctx) {
           ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase, lang })}</details>`;
       }
       const unread = await countUnread(env.DB, s.id);
-      return siteCard(s, block, tr, unread);
+      return siteCard(s, block, tr, unread, env.SITES_PREVIEW_SUFFIX || '');
     })
   );
   const ownCardsHtml = ownCards.join('');
@@ -215,7 +216,7 @@ export async function handleDashboard(ctx) {
       ]);
       const sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)];
       sharedHtml += `<div class="panel"><h2>${tr('dash.shared_by', { owner: esc(ref.owner) })}</h2>
-        ${sites.length ? sites.map((s) => siteCard(s, '', tr)).join('') : `<p class="muted">${tr('dash.no_sites_yet')}</p>`}</div>`;
+        ${sites.length ? sites.map((s) => siteCard(s, '', tr, 0, env.SITES_PREVIEW_SUFFIX || '')).join('') : `<p class="muted">${tr('dash.no_sites_yet')}</p>`}</div>`;
     }
   }
 

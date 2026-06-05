@@ -34,10 +34,14 @@ export function navbarTemplate(data, config) {
   const previewBase = config.previewBase || '';
   const currentSlug = config.currentSlug || '';
   const embedSuffix = config.embed ? '?embed=1' : '';
-  const homeHref = previewBase ? `${previewBase}/home${embedSuffix}` : '#top';
+  // previewBase is '' for SUBDOMAIN copies (nav rooted at /) — that's a valid
+  // base, not "no pages". Gating links on `previewBase` truthiness left
+  // subdomain-served sites with NO nav menu at all (links like `/about` are
+  // exactly what we want there). Single-page sites still get the anchor nav.
+  const homeHref = previewBase ? `${previewBase}/home${embedSuffix}` : pages.length > 1 ? '/' : '#top';
 
   const pageLinks =
-    pages.length > 1 && previewBase
+    pages.length > 1
       ? pages
           .map((p) => {
             const active = p.slug === currentSlug ? ' nav-link-active' : '';

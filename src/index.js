@@ -70,6 +70,12 @@ import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete } from './routes/api/forms.js';
 import { handleFormsInbox } from './routes/public/forms-inbox.js';
+import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
+import { handleBlogManager } from './routes/public/blog-manager.js';
+import {
+  handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
+  handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
+} from './routes/api/ai-builder/blog.js';
 
 // Initialize router
 const router = new Router();
@@ -107,8 +113,13 @@ router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, pr
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
 router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics);
+// Blog preview routes MUST register before the generic :page_slug routes
+// (the router is first-match; "blog" would otherwise resolve as a page slug).
+router.get('/ai-preview/:project_id/blog/:post_slug', handleAIPreviewBlog);
+router.get('/ai-preview/:project_id/blog', handleAIPreviewBlog);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
+router.get('/site/:project_id/blog/:post_slug', handlePublishedSite);
 router.get('/site/:project_id', handlePublishedSite);
 router.get('/site/:project_id/:page_slug', handlePublishedSite);
 
@@ -175,6 +186,17 @@ router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PRO
 // Contact-form inbox (owner-facing; same access model as customize)
 router.get('/ai-builder/forms/:project_id', handleFormsInbox, PROJ);
 router.delete('/api/ai-builder/:project_id/forms/:id', handleFormDelete, PROJ);
+
+// Blog manager + API (owner-facing; same access model as customize)
+router.get('/ai-builder/blog/:project_id', handleBlogManager, PROJ);
+router.get('/api/ai-builder/:project_id/blog', handleBlogList, PROJ);
+router.post('/api/ai-builder/:project_id/blog', handleBlogCreate, PROJ);
+router.post('/api/ai-builder/:project_id/blog/ai-draft', handleBlogAIDraft, PROJ);
+router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
+router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
+router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
+router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
+router.delete('/api/ai-builder/:project_id/blog/:post_id', handleBlogDelete, PROJ);
 
 // Billing API
 router.post('/api/billing/login', handleBillingLogin);

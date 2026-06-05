@@ -140,13 +140,14 @@ const DARK_SURFACE_SECTIONS = [
   '.testimonials-section', '.testimonials-quotes',
   '.gallery-section', '.gallery-carousel',
   '.contact-section', '.pricing-tables',
+  '.blog-list-section', '.blog-post-section',
 ];
 
 // Inner card/well surfaces (light) — flipped to the slightly lighter surface.card.
 const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
-  '.team-card', '.feature-item',
+  '.team-card', '.feature-item', '.blog-card',
 ];
 
 /**
@@ -168,6 +169,7 @@ export function darkModeCss(theme) {
     ${DARK_CARD_SURFACES.join(', ')} { background: ${s.card} !important; border-color: ${s.border} !important; }
     section h1, section h2, section h3, section h4, section h5, section h6 { color: ${s.text} !important; }
     section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p { color: ${s.muted} !important; }
+    .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .contact-form input, .contact-form textarea, .contact-form select {
       background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important;
     }

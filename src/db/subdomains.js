@@ -13,7 +13,7 @@ const RESERVED = new Set([
 ]);
 
 export function subdomainSlugify(name) {
-  const s = String(name || '')
+  let s = String(name || '')
     .toLowerCase()
     .trim()
     .replace(/^https?:\/\//, '')
@@ -21,12 +21,15 @@ export function subdomainSlugify(name) {
     .replace(/^-+|-+$/g, '')
     .slice(0, 40)
     .replace(/-+$/g, '');
+  // `<sub>-preview.caddisfly.app` is the preview-env host convention — a prod
+  // site whose label ended in -preview would route to the preview worker.
+  while (s.endsWith('-preview')) s = s.slice(0, -'-preview'.length).replace(/-+$/g, '');
   return s || 'site';
 }
 
 /** Is this exact subdomain already taken by any project? */
 async function isTaken(db, candidate) {
-  if (RESERVED.has(candidate)) return true;
+  if (RESERVED.has(candidate) || candidate.endsWith('-preview')) return true;
   const row = await db
     .prepare(
       `SELECT 1 FROM ai_projects WHERE subdomain = ?1
