@@ -635,6 +635,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <a href="/billing" class="credit-chip" title="${tr('cust.credits_title', { m: creditState.monthlyRemaining.toLocaleString(), p: creditState.purchased.toLocaleString() })}">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
       <a href="/dashboard" class="btn btn-secondary" title="${tr('cust.dashboard_title')}">${tr('cust.dashboard')}</a>
       <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
+      <a href="/ai-builder/blog/${project.project_id}" class="btn btn-secondary" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
       ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite()">${tr('cust.deploy')}</button>` : ''}
     </div>

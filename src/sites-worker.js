@@ -123,9 +123,10 @@ export default {
     if (url.pathname === '/sitemap.xml') return await sitemapXml(env, sub, hostNoPort);
 
     // "/" -> index; "/slug" -> slug (no DB; home was written as index.html).
+    // One nested level is allowed for blog posts ("/blog/<post-slug>").
     let slug = url.pathname.replace(/^\/+|\/+$/g, '');
     if (!slug) slug = 'index';
-    if (!/^[a-z0-9-]{1,60}$/.test(slug)) return notFound();
+    if (!/^[a-z0-9-]{1,60}(\/[a-z0-9-]{1,60})?$/.test(slug)) return notFound();
 
     let html = await env.STORAGE.get(`sites/${sub}/${slug}.html`);
     let servedSlug = slug;

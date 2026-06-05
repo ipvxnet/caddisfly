@@ -13,6 +13,8 @@ import { countPublishedSites } from '../../../db/billing.js';
 import { PUBLISH_LIMITS } from '../../../utils/credits.js';
 import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
 import { canDeploy } from '../../../middleware/project-access.js';
+import { getPostsByProject } from '../../../db/blog-posts.js';
+import { blogNavPage, blogListSection, blogPostSection } from '../../../utils/blog-render.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -96,6 +98,12 @@ export async function handleAIBuilderDeploy(ctx) {
     const pages = await getPagesByProject(env.DB, projectKey);
     const navPages = pages.filter((p) => p.is_visible !== 0);
 
+    // Blog: published posts become /blog + /blog/<slug> pages, and a Blog nav
+    // link appears on every page (synthetic nav entry; see utils/blog-render.js).
+    const siteLang = (aiProject && aiProject.language) || (regularProjectRow && regularProjectRow.language) || 'en';
+    const publishedPosts = await getPostsByProject(env.DB, projectKey, true);
+    if (publishedPosts.length) navPages.push(blogNavPage(siteLang));
+
     // Shared site sections (header/footer) — rendered on every page.
     const siteSections = await getSiteSections(env.DB, projectKey, true);
     const header = siteSections.filter((s) => s.section_type === 'header');
@@ -147,7 +155,7 @@ export async function handleAIBuilderDeploy(ctx) {
         hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
         trackId: publicId, // cookieless analytics beacon on published pages
         appOrigin, // absolute beacon target (works on both serving surfaces)
-        lang: (aiProject && aiProject.language) || (regularProjectRow && regularProjectRow.language) || 'en',
+        lang: siteLang,
         // SEO: per-page overrides + site social image + business identity.
         seoTitle: page.seo_title || null,
         seoDescription: page.seo_description || null,
@@ -173,6 +181,50 @@ export async function handleAIBuilderDeploy(ctx) {
     }
 
     if (pageCount === 0) return json({ success: false, error: 'Nothing to deploy' }, 400);
+
+    // Bake the blog: index + one page per published post, in BOTH copies
+    // (/site/:id and the subdomain). Drafts never publish.
+    if (publishedPosts.length) {
+      const blogCommon = {
+        pages: navPages,
+        currentSlug: 'blog',
+        preordered: true,
+        hideBadge: tier !== 'free_trial',
+        trackId: publicId,
+        appOrigin,
+        lang: siteLang,
+        business,
+      };
+      const writeBlogPage = async (slugPath, sectionFor, seo) => {
+        // /site/:id copy
+        const idSections = [...header, sectionFor(`/site/${publicId}`), ...footer];
+        const idHtml = assemblePage(idSections, config, projectView, { ...blogCommon, ...seo, previewBase: `/site/${publicId}` });
+        await uploadToR2(env.STORAGE, `published/${publicId}/${slugPath}.html`, idHtml, 'text/html; charset=utf-8');
+        // Subdomain copy (nav rooted at /)
+        const subSections = [...header, sectionFor(''), ...footer];
+        const subHtml = assemblePage(subSections, config, projectView, { ...blogCommon, ...seo, previewBase: '' });
+        await uploadToR2(env.STORAGE, `sites/${subdomain}/${slugPath}.html`, subHtml, 'text/html; charset=utf-8');
+      };
+
+      await writeBlogPage(
+        'blog',
+        (base) => blogListSection(publishedPosts, base, siteLang),
+        { canonicalUrl: `${subdomainBase}/blog`, pageTitle: 'Blog' }
+      );
+      for (const post of publishedPosts) {
+        await writeBlogPage(
+          `blog/${post.slug}`,
+          (base) => blogPostSection(post, base, { canonicalUrl: `${subdomainBase}/blog/${post.slug}`, businessName: business.name || '' }),
+          {
+            canonicalUrl: `${subdomainBase}/blog/${post.slug}`,
+            pageTitle: post.title,
+            seoTitle: post.seo_title || null,
+            seoDescription: post.seo_description || post.excerpt || null,
+            socialImage: post.cover_image || config.social_image || null,
+          }
+        );
+      }
+    }
 
     // Canonical URL: the subdomain on the sites domain. The sites worker serves
     // *.caddisfly.app in BOTH preview and prod, so default to caddisfly.app when
