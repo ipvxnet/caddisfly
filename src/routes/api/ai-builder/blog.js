@@ -79,7 +79,7 @@ export async function handleBlogCreate(ctx) {
     const content = (body.content || '').toString().slice(0, 30000);
     if (!title) return json({ success: false, error: 'Title is required' }, 400);
     const screen = screenContent(`${title}\n${content}`);
-    if (!screen.ok) return json({ success: false, error: policyError(screen).error }, 422);
+    if (!screen.allowed) return json(policyError(screen), 422);
     const slug = await uniquePostSlug(env.DB, r.projectKey, title);
     const post = await createPost(env.DB, r.projectKey, {
       slug,
@@ -106,7 +106,7 @@ export async function handleBlogAIDraft(ctx) {
     const brief = (body.brief || '').toString().trim().slice(0, 2000);
     if (brief.length < 10) return json({ success: false, error: 'Tell us a bit more (a few sentences) so the AI has something to work with.' }, 400);
     const screen = screenContent(brief);
-    if (!screen.ok) return json({ success: false, error: policyError(screen).error }, 422);
+    if (!screen.allowed) return json(policyError(screen), 422);
 
     const afford = await canAfford(env, env.DB, r.email, CREDIT_COSTS.blog_post);
     if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI blog drafting').error }, 402);
@@ -132,7 +132,7 @@ ${POLICY_INSTRUCTION}`;
       return json({ success: false, error: 'The AI draft came back malformed — please try again.' }, 502);
     }
     const outScreen = screenContent(`${draft.title}\n${draft.content}`);
-    if (!outScreen.ok) return json({ success: false, error: policyError(outScreen).error }, 422);
+    if (!outScreen.allowed) return json(policyError(outScreen), 422);
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.blog_post);
 
@@ -176,7 +176,7 @@ export async function handleBlogUpdate(ctx) {
     if (body.seo_description != null) updates.seo_description = body.seo_description.toString().trim().slice(0, 200) || null;
 
     const screen = screenContent(`${updates.title || post.title}\n${updates.content != null ? updates.content : post.content}`);
-    if (!screen.ok) return json({ success: false, error: policyError(screen).error }, 422);
+    if (!screen.allowed) return json(policyError(screen), 422);
 
     const updated = await updatePost(env.DB, r.projectKey, post.id, updates);
     return json({ success: true, post: updated });
