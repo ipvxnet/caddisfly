@@ -296,6 +296,18 @@ export const en = {
     err_apply_tpl: 'Failed to apply template: ', err_deploy: 'Deployment failed: ',
   },
 
+  ana: {
+    meta_title: 'Analytics — {name}', sub: 'Traffic · last 30 days · cookieless & privacy-first',
+    customize: '← Customize', view_site: 'View site ↗',
+    page_views: 'Page views', visitors: 'Visitors', active_days: 'Active days',
+    views_per_day: 'Views per day', top_pages: 'Top pages', referrers: 'Referrers', countries: 'Countries',
+    no_visits: 'No visits in the last 30 days yet. Share your site to start seeing traffic here.',
+    no_pages: 'No pages yet.', no_referrers: 'No referrers yet.', no_countries: 'No countries yet.',
+    direct: '(direct)', unknown: 'Unknown',
+    privacy_note: 'No cookies, no cross-site tracking, and no IP addresses are stored — visitor counts use a daily, per-site anonymous key. See our {privacy}.',
+    privacy_link: 'Privacy Policy',
+  },
+
   sed: {
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',

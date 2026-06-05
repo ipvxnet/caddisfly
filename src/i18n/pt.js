@@ -296,6 +296,18 @@ export const pt = {
     err_apply_tpl: 'Falha ao aplicar o modelo: ', err_deploy: 'A publicação falhou: ',
   },
 
+  ana: {
+    meta_title: 'Estatísticas — {name}', sub: 'Tráfego · últimos 30 dias · sem cookies e com privacidade em primeiro lugar',
+    customize: '← Personalizar', view_site: 'Ver site ↗',
+    page_views: 'Visualizações', visitors: 'Visitantes', active_days: 'Dias ativos',
+    views_per_day: 'Visualizações por dia', top_pages: 'Páginas principais', referrers: 'Referências', countries: 'Países',
+    no_visits: 'Ainda não há visitas nos últimos 30 dias. Compartilhe o seu site para começar a ver o tráfego aqui.',
+    no_pages: 'Ainda não há páginas.', no_referrers: 'Ainda não há referências.', no_countries: 'Ainda não há países.',
+    direct: '(direto)', unknown: 'Desconhecido',
+    privacy_note: 'Não são guardados cookies, nem rastreamento entre sites, nem endereços IP — as contagens de visitantes usam uma chave anônima diária por site. Veja a nossa {privacy}.',
+    privacy_link: 'Política de Privacidade',
+  },
+
   sed: {
     edit_section: 'Editar seção', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Salvar alterações',
     saving: 'Salvando…', updated: 'Seção atualizada com sucesso!', save_failed: 'Não foi possível salvar as alterações', save_failed_p: 'Não foi possível salvar: ',
