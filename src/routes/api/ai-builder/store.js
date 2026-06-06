@@ -428,19 +428,27 @@ export async function handleStoreCheckout(ctx) {
     let path = (body.path || '/shop').toString().split('?')[0].slice(0, 200);
     if (!path.startsWith('/')) path = '/shop';
 
-    const session = await createStoreCheckoutSession(env, {
-      account: config.stripe_account_id,
-      lineItems,
-      successUrl: `${origin}${path}?paid=1`,
-      cancelUrl: `${origin}${path}?cancelled=1`,
-      metadata: {
-        type: 'store_order',
-        site: publicId,
-        // compact for the 500-char metadata cap: [[id,qty],…]
-        items: JSON.stringify([...wanted]).slice(0, 480),
-      },
-      collectShipping: hasPhysical,
-    });
+    let session;
+    try {
+      session = await createStoreCheckoutSession(env, {
+        account: config.stripe_account_id,
+        lineItems,
+        successUrl: `${origin}${path}?paid=1`,
+        cancelUrl: `${origin}${path}?cancelled=1`,
+        metadata: {
+          type: 'store_order',
+          site: publicId,
+          // compact for the 500-char metadata cap: [[id,qty],…]
+          items: JSON.stringify([...wanted]).slice(0, 480),
+        },
+        collectShipping: hasPhysical,
+      });
+    } catch (e) {
+      // Surface Stripe's message — usually merchant-fixable setup issues
+      // (e.g. "you must set an account or business name"). Benign to show.
+      console.error('store checkout (stripe) error:', e.message);
+      return json({ success: false, error: e.message.slice(0, 300) }, 502);
+    }
     return json({ success: true, url: session.url });
   } catch (e) {
     console.error('store checkout error:', e);
