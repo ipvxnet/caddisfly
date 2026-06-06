@@ -193,6 +193,7 @@ export const pt = {
     no_sites: 'Você ainda não tem sites.', build_one: 'Crie um →',
     live: 'No ar', not_published: 'Ainda não publicado',
     customize: 'Personalizar', analytics: 'Estatísticas', inbox: 'Mensagens', blog: 'Blog', open: 'Abrir ↗',
+    export: '⬇ Exportar', export_title: 'Baixe o seu site publicado como HTML (seu para hospedar onde quiser)',
     custom_domain: 'Domínio próprio',
     shared_by: 'Sites compartilhados por {owner}', no_sites_yet: 'Ainda não há sites.',
     your_team: 'A sua equipe', team_owned_by: 'Equipe · de {owner}',

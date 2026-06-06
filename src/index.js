@@ -81,6 +81,7 @@ import {
   handleSnapshotAutoToggle,
 } from './routes/api/ai-builder/snapshots.js';
 import { autoSnapshotAfterEdit } from './utils/site-snapshot.js';
+import { handleSiteExport } from './routes/api/ai-builder/export.js';
 
 // Hourly auto-save, edit-driven: wrap state-changing project routes so a
 // successful edit kicks maybeAutoSnapshot off the response path (waitUntil).
@@ -219,6 +220,9 @@ router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, 
 router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);
 router.post('/api/ai-builder/:project_id/snapshots', handleSnapshotCreate, PROJ);
 router.put('/api/ai-builder/:project_id/snapshots/auto', handleSnapshotAutoToggle, PROJ);
+
+// HTML export — download the published site as a ZIP ("your site is yours")
+router.get('/api/ai-builder/:project_id/export', handleSiteExport, PROJ);
 router.post('/api/ai-builder/:project_id/snapshots/:snapshot_id/restore', handleSnapshotRestore, PROJ);
 router.delete('/api/ai-builder/:project_id/snapshots/:snapshot_id', handleSnapshotDelete, PROJ);
 router.delete('/api/ai-builder/:project_id/blog/:post_id', handleBlogDelete, PROJ);
