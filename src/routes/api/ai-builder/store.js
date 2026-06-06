@@ -24,20 +24,48 @@ import {
   signConnectState,
   verifyConnectState,
 } from '../../../utils/stripe.js';
+import {
+  createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
+  countProducts, uniqueProductSlug,
+} from '../../../db/products.js';
+import { callWorkersAI } from '../../../utils/ai-content-generator.js';
+import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
+import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS, PRODUCT_LIMITS } from '../../../utils/credits.js';
+import { getUserTier } from '../../../utils/rate-limiter.js';
+import { generateImageToR2 } from './ai-edit.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-/** Resolve :project_id (ai-first, like blog.js) to { projectKey, email }. */
+/** Resolve :project_id (ai-first, like blog.js) to project context. */
 export async function resolveStoreProject(env, project_id) {
   const aiProject = await getAIProjectByProjectId(env.DB, project_id);
   if (aiProject) {
-    return { projectKey: { aiProjectId: aiProject.id }, email: aiProject.customer_email };
+    return {
+      projectKey: { aiProjectId: aiProject.id },
+      email: aiProject.customer_email,
+      language: aiProject.language || 'en',
+      businessName: aiProject.project_name || 'My Website',
+      industry: aiProject.industry || '',
+    };
   }
   const regular = await getProjectByPreviewId(env.DB, project_id);
   if (regular) {
-    return { projectKey: { projectId: regular.id }, email: regular.customer_email };
+    let businessName = regular.website_url || 'My Website';
+    let industry = '';
+    try {
+      const p = JSON.parse(regular.company_profile_json || '{}');
+      if (p && p.name) businessName = p.name;
+      if (p && p.category) industry = p.category;
+    } catch { /* ignore */ }
+    return {
+      projectKey: { projectId: regular.id },
+      email: regular.customer_email,
+      language: regular.language || 'en',
+      businessName,
+      industry,
+    };
   }
   return null;
 }
@@ -144,5 +172,214 @@ export async function handleStripeConnectCallback(ctx) {
   } catch (e) {
     console.error('Stripe Connect exchange failed:', e.message);
     return back(projectId, `stripe_error=${encodeURIComponent(e.message.slice(0, 120))}`);
+  }
+}
+
+// ---- products ---------------------------------------------------------------
+
+const LANG_NAMES = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
+const PRODUCT_TYPES = ['physical', 'digital', 'service'];
+// Stripe's minimum charge is ~$0.50; cap well below Checkout's per-item max.
+const MIN_PRICE_CENTS = 50;
+const MAX_PRICE_CENTS = 99999999;
+
+function validPrice(cents) {
+  const n = Math.round(Number(cents));
+  if (!Number.isFinite(n) || n < MIN_PRICE_CENTS || n > MAX_PRICE_CENTS) return null;
+  return n;
+}
+
+/** GET /api/ai-builder/:project_id/store/products — list + cap info. */
+export async function handleProductList(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const products = await getProductsByProject(env.DB, r.projectKey);
+  const tier = await getUserTier(env.DB, r.email);
+  const limit = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  return json({
+    success: true,
+    products,
+    tier,
+    limit: Number.isFinite(limit) ? limit : null, // null = unlimited
+    enforced: env.ENVIRONMENT === 'production',
+    currency: config.store_currency || 'usd',
+  });
+}
+
+/** POST /api/ai-builder/:project_id/store/products — create (cap-gated). */
+export async function handleProductCreate(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+
+    // Product-count gate (production only, like PUBLISH_LIMITS in deploy.js).
+    const tier = await getUserTier(env.DB, r.email);
+    const limit = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+    if (env.ENVIRONMENT === 'production' && Number.isFinite(limit)) {
+      const n = await countProducts(env.DB, r.projectKey);
+      if (n >= limit) {
+        return json({
+          success: false,
+          error: `You've reached your plan's product limit (${limit} on ${tier.replace('_', ' ')}). Upgrade to add more.`,
+          limit,
+          billing_url: '/billing',
+        }, 402);
+      }
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const name = (body.name || '').toString().trim().slice(0, 140);
+    if (!name) return json({ success: false, error: 'Product name is required' }, 400);
+    const price_cents = validPrice(body.price_cents);
+    if (price_cents == null) return json({ success: false, error: 'Price must be between 0.50 and 999,999.99' }, 400);
+    const description = (body.description || '').toString().slice(0, 5000);
+    const screen = screenContent(`${name}\n${description}`);
+    if (!screen.allowed) return json(policyError(screen), 422);
+
+    const slug = await uniqueProductSlug(env.DB, r.projectKey, name);
+    const product = await createProduct(env.DB, r.projectKey, {
+      slug,
+      name,
+      description,
+      price_cents,
+      image: (body.image || '').toString().trim().slice(0, 500),
+      product_type: PRODUCT_TYPES.includes(body.product_type) ? body.product_type : 'physical',
+    });
+    return json({ success: true, product }, 201);
+  } catch (e) {
+    console.error('product create error:', e);
+    return json({ success: false, error: 'Failed to create product' }, 500);
+  }
+}
+
+/** PUT /api/ai-builder/:project_id/store/products/:product_id */
+export async function handleProductUpdate(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const product = await getProductById(env.DB, r.projectKey, parseInt(params.product_id, 10));
+    if (!product) return json({ success: false, error: 'Product not found' }, 404);
+    const body = await request.json().catch(() => ({}));
+
+    const updates = {};
+    if (body.name != null) {
+      const name = body.name.toString().trim().slice(0, 140);
+      if (!name) return json({ success: false, error: 'Product name is required' }, 400);
+      updates.name = name;
+      if (name !== product.name) updates.slug = await uniqueProductSlug(env.DB, r.projectKey, name, product.id);
+    }
+    if (body.price_cents != null) {
+      const price_cents = validPrice(body.price_cents);
+      if (price_cents == null) return json({ success: false, error: 'Price must be between 0.50 and 999,999.99' }, 400);
+      updates.price_cents = price_cents;
+    }
+    if (body.description != null) updates.description = body.description.toString().slice(0, 5000);
+    if (body.image != null) updates.image = body.image.toString().trim().slice(0, 500);
+    if (body.product_type != null && PRODUCT_TYPES.includes(body.product_type)) updates.product_type = body.product_type;
+    if (body.active != null) updates.active = body.active ? 1 : 0;
+
+    if (updates.name != null || updates.description != null) {
+      const screen = screenContent(`${updates.name || product.name}\n${updates.description != null ? updates.description : product.description}`);
+      if (!screen.allowed) return json(policyError(screen), 422);
+    }
+
+    const updated = await updateProduct(env.DB, r.projectKey, product.id, updates);
+    return json({ success: true, product: updated });
+  } catch (e) {
+    console.error('product update error:', e);
+    return json({ success: false, error: 'Failed to update product' }, 500);
+  }
+}
+
+/** DELETE /api/ai-builder/:project_id/store/products/:product_id */
+export async function handleProductDelete(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const ok = await deleteProduct(env.DB, r.projectKey, parseInt(params.product_id, 10));
+  if (!ok) return json({ success: false, error: 'Product not found' }, 404);
+  return json({ success: true });
+}
+
+/**
+ * POST /api/ai-builder/:project_id/store/products/ai-describe
+ * { name, notes? } -> { description } — a writing helper, does NOT create rows.
+ */
+export async function handleProductAIDescribe(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const body = await request.json().catch(() => ({}));
+    const name = (body.name || '').toString().trim().slice(0, 140);
+    const notes = (body.notes || '').toString().trim().slice(0, 1000);
+    if (!name) return json({ success: false, error: 'Give the product a name first.' }, 400);
+    const screen = screenContent(`${name}\n${notes}`);
+    if (!screen.allowed) return json(policyError(screen), 422);
+
+    const afford = await canAfford(env, env.DB, r.email, CREDIT_COSTS.product_desc);
+    if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI product description').error }, 402);
+
+    const langName = LANG_NAMES[r.language] || 'English';
+    const prompt = `You are writing an online-store product description for "${r.businessName}"${r.industry ? ` (${r.industry})` : ''}.
+
+Product name: ${name}
+${notes ? `Owner's notes about the product:\n"""\n${notes}\n"""` : ''}
+
+Write a persuasive product description of 50-120 words in ${langName}. Plain sentences and at most one short "- " bullet list; no headings, no markdown emphasis. Do not invent specific facts, materials, sizes or prices the notes don't mention.
+
+Respond in EXACTLY this format (plain text, no JSON, no commentary, keep the uppercase label):
+DESCRIPTION:
+the product description
+${POLICY_INSTRUCTION}`;
+
+    const raw = await callWorkersAI(env, prompt, { max_tokens: 512, temperature: 0.6, system_message: 'You are a professional e-commerce copywriter for small businesses.' });
+    const start = String(raw || '').search(/DESCRIPTION:/);
+    const description = start === -1 ? '' : String(raw).slice(start + 'DESCRIPTION:'.length).replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
+    if (!description) return json({ success: false, error: 'The AI description came back malformed — please try again.' }, 502);
+    const outScreen = screenContent(description);
+    if (!outScreen.allowed) return json(policyError(outScreen), 422);
+
+    await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.product_desc);
+    return json({ success: true, description: description.slice(0, 5000) });
+  } catch (e) {
+    console.error('product ai-describe error:', e);
+    return json({ success: false, error: 'AI description failed — please try again.' }, 500);
+  }
+}
+
+/** POST /api/ai-builder/:project_id/store/products/:product_id/image — AI product shot. */
+export async function handleProductImage(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const product = await getProductById(env.DB, r.projectKey, parseInt(params.product_id, 10));
+    if (!product) return json({ success: false, error: 'Product not found' }, 404);
+
+    const afford = await canAfford(env, env.DB, r.email, CREDIT_COSTS.image);
+    if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI image generation').error }, 402);
+
+    const desc = (product.description || '').slice(0, 200);
+    const subject = product.product_type === 'service'
+      ? `Professional photograph representing the service "${product.name}"`
+      : `Professional e-commerce product photograph of "${product.name}"`;
+    const prompt =
+      `${subject}. ${desc} ` +
+      `${r.industry ? `Business: ${r.industry}. ` : ''}` +
+      `Clean studio composition on a softly lit neutral background, photorealistic, high quality, square format. ` +
+      `Strictly NO text, NO words, NO letters, NO typography, NO logos, NO watermarks.`;
+
+    const url = await generateImageToR2(env, params.project_id, prompt);
+    await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.image);
+    const updated = await updateProduct(env.DB, r.projectKey, product.id, { image: url });
+    return json({ success: true, image: url, product: updated });
+  } catch (e) {
+    console.error('product image error:', e);
+    return json({ success: false, error: 'Image generation failed — please try again.' }, 500);
   }
 }

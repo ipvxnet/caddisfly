@@ -85,6 +85,8 @@ import { handleSiteExport } from './routes/api/ai-builder/export.js';
 import {
   handleStoreStripeStatus, handleStoreStripeConnect, handleStoreStripeDisconnect,
   handleStripeConnectCallback,
+  handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
+  handleProductAIDescribe, handleProductImage,
 } from './routes/api/ai-builder/store.js';
 import { handleStoreManager } from './routes/public/store-manager.js';
 
@@ -229,6 +231,13 @@ router.get('/api/ai-builder/:project_id/store/stripe', handleStoreStripeStatus, 
 router.post('/api/ai-builder/:project_id/store/stripe/connect', handleStoreStripeConnect, PROJ);
 router.post('/api/ai-builder/:project_id/store/stripe/disconnect', handleStoreStripeDisconnect, PROJ);
 router.get('/store/stripe/callback', handleStripeConnectCallback);
+// Products (first-match: the specific ai-describe route before :product_id)
+router.get('/api/ai-builder/:project_id/store/products', handleProductList, PROJ);
+router.post('/api/ai-builder/:project_id/store/products/ai-describe', handleProductAIDescribe, PROJ);
+router.post('/api/ai-builder/:project_id/store/products', handleProductCreate, PROJ);
+router.post('/api/ai-builder/:project_id/store/products/:product_id/image', handleProductImage, PROJ);
+router.put('/api/ai-builder/:project_id/store/products/:product_id', handleProductUpdate, PROJ);
+router.delete('/api/ai-builder/:project_id/store/products/:product_id', handleProductDelete, PROJ);
 
 // Site version snapshots (save / restore / delete / auto-save toggle)
 router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);
