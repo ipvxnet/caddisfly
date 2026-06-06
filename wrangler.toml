@@ -110,6 +110,15 @@ binding = "BROWSER"
 #   STRIPE_PRICE_AGENCY_MONTHLY   STRIPE_PRICE_AGENCY_ANNUAL
 # e.g. npx wrangler secret put STRIPE_SECRET_KEY --env preview
 #
+# Stripe Connect (commerce v1 — merchants connect their own Stripe). From
+# Stripe Dashboard → Settings → Connect → Onboarding options → OAuth: enable
+# OAuth for Standard accounts, copy the client id, and allow-list the redirect
+# URI <APP_ORIGIN>/store/stripe/callback for BOTH environments (preview uses
+# the ca_… test-mode client id, prod the live one). Until set, the store UI
+# shows "payments not available" (email-stub degradation pattern).
+#   STRIPE_CONNECT_CLIENT_ID     (ca_…)
+# e.g. npx wrangler secret put STRIPE_CONNECT_CLIENT_ID --env preview
+#
 # Custom domains (Cloudflare for SaaS — Custom Hostnames). Until set, the
 # "Custom domain" UI shows but registration is disabled. Enable Cloudflare for
 # SaaS on the caddisfly.app zone first.

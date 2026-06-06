@@ -82,6 +82,11 @@ import {
 } from './routes/api/ai-builder/snapshots.js';
 import { autoSnapshotAfterEdit } from './utils/site-snapshot.js';
 import { handleSiteExport } from './routes/api/ai-builder/export.js';
+import {
+  handleStoreStripeStatus, handleStoreStripeConnect, handleStoreStripeDisconnect,
+  handleStripeConnectCallback,
+} from './routes/api/ai-builder/store.js';
+import { handleStoreManager } from './routes/public/store-manager.js';
 
 // Hourly auto-save, edit-driven: wrap state-changing project routes so a
 // successful edit kicks maybeAutoSnapshot off the response path (waitUntil).
@@ -215,6 +220,15 @@ router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
+
+// Store manager + Stripe Connect (owner-facing; same access model as customize).
+// The OAuth callback is public — Stripe redirects the browser there; the
+// HMAC-signed state (minted by the gated connect endpoint) authorizes it.
+router.get('/ai-builder/store/:project_id', handleStoreManager, PROJ);
+router.get('/api/ai-builder/:project_id/store/stripe', handleStoreStripeStatus, PROJ);
+router.post('/api/ai-builder/:project_id/store/stripe/connect', handleStoreStripeConnect, PROJ);
+router.post('/api/ai-builder/:project_id/store/stripe/disconnect', handleStoreStripeDisconnect, PROJ);
+router.get('/store/stripe/callback', handleStripeConnectCallback);
 
 // Site version snapshots (save / restore / delete / auto-save toggle)
 router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);

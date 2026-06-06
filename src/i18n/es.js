@@ -192,7 +192,7 @@ export const es = {
     support: 'Soporte', help: 'Ayuda', sign_out: 'Cerrar sesión',
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
     live: 'En línea', not_published: 'Aún no publicado',
-    customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', open: 'Abrir ↗',
+    customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', store: 'Tienda', open: 'Abrir ↗',
     export: '⬇ Exportar', export_title: 'Descarga tu sitio publicado como HTML (tuyo para alojarlo donde quieras)',
     custom_domain: 'Dominio propio',
     shared_by: 'Sitios compartidos por {owner}', no_sites_yet: 'Aún no hay sitios web.',
@@ -347,6 +347,26 @@ export const es = {
     restore: 'Restaurar', restoring: 'Restaurando…',
     restore_confirm: '¿Restaurar esta versión? Tus páginas, secciones y diseño actuales serán reemplazados. (Antes se guarda una copia automática, y tu sitio publicado solo cambia cuando publicas.)',
     delete: 'Eliminar', delete_confirm: '¿Eliminar esta versión guardada? No se puede deshacer.',
+  },
+
+  // Gestor de tienda (interfaz de la app, idioma del usuario).
+  storem: {
+    meta_title: 'Tienda — {name}',
+    title_sub: 'Vende en tu sitio — los pagos van directos a tu cuenta de Stripe',
+    customize: '← Personalizar',
+    payments_heading: '💳 Pagos',
+    payments_intro: 'Conecta tu cuenta de Stripe para aceptar pagos. El checkout, los recibos y los reembolsos funcionan en tu propio Stripe — el dinero va directamente a ti, nunca pasa por Caddisfly.',
+    checking: 'Comprobando…',
+    connect: 'Conectar Stripe', connecting: 'Redirigiendo a Stripe…',
+    connected_as: 'Conectado ({account})',
+    not_connected: 'No conectado',
+    not_configured: 'Los pagos aún no están disponibles en este entorno.',
+    disconnect: 'Desconectar',
+    disconnect_confirm: '¿Desconectar Stripe? Tus páginas de tienda dejarán de aceptar pagos hasta que vuelvas a conectar.',
+    connected_ok: '✓ Stripe conectado — ya puedes empezar a añadir productos.',
+    error_prefix: 'Error de Stripe:',
+    products_heading: '📦 Productos',
+    products_soon: 'La gestión de productos llega justo después del paso de conexión con Stripe.',
   },
 
   blogm: {

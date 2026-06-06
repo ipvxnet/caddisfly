@@ -192,7 +192,7 @@ export const en = {
     support: 'Support', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet',
-    customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', open: 'Open ↗',
+    customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', store: 'Store', open: 'Open ↗',
     export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',
@@ -352,6 +352,26 @@ export const en = {
     restore: 'Restore', restoring: 'Restoring…',
     restore_confirm: 'Restore this version? Your current pages, sections and design will be replaced. (A backup of the current state is saved automatically, and your published site only changes when you publish.)',
     delete: 'Delete', delete_confirm: 'Delete this saved version? This cannot be undone.',
+  },
+
+  // Store manager (app UI, viewer's language).
+  storem: {
+    meta_title: 'Store — {name}',
+    title_sub: 'Sell on your site — payments go straight to your Stripe account',
+    customize: '← Customize',
+    payments_heading: '💳 Payments',
+    payments_intro: 'Connect your Stripe account to accept payments. Checkout, receipts and refunds run on your own Stripe — money goes directly to you, never through Caddisfly.',
+    checking: 'Checking…',
+    connect: 'Connect Stripe', connecting: 'Redirecting to Stripe…',
+    connected_as: 'Connected ({account})',
+    not_connected: 'Not connected',
+    not_configured: 'Payments are not available on this environment yet.',
+    disconnect: 'Disconnect',
+    disconnect_confirm: 'Disconnect Stripe? Your shop pages will stop accepting payments until you connect again.',
+    connected_ok: '✓ Stripe connected — you can start adding products.',
+    error_prefix: 'Stripe error:',
+    products_heading: '📦 Products',
+    products_soon: 'Product management is coming right after the Stripe connection step.',
   },
 
   blogm: {
