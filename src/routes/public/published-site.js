@@ -1,6 +1,7 @@
 // GET /site/:project_id                       -> published home page
-// GET /site/:project_id/:page_slug            -> a published page (incl. "blog")
+// GET /site/:project_id/:page_slug            -> a published page (incl. "blog"/"shop")
 // GET /site/:project_id/blog/:post_slug       -> a published blog post
+// GET /site/:project_id/shop/:product_slug    -> a published product page
 // Serves the static HTML written to R2 at deploy time (published/<id>/<slug>.html).
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
@@ -36,8 +37,10 @@ export async function handlePublishedSite(ctx) {
   }
   if (!projectKey) return notPublished();
 
-  // Resolve the slug: blog post (nested), explicit page, else the home slug.
-  let slug = params.post_slug ? `blog/${params.post_slug}` : params.page_slug;
+  // Resolve the slug: blog post / product (nested), explicit page, else home.
+  let slug = params.post_slug ? `blog/${params.post_slug}`
+    : params.product_slug ? `shop/${params.product_slug}`
+    : params.page_slug;
   if (!slug) {
     const home = await getHomePage(env.DB, projectKey);
     slug = home ? home.slug : 'home';
@@ -46,7 +49,7 @@ export async function handlePublishedSite(ctx) {
   const read = (s) => getFromR2(env.STORAGE, `published/${publicId}/${s}.html`);
 
   let html = await read(slug);
-  if (!html && (params.page_slug || params.post_slug)) {
+  if (!html && (params.page_slug || params.post_slug || params.product_slug)) {
     // Unknown/renamed slug → fall back to the home page.
     const home = await getHomePage(env.DB, projectKey);
     if (home) html = await read(home.slug);

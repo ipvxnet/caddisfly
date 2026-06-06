@@ -340,6 +340,28 @@ export const en = {
     no_posts: 'No posts yet — check back soon!',
   },
 
+  // Shop storefront (published/preview SITES, rendered in the SITE's language).
+  shopw: {
+    nav_title: 'Shop',
+    list_heading: 'Shop',
+    view: 'View',
+    add: 'Add to cart',
+    added: 'Added ✓',
+    cart: 'Cart',
+    empty: 'Your cart is empty.',
+    checkout: 'Checkout',
+    starting: 'Starting checkout…',
+    remove: 'Remove',
+    total: 'Total',
+    paid: 'Thank you for your order! A receipt is on its way to your email.',
+    cancelled: 'Checkout cancelled — your cart is saved.',
+    error: 'Could not start checkout — please try again.',
+    preview_note: 'Preview — checkout works on your published site.',
+    not_accepting: 'This store isn’t accepting payments yet.',
+    back_to_shop: 'Shop',
+    no_products: 'No products yet — check back soon!',
+  },
+
   // Blog manager (app UI, viewer's language).
   snap: {
     summary: '🕘 Versions — save & restore',
@@ -358,7 +380,7 @@ export const en = {
   storem: {
     meta_title: 'Store — {name}',
     title_sub: 'Sell on your site — payments go straight to your Stripe account',
-    customize: '← Customize',
+    customize: '← Customize', view_shop: 'View shop ↗',
     payments_heading: '💳 Payments',
     payments_intro: 'Connect your Stripe account to accept payments. Checkout, receipts and refunds run on your own Stripe — money goes directly to you, never through Caddisfly.',
     checking: 'Checking…',

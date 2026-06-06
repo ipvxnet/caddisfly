@@ -99,6 +99,7 @@ export async function handleStoreManager(ctx) {
       </div>
       <div class="acts">
         <a class="btn ghost" href="/ai-builder/customize/${esc(publicId)}">${tr('storem.customize')}</a>
+        <a class="btn" href="/ai-preview/${esc(publicId)}/shop" target="_blank" rel="noopener">${tr('storem.view_shop')}</a>
       </div>
     </div>
 

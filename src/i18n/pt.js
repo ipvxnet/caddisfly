@@ -336,6 +336,28 @@ export const pt = {
     no_posts: 'Ainda não há publicações — volte em breve!',
   },
 
+  // Loja (sites publicados/preview, no idioma do SITE).
+  shopw: {
+    nav_title: 'Loja',
+    list_heading: 'Loja',
+    view: 'Ver',
+    add: 'Adicionar ao carrinho',
+    added: 'Adicionado ✓',
+    cart: 'Carrinho',
+    empty: 'Seu carrinho está vazio.',
+    checkout: 'Finalizar compra',
+    starting: 'Iniciando o pagamento…',
+    remove: 'Remover',
+    total: 'Total',
+    paid: 'Obrigado pelo seu pedido! O recibo está a caminho do seu e-mail.',
+    cancelled: 'Pagamento cancelado — seu carrinho foi salvo.',
+    error: 'Não foi possível iniciar o pagamento — tente novamente.',
+    preview_note: 'Pré-visualização — o pagamento funciona no seu site publicado.',
+    not_accepting: 'Esta loja ainda não aceita pagamentos.',
+    back_to_shop: 'Loja',
+    no_products: 'Ainda não há produtos — volte em breve!',
+  },
+
   snap: {
     summary: '🕘 Versões — salvar e restaurar',
     hint: 'Salve uma versão do seu site antes de grandes mudanças. Restaurar substitui as suas páginas, seções e design atuais (uma cópia do estado atual é salva automaticamente antes). O site publicado é atualizado quando você publica.',
@@ -353,7 +375,7 @@ export const pt = {
   storem: {
     meta_title: 'Loja — {name}',
     title_sub: 'Venda no seu site — os pagamentos vão direto para a sua conta Stripe',
-    customize: '← Personalizar',
+    customize: '← Personalizar', view_shop: 'Ver loja ↗',
     payments_heading: '💳 Pagamentos',
     payments_intro: 'Conecte sua conta Stripe para aceitar pagamentos. O checkout, os recibos e os reembolsos rodam no seu próprio Stripe — o dinheiro vai diretamente para você, nunca passa pela Caddisfly.',
     checking: 'Verificando…',

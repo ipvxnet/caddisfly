@@ -23,6 +23,7 @@ import {
   deauthorizeConnect,
   signConnectState,
   verifyConnectState,
+  createStoreCheckoutSession,
 } from '../../../utils/stripe.js';
 import {
   createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
@@ -349,6 +350,100 @@ ${POLICY_INSTRUCTION}`;
   } catch (e) {
     console.error('product ai-describe error:', e);
     return json({ success: false, error: 'AI description failed — please try again.' }, 500);
+  }
+}
+
+// ---- public checkout ---------------------------------------------------------
+
+const PUBLIC_ID_RE = /^[0-9a-f]{16,64}$/i;
+
+/**
+ * POST /api/store/checkout — PUBLIC; the mini cart on published shop pages
+ * POSTs here cross-origin (forms/analytics pattern). Body:
+ *   { s: publicId, items: [{id, qty}], path }
+ * Creates a Stripe Checkout Session on the merchant's CONNECTED account
+ * (direct charge — funds go to the merchant) and returns { url }.
+ * Server truth: every line is repriced from the products table; the client
+ * only chooses ids + quantities.
+ */
+export async function handleStoreCheckout(ctx) {
+  const { env, request } = ctx;
+  try {
+    const body = await request.json().catch(() => ({}));
+    const publicId = (body.s || '').toString();
+    if (!PUBLIC_ID_RE.test(publicId)) return json({ success: false, error: 'Unknown site' }, 404);
+
+    const r = await resolveStoreProject(env, publicId);
+    if (!r) return json({ success: false, error: 'Unknown site' }, 404);
+
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    if (!config.stripe_account_id) {
+      return json({ success: false, error: 'This store isn’t accepting payments yet.' }, 503);
+    }
+
+    // Validate the cart: 1..20 distinct lines, qty 1..99 each.
+    const rawItems = Array.isArray(body.items) ? body.items.slice(0, 20) : [];
+    const wanted = new Map();
+    for (const it of rawItems) {
+      const id = parseInt(it && it.id, 10);
+      const qty = Math.min(99, Math.max(1, parseInt(it && it.qty, 10) || 1));
+      if (Number.isFinite(id) && id > 0) wanted.set(id, (wanted.get(id) || 0) + qty);
+    }
+    if (!wanted.size) return json({ success: false, error: 'Cart is empty' }, 400);
+
+    // Reprice from the DB — active products only.
+    const products = await getProductsByProject(env.DB, r.projectKey, true);
+    const byId = new Map(products.map((p) => [p.id, p]));
+    const appOrigin = env.APP_URL || '';
+    const lineItems = [];
+    let hasPhysical = false;
+    for (const [id, qty] of wanted) {
+      const p = byId.get(id);
+      if (!p) return json({ success: false, error: 'A product in your cart is no longer available.' }, 409);
+      if (p.product_type === 'physical') hasPhysical = true;
+      const productData = { name: p.name };
+      if (p.image) {
+        // Stripe needs absolute image URLs; ours may be relative /preview-asset/…
+        const abs = p.image.startsWith('/') ? `${appOrigin}${p.image}` : p.image;
+        if (/^https:\/\//.test(abs)) productData.images = [abs];
+      }
+      lineItems.push({
+        price_data: {
+          currency: config.store_currency || 'usd',
+          unit_amount: p.price_cents,
+          product_data: productData,
+        },
+        quantity: qty,
+      });
+    }
+
+    // Redirect targets: back to the page the buyer came from. Origin header is
+    // present on cross-origin fetches from the published site; fall back to the
+    // app origin (the /site/:id serving surface).
+    const origin = (request.headers.get('Origin') || appOrigin || '').replace(/\/$/, '');
+    if (!/^https?:\/\/[\w.-]+(:\d+)?$/.test(origin)) {
+      return json({ success: false, error: 'Bad origin' }, 400);
+    }
+    let path = (body.path || '/shop').toString().split('?')[0].slice(0, 200);
+    if (!path.startsWith('/')) path = '/shop';
+
+    const session = await createStoreCheckoutSession(env, {
+      account: config.stripe_account_id,
+      lineItems,
+      successUrl: `${origin}${path}?paid=1`,
+      cancelUrl: `${origin}${path}?cancelled=1`,
+      metadata: {
+        type: 'store_order',
+        site: publicId,
+        // compact for the 500-char metadata cap: [[id,qty],…]
+        items: JSON.stringify([...wanted]).slice(0, 480),
+      },
+      collectShipping: hasPhysical,
+    });
+    return json({ success: true, url: session.url });
+  } catch (e) {
+    console.error('store checkout error:', e);
+    return json({ success: false, error: 'Could not start checkout — please try again.' }, 500);
   }
 }
 

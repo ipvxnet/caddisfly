@@ -45,6 +45,10 @@ import { statsNumbersTemplate } from './stats/numbers.js';
 import { blogListTemplate } from './blog/list.js';
 import { blogPostTemplate } from './blog/post.js';
 
+// Shop (synthetic, like blog — products live in the `products` table)
+import { shopGridTemplate } from './shop/grid.js';
+import { shopProductTemplate } from './shop/product.js';
+
 /**
  * Template registry
  * Maps section types to their available template variants
@@ -112,6 +116,12 @@ export const TEMPLATE_REGISTRY = {
   },
   blog_post: {
     default: blogPostTemplate,
+  },
+  shop_list: {
+    default: shopGridTemplate,
+  },
+  shop_product: {
+    default: shopProductTemplate,
   },
 };
 

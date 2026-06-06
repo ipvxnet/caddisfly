@@ -71,6 +71,7 @@ import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete } from './routes/api/forms.js';
 import { handleFormsInbox } from './routes/public/forms-inbox.js';
 import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
+import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
 import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
@@ -86,7 +87,7 @@ import {
   handleStoreStripeStatus, handleStoreStripeConnect, handleStoreStripeDisconnect,
   handleStripeConnectCallback,
   handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
-  handleProductAIDescribe, handleProductImage,
+  handleProductAIDescribe, handleProductImage, handleStoreCheckout,
 } from './routes/api/ai-builder/store.js';
 import { handleStoreManager } from './routes/public/store-manager.js';
 
@@ -139,13 +140,16 @@ router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, pr
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
 router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics);
-// Blog preview routes MUST register before the generic :page_slug routes
-// (the router is first-match; "blog" would otherwise resolve as a page slug).
+// Blog/shop preview routes MUST register before the generic :page_slug routes
+// (the router is first-match; "blog"/"shop" would otherwise resolve as page slugs).
 router.get('/ai-preview/:project_id/blog/:post_slug', handleAIPreviewBlog);
 router.get('/ai-preview/:project_id/blog', handleAIPreviewBlog);
+router.get('/ai-preview/:project_id/shop/:product_slug', handleAIPreviewShop);
+router.get('/ai-preview/:project_id/shop', handleAIPreviewShop);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
 router.get('/site/:project_id/blog/:post_slug', handlePublishedSite);
+router.get('/site/:project_id/shop/:product_slug', handlePublishedSite);
 router.get('/site/:project_id', handlePublishedSite);
 router.get('/site/:project_id/:page_slug', handlePublishedSite);
 
@@ -178,6 +182,8 @@ router.post('/api/track', handleTrack);
 
 // Contact-form submissions from published sites (public, cross-origin like /api/track)
 router.post('/api/forms/submit', handleFormSubmit);
+// Store checkout — public, called cross-origin by the mini cart on shop pages
+router.post('/api/store/checkout', handleStoreCheckout);
 
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);

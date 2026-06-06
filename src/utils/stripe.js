@@ -66,14 +66,17 @@ function toForm(obj) {
   return params;
 }
 
-async function stripeRequest(env, path, body) {
+async function stripeRequest(env, path, body, stripeAccount = null) {
   if (!isStripeConfigured(env)) throw new Error('Stripe is not configured');
+  const headers = {
+    Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  // Act on a connected account (Connect direct charge / read).
+  if (stripeAccount) headers['Stripe-Account'] = stripeAccount;
   const res = await fetch(`${STRIPE_API}${path}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers,
     body: toForm(body).toString(),
   });
   const json = await res.json().catch(() => ({}));
@@ -144,6 +147,59 @@ export async function createCreditCheckoutSession(env, { email, pack, successUrl
   if (customerId) body.customer = customerId;
   else body.customer_email = email;
   return stripeRequest(env, '/checkout/sessions', body);
+}
+
+// Countries we offer in Stripe Checkout's shipping-address collector when a
+// cart contains physical goods (Checkout requires an explicit allowlist).
+// Broad coverage of our customer base; configurable per store later.
+export const SHIPPING_COUNTRIES = [
+  'US', 'CA', 'MX', 'BR', 'AR', 'CL', 'CO', 'PE', 'UY',
+  'GB', 'IE', 'PT', 'ES', 'FR', 'DE', 'IT', 'NL', 'BE', 'AT', 'CH',
+  'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'RO',
+  'AU', 'NZ', 'JP', 'SG', 'AE', 'ZA', 'IN',
+];
+
+/**
+ * Commerce v1: create a one-time Checkout Session ON the merchant's connected
+ * account (direct charge — funds settle to the merchant; we never hold money).
+ * Line items use inline price_data; amounts come from OUR products table, never
+ * from the client. The webhook/success path reads metadata.{type,site,items}.
+ * @returns {Promise<{id:string,url:string}>}
+ */
+export async function createStoreCheckoutSession(env, {
+  account, lineItems, successUrl, cancelUrl, metadata, collectShipping = false,
+}) {
+  const body = {
+    mode: 'payment',
+    line_items: lineItems,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    metadata,
+    payment_intent_data: { metadata },
+  };
+  if (collectShipping) {
+    body.shipping_address_collection = { allowed_countries: SHIPPING_COUNTRIES };
+  }
+  return stripeRequest(env, '/checkout/sessions', body, account);
+}
+
+/**
+ * Retrieve a Checkout Session from a connected account (success-redirect
+ * order recording; GET via form-encoded API isn't needed — Stripe allows GET).
+ */
+export async function getStoreCheckoutSession(env, account, sessionId) {
+  const res = await fetch(`${STRIPE_API}/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Stripe-Account': account,
+    },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
+    throw new Error(msg);
+  }
+  return json;
 }
 
 /**
