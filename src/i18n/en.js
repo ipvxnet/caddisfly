@@ -193,6 +193,7 @@ export const en = {
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet',
     customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', open: 'Open ↗',
+    export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',
     your_team: 'Your team', team_owned_by: 'Team · owned by {owner}',

@@ -193,6 +193,7 @@ export const es = {
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
     live: 'En línea', not_published: 'Aún no publicado',
     customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', open: 'Abrir ↗',
+    export: '⬇ Exportar', export_title: 'Descarga tu sitio publicado como HTML (tuyo para alojarlo donde quieras)',
     custom_domain: 'Dominio propio',
     shared_by: 'Sitios compartidos por {owner}', no_sites_yet: 'Aún no hay sitios web.',
     your_team: 'Tu equipo', team_owned_by: 'Equipo · de {owner}',
