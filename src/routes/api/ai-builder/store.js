@@ -355,7 +355,8 @@ ${POLICY_INSTRUCTION}`;
 
 // ---- public checkout ---------------------------------------------------------
 
-const PUBLIC_ID_RE = /^[0-9a-f]{16,64}$/i;
+// Same shape as forms.js/track.js — refactor preview ids contain dashes.
+const PUBLIC_ID_RE = /^[a-f0-9-]{8,64}$/i;
 
 /**
  * POST /api/store/checkout — PUBLIC; the mini cart on published shop pages
