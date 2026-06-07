@@ -15,16 +15,22 @@
  * @returns {Promise<boolean>} true if Slack accepted it
  */
 export async function notifyOps(env, text) {
-  if (!env || !env.SLACK_WEBHOOK_URL || !text) return false;
+  if (!env || !env.SLACK_WEBHOOK_URL || !text) {
+    console.warn('ops notify skipped:', !env || !env.SLACK_WEBHOOK_URL ? 'SLACK_WEBHOOK_URL not set' : 'empty text');
+    return false;
+  }
   // Label non-production noise so one channel can serve both envs.
   const prefix = env.ENVIRONMENT === 'production' ? '' : `[${env.ENVIRONMENT || 'dev'}] `;
   try {
-    const res = await fetch(env.SLACK_WEBHOOK_URL, {
+    // Defensive: pasted secrets sometimes carry whitespace/newlines.
+    const hook = String(env.SLACK_WEBHOOK_URL).trim();
+    const res = await fetch(hook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: `${prefix}${String(text).slice(0, 3000)}` }),
     });
-    if (!res.ok) console.error(`ops notify rejected: ${res.status}`);
+    if (res.ok) console.log('ops notify: delivered');
+    else console.error(`ops notify rejected: ${res.status} ${await res.text().catch(() => '')}`.slice(0, 200));
     return res.ok;
   } catch (e) {
     console.error('ops notify failed:', e.message);
