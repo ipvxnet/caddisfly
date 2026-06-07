@@ -184,6 +184,25 @@ export async function createStoreCheckoutSession(env, {
 }
 
 /**
+ * List a connected account's active products with their default price expanded
+ * (catalog import). One page of up to 100 — plenty for our product caps.
+ */
+export async function listConnectProducts(env, account) {
+  const res = await fetch(`${STRIPE_API}/products?active=true&limit=100&expand[]=data.default_price`, {
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Stripe-Account': account,
+    },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
+    throw new Error(msg);
+  }
+  return json.data || [];
+}
+
+/**
  * Retrieve a Checkout Session (with line items expanded) from a connected
  * account — used by the receipt page and the Connect webhook to record orders.
  */

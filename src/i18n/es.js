@@ -381,6 +381,19 @@ export const es = {
     intro: '¡Gracias por tu compra en {name}! Aquí tienes el resumen de tu pedido.',
     view_receipt: 'Ver recibo',
     questions: '¿Preguntas sobre tu pedido? Simplemente responde a este correo.',
+    // historial de compras del comprador
+    my_orders: 'Mis pedidos',
+    orders_at: 'Tus pedidos en {name}',
+    orders_intro: 'Introduce el correo que usaste al pagar y te enviaremos un enlace seguro de acceso.',
+    email_ph: 'tu@ejemplo.com',
+    send_link: 'Enviarme un enlace',
+    sent: 'Si ese correo tiene pedidos aquí, un enlace de acceso va en camino. Caduca en 15 minutos.',
+    link_expired: 'Ese enlace no es válido o ha caducado — solicita uno nuevo abajo.',
+    no_orders_yet: 'Aún no hay pedidos para este correo.',
+    link_subject: 'Tus pedidos en {name}',
+    link_heading: 'Ver tus pedidos',
+    link_intro: 'Haz clic en el botón para ver tu historial de compras en {name}.',
+    link_expiry: 'Este enlace caduca en 15 minutos. Si no lo solicitaste, puedes ignorar este correo.',
   },
 
   snap: {
@@ -435,6 +448,13 @@ export const es = {
     no_orders: 'Aún no hay pedidos — aparecerán aquí en cuanto alguien compre.',
     ord_paid: 'pagado',
     ord_new: 'nuevo',
+    import_stripe: '⬇ Importar de Stripe',
+    importing: 'Importando…',
+    import_done: 'Importados {n} de {found} productos desde Stripe.{skips}',
+    import_skips: ' Omitidos: {list}.',
+    import_none: 'No se encontraron productos importables en tu cuenta de Stripe (solo precios de pago único).',
+    skip_recurring: 'precio de suscripción', skip_exists: 'ya está en la tienda', skip_currency: 'moneda distinta',
+    skip_no_price: 'sin precio', skip_limit: 'límite del plan', skip_policy: 'política de contenido', skip_price_range: 'precio fuera de rango',
   },
 
   blogm: {

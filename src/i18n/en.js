@@ -386,6 +386,19 @@ export const en = {
     intro: 'Thank you for your purchase from {name}! Here’s your order summary.',
     view_receipt: 'View receipt',
     questions: 'Questions about your order? Just reply to this email.',
+    // buyer purchase history
+    my_orders: 'My orders',
+    orders_at: 'Your orders at {name}',
+    orders_intro: 'Enter the email you used at checkout and we’ll send you a secure sign-in link.',
+    email_ph: 'you@example.com',
+    send_link: 'Email me a link',
+    sent: 'If that email has orders here, a sign-in link is on its way. It expires in 15 minutes.',
+    link_expired: 'That link is invalid or has expired — request a new one below.',
+    no_orders_yet: 'No orders found for this email yet.',
+    link_subject: 'Your orders at {name}',
+    link_heading: 'View your orders',
+    link_intro: 'Click the button below to see your purchase history at {name}.',
+    link_expiry: 'This link expires in 15 minutes. If you didn’t request it, you can ignore this email.',
   },
 
   // Blog manager (app UI, viewer's language).
@@ -441,6 +454,13 @@ export const en = {
     no_orders: 'No orders yet — they’ll appear here the moment someone buys.',
     ord_paid: 'paid',
     ord_new: 'new',
+    import_stripe: '⬇ Import from Stripe',
+    importing: 'Importing…',
+    import_done: 'Imported {n} of {found} products from Stripe.{skips}',
+    import_skips: ' Skipped: {list}.',
+    import_none: 'No importable products found in your Stripe account (one-time prices only).',
+    skip_recurring: 'subscription price', skip_exists: 'already in store', skip_currency: 'different currency',
+    skip_no_price: 'no price', skip_limit: 'plan limit', skip_policy: 'content policy', skip_price_range: 'price out of range',
   },
 
   blogm: {

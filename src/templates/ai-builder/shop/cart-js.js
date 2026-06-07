@@ -36,7 +36,9 @@ export function cartScript(config) {
       cancelled: t(lang, 'shopw.cancelled'),
       error: t(lang, 'shopw.error'),
       preview: t(lang, 'shopw.preview_note'),
+      myOrders: t(lang, 'rcpt.my_orders'),
     },
+    ordersUrl: siteId ? `${config.appOrigin || ''}/store/orders?s=${siteId}` : '',
   };
 
   return `
@@ -100,7 +102,8 @@ export function cartScript(config) {
     panel.innerHTML = '<h3>' + CFG.s.cart + '</h3>' + rows +
       '<div class="cf-cart-total"><span>' + CFG.s.total + '</span><span>' + money(total) + '</span></div>' +
       '<button class="cf-cart-go">' + CFG.s.checkout + '</button>' +
-      (CFG.preview ? '<div class="cf-cart-note">' + CFG.s.preview + '</div>' : '');
+      (CFG.preview ? '<div class="cf-cart-note">' + CFG.s.preview + '</div>' : '') +
+      (CFG.ordersUrl ? '<div class="cf-cart-note"><a href="' + CFG.ordersUrl + '" target="_blank" rel="noopener" style="color:inherit">' + CFG.s.myOrders + ' →</a></div>' : '');
     // product names via textContent (never trusted as HTML)
     var bs = panel.querySelectorAll('.cf-i b');
     for (var k = 0; k < cart.length; k++) bs[k].textContent = cart[k].name;

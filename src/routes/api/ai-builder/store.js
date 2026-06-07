@@ -25,8 +25,10 @@ import {
   verifyConnectState,
   createStoreCheckoutSession,
   getStoreCheckoutSession,
+  listConnectProducts,
   verifyWebhook,
 } from '../../../utils/stripe.js';
+import { slugify } from '../../../db/blog-posts.js';
 import { insertOrderIfNew, getOrdersByProject, markOrdersRead } from '../../../db/store-orders.js';
 import { sendOrderBuyerEmail, sendOrderMerchantEmail } from '../../../utils/email.js';
 import { t } from '../../../i18n/index.js';
@@ -462,6 +464,80 @@ export async function handleStoreCheckout(ctx) {
   } catch (e) {
     console.error('store checkout error:', e);
     return json({ success: false, error: 'Could not start checkout — please try again.' }, 500);
+  }
+}
+
+/**
+ * POST /api/ai-builder/:project_id/store/import — one-click catalog import
+ * from the merchant's connected Stripe account. Idempotent by slug; one-time
+ * prices only (no subscriptions); the first import sets the store currency
+ * and mismatched-currency products are skipped (one currency per Checkout
+ * Session). Counts against PRODUCT_LIMITS like manual adds.
+ */
+export async function handleProductImport(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    if (!config.stripe_account_id) {
+      return json({ success: false, error: 'Connect your Stripe account first.' }, 400);
+    }
+
+    let stripeProducts;
+    try {
+      stripeProducts = await listConnectProducts(env, config.stripe_account_id);
+    } catch (e) {
+      return json({ success: false, error: e.message.slice(0, 200) }, 502);
+    }
+
+    const tier = await getUserTier(env.DB, r.email);
+    const limit = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+    const enforced = env.ENVIRONMENT === 'production' && Number.isFinite(limit);
+    let count = await countProducts(env.DB, r.projectKey);
+
+    const existing = await getProductsByProject(env.DB, r.projectKey);
+    const existingSlugs = new Set(existing.map((p) => p.slug));
+    // First import into an empty store adopts the merchant's Stripe currency.
+    let currency = existing.length ? (config.store_currency || 'usd') : null;
+
+    let imported = 0;
+    const skipped = [];
+    for (const sp of stripeProducts) {
+      const name = (sp.name || '').trim().slice(0, 140);
+      if (!name) continue;
+      const price = sp.default_price;
+      if (!price || typeof price !== 'object') { skipped.push({ name, reason: 'no_price' }); continue; }
+      if (price.type !== 'one_time' || price.unit_amount == null) { skipped.push({ name, reason: 'recurring' }); continue; }
+      if (price.unit_amount < MIN_PRICE_CENTS || price.unit_amount > MAX_PRICE_CENTS) { skipped.push({ name, reason: 'price_range' }); continue; }
+      if (currency && price.currency !== currency) { skipped.push({ name, reason: 'currency' }); continue; }
+      const slug = slugify(name);
+      if (existingSlugs.has(slug)) { skipped.push({ name, reason: 'exists' }); continue; }
+      if (enforced && count >= limit) { skipped.push({ name, reason: 'limit' }); continue; }
+      const screen = screenContent(`${name}\n${sp.description || ''}`);
+      if (!screen.allowed) { skipped.push({ name, reason: 'policy' }); continue; }
+
+      if (!currency) {
+        currency = price.currency;
+        await updateWebsiteConfigById(env.DB, config.id, { store_currency: currency });
+      }
+      await createProduct(env.DB, r.projectKey, {
+        slug,
+        name,
+        description: (sp.description || '').slice(0, 5000),
+        price_cents: price.unit_amount,
+        image: (Array.isArray(sp.images) && sp.images[0] ? sp.images[0] : '').slice(0, 500),
+        product_type: 'physical',
+      });
+      existingSlugs.add(slug);
+      imported++;
+      count++;
+    }
+
+    return json({ success: true, imported, skipped, found: stripeProducts.length });
+  } catch (e) {
+    console.error('product import error:', e);
+    return json({ success: false, error: 'Import failed — please try again.' }, 500);
   }
 }
 

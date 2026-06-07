@@ -381,6 +381,19 @@ export const pt = {
     intro: 'Obrigado pela sua compra em {name}! Aqui está o resumo do seu pedido.',
     view_receipt: 'Ver recibo',
     questions: 'Dúvidas sobre seu pedido? Basta responder a este e-mail.',
+    // histórico de compras do comprador
+    my_orders: 'Meus pedidos',
+    orders_at: 'Seus pedidos em {name}',
+    orders_intro: 'Informe o e-mail que você usou no pagamento e enviaremos um link seguro de acesso.',
+    email_ph: 'voce@exemplo.com',
+    send_link: 'Enviar link por e-mail',
+    sent: 'Se esse e-mail tiver pedidos aqui, um link de acesso está a caminho. Ele expira em 15 minutos.',
+    link_expired: 'Esse link é inválido ou expirou — solicite um novo abaixo.',
+    no_orders_yet: 'Ainda não há pedidos para este e-mail.',
+    link_subject: 'Seus pedidos em {name}',
+    link_heading: 'Ver seus pedidos',
+    link_intro: 'Clique no botão abaixo para ver seu histórico de compras em {name}.',
+    link_expiry: 'Este link expira em 15 minutos. Se você não o solicitou, pode ignorar este e-mail.',
   },
 
   snap: {
@@ -435,6 +448,13 @@ export const pt = {
     no_orders: 'Ainda não há pedidos — eles aparecerão aqui assim que alguém comprar.',
     ord_paid: 'pago',
     ord_new: 'novo',
+    import_stripe: '⬇ Importar do Stripe',
+    importing: 'Importando…',
+    import_done: 'Importados {n} de {found} produtos do Stripe.{skips}',
+    import_skips: ' Ignorados: {list}.',
+    import_none: 'Nenhum produto importável encontrado na sua conta Stripe (apenas preços avulsos).',
+    skip_recurring: 'preço de assinatura', skip_exists: 'já está na loja', skip_currency: 'moeda diferente',
+    skip_no_price: 'sem preço', skip_limit: 'limite do plano', skip_policy: 'política de conteúdo', skip_price_range: 'preço fora do intervalo',
   },
 
   blogm: {

@@ -88,10 +88,11 @@ import {
   handleStripeConnectCallback,
   handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
   handleProductAIDescribe, handleProductImage, handleStoreCheckout,
-  handleStoreWebhook, handleOrderList,
+  handleStoreWebhook, handleOrderList, handleProductImport,
 } from './routes/api/ai-builder/store.js';
 import { handleStoreManager } from './routes/public/store-manager.js';
 import { handleStoreReceipt } from './routes/public/store-receipt.js';
+import { handleBuyerOrders, handleBuyerOrdersSend, handleBuyerOrdersAuth } from './routes/public/store-orders.js';
 
 // Hourly auto-save, edit-driven: wrap state-changing project routes so a
 // successful edit kicks maybeAutoSnapshot off the response path (waitUntil).
@@ -189,6 +190,10 @@ router.post('/api/store/checkout', handleStoreCheckout);
 // Buyer receipt page (Stripe success_url) + Connect webhook (order backstop)
 router.get('/store/receipt', handleStoreReceipt);
 router.post('/api/store/webhook', handleStoreWebhook);
+// Buyer purchase history (magic-link, per site; first-match: specific before generic)
+router.get('/store/orders/auth', handleBuyerOrdersAuth);
+router.post('/store/orders/send', handleBuyerOrdersSend);
+router.get('/store/orders', handleBuyerOrders);
 
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);
@@ -250,6 +255,7 @@ router.post('/api/ai-builder/:project_id/store/products/:product_id/image', hand
 router.put('/api/ai-builder/:project_id/store/products/:product_id', handleProductUpdate, PROJ);
 router.delete('/api/ai-builder/:project_id/store/products/:product_id', handleProductDelete, PROJ);
 router.get('/api/ai-builder/:project_id/store/orders', handleOrderList, PROJ);
+router.post('/api/ai-builder/:project_id/store/import', handleProductImport, PROJ);
 
 // Site version snapshots (save / restore / delete / auto-save toggle)
 router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);
