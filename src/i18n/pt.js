@@ -256,7 +256,7 @@ export const pt = {
     meta_title: 'Painel — Caddisfly',
     title: 'Os seus sites',
     plan_billing: 'Plano e faturação →',
-    buy_domain: '🌐 Compre um domínio',
+    buy_domain: '🌐 Domínios',
     signed_in_as: 'Sessão iniciada como',
     support: 'Suporte', help: 'Ajuda', sign_out: 'Sair',
     no_sites: 'Você ainda não tem sites.', build_one: 'Crie um →',
@@ -637,8 +637,8 @@ export const pt = {
 
   domstore: {
     meta_title: 'Compre um domínio — Caddisfly',
-    title: '🌐 Compre um domínio',
-    sub: 'Pesquise, compre e nós conectamos ao seu site automaticamente — SSL incluído, sem configurar DNS.',
+    title: '🌐 Domínios',
+    sub: 'Compre um domínio novo — nós conectamos automaticamente com SSL — ou gerencie DNS, e-mail e renovações dos seus domínios abaixo.',
     coming_soon: 'A compra de domínios está quase pronta — volte em breve.',
     search_ph: 'seunegocio.com', search_btn: 'Pesquisar', searching: 'Verificando disponibilidade…',
     results_empty: 'Sem resultados — tente outro nome.',
@@ -713,6 +713,8 @@ export const pt = {
     ssl_note: '🔒 O seu certificado SSL é emitido automaticamente quando o registro estiver ativo — geralmente alguns minutos. Depois clique em <em>Verificar status</em>.',
     check_status: 'Verificar status', remove: 'Remover',
     none_yet: 'Ainda não há nenhum domínio próprio conectado.',
+    hub_link: 'Comprou seu domínio pela Caddisfly? {link} para gerenciar o DNS, e-mail, renovação automática e renovações.',
+    hub_link_a: 'Ir para a página de Domínios →',
     not_enabled: 'Os domínios próprios ainda não estão habilitados neste ambiente — o formulário está aqui para a configuração.',
     connect: 'Conectar domínio',
     tip: 'Dica: use um subdomínio como <code>www.</code> ou <code>shop.</code> — funcionam em qualquer provedor de DNS. Um domínio raiz puro (<code>seunegocio.com</code>) precisa de ALIAS / flattening de CNAME, que alguns provedores (ex.: GoDaddy, Namecheap) não suportam.',

@@ -63,7 +63,8 @@ export function renderDomainsPanel({ projectId, domains = [], subdomain = '', sa
        </form>
        <p class="d-hint">${tr('dom.tip')}</p>`
     : `<p class="d-empty">${tr('dom.publish_first')}</p>`;
-  return `<div class="domains-panel" data-project="${esc(projectId)}">${note}<div class="domains-list">${list}</div>${form}</div>`;
+  const hub = `<p class="d-hub">${tr('dom.hub_link', { link: `<a href="/domains">${tr('dom.hub_link_a')}</a>` })}</p>`;
+  return `<div class="domains-panel" data-project="${esc(projectId)}">${note}<div class="domains-list">${list}</div>${form}${hub}</div>`;
 }
 
 /** Styles for the domains panel (include once per page). */
@@ -95,6 +96,9 @@ export const DOMAINS_CSS = `
     .d-auto { font-size: .8rem; color: #03543f; background: #f0fdf9; border: 1px solid #c6f6e5; border-radius: 8px; padding: .5rem .7rem; margin-top: .6rem; }
     .d-hint { font-size: .78rem; color: #718096; margin: .55rem 0 0; line-height: 1.5; }
     .d-hint code { background: #f1f5f9; border-radius: 4px; padding: 0 .25rem; font-size: .92em; }
+    .d-hub { font-size: .8rem; color: #718096; margin: .9rem 0 0; padding-top: .7rem; border-top: 1px solid #edf1f7; }
+    .d-hub a { color: #667eea; font-weight: 700; text-decoration: none; }
+    .d-hub a:hover { text-decoration: underline; }
     .d-form { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
     .d-input { flex: 1; min-width: 180px; padding: .5rem .7rem; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: .9rem; }
     .d-err { color: #c53030; font-size: .8rem; width: 100%; }

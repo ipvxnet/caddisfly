@@ -256,7 +256,7 @@ export const en = {
     meta_title: 'Dashboard — Caddisfly',
     title: 'Your websites',
     plan_billing: 'Plan & billing →',
-    buy_domain: '🌐 Buy a domain',
+    buy_domain: '🌐 Domains',
     signed_in_as: 'Signed in as',
     support: 'Support', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
@@ -643,8 +643,8 @@ export const en = {
 
   domstore: {
     meta_title: 'Buy a domain — Caddisfly',
-    title: '🌐 Buy a domain',
-    sub: 'Search, buy, and we connect it to your site automatically — SSL included, no DNS setup.',
+    title: '🌐 Domains',
+    sub: 'Buy a new domain — we connect it automatically with SSL — or manage DNS, email, and renewals for domains you own below.',
     coming_soon: 'Domain purchases are almost ready — check back soon.',
     search_ph: 'yourbusiness.com', search_btn: 'Search', searching: 'Checking availability…',
     results_empty: 'No results — try another name.',
@@ -719,6 +719,8 @@ export const en = {
     ssl_note: '🔒 Your SSL certificate is issued automatically once the record is live — usually a few minutes. Then click <em>Check status</em>.',
     check_status: 'Check status', remove: 'Remove',
     none_yet: 'No custom domain connected yet.',
+    hub_link: 'Bought your domain through Caddisfly? {link} to manage its DNS, email, auto-renew, and renewals.',
+    hub_link_a: 'Go to the Domains page →',
     not_enabled: 'Custom domains aren’t enabled in this environment yet — the form is here for setup.',
     connect: 'Connect domain',
     tip: 'Tip: use a subdomain like <code>www.</code> or <code>shop.</code> — these work at any DNS provider. A bare root domain (<code>yourbusiness.com</code>) needs ALIAS / CNAME-flattening, which some providers (e.g. GoDaddy, Namecheap) don’t support.',
