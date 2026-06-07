@@ -40,14 +40,14 @@ export async function handleCreateTicket(ctx) {
   const ticket = await createTicket(env.DB, { email, subject, type, body: message });
 
   // Slack ops alert (best-effort, off the response path).
-  notifyOpsAsync(ctx, `🎫 *New ${type} ticket* from ${email}\n*${subject}*\n>${message.slice(0, 280).replace(/\n/g, '\n>')}\n<${url.origin}/admin/tickets?t=${ticket.public_id}|Open in admin>`);
+  notifyOpsAsync(ctx, `🎫 *New ${type} ticket #${ticket.id}* from ${email}\n*${subject}*\n>${message.slice(0, 280).replace(/\n/g, '\n>')}\n<${url.origin}/admin/tickets?t=${ticket.public_id}|Open in admin>`);
 
   // Notify staff (best-effort).
   const inbox = adminInbox(env);
   if (inbox) {
     await sendTicketEmail(env, {
       to: inbox,
-      subject: `[Ticket] ${subject}`,
+      subject: `[Ticket #${ticket.id}] ${subject}`,
       heading: `New ${type} from ${email}`,
       intro: `${email} opened a support ticket.`,
       body: message,
@@ -75,13 +75,13 @@ export async function handleReplyTicket(ctx) {
   await addMessage(env.DB, ticket, { authorEmail: email, isStaff: false, body: message });
 
   // Slack ops alert (best-effort, off the response path).
-  notifyOpsAsync(ctx, `💬 *Ticket reply* from ${email} on "${ticket.subject}"\n>${message.slice(0, 280).replace(/\n/g, '\n>')}\n<${url.origin}/admin/tickets?t=${ticket.public_id}|Open in admin>`);
+  notifyOpsAsync(ctx, `💬 *Reply on ticket #${ticket.id}* from ${email} — "${ticket.subject}"\n>${message.slice(0, 280).replace(/\n/g, '\n>')}\n<${url.origin}/admin/tickets?t=${ticket.public_id}|Open in admin>`);
 
   const inbox = adminInbox(env);
   if (inbox) {
     await sendTicketEmail(env, {
       to: inbox,
-      subject: `[Ticket reply] ${ticket.subject}`,
+      subject: `[Ticket #${ticket.id}] Re: ${ticket.subject}`,
       heading: `${email} replied`,
       intro: `New reply on ticket "${ticket.subject}".`,
       body: message,

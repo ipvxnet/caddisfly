@@ -44,7 +44,7 @@ export async function handleSupport(ctx) {
     const inner = `
       <p><a class="muted-link" href="/support">${tr('sup.all_tickets')}</a></p>
       <div class="thead">
-        <h1>${esc(ticket.subject)}</h1>
+        <h1><span class="tno">#${ticket.id}</span> ${esc(ticket.subject)}</h1>
         <div>${statusPill(ticket.status, tr)} <span class="pill">${esc(tr('sup.ty_' + ticket.type))}</span></div>
       </div>
       <div class="thread">${thread}</div>
@@ -65,7 +65,7 @@ export async function handleSupport(ctx) {
     ? tickets
         .map(
           (t) => `<a class="trow" href="/support?t=${esc(t.public_id)}">
-            <div><div class="t-subj">${esc(t.subject)}</div><div class="muted t-meta">${esc(tr('sup.ty_' + t.type))} · ${tr('sup.updated', { date: fmt(t.updated_at) })}</div></div>
+            <div><div class="t-subj"><span class="tno">#${t.id}</span> ${esc(t.subject)}</div><div class="muted t-meta">${esc(tr('sup.ty_' + t.type))} · ${tr('sup.updated', { date: fmt(t.updated_at) })}</div></div>
             ${statusPill(t.status, tr)}
           </a>`
         )
@@ -130,6 +130,7 @@ function pageShell(origin, inner, status = 200, lang = 'en', tr = (k) => k) {
     .btn{display:inline-flex;align-items:center;background:var(--grad);color:#fff;border:none;border-radius:11px;padding:.7rem 1.2rem;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;margin-top:1rem}
     .muted{color:var(--muted)}.muted-link{color:var(--muted);font-size:.9rem}
     .pill{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.12rem .6rem;font-size:.74rem;font-weight:700;color:var(--p2)}
+    .tno{color:var(--muted);font-weight:700}
     .pill.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
     .pill.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
     .tlist{display:flex;flex-direction:column}

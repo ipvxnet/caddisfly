@@ -44,7 +44,7 @@ export async function handleAdminTickets(ctx) {
       </form>`;
     return htmlResponse(page(`
       <p><a href="/admin/tickets">← All tickets</a></p>
-      <div class="thead"><h2>${esc(ticket.subject)}</h2><div>${pill(ticket.status)} <span class="badge">${esc(ticket.type)}</span></div></div>
+      <div class="thead"><h2><span class="tno">#${ticket.id}</span> ${esc(ticket.subject)}</h2><div>${pill(ticket.status)} <span class="badge">${esc(ticket.type)}</span></div></div>
       <p class="muted">From ${esc(ticket.customer_email)} · opened ${fmt(ticket.created_at)}</p>
       ${statusForm}
       <div class="thread">${thread}</div>
@@ -62,6 +62,7 @@ export async function handleAdminTickets(ctx) {
     ? tickets
         .map(
           (t) => `<tr onclick="location.href='/admin/tickets?t=${esc(t.public_id)}'">
+            <td class="muted">#${t.id}</td>
             <td>${pill(t.status)}</td>
             <td>${esc(t.type)}</td>
             <td class="subj">${esc(t.subject)}</td>
@@ -70,14 +71,14 @@ export async function handleAdminTickets(ctx) {
           </tr>`
         )
         .join('')
-    : '<tr><td colspan="5" class="muted">No tickets.</td></tr>';
+    : '<tr><td colspan="6" class="muted">No tickets.</td></tr>';
   const tabs = ['', 'open', 'in_progress', 'closed']
     .map((s) => `<a class="tab ${filter === s ? 'active' : ''}" href="/admin/tickets${s ? '?status=' + s : ''}">${s ? s.replace('_', ' ') : 'all'}</a>`)
     .join('');
   return htmlResponse(page(`
     <div class="thead"><h2>Support tickets</h2><a class="back" href="/admin">← Dashboard</a></div>
     <div class="tabs">${tabs}</div>
-    <table><thead><tr><th>Status</th><th>Type</th><th>Subject</th><th>Customer</th><th>Updated</th></tr></thead>
+    <table><thead><tr><th>#</th><th>Status</th><th>Type</th><th>Subject</th><th>Customer</th><th>Updated</th></tr></thead>
       <tbody>${rows}</tbody></table>`));
 }
 
@@ -93,7 +94,7 @@ export async function handleAdminTicketReply(ctx) {
   await addMessage(env.DB, ticket, { authorEmail: ctx.user.email, isStaff: true, body: message });
   await sendTicketEmail(env, {
     to: ticket.customer_email,
-    subject: `Re: ${ticket.subject}`,
+    subject: `Re: ${ticket.subject} [Ticket #${ticket.id}]`,
     heading: 'Caddisfly Support replied to your ticket',
     intro: `Re: "${ticket.subject}"`,
     body: message,
@@ -135,6 +136,7 @@ function page(inner) {
   tbody tr:hover{background:#f8fafc}
   td.subj{font-weight:700}td.email{color:#4a5568}
   .badge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;background:#edf2f7;color:#4a5568;text-transform:capitalize}
+  .tno{color:#a0aec0;font-weight:700}
   .badge.ok{background:#ecfdf5;color:#065f46}.badge.warn{background:#fffbeb;color:#92400e}
   .row-form{display:flex;gap:.5rem;margin:1rem 0;align-items:center}
   select,textarea{font:inherit;padding:.5rem .7rem;border:1px solid #cbd5e0;border-radius:8px}
