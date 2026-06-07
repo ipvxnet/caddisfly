@@ -20,6 +20,28 @@ export function cnameTarget(env) {
   return (env && env.SAAS_CNAME_TARGET) || 'sites.caddisfly.app';
 }
 
+/** The sites Worker that serves custom hostnames (per env: prod vs preview). */
+export function saasWorkerScript(env) {
+  return (env && env.SAAS_WORKER_SCRIPT) || 'caddisfly-sites';
+}
+
+/**
+ * Ensure a Worker route `<hostname>/*` → the sites worker. REQUIRED for SaaS
+ * custom hostnames: Cloudflare matches Worker routes against the incoming
+ * (custom) hostname, which never matches *.caddisfly.app — so without this the
+ * worker never runs and CF times out on the fallback origin (522). Idempotent:
+ * a duplicate route is treated as success.
+ */
+export async function createWorkerRoute(env, hostname) {
+  try {
+    await cfRequest(env, 'POST', '/workers/routes', { pattern: `${hostname}/*`, script: saasWorkerScript(env) });
+    return true;
+  } catch (e) {
+    if (/duplicate|already exists|10020/i.test(e.message)) return true; // already routed
+    throw e;
+  }
+}
+
 /** Normalize user input to a bare hostname (lowercase, no scheme/path/port). */
 export function normalizeHostname(input) {
   let h = String(input || '').trim().toLowerCase();
@@ -84,6 +106,14 @@ export async function createCustomHostname(env, hostname) {
     hostname,
     ssl: { method: 'http', type: 'dv', settings: { min_tls_version: '1.2' } },
   });
+  // The worker route is what actually makes the sites worker serve this
+  // hostname — without it the active cert still 522s. Best-effort here; the
+  // reconnect path re-ensures it.
+  try {
+    await createWorkerRoute(env, hostname);
+  } catch (e) {
+    console.error('worker route create failed (will retry on reconnect):', e.message);
+  }
   return { ...extractRecords(result), cname_target: cnameTarget(env) };
 }
 
