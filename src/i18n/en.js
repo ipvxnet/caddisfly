@@ -267,6 +267,7 @@ export const en = {
     dashboard: '🏠 Dashboard', dashboard_title: 'Your websites & team',
     analytics: '📊 Analytics', analytics_title: 'Traffic analytics for your published site',
     blog: '📝 Blog', blog_title: 'Write and publish blog posts with AI',
+    store: '🛍 Store', store_title: 'Sell on your site — products, orders, Stripe payments',
     full_preview: 'View Full Preview', deploy: 'Deploy Website',
     pages: 'Pages', add_page: '+ Page', add_page_title: 'Add a page',
     rename: 'Rename', delete_page: 'Delete page', home_page: 'Home page',

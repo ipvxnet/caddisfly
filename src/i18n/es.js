@@ -267,6 +267,7 @@ export const es = {
     dashboard: '🏠 Panel', dashboard_title: 'Tus sitios y equipo',
     analytics: '📊 Estadísticas', analytics_title: 'Estadísticas de tráfico de tu sitio publicado',
     blog: '📝 Blog', blog_title: 'Escribe y publica entradas de blog con IA',
+    store: '🛍 Tienda', store_title: 'Vende en tu sitio — productos, pedidos, pagos con Stripe',
     full_preview: 'Ver vista previa completa', deploy: 'Publicar sitio',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Añadir una página',
     rename: 'Renombrar', delete_page: 'Eliminar página', home_page: 'Página de inicio',

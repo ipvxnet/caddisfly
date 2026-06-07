@@ -7,6 +7,10 @@ import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } fro
 import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js';
+import { getPostsByProject } from '../../db/blog-posts.js';
+import { getProductsByProject } from '../../db/products.js';
+import { blogNavPage } from '../../utils/blog-render.js';
+import { shopNavPage } from '../../utils/shop-render.js';
 
 /**
  * Handle AI preview page
@@ -128,6 +132,7 @@ export async function handleAIPreview(ctx) {
         project_id: regularProject.preview_id,
         project_name: businessName,
         id: regularProject.id,
+        language: regularProject.language || 'en',
       };
 
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
@@ -146,6 +151,16 @@ export async function handleAIPreview(ctx) {
     // then resolve the target page (slug param, else home; unknown slug → home).
     await ensurePagesForProject(env.DB, projectKey);
     const pages = await getPagesByProject(env.DB, projectKey);
+
+    // Nav parity with deploy.js: published posts / active products add the
+    // Blog + Shop nav entries, so the editor preview matches what publishes
+    // (and clicking them renders those pages right in the preview iframe).
+    const siteLang = project.language || 'en';
+    const navPages = [...pages];
+    const publishedPosts = await getPostsByProject(env.DB, projectKey, true);
+    if (publishedPosts.length) navPages.push(blogNavPage(siteLang));
+    const activeProducts = await getProductsByProject(env.DB, projectKey, true);
+    if (activeProducts.length) navPages.push(shopNavPage(siteLang));
     const slug = params.page_slug;
     let page = slug ? await getPageBySlug(env.DB, projectKey, slug) : null;
     if (!page) page = await getHomePage(env.DB, projectKey);
@@ -171,11 +186,12 @@ export async function handleAIPreview(ctx) {
     // link can't be re-triggered nested inside the editor.
     const embed = query && (query.embed === '1' || query.embed === 'true');
     const opts = {
-      pages,
+      pages: navPages,
       currentSlug: page ? page.slug : 'home',
       previewBase: `/ai-preview/${project.project_id}`,
       embed,
       preordered: true,
+      lang: siteLang,
       // Badge "Built with Caddisfly" links back to THIS app origin (the new
       // landing), not the hardcoded prod domain that still runs old code.
       appOrigin: env.APP_URL || '',

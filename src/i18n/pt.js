@@ -267,6 +267,7 @@ export const pt = {
     dashboard: '🏠 Painel', dashboard_title: 'Os seus sites e equipe',
     analytics: '📊 Estatísticas', analytics_title: 'Estatísticas de tráfego do seu site publicado',
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
+    store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Adicionar uma página',
     rename: 'Renomear', delete_page: 'Excluir página', home_page: 'Página inicial',
