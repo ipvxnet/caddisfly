@@ -654,6 +654,7 @@ export const es = {
     cta_q: '¿No encontraste lo que buscabas?', cta_btn: 'Abrir un ticket de soporte →',
     toc: [
       ['getting-started', 'Primeros pasos'], ['customizing', 'Personalizar tu sitio'],
+      ['logo', 'Logo y marca'],
       ['publishing', 'Publicar'], ['store', 'Tienda online'],
       ['blog', 'Blog y redes sociales'], ['messages', 'Formulario de contacto y bandeja'],
       ['versions', 'Versiones, copias y exportación'], ['seo', 'SEO y aparecer en Google'],
@@ -676,6 +677,14 @@ export const es = {
           <li><strong>Galería</strong> — abre el editor de una galería para reordenar (arrastrar), reemplazar, quitar o añadir fotos individuales (sin regenerar con IA).</li>
           <li><strong>Diseño</strong> — el panel 🎨 Diseño cambia el tema, los colores y las fuentes de todo el sitio a la vez.</li>
         </ul>`],
+      ['logo', 'Logo y marca', `
+        <p>Dale a tu sitio una marca de verdad desde el panel <strong>✨ Logo y marca</strong> en Personalizar:</p>
+        <ul>
+          <li><strong>Generar con IA</strong> (planes de pago) — añade notas de estilo opcionales (“un zorro, tonos naranjas cálidos”) y obtén <strong>4 opciones de logo</strong> por intento (10 créditos). Haz clic en una para aplicarla.</li>
+          <li><strong>O sube el tuyo</strong> — PNG, JPG, WebP o SVG; mejor si es cuadrado. Disponible en todos los planes.</li>
+        </ul>
+        <p>Tu logo se aplica en todas partes a la vez: el <strong>encabezado del sitio</strong>, el <strong>icono de la pestaña del navegador</strong> (favicon) y como <strong>imagen para compartir</strong> cuando enlazan tus páginas en redes sociales. Vuelve a publicar para ponerlo en vivo. Puedes quitarlo o reemplazarlo cuando quieras.</p>
+        <p><em>Nota:</em> los logos generados por IA no se verifican contra marcas registradas existentes — revísalos antes de uso comercial.</p>`],
       ['publishing', 'Publicar', `
         <p>Haz clic en <strong>Publicar sitio</strong> en Personalizar. Tu sitio se pone en línea en una dirección gratuita como <code>tunegocio.caddisfly.app</code> y te mostramos un enlace. Vuelve a publicar cuando quieras tras hacer cambios — al republicar en un plan de pago también se quita la insignia “Built with Caddisfly”.</p>`],
       ['store', 'Tienda online', `
@@ -742,6 +751,7 @@ export const es = {
       ['¿Qué son los créditos Caddi?', 'Los créditos se gastan en acciones de IA (generar contenido, crear imágenes con IA, ediciones con IA). Cada plan incluye una asignación mensual que se reinicia cada mes, y además puedes comprar recargas únicas que nunca caducan.'],
       ['¿Cómo funcionan los miembros del equipo?', 'Invita a tu equipo por correo desde tu <strong>Panel</strong>. Reciben un enlace que los identifica y los une a tu equipo, donde pueden acceder a tus sitios. Tú (el propietario) y los administradores pueden invitar, promover o quitar miembros. Plazas: Starter 5, Pro 15, Agency 50 (incluyéndote).'],
       ['¿Mi sitio es bueno para SEO? ¿Tengo que configurar algo?', 'Cada sitio publicado está listo para buscadores automáticamente — títulos, meta descripciones, tarjetas para compartir, datos de negocio de Google (LocalBusiness), una URL canónica, <code>robots.txt</code> y un <code>sitemap.xml</code>, todo generado por ti. Para personalizar una página, abre <strong>Personalizar → 🔎 SEO</strong> y edita el título y la descripción con una vista previa del resultado de Google. Ver <a href="#seo">SEO y aparecer en Google</a>.'],
+      ['¿Puede Caddisfly crear un logo para mí?', 'Sí — en los planes de pago, abre <strong>✨ Logo y marca</strong> en Personalizar y genera 4 opciones de logo con IA por intento (10 créditos); haz clic en una para usarla como logo del encabezado, favicon e imagen para compartir. En cualquier plan puedes subir tu propio logo. Ver <a href="#logo">Logo y marca</a>.'],
       ['¿Puedo vender productos en mi sitio?', 'Sí — desde el plan Starter ($9/mes). Conecta tu propia cuenta de Stripe en la página <strong>🛍 Tienda</strong>, añade productos (la IA puede escribir descripciones y generar fotos — o importa tu catálogo de Stripe en un clic) y publica. Ver <a href="#store">Tienda online</a>.'],
       ['¿Os quedáis con una parte de mis ventas?', 'No. El pago se procesa en tu propia cuenta de Stripe, así que el dinero va directamente a ti. Solo pagas las tarifas estándar de Stripe — Caddisfly no añade nada encima.'],
       ['¿Cómo funciona el blog con IA?', 'Abre <strong>📝 Blog</strong>, dale a la IA unas frases y redactará una publicación completa en el idioma de tu sitio — tú la editas, la publicas y republicas tu sitio para ponerla en línea. Con un clic también genera una imagen de portada y publicaciones listas para X, Instagram y LinkedIn. Ver <a href="#blog">Blog y redes sociales</a>.'],

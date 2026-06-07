@@ -660,6 +660,7 @@ export const en = {
     cta_q: 'Didn’t find what you need?', cta_btn: 'Open a support ticket →',
     toc: [
       ['getting-started', 'Getting started'], ['customizing', 'Customizing your site'],
+      ['logo', 'Logo & branding'],
       ['publishing', 'Publishing'], ['store', 'Online store'],
       ['blog', 'Blog & social posts'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
@@ -682,6 +683,14 @@ export const en = {
           <li><strong>Gallery</strong> — open a gallery’s editor to drag-reorder, replace, remove, or add individual photos (no AI re-roll needed).</li>
           <li><strong>Design</strong> — the 🎨 Design panel switches the whole-site theme, colors, and fonts at once.</li>
         </ul>`],
+      ['logo', 'Logo & branding', `
+        <p>Give your site a real brand mark from the <strong>✨ Logo &amp; Brand</strong> panel in Customize:</p>
+        <ul>
+          <li><strong>Generate with AI</strong> (paid plans) — optionally add style notes (“a fox, warm orange tones”) and get <strong>4 logo options</strong> per run (10 credits). Click one to apply it.</li>
+          <li><strong>Or upload your own</strong> — PNG, JPG, WebP, or SVG; square images work best. Available on every plan.</li>
+        </ul>
+        <p>Your logo is applied everywhere at once: the <strong>site header</strong>, the <strong>browser-tab icon</strong> (favicon), and as the fallback <strong>share image</strong> when your pages are linked on social media. Re-publish to put it live. You can remove or replace it anytime.</p>
+        <p><em>Note:</em> AI-generated marks aren’t checked against existing trademarks — review before commercial use.</p>`],
       ['publishing', 'Publishing', `
         <p>Click <strong>Deploy Website</strong> in Customize. Your site goes live on a free address like <code>yourbusiness.caddisfly.app</code>, and we show you a clickable link. Re-deploy any time after making changes — re-publishing on a paid plan also removes the “Built with Caddisfly” badge.</p>`],
       ['store', 'Online store', `
@@ -748,6 +757,7 @@ export const en = {
       ['What are Caddi Credits?', 'Credits are spent on AI actions (generating content, AI image creation, AI edits). Each plan includes a monthly allotment that resets every month, plus you can buy one-time top-up credits that never expire.'],
       ['How do team members work?', 'Invite teammates by email from your <strong>Dashboard</strong>. They get a link that signs them in and joins your team, where they can access your websites. You (the owner) and any admins can invite, promote, or remove members. Seat limits: Starter 5, Pro 15, Agency 50 (including you).'],
       ['Is my site good for SEO? Do I need to set anything up?', 'Every published site is search-ready automatically — page titles, meta descriptions, social share cards, Google business (LocalBusiness) markup, a canonical URL, <code>robots.txt</code>, and a <code>sitemap.xml</code>, all generated for you. To customize a page, open <strong>Customize → 🔎 SEO</strong> and edit the title and description with a live Google-result preview. See <a href="#seo">SEO &amp; getting found</a>.'],
+      ['Can Caddisfly create a logo for me?', 'Yes — on paid plans, open <strong>✨ Logo &amp; Brand</strong> in Customize and generate 4 AI logo options per run (10 credits); click one to use it as your header logo, favicon, and share image. On any plan you can upload your own logo instead. See <a href="#logo">Logo &amp; branding</a>.'],
       ['Can I sell products on my site?', 'Yes — from the Starter plan ($9/mo). Connect your own Stripe account on the <strong>🛍 Store</strong> page, add products (AI can write descriptions and generate photos — or import your Stripe catalog in one click), and publish. See <a href="#store">Online store</a>.'],
       ['Do you take a cut of my sales?', 'No. Checkout runs on your own Stripe account, so the money goes straight to you. You pay only Stripe’s standard processing fees — Caddisfly adds nothing on top.'],
       ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. See <a href="#blog">Blog &amp; social posts</a>.'],
