@@ -44,6 +44,9 @@ export async function handleDomainsStorePage(ctx) {
     none: tr('domstore.results_empty'),
     st_registered: tr('domstore.st_registered'), st_working: tr('domstore.st_working'),
     st_failed: tr('domstore.st_failed'), expires: tr('domstore.expires'),
+    autorenew: tr('domstore.autorenew'), autorenew_off_note: tr('domstore.autorenew_off_note'),
+    reconnect: tr('domstore.reconnect'), reconnecting: tr('domstore.reconnecting'),
+    reconnect_ok: tr('domstore.reconnect_ok'), reconnect_fail: tr('domstore.reconnect_fail'),
   };
 
   const html = `<!DOCTYPE html>
@@ -89,6 +92,11 @@ export async function handleDomainsStorePage(ctx) {
     .pill.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
     .pill.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
     .pill.bad{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+    .ar-toggle{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;color:#4a5568;cursor:pointer;user-select:none}
+    .ar-toggle input{width:auto;cursor:pointer}
+    .reconnect-btn{background:none;border:1.5px solid var(--line);border-radius:8px;padding:.35rem .8rem;font-size:.8rem;font-weight:700;color:#4a5568;cursor:pointer}
+    .reconnect-btn:hover{border-color:#a3b3f5;color:#4338ca}
+    .reconnect-btn:disabled{opacity:.6;cursor:default}
   </style>
 </head>
 <body>
@@ -226,13 +234,57 @@ export async function handleDomainsStorePage(ctx) {
             left.appendChild(ex);
           }
           row.appendChild(left);
+          const right = document.createElement('div');
+          right.style.cssText = 'display:flex;align-items:center;gap:.9rem;flex-wrap:wrap';
+          // Auto-renew toggle (registered domains only).
+          if (o.status === 'registered') {
+            const lbl = document.createElement('label');
+            lbl.className = 'ar-toggle';
+            lbl.title = T.autorenew_off_note;
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.checked = !!o.auto_renew;
+            cb.onchange = function () { setAutoRenew(o.id, cb); };
+            const span = document.createElement('span'); span.textContent = T.autorenew;
+            lbl.appendChild(cb); lbl.appendChild(span);
+            right.appendChild(lbl);
+          }
+          if (o.status === 'registered') {
+            const rc = document.createElement('button');
+            rc.className = 'reconnect-btn'; rc.textContent = T.reconnect;
+            rc.onclick = function () { reconnect(o.id, rc); };
+            right.appendChild(rc);
+          }
           const pill = document.createElement('span');
           pill.className = 'pill ' + (o.status === 'registered' ? 'ok' : (o.status === 'paid' || o.status === 'registering') ? 'warn' : 'bad');
           pill.textContent = o.status === 'registered' ? T.st_registered : (o.status === 'paid' || o.status === 'registering') ? T.st_working : T.st_failed;
-          row.appendChild(pill);
+          right.appendChild(pill);
+          row.appendChild(right);
           list.appendChild(row);
         });
       } catch (e) { /* quiet */ }
+    }
+    async function reconnect(id, btn) {
+      btn.disabled = true; btn.textContent = T.reconnecting;
+      try {
+        const r = await fetch('/api/domains/' + id + '/reconnect', { method: 'POST' });
+        const d = await r.json();
+        if (!r.ok || !d.dns) throw new Error(T.reconnect_fail);
+        btn.textContent = T.reconnect_ok;
+      } catch (e) { btn.disabled = false; btn.textContent = T.reconnect; alert(e.message || T.reconnect_fail); }
+    }
+    async function setAutoRenew(id, cb) {
+      const want = cb.checked;
+      cb.disabled = true;
+      try {
+        const r = await fetch('/api/domains/' + id + '/auto-renew', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auto_renew: want }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
+        cb.checked = !!d.auto_renew;
+      } catch (e) { cb.checked = !want; alert(e.message || T.err); }
+      finally { cb.disabled = false; }
     }
     loadMyDomains();
   </script>
