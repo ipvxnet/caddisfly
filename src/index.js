@@ -10,6 +10,8 @@ import { notFound } from './utils/response.js';
 // Import route handlers
 import { handleLanding } from './routes/public/landing.js';
 import { handlePricing } from './routes/public/pricing.js';
+import { handleSpeed } from './routes/public/speed.js';
+import { handleCompare } from './routes/public/compare.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
@@ -113,6 +115,8 @@ const router = new Router();
 // Public routes
 router.get('/', handleLanding);
 router.get('/pricing', handlePricing);
+router.get('/speed', handleSpeed);
+router.get('/compare', handleCompare);
 router.get('/terms', handleTerms);
 router.get('/privacy', handlePrivacy);
 

@@ -76,6 +76,8 @@ const APP_PAGES = [
   { path: '/', priority: '1.0' },
   { path: '/ai-builder', priority: '0.9' },
   { path: '/pricing', priority: '0.8' },
+  { path: '/compare', priority: '0.7' },
+  { path: '/speed', priority: '0.7' },
   { path: '/help', priority: '0.6' },
   { path: '/terms', priority: '0.3' },
   { path: '/privacy', priority: '0.3' },
