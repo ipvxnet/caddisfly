@@ -31,11 +31,12 @@ export function assemblePage(sections, config, project, opts = {}) {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
     hideBadge = false, trackId = null, appOrigin = '',
     seoTitle = null, seoDescription = null, socialImage = null, canonicalUrl = null, pageTitle = null, business = null,
-    lang = 'en',
+    lang = 'en', products = null,
   } = opts;
 
-  // Inject nav context so the navbar can render page links (other templates ignore it).
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang };
+  // Inject nav context so the navbar can render page links (other templates
+  // ignore it). `products` feeds the 🛍 featured-products section live data.
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.

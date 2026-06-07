@@ -29,7 +29,7 @@ export function generateSectionEditorModal(section, projectId, lang = 'en') {
       <details class="manual-edit">
         <summary>${tr('sed.edit_manual')}</summary>
         <form id="section-edit-form" onsubmit="saveSectionChanges(event)">
-          ${generateFormFields(section.section_type, content, tr)}
+          ${generateFormFields(section.section_type, content, tr, projectId)}
 
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="closeModal()">${tr('sed.cancel')}</button>
@@ -757,7 +757,7 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
 /**
  * Generate form fields based on section type
  */
-function generateFormFields(sectionType, content, tr) {
+function generateFormFields(sectionType, content, tr, projectId = '') {
   switch (sectionType) {
     case 'hero':
       return generateHeroFields(content, tr);
@@ -775,9 +775,46 @@ function generateFormFields(sectionType, content, tr) {
       return generateFooterFields(content, tr);
     case 'pricing':
       return generatePricingFields(content, tr);
+    case 'products':
+      return generateProductsFields(content, tr, projectId);
     default:
       return `<p>${tr('sed.not_supported')}</p>`;
   }
+}
+
+/**
+ * 🛍 Featured products: text + how-many; the products themselves come from the
+ * Store page (live injection at render — nothing to manage here).
+ */
+function generateProductsFields(content, tr, projectId) {
+  const count = [3, 6, 9].includes(parseInt(content.count, 10)) ? parseInt(content.count, 10) : 3;
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${tr('sed.feat_heading_ph')}">
+    </div>
+
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+
+    <div class="form-group">
+      <label for="count">${tr('sed.feat_count')}</label>
+      <select id="count" name="count">
+        ${[3, 6, 9].map((n) => `<option value="${n}"${n === count ? ' selected' : ''}>${n}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="cta_text">${tr('sed.button_text')}</label>
+      <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || '')}" placeholder="${tr('sed.feat_cta_ph')}">
+    </div>
+
+    <p style="color: #718096; font-size: .85rem;">${tr('sed.feat_hint')}
+      <a href="/ai-builder/store/${escapeHtml(projectId)}" target="_blank" rel="noopener">${tr('sed.feat_store_link')}</a>
+    </p>
+  `;
 }
 
 /**

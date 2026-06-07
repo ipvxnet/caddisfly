@@ -442,6 +442,9 @@ export const pt = {
     sub_busy: 'Iniciando o pagamento…',
     sub_error: 'Não foi possível iniciar o pagamento — tente novamente.',
     sub_preview: 'Pré-visualização — as assinaturas funcionam no seu site publicado.',
+    feat_heading: 'Nossos produtos',
+    feat_cta: 'Visite a loja',
+    feat_empty: 'Ainda não há produtos — adicione produtos na sua página Loja e eles aparecerão aqui automaticamente.',
   },
 
   // Página de recibo + e-mail de confirmação ao comprador (idioma do SITE).
@@ -606,6 +609,9 @@ export const pt = {
     per_month: 'por mês', per_year: 'por ano',
     sub_create: 'Criar e anexar', sub_creating: 'Criando…',
     sub_err: 'Não foi possível criar o preço — verifique os valores e tente novamente.',
+    feat_count: 'Produtos a exibir', feat_heading_ph: 'Nossos produtos', feat_cta_ph: 'Visite a loja',
+    feat_hint: 'Mostra seus produtos mais recentes automaticamente — adicione ou edite na',
+    feat_store_link: '🛍 página Loja →',
   },
 
   aip: {

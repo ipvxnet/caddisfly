@@ -442,6 +442,9 @@ export const es = {
     sub_busy: 'Iniciando el pago…',
     sub_error: 'No se pudo iniciar el pago — inténtalo de nuevo.',
     sub_preview: 'Vista previa — las suscripciones funcionan en tu sitio publicado.',
+    feat_heading: 'Nuestros productos',
+    feat_cta: 'Visita la tienda',
+    feat_empty: 'Aún no hay productos — añade productos en tu página Tienda y aparecerán aquí automáticamente.',
   },
 
   // Página de recibo + correo de confirmación al comprador (idioma del SITIO).
@@ -606,6 +609,9 @@ export const es = {
     per_month: 'al mes', per_year: 'al año',
     sub_create: 'Crear y adjuntar', sub_creating: 'Creando…',
     sub_err: 'No se pudo crear el precio — revisa los valores e inténtalo de nuevo.',
+    feat_count: 'Productos a mostrar', feat_heading_ph: 'Nuestros productos', feat_cta_ph: 'Visita la tienda',
+    feat_hint: 'Muestra tus productos más recientes automáticamente — añádelos o edítalos en la',
+    feat_store_link: '🛍 página Tienda →',
   },
 
   aip: {

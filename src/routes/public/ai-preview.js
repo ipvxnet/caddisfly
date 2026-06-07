@@ -192,6 +192,7 @@ export async function handleAIPreview(ctx) {
       embed,
       preordered: true,
       lang: siteLang,
+      products: activeProducts, // 🛍 featured-products section (live data)
       // Badge "Built with Caddisfly" links back to THIS app origin (the new
       // landing), not the hardcoded prod domain that still runs old code.
       appOrigin: env.APP_URL || '',

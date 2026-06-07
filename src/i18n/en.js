@@ -446,6 +446,9 @@ export const en = {
     sub_busy: 'Starting checkout…',
     sub_error: 'Could not start checkout — please try again.',
     sub_preview: 'Preview — subscriptions work on your published site.',
+    feat_heading: 'Our products',
+    feat_cta: 'Visit the shop',
+    feat_empty: 'No products yet — add products on your Store page and they’ll appear here automatically.',
   },
 
   // Order receipt page + buyer confirmation email (SITE's language).
@@ -612,6 +615,9 @@ export const en = {
     per_month: 'per month', per_year: 'per year',
     sub_create: 'Create & attach', sub_creating: 'Creating…',
     sub_err: 'Could not create the price — check the values and try again.',
+    feat_count: 'Products to show', feat_heading_ph: 'Our products', feat_cta_ph: 'Visit the shop',
+    feat_hint: 'Shows your newest products automatically — add or edit them on the',
+    feat_store_link: '🛍 Store page →',
   },
 
   aip: {

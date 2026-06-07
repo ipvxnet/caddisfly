@@ -27,6 +27,7 @@ const SECTION_FIELDS = {
   contact: { text: ['heading', 'subheading', 'button_text', 'phone', 'email', 'address'], images: [] },
   gallery: { text: ['heading', 'subheading'], images: ['images'] },
   pricing: { text: ['heading', 'subheading', 'plans[].{name,price,features}'], images: [] },
+  products: { text: ['heading', 'subheading', 'cta_text'], images: [] },
   stats: { text: ['heading', 'stats[].{number,label}'], images: [] },
   cta: { text: ['heading', 'description', 'cta_text', 'cta_url'], images: [] },
   footer: { text: ['business_name', 'tagline', 'copyright', 'links[]', 'social[]'], images: [] },

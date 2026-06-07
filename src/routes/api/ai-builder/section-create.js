@@ -32,6 +32,7 @@ export const ADDABLE_SECTIONS = [
   { type: 'gallery', emoji: '🖼️', label: 'Gallery' },
   { type: 'testimonials', emoji: '💬', label: 'Testimonials' },
   { type: 'pricing', emoji: '💲', label: 'Pricing' },
+  { type: 'products', emoji: '🛍️', label: 'Shop products' },
   { type: 'stats', emoji: '📊', label: 'Stats' },
   { type: 'cta', emoji: '📣', label: 'Call to action' },
   { type: 'contact', emoji: '✉️', label: 'Contact' },
