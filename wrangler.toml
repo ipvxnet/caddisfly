@@ -88,6 +88,12 @@ binding = "AI"
 [env.production.browser]
 binding = "BROWSER"
 
+# Daily domain auto-renewal + expiry reminders (08:00 UTC). Production only —
+# preview shares the real Namecheap account, and the scheduled() handler also
+# guards on ENVIRONMENT === 'production'.
+[env.production.triggers]
+crons = ["0 8 * * *"]
+
 # [[env.production.send_email]]
 # name = "SEND_EMAIL"
 

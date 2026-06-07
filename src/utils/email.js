@@ -564,3 +564,47 @@ export async function sendDomainRegisteredEmail(env, { to, domain, autoConnected
     return false;
   }
 }
+
+/** Domain successfully auto-renewed. */
+export async function sendDomainRenewedEmail(env, { to, domain, amountLabel, expiresLabel }) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">🌐 ${domain} renewed</h1>
+        <p style="color:#444;line-height:1.6;">Your domain <strong>${domain}</strong> renewed automatically${amountLabel ? ` for ${amountLabel}` : ''}${expiresLabel ? `, and is now paid through <strong>${expiresLabel}</strong>` : ''}.</p>
+        <p style="color:#444;line-height:1.6;">No action needed — your site stays online. Manage auto-renew anytime from your dashboard.</p>
+      </div>
+    </body></html>`;
+  try { return await deliverEmail(env, { to, subject: `${domain} renewed for another year`, html }); }
+  catch (e) { console.error('domain renewed email failed:', e.message); return false; }
+}
+
+/** Auto-renew charge failed — ask the customer to update their card. */
+export async function sendDomainRenewalFailedEmail(env, { to, domain, daysLeft, manageUrl }) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">⚠️ Couldn’t renew ${domain}</h1>
+        <p style="color:#444;line-height:1.6;">We tried to auto-renew <strong>${domain}</strong> but the payment didn’t go through${typeof daysLeft === 'number' ? ` — it expires in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>` : ''}.</p>
+        <p style="color:#444;line-height:1.6;">Please update your payment method so your domain and site stay online. We’ll keep trying for a few days.</p>
+        <p style="margin:24px 0 0;"><a href="${manageUrl || (env.APP_URL || 'https://caddisfly.ai') + '/billing'}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Update payment method</a></p>
+      </div>
+    </body></html>`;
+  try { return await deliverEmail(env, { to, subject: `Action needed: couldn’t renew ${domain}`, html }); }
+  catch (e) { console.error('domain renewal-failed email failed:', e.message); return false; }
+}
+
+/** Expiry reminder for a domain with auto-renew OFF. */
+export async function sendDomainExpiringEmail(env, { to, domain, daysLeft, manageUrl }) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">⏰ ${domain} expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}</h1>
+        <p style="color:#444;line-height:1.6;">Auto-renew is <strong>off</strong> for <strong>${domain}</strong>, so it will expire and your site will go offline unless you renew it.</p>
+        <p style="color:#444;line-height:1.6;">Turn auto-renew back on (or renew manually) from your dashboard to keep it.</p>
+        <p style="margin:24px 0 0;"><a href="${manageUrl || (env.APP_URL || 'https://caddisfly.ai') + '/domains'}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Manage domain</a></p>
+      </div>
+    </body></html>`;
+  try { return await deliverEmail(env, { to, subject: `${domain} expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`, html }); }
+  catch (e) { console.error('domain expiring email failed:', e.message); return false; }
+}

@@ -96,6 +96,19 @@ import {
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSave, handleDnsEmailSetup } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
+import { processRenewals } from './routes/api/domains-renew.js';
+
+/** GET /api/admin/domains/renew?dry=1&now=<unix> — manual renewal run
+ *  (admin-only test). `now` simulates a date so dry-runs can preview the
+ *  window without waiting; it's ignored unless dry=1 (never charge on a sim). */
+async function handleAdminRenewRun(ctx) {
+  const dryRun = ctx.query && (ctx.query.dry === '1' || ctx.query.dry === 'true');
+  const opts = { dryRun };
+  const nowOverride = parseInt(ctx.query && ctx.query.now, 10);
+  if (dryRun && Number.isFinite(nowOverride)) opts.now = nowOverride;
+  const summary = await processRenewals(ctx.env, opts);
+  return new Response(JSON.stringify({ success: true, summary }), { headers: { 'Content-Type': 'application/json' } });
+}
 import { handleStoreManager } from './routes/public/store-manager.js';
 import { handleStoreReceipt } from './routes/public/store-receipt.js';
 import { handleBuyerOrders, handleBuyerOrdersSend, handleBuyerOrdersAuth } from './routes/public/store-orders.js';
@@ -309,6 +322,7 @@ router.post('/api/stripe/webhook', handleStripeWebhook);
 router.get('/logout', handleLogout, [authMiddleware]);
 router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
 router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddleware]);
+router.get('/api/admin/domains/renew', handleAdminRenewRun, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
 router.get('/admin/legal', handleAdminLegal, [authMiddleware, adminMiddleware]);
@@ -341,6 +355,19 @@ export default {
       // Global error handling
       console.error('Unhandled error in fetch:', error);
       return handleError(error, request, env);
+    }
+  },
+
+  // Daily cron (wrangler [triggers]) — domain auto-renewals + expiry reminders.
+  // Production only: preview shares the real Namecheap account, so renewals
+  // there would really renew + charge.
+  async scheduled(event, env, ctx) {
+    if (env.ENVIRONMENT !== 'production') return;
+    try {
+      const summary = await processRenewals(env);
+      console.log('renewals:', JSON.stringify(summary));
+    } catch (e) {
+      console.error('scheduled renewals failed:', e.message);
     }
   },
 };
