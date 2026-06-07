@@ -170,10 +170,10 @@ export const en = {
     pro_name: 'Pro', pro_tag: 'For freelancers & growing businesses.', pro_cta: 'Get Pro',
     agency_name: 'Agency', agency_tag: 'For studios building many sites.', agency_cta: 'Get Agency',
     features: {
-      free: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.app subdomain', 'AI builder + 1 refactor', 'Community support'],
-      starter: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', 'Email support'],
-      pro: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '5 custom domains', 'Priority AI image generation', 'Everything in Starter', 'Priority support'],
-      agency: ['Unlimited sites', '<strong>500 GB+</strong> storage', '8,000 AI credits / mo', 'Unlimited custom domains', 'Bulk refactor', 'Everything in Pro', 'Priority+ support'],
+      free: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.app subdomain', 'AI builder + 1 refactor', 'AI blog + contact-form inbox', 'HTML export & 2 saved versions', 'Community support'],
+      starter: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '<strong>🛍 Online store</strong> — sell with your own Stripe (10 products)', '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', '5 saved versions', 'Email support'],
+      pro: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '🛍 Online store — 50 products', '5 custom domains', 'Priority AI image generation', '10 saved versions', 'Everything in Starter', 'Priority support'],
+      agency: ['Unlimited sites', '<strong>500 GB+</strong> storage', '8,000 AI credits / mo', '🛍 Online store — unlimited products', 'Unlimited custom domains', 'Bulk refactor', '30 saved versions', 'Everything in Pro', 'Priority+ support'],
     },
     faqs: [
       ['What’s an “AI credit”?', 'Credits cover the AI work behind your site. Roughly: a full AI site build ≈ 20 credits, an AI text edit ≈ 1, an AI-generated image ≈ 5, refactoring an existing site ≈ 10. Your monthly allotment resets each cycle.'],
@@ -193,6 +193,8 @@ export const en = {
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet',
     customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', store: 'Store', open: 'Open ↗',
+    republish_note: 'New this week: mobile-friendly menus, working contact forms, blog and online store. Open Customize and hit Publish to apply the latest improvements to your live site.',
+    dismiss: 'Dismiss',
     export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',

@@ -229,6 +229,14 @@ export async function handleDashboard(ctx) {
     </div>
     <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
 
+    ${ownSites.some((s) => s.subdomain) ? `
+    <div class="note-banner" id="republish-note" hidden>
+      <span>📣 ${tr('dash.republish_note')}</span>
+      <button class="note-x" aria-label="${tr('dash.dismiss')}">✕</button>
+    </div>
+    <script>(function(){var k='cf-republish-2026-06';var el=document.getElementById('republish-note');
+      if(el&&!localStorage.getItem(k)){el.hidden=false;el.querySelector('.note-x').onclick=function(){localStorage.setItem(k,'1');el.hidden=true;};}})();</script>` : ''}
+
     <div class="panel">
       ${ownSites.length
         ? ownCardsHtml
@@ -258,6 +266,9 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .dhead{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
     .dhead h1{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:900;color:var(--ink);letter-spacing:-.02em}
     .sub{color:var(--body);margin:.3rem 0 2rem}
+    .note-banner{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:12px;padding:.75rem 1rem;font-size:.9rem;margin-bottom:1.2rem;line-height:1.5}
+    .note-banner[hidden]{display:none}
+    .note-x{background:none;border:none;color:#3730a3;cursor:pointer;font-size:.95rem;padding:0 .2rem;flex-shrink:0}
     .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem 1.6rem;margin-bottom:1.2rem}
     .panel-head{display:flex;justify-content:space-between;align-items:center}
     .panel h2{font-size:1.1rem;color:var(--ink);margin-bottom:.4rem}

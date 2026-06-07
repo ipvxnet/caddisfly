@@ -170,10 +170,10 @@ export const es = {
     pro_name: 'Pro', pro_tag: 'Para autónomos y negocios en crecimiento.', pro_cta: 'Elegir Pro',
     agency_name: 'Agency', agency_tag: 'Para estudios que crean muchos sitios.', agency_cta: 'Elegir Agency',
     features: {
-      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Soporte de la comunidad'],
-      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', 'Soporte por correo'],
-      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '5 dominios propios', 'Generación de imágenes prioritaria', 'Todo lo de Starter', 'Soporte prioritario'],
-      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', 'Dominios propios ilimitados', 'Renovación masiva', 'Todo lo de Pro', 'Soporte prioritario+'],
+      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
+      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (10 productos)', '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '5 versiones guardadas', 'Soporte por correo'],
+      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — 50 productos', '5 dominios propios', 'Generación de imágenes prioritaria', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
+      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
     },
     faqs: [
       ['¿Qué es un “crédito de IA”?', 'Los créditos cubren el trabajo de IA detrás de tu sitio. Aprox.: crear un sitio completo ≈ 20 créditos, una edición de texto con IA ≈ 1, una imagen generada con IA ≈ 5, renovar un sitio existente ≈ 10. Tu asignación mensual se reinicia cada ciclo.'],
@@ -193,6 +193,8 @@ export const es = {
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
     live: 'En línea', not_published: 'Aún no publicado',
     customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', store: 'Tienda', open: 'Abrir ↗',
+    republish_note: 'Novedades de esta semana: menús adaptados a móvil, formularios de contacto funcionales, blog y tienda online. Abre Personalizar y pulsa Publicar para aplicar las últimas mejoras a tu sitio.',
+    dismiss: 'Cerrar',
     export: '⬇ Exportar', export_title: 'Descarga tu sitio publicado como HTML (tuyo para alojarlo donde quieras)',
     custom_domain: 'Dominio propio',
     shared_by: 'Sitios compartidos por {owner}', no_sites_yet: 'Aún no hay sitios web.',
