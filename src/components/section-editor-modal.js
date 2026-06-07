@@ -332,6 +332,23 @@ export function generateSectionEditorModal(section, projectId, lang = 'en') {
   }
 }
 
+/* Pricing plans editor */
+.plan-card { border: 1.5px solid #e2e8f0; border-radius: 12px; padding: .9rem; margin-bottom: .8rem; background: #fafbff; }
+.plan-card input, .plan-card textarea, .plan-card select { width: 100%; padding: .5rem .6rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: .88rem; }
+.plan-card textarea { margin-top: .5rem; resize: vertical; }
+.plan-row { display: flex; gap: .5rem; }
+.plan-row .plan-price, .plan-row .plan-period { max-width: 32%; }
+.plan-foot { justify-content: space-between; align-items: center; margin-top: .5rem; }
+.plan-foot label { display: flex; align-items: center; gap: .35rem; font-size: .85rem; color: #4a5568; }
+.plan-foot label input { width: auto; }
+.plan-remove { background: none; border: none; color: #b91c1c; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.plan-sub { margin-top: .6rem; padding-top: .6rem; border-top: 1px dashed #e2e8f0; }
+.plan-sub-label { display: block; font-size: .8rem; font-weight: 700; color: #4a5568; margin-bottom: .3rem; }
+.plan-sub-note { font-size: .82rem; color: #718096; margin: 0; }
+.plan-sub-new { display: flex; gap: .45rem; margin-top: .5rem; flex-wrap: wrap; }
+.plan-sub-new input, .plan-sub-new select { flex: 1; min-width: 110px; }
+.plan-sub-new button { flex: none; }
+
 .manual-edit > summary {
   cursor: pointer;
   font-weight: 600;
@@ -403,6 +420,12 @@ async function saveSectionChanges(event) {
   if (content.images_json !== undefined) {
     try { content.images = JSON.parse(content.images_json) || []; } catch (e) { content.images = []; }
     delete content.images_json;
+  }
+
+  // Pricing plans use the same hidden-JSON pattern.
+  if (content.plans_json !== undefined) {
+    try { content.plans = JSON.parse(content.plans_json) || []; } catch (e) { content.plans = []; }
+    delete content.plans_json;
   }
 
   saveBtn.disabled = true;
@@ -601,6 +624,132 @@ async function galleryReplaceUpload(input) {
 
 // Initialise the gallery manager if this section has one (runs on inject).
 galleryRender();
+
+// ---- Pricing plans editor (plans_json hidden field; runs on inject) -------
+const PLANS_T = ${JSON.stringify({
+  name: tr('sed.plan_name'),
+  price_text: tr('sed.plan_price_text'),
+  period: tr('sed.plan_period'),
+  features: tr('sed.plan_features'),
+  features_hint: tr('sed.plan_features_hint'),
+  highlighted: tr('sed.plan_highlighted'),
+  remove: tr('sed.plan_remove'),
+  sub_label: tr('sed.sub_label'),
+  sub_loading: tr('sed.sub_loading'),
+  sub_none: tr('sed.sub_none'),
+  sub_new: tr('sed.sub_new'),
+  sub_connect_first: tr('sed.sub_connect_first'),
+  sub_open_store: tr('sed.sub_open_store'),
+  sub_name_ph: tr('sed.sub_name_ph'),
+  sub_amount_ph: tr('sed.sub_amount_ph'),
+  per_month: tr('sed.per_month'),
+  per_year: tr('sed.per_year'),
+  sub_create: tr('sed.sub_create'),
+  sub_creating: tr('sed.sub_creating'),
+  sub_err: tr('sed.sub_err'),
+})};
+function escH(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function plansRead() { const el = document.getElementById('plans_json'); try { return JSON.parse(el.value) || []; } catch (e) { return []; } }
+function plansWrite(p) { document.getElementById('plans_json').value = JSON.stringify(p); }
+function planField(i, key, value) { const p = plansRead(); if (!p[i]) return; p[i][key] = value; plansWrite(p); }
+function planFeatures(i, text) { const p = plansRead(); if (!p[i]) return; p[i].features = text.split('\\n').map(function (s) { return s.trim(); }).filter(Boolean); plansWrite(p); }
+function planHighlight(i, on) { const p = plansRead(); p.forEach(function (pl, j) { pl.highlighted = on ? j === i : (j === i ? false : pl.highlighted); }); plansWrite(p); plansRender(); }
+function addPlan() { const p = plansRead(); p.push({ name: 'New plan', price: '$0', period: PLANS_T.per_month, features: [], highlighted: false }); plansWrite(p); plansRender(); }
+function removePlan(i) { const p = plansRead(); p.splice(i, 1); plansWrite(p); plansRender(); }
+function subMoney(amount, currency) {
+  try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: (currency || 'usd').toUpperCase() }).format((amount || 0) / 100); }
+  catch (e) { return ((amount || 0) / 100).toFixed(2) + ' ' + (currency || 'usd').toUpperCase(); }
+}
+window.__subPrices = undefined; // undefined = loading, object = loaded
+async function plansLoadPrices() {
+  try {
+    const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/store/prices');
+    const d = await r.json().catch(function () { return {}; });
+    window.__subPrices = d && d.success ? d : { connected: false, prices: [] };
+  } catch (e) { window.__subPrices = { connected: false, prices: [] }; }
+  plansRender();
+}
+function planSubBlock(plan, i) {
+  const sp = window.__subPrices;
+  if (sp === undefined) return '<p class="plan-sub-note">' + PLANS_T.sub_loading + '</p>';
+  if (!sp.connected) {
+    return '<p class="plan-sub-note">' + PLANS_T.sub_connect_first +
+      ' <a href="/ai-builder/store/' + window.currentProjectId + '" target="_blank" rel="noopener">' + PLANS_T.sub_open_store + '</a></p>';
+  }
+  const cur = plan.stripe_price_id || '';
+  const known = sp.prices.some(function (p) { return p.id === cur; });
+  let opts = '<option value="">' + PLANS_T.sub_none + '</option>';
+  sp.prices.forEach(function (p) {
+    opts += '<option value="' + escH(p.id) + '"' + (p.id === cur ? ' selected' : '') + '>' +
+      escH(p.product_name) + ' — ' + subMoney(p.amount, p.currency) + ' / ' + escH(p.interval) + '</option>';
+  });
+  if (cur && !known) opts += '<option value="' + escH(cur) + '" selected>' + escH(cur) + '</option>';
+  opts += '<option value="__new">' + PLANS_T.sub_new + '</option>';
+  return '<label class="plan-sub-label">' + PLANS_T.sub_label + '</label>' +
+    '<select onchange="planAttach(' + i + ', this)">' + opts + '</select>' +
+    '<div class="plan-sub-new" id="plan-sub-new-' + i + '" hidden>' +
+      '<input type="text" id="sub-name-' + i + '" placeholder="' + escH(PLANS_T.sub_name_ph) + '" value="' + escH(plan.name || '') + '">' +
+      '<input type="number" id="sub-amount-' + i + '" min="0.5" step="0.01" placeholder="' + escH(PLANS_T.sub_amount_ph) + '">' +
+      '<select id="sub-interval-' + i + '"><option value="month">' + PLANS_T.per_month + '</option><option value="year">' + PLANS_T.per_year + '</option></select>' +
+      '<button type="button" class="btn-secondary" onclick="planCreatePrice(' + i + ', this)">' + PLANS_T.sub_create + '</button>' +
+    '</div>';
+}
+function planAttachPrice(i, priceObj) {
+  const p = plansRead(); if (!p[i]) return;
+  p[i].stripe_price_id = priceObj ? priceObj.id : '';
+  if (priceObj) {
+    // Sync the card's display text to the real billed amount (still editable).
+    p[i].price = subMoney(priceObj.amount, priceObj.currency);
+    p[i].period = priceObj.interval === 'year' ? PLANS_T.per_year : PLANS_T.per_month;
+  }
+  plansWrite(p); plansRender();
+}
+function planAttach(i, sel) {
+  const v = sel.value;
+  if (v === '__new') { const row = document.getElementById('plan-sub-new-' + i); if (row) row.hidden = false; return; }
+  if (!v) { planAttachPrice(i, null); return; }
+  const sp = window.__subPrices || { prices: [] };
+  planAttachPrice(i, sp.prices.find(function (p) { return p.id === v; }) || { id: v });
+}
+async function planCreatePrice(i, btn) {
+  const name = (document.getElementById('sub-name-' + i).value || '').trim();
+  const amount = Math.round(parseFloat(document.getElementById('sub-amount-' + i).value) * 100);
+  const interval = document.getElementById('sub-interval-' + i).value;
+  if (!name || !Number.isFinite(amount) || amount <= 0) { alert(PLANS_T.sub_err); return; }
+  btn.disabled = true; btn.textContent = PLANS_T.sub_creating;
+  try {
+    const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/store/prices', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, amount_cents: amount, interval: interval }),
+    });
+    const d = await r.json().catch(function () { return {}; });
+    if (!r.ok || !d.success) throw new Error((d && d.error) || PLANS_T.sub_err);
+    if (window.__subPrices && window.__subPrices.prices) window.__subPrices.prices.push(d.price);
+    planAttachPrice(i, d.price);
+  } catch (e) { alert(e.message || PLANS_T.sub_err); btn.disabled = false; btn.textContent = PLANS_T.sub_create; }
+}
+function plansRender() {
+  const box = document.getElementById('plans-editor');
+  if (!box) return;
+  const plans = plansRead();
+  box.innerHTML = plans.map(function (plan, i) {
+    return '<div class="plan-card">' +
+      '<div class="plan-row">' +
+        '<input type="text" value="' + escH(plan.name || '') + '" placeholder="' + PLANS_T.name + '" oninput="planField(' + i + ', \\'name\\', this.value)">' +
+        '<input type="text" class="plan-price" value="' + escH(plan.price || '') + '" placeholder="' + PLANS_T.price_text + '" oninput="planField(' + i + ', \\'price\\', this.value)">' +
+        '<input type="text" class="plan-period" value="' + escH(plan.period || '') + '" placeholder="' + PLANS_T.period + '" oninput="planField(' + i + ', \\'period\\', this.value)">' +
+      '</div>' +
+      '<textarea rows="3" placeholder="' + PLANS_T.features_hint + '" oninput="planFeatures(' + i + ', this.value)">' + escH((plan.features || []).join('\\n')) + '</textarea>' +
+      '<div class="plan-row plan-foot">' +
+        '<label><input type="checkbox"' + (plan.highlighted ? ' checked' : '') + ' onchange="planHighlight(' + i + ', this.checked)"> ' + PLANS_T.highlighted + '</label>' +
+        '<button type="button" class="plan-remove" onclick="removePlan(' + i + ')">' + PLANS_T.remove + '</button>' +
+      '</div>' +
+      '<div class="plan-sub">' + planSubBlock(plan, i) + '</div>' +
+    '</div>';
+  }).join('');
+}
+// Initialise the plans editor if this section has one (runs on inject).
+if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices(); }
 </script>
   `;
 }
@@ -624,9 +773,41 @@ function generateFormFields(sectionType, content, tr) {
       return generateGalleryFields(content, tr);
     case 'footer':
       return generateFooterFields(content, tr);
+    case 'pricing':
+      return generatePricingFields(content, tr);
     default:
       return `<p>${tr('sed.not_supported')}</p>`;
   }
+}
+
+/**
+ * Pricing section: heading/description + a per-plan editor (name, price text,
+ * features, highlight) where each plan can attach a RECURRING Stripe price
+ * from the merchant's connected account (or create one) — that turns the
+ * card's CTA into a live Subscribe button on the published site. Plans travel
+ * as a JSON blob in a hidden field (gallery images pattern).
+ */
+function generatePricingFields(content, tr) {
+  const plans = Array.isArray(content.plans) ? content.plans : [];
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || 'Pricing')}" required>
+    </div>
+
+    <div class="form-group">
+      <label for="description">${tr('sed.subheading')}</label>
+      <input type="text" id="description" name="description" value="${escapeHtml(content.description || '')}">
+    </div>
+
+    <input type="hidden" id="plans_json" name="plans_json" value="${escapeHtml(JSON.stringify(plans))}">
+    <div class="form-group">
+      <label>${tr('sed.plans')}</label>
+      <small>${tr('sed.plans_hint')}</small>
+      <div id="plans-editor"></div>
+      <button type="button" class="btn-secondary" onclick="addPlan()">${tr('sed.add_plan')}</button>
+    </div>
+  `;
 }
 
 function generateHeroFields(content, tr) {

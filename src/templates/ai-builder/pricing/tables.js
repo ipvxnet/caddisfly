@@ -1,9 +1,22 @@
 // Pricing Tables Template
-// Pricing plans comparison
+// Pricing plans comparison. Plans with an attached Stripe price
+// (plan.stripe_price_id, set in the section editor) render a live Subscribe
+// button that opens a subscription Checkout on the merchant's connected
+// account; plans without one keep the decorative CTA.
+
+import { t } from '../../../i18n/index.js';
+
+const escA = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export function pricingTablesTemplate(data, config) {
   const { heading, description = '', plans } = data;
   const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
+
+  // Live-checkout wiring (published pages only — previews show a notice,
+  // same contract as the contact form: trackId/appOrigin via renderConfig).
+  const lang = config.lang || 'en';
+  const siteId = config.trackId || '';
+  const subEndpoint = `${config.appOrigin || ''}/api/store/subscribe`;
 
   // Default pricing plans if not provided
   const pricingPlans = plans || [
@@ -61,9 +74,15 @@ export function pricingTablesTemplate(data, config) {
               )
               .join('')}
           </ul>
-          <button class="pricing-cta" style="background: ${plan.highlighted ? primaryColor : '#f7fafc'}; color: ${plan.highlighted ? 'white' : '#1a202c'};">
-            Get Started
-          </button>
+          ${plan.stripe_price_id
+            ? `<button class="pricing-cta cf-sub-cta" style="background: ${plan.highlighted ? primaryColor : '#f7fafc'}; color: ${plan.highlighted ? 'white' : '#1a202c'};"
+                data-cf-price="${escA(plan.stripe_price_id)}" data-cf-site="${escA(siteId)}" data-cf-endpoint="${escA(subEndpoint)}"
+                data-msg-busy="${escA(t(lang, 'shopw.sub_busy'))}" data-msg-error="${escA(t(lang, 'shopw.sub_error'))}" data-msg-preview="${escA(t(lang, 'shopw.sub_preview'))}">
+                ${escA(plan.cta_text || t(lang, 'shopw.subscribe'))}
+              </button>`
+            : `<button class="pricing-cta" style="background: ${plan.highlighted ? primaryColor : '#f7fafc'}; color: ${plan.highlighted ? 'white' : '#1a202c'};">
+            ${escA(plan.cta_text || 'Get Started')}
+          </button>`}
         </div>
       `
         )
@@ -71,6 +90,33 @@ export function pricingTablesTemplate(data, config) {
     </div>
   </div>
 </section>
+
+<script>
+(function () {
+  if (window.__cfSubInit) return; window.__cfSubInit = 1;
+  // Delegated + idempotent (multiple pricing sections / re-injected previews).
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest('.cf-sub-cta') : null;
+    if (!btn) return;
+    e.preventDefault();
+    if (!btn.dataset.cfSite) { alert(btn.dataset.msgPreview); return; }
+    var label = btn.textContent;
+    btn.disabled = true; btn.textContent = btn.dataset.msgBusy;
+    fetch(btn.dataset.cfEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ s: btn.dataset.cfSite, price: btn.dataset.cfPrice, path: location.pathname })
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        if (d && d.success && d.url) { location.href = d.url; return; }
+        alert((d && d.error) || btn.dataset.msgError);
+        btn.disabled = false; btn.textContent = label;
+      })
+      .catch(function () { alert(btn.dataset.msgError); btn.disabled = false; btn.textContent = label; });
+  });
+})();
+</script>
 
 <style>
 .pricing-tables {

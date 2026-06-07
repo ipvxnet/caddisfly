@@ -108,8 +108,9 @@ export async function handleStoreReceipt(ctx) {
     const body = `
   <div class="card">
     <div class="ok-badge">✓</div>
-    <h1>${tr(paid ? 'rcpt.thanks' : 'rcpt.title')}</h1>
+    <h1>${tr(paid ? (session.mode === 'subscription' ? 'rcpt.sub_thanks' : 'rcpt.thanks') : 'rcpt.title')}</h1>
     <p class="sub">${paid ? tr('rcpt.paid_to', { name: esc(r.businessName) }) : tr('rcpt.pending')}</p>
+    ${session.mode === 'subscription' ? `<p class="sub">${tr('rcpt.sub_note', { name: esc(r.businessName) })}</p>` : ''}
     <div class="meta">
       <span>${tr('rcpt.order_ref')}: <b>${esc(orderRef)}</b></span>
       ${when ? `<span>${tr('rcpt.date')}: <b>${esc(when)}</b></span>` : ''}

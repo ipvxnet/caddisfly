@@ -442,6 +442,10 @@ export const en = {
     not_accepting: 'This store isn’t accepting payments yet.',
     back_to_shop: 'Shop',
     no_products: 'No products yet — check back soon!',
+    subscribe: 'Subscribe',
+    sub_busy: 'Starting checkout…',
+    sub_error: 'Could not start checkout — please try again.',
+    sub_preview: 'Preview — subscriptions work on your published site.',
   },
 
   // Order receipt page + buyer confirmation email (SITE's language).
@@ -459,6 +463,8 @@ export const en = {
     back: '← Back to shop',
     pending: 'Your payment is still processing — you’ll receive a confirmation by email shortly.',
     not_found: 'We couldn’t find this order.',
+    sub_thanks: 'Subscription confirmed!',
+    sub_note: 'Your subscription renews automatically — invoices and receipts arrive by email from {name}.',
     // buyer email
     subject: 'Your order from {name} — {ref}',
     subject_line: 'Order confirmed ✓',
@@ -592,6 +598,20 @@ export const en = {
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',
     no_photos: 'No photos yet — click “Add photo”.', g_drag: 'Drag to reorder', g_alt_ph: 'Describe this photo (alt text)',
     g_replace: 'Replace', g_replace_t: 'Replace photo', g_remove_t: 'Remove photo',
+    plans: 'Plans', plans_hint: 'Attach a Stripe price to a plan and its button becomes a live “Subscribe” checkout on your published site.',
+    add_plan: '＋ Add plan',
+    plan_name: 'Plan name', plan_price_text: 'Price (display)', plan_period: 'Period', plan_features: 'Features',
+    plan_features_hint: 'One feature per line', plan_highlighted: 'Highlight (“Most popular”)', plan_remove: 'Remove plan',
+    sub_label: '💳 Subscription (via your Stripe)',
+    sub_loading: 'Loading your Stripe prices…',
+    sub_none: '— Not attached (decorative card) —',
+    sub_new: '＋ Create a new recurring price…',
+    sub_connect_first: 'Connect your Stripe account to sell subscriptions.',
+    sub_open_store: 'Open Store settings →',
+    sub_name_ph: 'Plan name on Stripe', sub_amount_ph: 'Amount (e.g. 9.99)',
+    per_month: 'per month', per_year: 'per year',
+    sub_create: 'Create & attach', sub_creating: 'Creating…',
+    sub_err: 'Could not create the price — check the values and try again.',
   },
 
   aip: {
