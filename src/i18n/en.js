@@ -386,6 +386,19 @@ export const en = {
     intro: 'Thank you for your purchase from {name}! Here’s your order summary.',
     view_receipt: 'View receipt',
     questions: 'Questions about your order? Just reply to this email.',
+    // buyer purchase history
+    my_orders: 'My orders',
+    orders_at: 'Your orders at {name}',
+    orders_intro: 'Enter the email you used at checkout and we’ll send you a secure sign-in link.',
+    email_ph: 'you@example.com',
+    send_link: 'Email me a link',
+    sent: 'If that email has orders here, a sign-in link is on its way. It expires in 15 minutes.',
+    link_expired: 'That link is invalid or has expired — request a new one below.',
+    no_orders_yet: 'No orders found for this email yet.',
+    link_subject: 'Your orders at {name}',
+    link_heading: 'View your orders',
+    link_intro: 'Click the button below to see your purchase history at {name}.',
+    link_expiry: 'This link expires in 15 minutes. If you didn’t request it, you can ignore this email.',
   },
 
   // Blog manager (app UI, viewer's language).
@@ -441,6 +454,13 @@ export const en = {
     no_orders: 'No orders yet — they’ll appear here the moment someone buys.',
     ord_paid: 'paid',
     ord_new: 'new',
+    import_stripe: '⬇ Import from Stripe',
+    importing: 'Importing…',
+    import_done: 'Imported {n} of {found} products from Stripe.{skips}',
+    import_skips: ' Skipped: {list}.',
+    import_none: 'No importable products found in your Stripe account (one-time prices only).',
+    skip_recurring: 'subscription price', skip_exists: 'already in store', skip_currency: 'different currency',
+    skip_no_price: 'no price', skip_limit: 'plan limit', skip_policy: 'content policy', skip_price_range: 'price out of range',
   },
 
   blogm: {
@@ -555,7 +575,9 @@ export const en = {
     cta_q: 'Didn’t find what you need?', cta_btn: 'Open a support ticket →',
     toc: [
       ['getting-started', 'Getting started'], ['customizing', 'Customizing your site'],
-      ['publishing', 'Publishing'], ['seo', 'SEO & getting found'],
+      ['publishing', 'Publishing'], ['store', 'Online store'],
+      ['blog', 'Blog & social posts'], ['messages', 'Contact form & inbox'],
+      ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
       ['custom-domains', 'Custom domains & DNS'], ['plans', 'Plans, credits & billing'],
       ['team', 'Team members'], ['faq', 'FAQ'],
     ],
@@ -577,6 +599,29 @@ export const en = {
         </ul>`],
       ['publishing', 'Publishing', `
         <p>Click <strong>Deploy Website</strong> in Customize. Your site goes live on a free address like <code>yourbusiness.caddisfly.app</code>, and we show you a clickable link. Re-deploy any time after making changes — re-publishing on a paid plan also removes the “Built with Caddisfly” badge.</p>`],
+      ['store', 'Online store', `
+        <p>Sell on your site with your <strong>own Stripe account</strong> — payments go directly to you; Caddisfly never holds your money and adds no transaction fee (Stripe’s standard processing fees apply). Available from the Starter plan.</p>
+        <ol>
+          <li><strong>Connect Stripe</strong> — open <strong>🛍 Store</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize) and click <strong>Connect Stripe</strong>. One click — no keys to copy.</li>
+          <li><strong>Add products</strong> — name, price, type (physical / digital / service). Let AI write the description (✨) and generate a product photo (🖼). Already selling on Stripe? <strong>⬇ Import from Stripe</strong> pulls your catalog in one click.</li>
+          <li><strong>Publish</strong> — your site gets a <strong>Shop</strong> page and menu link automatically. Visitors add to cart and check out securely on Stripe (Apple&nbsp;Pay / Google&nbsp;Pay included); physical products collect a shipping address.</li>
+        </ol>
+        <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>`],
+      ['blog', 'Blog & social posts', `
+        <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>
+        <ul>
+          <li><strong>🖼 AI cover</strong> — generate an on-topic cover image for any post.</li>
+          <li><strong>Social pack</strong> — one click writes ready-to-share variants for X, Instagram and LinkedIn with share buttons. Nothing posts automatically — you stay in control.</li>
+        </ul>`],
+      ['messages', 'Contact form & inbox', `
+        <p>The contact form on your published site just works — no setup. Every message is stored in your <strong>Inbox</strong> (Dashboard → <strong>Inbox</strong>, with an unread badge) and emailed to you; replying to that email answers the visitor directly. Spam is filtered automatically.</p>`],
+      ['versions', 'Versions, backups & export', `
+        <ul>
+          <li><strong>Save a version</strong> — in Customize, open <strong>🕘 Versions</strong> to save a named snapshot of your pages, sections and design before big changes.</li>
+          <li><strong>Auto-save</strong> — while you edit, Caddisfly auto-saves a version every hour (toggle it in the Versions panel). Restoring first backs up your current state, and your live site only changes when you publish.</li>
+          <li><strong>Retention</strong> — versions kept: Free 2 · Starter 5 · Pro 10 · Agency 30.</li>
+          <li><strong>HTML export</strong> — your site is yours: <strong>⬇ Export</strong> on the Dashboard downloads your published site as a ZIP you can host anywhere. Your contact form and analytics keep working from the exported copy.</li>
+        </ul>`],
       ['seo', 'SEO & getting found', `
         <p>Every site you publish is <strong>search-ready out of the box</strong> — no setup required. Caddisfly automatically adds:</p>
         <ul>
@@ -618,6 +663,12 @@ export const en = {
       ['What are Caddi Credits?', 'Credits are spent on AI actions (generating content, AI image creation, AI edits). Each plan includes a monthly allotment that resets every month, plus you can buy one-time top-up credits that never expire.'],
       ['How do team members work?', 'Invite teammates by email from your <strong>Dashboard</strong>. They get a link that signs them in and joins your team, where they can access your websites. You (the owner) and any admins can invite, promote, or remove members. Seat limits: Starter 5, Pro 15, Agency 50 (including you).'],
       ['Is my site good for SEO? Do I need to set anything up?', 'Every published site is search-ready automatically — page titles, meta descriptions, social share cards, Google business (LocalBusiness) markup, a canonical URL, <code>robots.txt</code>, and a <code>sitemap.xml</code>, all generated for you. To customize a page, open <strong>Customize → 🔎 SEO</strong> and edit the title and description with a live Google-result preview. See <a href="#seo">SEO &amp; getting found</a>.'],
+      ['Can I sell products on my site?', 'Yes — from the Starter plan ($9/mo). Connect your own Stripe account on the <strong>🛍 Store</strong> page, add products (AI can write descriptions and generate photos — or import your Stripe catalog in one click), and publish. See <a href="#store">Online store</a>.'],
+      ['Do you take a cut of my sales?', 'No. Checkout runs on your own Stripe account, so the money goes straight to you. You pay only Stripe’s standard processing fees — Caddisfly adds nothing on top.'],
+      ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. See <a href="#blog">Blog &amp; social posts</a>.'],
+      ['Where do contact-form messages go?', 'To your <strong>Inbox</strong> (Dashboard → Inbox) and to your email. Reply to the notification email to answer the visitor directly. Spam is filtered automatically.'],
+      ['Can I undo changes or go back to an earlier version?', 'Yes — open <strong>🕘 Versions</strong> in Customize. Save versions manually before big changes, and Caddisfly also auto-saves hourly while you edit. Restoring backs up your current state first, and your live site only changes when you publish. See <a href="#versions">Versions, backups &amp; export</a>.'],
+      ['Can I export my website?', 'Yes, on every plan — click <strong>⬇ Export</strong> on your Dashboard to download your published site as a ZIP of plain HTML you can host anywhere. No lock-in: your contact form and analytics keep working from the exported copy.'],
       ['Can I get a refund?', 'Subscriptions can be cancelled anytime from <strong>Billing</strong> (you keep access until the period ends). For-convenience terminations are pro-rated per our <a href="/terms">Terms</a>.'],
       ['I need help or found a bug.', 'Open a ticket from <a href="/support">Support</a> — describe the issue or request and we’ll get back to you by email.'],
     ],

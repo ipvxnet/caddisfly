@@ -381,6 +381,19 @@ export const pt = {
     intro: 'Obrigado pela sua compra em {name}! Aqui está o resumo do seu pedido.',
     view_receipt: 'Ver recibo',
     questions: 'Dúvidas sobre seu pedido? Basta responder a este e-mail.',
+    // histórico de compras do comprador
+    my_orders: 'Meus pedidos',
+    orders_at: 'Seus pedidos em {name}',
+    orders_intro: 'Informe o e-mail que você usou no pagamento e enviaremos um link seguro de acesso.',
+    email_ph: 'voce@exemplo.com',
+    send_link: 'Enviar link por e-mail',
+    sent: 'Se esse e-mail tiver pedidos aqui, um link de acesso está a caminho. Ele expira em 15 minutos.',
+    link_expired: 'Esse link é inválido ou expirou — solicite um novo abaixo.',
+    no_orders_yet: 'Ainda não há pedidos para este e-mail.',
+    link_subject: 'Seus pedidos em {name}',
+    link_heading: 'Ver seus pedidos',
+    link_intro: 'Clique no botão abaixo para ver seu histórico de compras em {name}.',
+    link_expiry: 'Este link expira em 15 minutos. Se você não o solicitou, pode ignorar este e-mail.',
   },
 
   snap: {
@@ -435,6 +448,13 @@ export const pt = {
     no_orders: 'Ainda não há pedidos — eles aparecerão aqui assim que alguém comprar.',
     ord_paid: 'pago',
     ord_new: 'novo',
+    import_stripe: '⬇ Importar do Stripe',
+    importing: 'Importando…',
+    import_done: 'Importados {n} de {found} produtos do Stripe.{skips}',
+    import_skips: ' Ignorados: {list}.',
+    import_none: 'Nenhum produto importável encontrado na sua conta Stripe (apenas preços avulsos).',
+    skip_recurring: 'preço de assinatura', skip_exists: 'já está na loja', skip_currency: 'moeda diferente',
+    skip_no_price: 'sem preço', skip_limit: 'limite do plano', skip_policy: 'política de conteúdo', skip_price_range: 'preço fora do intervalo',
   },
 
   blogm: {
@@ -549,7 +569,9 @@ export const pt = {
     cta_q: 'Não encontrou o que precisava?', cta_btn: 'Abrir um ticket de suporte →',
     toc: [
       ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
-      ['publishing', 'Publicar'], ['seo', 'SEO e aparecer no Google'],
+      ['publishing', 'Publicar'], ['store', 'Loja online'],
+      ['blog', 'Blog e redes sociais'], ['messages', 'Formulário de contato e caixa de entrada'],
+      ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
       ['custom-domains', 'Domínios próprios e DNS'], ['plans', 'Planos, créditos e faturação'],
       ['team', 'Membros da equipe'], ['faq', 'Perguntas frequentes'],
     ],
@@ -571,6 +593,29 @@ export const pt = {
         </ul>`],
       ['publishing', 'Publicar', `
         <p>Clique em <strong>Publicar site</strong> no Personalizar. O seu site fica no ar num endereço gratuito como <code>seunegocio.caddisfly.app</code> e mostramos um link. Republique quando quiser após mudanças — republicar num plano pago também remove o selo “Built with Caddisfly”.</p>`],
+      ['store', 'Loja online', `
+        <p>Venda no seu site com a sua <strong>própria conta Stripe</strong> — os pagamentos vão diretamente para você; a Caddisfly nunca retém seu dinheiro nem adiciona taxa por transação (aplicam-se as tarifas padrão do Stripe). Disponível a partir do plano Starter.</p>
+        <ol>
+          <li><strong>Conecte o Stripe</strong> — abra <strong>🛍 Loja</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar) e clique em <strong>Conectar Stripe</strong>. Um clique — sem chaves para copiar.</li>
+          <li><strong>Adicione produtos</strong> — nome, preço e tipo (físico / digital / serviço). Deixe a IA escrever a descrição (✨) e gerar uma foto do produto (🖼). Já vende com Stripe? <strong>⬇ Importar do Stripe</strong> traz seu catálogo em um clique.</li>
+          <li><strong>Publique</strong> — seu site ganha uma página <strong>Loja</strong> e um link no menu automaticamente. Os visitantes adicionam ao carrinho e pagam com segurança no Stripe (inclui Apple&nbsp;Pay / Google&nbsp;Pay); produtos físicos pedem endereço de entrega.</li>
+        </ol>
+        <p>Após cada venda, o comprador chega a uma página de recibo (salvável em PDF) e recebe um e-mail de confirmação; você recebe um e-mail de “novo pedido” e o pedido aparece em <strong>🧾 Pedidos</strong> na página Loja. Os compradores podem rever o histórico quando quiserem em <strong>Meus pedidos</strong> (link seguro por e-mail). Limites de produtos: Starter 10 · Pro 50 · Agency ilimitados.</p>`],
+      ['blog', 'Blog e redes sociais', `
+        <p>Abra <strong>📝 Blog</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar). Dê à IA algumas frases sobre o que a publicação deve dizer — ela redige o texto completo no idioma do seu site; você edita e publica. Ao publicar, seu site ganha uma página <strong>Blog</strong> e um link no menu (republique pelo Personalizar para colocar novas publicações no ar).</p>
+        <ul>
+          <li><strong>🖼 Capa com IA</strong> — gere uma imagem de capa alinhada ao tema de cada publicação.</li>
+          <li><strong>Pacote social</strong> — um clique redige variantes prontas para compartilhar no X, Instagram e LinkedIn com botões de compartilhamento. Nada é publicado automaticamente — você mantém o controle.</li>
+        </ul>`],
+      ['messages', 'Formulário de contato e caixa de entrada', `
+        <p>O formulário de contato do seu site publicado funciona sem configurar nada. Cada mensagem fica na sua <strong>caixa de entrada</strong> (Painel → <strong>Mensagens</strong>, com contador de não lidas) e chega por e-mail; respondendo a esse e-mail você fala diretamente com o visitante. O spam é filtrado automaticamente.</p>`],
+      ['versions', 'Versões, backups e exportação', `
+        <ul>
+          <li><strong>Salvar uma versão</strong> — no Personalizar, abra <strong>🕘 Versões</strong> para salvar uma cópia nomeada das suas páginas, seções e design antes de grandes mudanças.</li>
+          <li><strong>Salvamento automático</strong> — enquanto você edita, a Caddisfly salva uma versão a cada hora (ative ou desative no painel de Versões). Ao restaurar, seu estado atual é salvo primeiro, e o site no ar só muda quando você publica.</li>
+          <li><strong>Retenção</strong> — versões mantidas: Free 2 · Starter 5 · Pro 10 · Agency 30.</li>
+          <li><strong>Exportação HTML</strong> — seu site é seu: <strong>⬇ Exportar</strong> no Painel baixa seu site publicado como um ZIP que você pode hospedar onde quiser. O formulário de contato e as estatísticas continuam funcionando na cópia exportada.</li>
+        </ul>`],
       ['seo', 'SEO e aparecer no Google', `
         <p>Cada site que você publica fica <strong>pronto para buscadores desde o início</strong> — sem configuração. A Caddisfly adiciona automaticamente:</p>
         <ul>
@@ -612,6 +657,12 @@ export const pt = {
       ['O que são créditos Caddi?', 'Os créditos são gastos em ações de IA (gerar conteúdo, criar imagens com IA, edições com IA). Cada plano inclui uma cota mensal que reinicia todo mês, e você ainda pode comprar recargas únicas que nunca expiram.'],
       ['Como funcionam os membros da equipe?', 'Convide a sua equipe por e-mail pelo seu <strong>Painel</strong>. Eles recebem um link que os identifica e os adiciona à sua equipe, onde podem acessar os seus sites. Você (o proprietário) e os administradores podem convidar, promover ou remover membros. Vagas: Starter 5, Pro 15, Agency 50 (incluindo você).'],
       ['O meu site é bom para SEO? Preciso configurar algo?', 'Cada site publicado fica pronto para buscadores automaticamente — títulos, meta descrições, cartões de compartilhamento, dados de negócio do Google (LocalBusiness), um URL canônico, <code>robots.txt</code> e um <code>sitemap.xml</code>, tudo gerado para você. Para personalizar uma página, abra <strong>Personalizar → 🔎 SEO</strong> e edite o título e a descrição com pré-visualização do resultado do Google. Ver <a href="#seo">SEO e aparecer no Google</a>.'],
+      ['Posso vender produtos no meu site?', 'Sim — a partir do plano Starter ($9/mês). Conecte sua própria conta Stripe na página <strong>🛍 Loja</strong>, adicione produtos (a IA pode escrever descrições e gerar fotos — ou importe seu catálogo do Stripe em um clique) e publique. Ver <a href="#store">Loja online</a>.'],
+      ['Vocês ficam com uma parte das minhas vendas?', 'Não. O pagamento é processado na sua própria conta Stripe, então o dinheiro vai direto para você. Você paga apenas as tarifas padrão do Stripe — a Caddisfly não adiciona nada em cima.'],
+      ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Ver <a href="#blog">Blog e redes sociais</a>.'],
+      ['Para onde vão as mensagens do formulário de contato?', 'Para a sua <strong>caixa de entrada</strong> (Painel → Mensagens) e para o seu e-mail. Responda ao e-mail de aviso para falar diretamente com o visitante. O spam é filtrado automaticamente.'],
+      ['Posso desfazer mudanças ou voltar a uma versão anterior?', 'Sim — abra <strong>🕘 Versões</strong> no Personalizar. Salve versões manualmente antes de grandes mudanças, e a Caddisfly também salva automaticamente a cada hora enquanto você edita. Ao restaurar, seu estado atual é salvo primeiro, e o site no ar só muda quando você publica. Ver <a href="#versions">Versões, backups e exportação</a>.'],
+      ['Posso exportar o meu site?', 'Sim, em todos os planos — clique em <strong>⬇ Exportar</strong> no seu Painel para baixar o site publicado como um ZIP de HTML que você pode hospedar onde quiser. Sem amarras: o formulário de contato e as estatísticas continuam funcionando na cópia exportada.'],
       ['Posso pedir reembolso?', 'As assinaturas podem ser canceladas quando quiser em <strong>Faturação</strong> (você mantém o acesso até o fim do período). Cancelamentos por conveniência são proporcionais conforme os nossos <a href="/terms">Termos</a>.'],
       ['Preciso de ajuda ou encontrei um erro.', 'Abra um ticket em <a href="/support">Suporte</a> — descreva o problema ou pedido e responderemos por e-mail.'],
     ],

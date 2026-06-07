@@ -489,6 +489,28 @@ export async function sendOrderBuyerEmail(env, {
   }
 }
 
+/**
+ * Buyer purchase-history magic link (site language). Only ever sent to an
+ * email that already has orders on that site (no enumeration / spam vector).
+ */
+export async function sendBuyerOrdersLinkEmail(env, { to, businessName, linkUrl, labels }) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">${escHtml(labels.heading)}</h1>
+        <p style="color:#444;line-height:1.6;">${escHtml(labels.intro)}</p>
+        <p style="margin:24px 0;"><a href="${linkUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">${escHtml(labels.button)}</a></p>
+        <p style="color:#666;font-size:13px;">${escHtml(labels.expiry)}</p>
+      </div>
+    </body></html>`;
+  try {
+    return await deliverEmail(env, { to, subject: labels.subject, html });
+  } catch (e) {
+    console.error('Failed to send buyer orders link email:', e);
+    return false;
+  }
+}
+
 /** Merchant-facing "new order" notification (English; operator-side). */
 export async function sendOrderMerchantEmail(env, {
   to, siteName, orderRef, buyerEmail, items, total, currency, ordersUrl,

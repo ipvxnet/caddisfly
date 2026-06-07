@@ -201,6 +201,20 @@ export async function handleStoreManager(ctx) {
       noOrders: ${JSON.stringify(tr('storem.no_orders'))},
       ordPaid: ${JSON.stringify(tr('storem.ord_paid'))},
       ordNew: ${JSON.stringify(tr('storem.ord_new'))},
+      importStripe: ${JSON.stringify(tr('storem.import_stripe'))},
+      importing: ${JSON.stringify(tr('storem.importing'))},
+      importDone: ${JSON.stringify(tr('storem.import_done'))},
+      importSkips: ${JSON.stringify(tr('storem.import_skips'))},
+      importNone: ${JSON.stringify(tr('storem.import_none'))},
+      skipReasons: {
+        recurring: ${JSON.stringify(tr('storem.skip_recurring'))},
+        exists: ${JSON.stringify(tr('storem.skip_exists'))},
+        currency: ${JSON.stringify(tr('storem.skip_currency'))},
+        no_price: ${JSON.stringify(tr('storem.skip_no_price'))},
+        limit: ${JSON.stringify(tr('storem.skip_limit'))},
+        policy: ${JSON.stringify(tr('storem.skip_policy'))},
+        price_range: ${JSON.stringify(tr('storem.skip_price_range'))},
+      },
     };
     var LANG = ${JSON.stringify(lang)};
     var CUR = 'usd';
@@ -220,6 +234,10 @@ export async function handleStoreManager(ctx) {
       if (!s.configured) { status.innerHTML = '<span class="pill">' + T.notConfigured + '</span>'; return; }
       if (s.connected) {
         status.innerHTML = '<span class="pill ok">✓ ' + T.connected.replace('{account}', s.account) + '</span>';
+        var imp = document.createElement('button');
+        imp.className = 'btn ghost'; imp.textContent = T.importStripe;
+        imp.onclick = function () { importProducts(imp); };
+        acts.appendChild(imp);
         var b = document.createElement('button');
         b.className = 'btn ghost'; b.textContent = T.disconnect;
         b.onclick = async function () {
@@ -395,6 +413,29 @@ export async function handleStoreManager(ctx) {
         descEl.value = d.description;
       } catch (e) { alert(e.message); }
       btn.disabled = false; btn.textContent = T.aiDesc;
+    }
+
+    async function importProducts(btn) {
+      btn.disabled = true; btn.textContent = T.importing;
+      try {
+        var d = await api('POST', '/import');
+        if (!d.found) { alert(T.importNone); }
+        else {
+          var skips = '';
+          if (d.skipped && d.skipped.length) {
+            var byReason = {};
+            d.skipped.forEach(function (s) {
+              var r = T.skipReasons[s.reason] || s.reason;
+              (byReason[r] = byReason[r] || []).push(s.name);
+            });
+            var list = Object.keys(byReason).map(function (r) { return byReason[r].length + ' × ' + r; }).join(', ');
+            skips = T.importSkips.replace('{list}', list);
+          }
+          alert(T.importDone.replace('{n}', d.imported).replace('{found}', d.found).replace('{skips}', skips));
+        }
+        await loadProducts();
+      } catch (e) { alert(T.errorPrefix + ' ' + e.message); }
+      btn.disabled = false; btn.textContent = T.importStripe;
     }
 
     async function aiDescribeEdit(id, btn) {

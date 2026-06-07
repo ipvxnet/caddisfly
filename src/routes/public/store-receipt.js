@@ -123,6 +123,7 @@ export async function handleStoreReceipt(ctx) {
     <div class="acts">
       <button class="btn btn-p" onclick="window.print()">${tr('rcpt.print')}</button>
       ${back ? `<a class="btn btn-g" href="${esc(`${back}?paid=1`)}">${tr('rcpt.back')}</a>` : ''}
+      <a class="btn btn-g" href="/store/orders?s=${esc(publicId)}">${tr('rcpt.my_orders')}</a>
     </div>
   </div>`;
 

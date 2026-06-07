@@ -49,6 +49,16 @@ export async function getOrdersByProject(db, projectKey, limit = 100) {
   return results || [];
 }
 
+/** A buyer's orders on one site (purchase history; email = checkout email). */
+export async function getOrdersByEmail(db, projectKey, email, limit = 50) {
+  const k = keyWhere(projectKey);
+  const { results } = await db
+    .prepare(`SELECT * FROM store_orders WHERE ${k.sql} AND customer_email = ? COLLATE NOCASE ORDER BY created_at DESC, id DESC LIMIT ?`)
+    .bind(k.val, email, limit)
+    .all();
+  return results || [];
+}
+
 export async function countUnreadOrders(db, projectKey) {
   const k = keyWhere(projectKey);
   const r = await db.prepare(`SELECT COUNT(*) AS n FROM store_orders WHERE ${k.sql} AND is_read = 0`).bind(k.val).first();
