@@ -13,7 +13,7 @@
 
 import { jsonResponse, htmlResponse } from '../../utils/response.js';
 import {
-  isNamecheapConfigured, checkDomains, getWholesalePricing, registerDomain, setDnsHosts, getDomainInfo, SELL_TLDS,
+  isNamecheapConfigured, checkDomains, getWholesalePricing, registerDomain, setDnsHosts, getDnsHosts, getDomainInfo, SELL_TLDS,
 } from '../../utils/namecheap.js';
 import {
   createDomainOrder, getOrderById, getOrdersByEmail, updateOrder, claimOrderForRegistration,
@@ -433,6 +433,136 @@ export async function handleDomainAutoRenew(ctx) {
   const on = body.auto_renew ? 1 : 0;
   await updateOrder(env.DB, order.id, { auto_renew: on });
   return jsonResponse({ success: true, auto_renew: !!on });
+}
+
+// ---- DNS records manager (Caddisfly-purchased domains) -------------------
+// setHosts is all-or-nothing, so editing is read-modify-write: the client
+// sends its editable records, the server re-injects the LOCKED records that
+// keep the site connected (www CNAME + root redirect) and writes the full set.
+
+const DNS_TYPES = new Set(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'URL', 'URL301', 'FRAME']);
+const HOSTNAME_RE = /^(@|\*|[a-zA-Z0-9_]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9_])?(\.[a-zA-Z0-9_]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9_])?)*)$/;
+
+/** The records WE manage so the customer's site stays reachable. */
+function lockedRecords(domain) {
+  const target = 'sites.caddisfly.app';
+  return [
+    { name: 'www', type: 'CNAME', address: `${target}.`, ttl: '1800', mxpref: '10', locked: true },
+    { name: '@', type: 'URL301', address: `https://www.${domain}`, ttl: '1800', mxpref: '10', locked: true },
+  ];
+}
+const isLockedRow = (r) => (r.name === 'www' && r.type === 'CNAME') || (r.name === '@' && (r.type === 'URL301' || r.type === 'URL' || r.type === 'FRAME'));
+
+/** Resolve + own-check a registered domain order. → order | Response(error). */
+async function ownDomainOrder(ctx, requireRegistered = true) {
+  const { env, params } = ctx;
+  if (!ctx.billingEmail) return jsonResponse({ success: false, error: 'Sign in first.' }, 401);
+  const order = await getOrderById(env.DB, parseInt(params.id, 10) || 0);
+  if (!order || order.customer_email.toLowerCase() !== ctx.billingEmail.toLowerCase()) {
+    return jsonResponse({ success: false, error: 'Domain not found.' }, 404);
+  }
+  if (requireRegistered && order.status !== 'registered') {
+    return jsonResponse({ success: false, error: 'This domain isn’t registered yet.' }, 409);
+  }
+  return order;
+}
+
+/** GET /api/domains/:id/dns — current records (locked ones flagged). */
+export async function handleDnsList(ctx) {
+  const { env } = ctx;
+  const order = await ownDomainOrder(ctx);
+  if (order instanceof Response) return order;
+  try {
+    const hosts = await getDnsHosts(env, order.domain);
+    const records = hosts.map((h) => ({ ...h, locked: isLockedRow(h) }));
+    return jsonResponse({ success: true, domain: order.domain, records });
+  } catch (e) {
+    console.error('dns list error:', e.message);
+    return jsonResponse({ success: false, error: 'Could not load DNS records — try again.' }, 502);
+  }
+}
+
+/** Validate + normalize one editable record. → record | null */
+function cleanRecord(r) {
+  if (!r || typeof r !== 'object') return null;
+  const type = String(r.type || '').toUpperCase().trim();
+  if (!DNS_TYPES.has(type)) return null;
+  let name = String(r.name || '@').trim() || '@';
+  if (!HOSTNAME_RE.test(name)) return null;
+  const address = String(r.address || '').trim();
+  if (!address || address.length > 2048) return null;
+  const ttl = String(parseInt(r.ttl, 10) || 1800);
+  const out = { name, type, address, ttl, mxpref: '10' };
+  if (type === 'MX') {
+    const p = parseInt(r.mxpref, 10);
+    out.mxpref = String(Number.isFinite(p) && p >= 0 ? p : 10);
+  }
+  return out;
+}
+
+/** PUT /api/domains/:id/dns — replace the editable records; we always re-add
+ *  the locked site records so the customer can't disconnect themselves. */
+export async function handleDnsSave(ctx) {
+  const { env, request } = ctx;
+  const order = await ownDomainOrder(ctx);
+  if (order instanceof Response) return order;
+  try {
+    const body = await request.json().catch(() => ({}));
+    const raw = Array.isArray(body.records) ? body.records.slice(0, 100) : [];
+    // Drop anything that collides with our locked records (we re-add them).
+    const editable = [];
+    for (const r of raw) {
+      const c = cleanRecord(r);
+      if (!c) return jsonResponse({ success: false, error: t(ctx.lang, 'domstore.dns_bad') }, 400);
+      if (isLockedRow(c)) continue;
+      editable.push(c);
+    }
+    const full = [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...editable];
+    await setDnsHosts(env, order.domain, full);
+    return jsonResponse({ success: true });
+  } catch (e) {
+    console.error('dns save error:', e.message);
+    return jsonResponse({ success: false, error: e.message.slice(0, 200) }, 502);
+  }
+}
+
+// Email presets — MX + SPF (+ DMARC skeleton). DKIM is provider-generated, so
+// the customer adds that TXT themselves from the editor afterwards.
+const EMAIL_PRESETS = {
+  google: { mx: [['smtp.google.com', 1]], spf: 'v=spf1 include:_spf.google.com ~all' },
+  microsoft: (domain) => ({ mx: [[`${domain.replace(/\./g, '-')}.mail.protection.outlook.com`, 0]], spf: 'v=spf1 include:spf.protection.outlook.com -all' }),
+  zoho: { mx: [['mx.zoho.com', 10], ['mx2.zoho.com', 20]], spf: 'v=spf1 include:zoho.com ~all' },
+};
+
+/** POST /api/domains/:id/dns/email — merge a provider's MX + SPF into the
+ *  current records (replaces any existing MX / root SPF). Body { provider }. */
+export async function handleDnsEmailSetup(ctx) {
+  const { env, request } = ctx;
+  const order = await ownDomainOrder(ctx);
+  if (order instanceof Response) return order;
+  try {
+    const body = await request.json().catch(() => ({}));
+    const key = String(body.provider || '').toLowerCase();
+    const presetDef = EMAIL_PRESETS[key];
+    if (!presetDef) return jsonResponse({ success: false, error: 'Unknown email provider.' }, 400);
+    const preset = typeof presetDef === 'function' ? presetDef(order.domain) : presetDef;
+
+    const current = (await getDnsHosts(env, order.domain)).filter((h) => !isLockedRow(h));
+    // Strip existing MX + any root SPF TXT (we replace them), keep the rest.
+    const kept = current.filter(
+      (h) => h.type !== 'MX' && !(h.type === 'TXT' && h.name === '@' && /^v=spf1/i.test(h.address))
+    );
+    const added = [
+      ...preset.mx.map(([host, pref]) => ({ name: '@', type: 'MX', address: host, mxpref: String(pref), ttl: '1800' })),
+      { name: '@', type: 'TXT', address: preset.spf, ttl: '1800', mxpref: '10' },
+    ];
+    const full = [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...kept, ...added];
+    await setDnsHosts(env, order.domain, full);
+    return jsonResponse({ success: true });
+  } catch (e) {
+    console.error('dns email setup error:', e.message);
+    return jsonResponse({ success: false, error: e.message.slice(0, 200) }, 502);
+  }
 }
 
 /** POST /api/domains/:id/reconnect — re-run auto-connect (DNS + custom

@@ -94,7 +94,7 @@ import {
   handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
-import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect } from './routes/api/domains-store.js';
+import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSave, handleDnsEmailSetup } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { handleStoreManager } from './routes/public/store-manager.js';
 import { handleStoreReceipt } from './routes/public/store-receipt.js';
@@ -185,6 +185,9 @@ router.post('/api/domains/checkout', handleDomainCheckout, [billingAuth]);
 router.get('/api/domains/orders', handleDomainOrders, [billingAuth]);
 router.post('/api/domains/:id/auto-renew', handleDomainAutoRenew, [billingAuth]);
 router.post('/api/domains/:id/reconnect', handleDomainReconnect, [billingAuth]);
+router.get('/api/domains/:id/dns', handleDnsList, [billingAuth]);
+router.put('/api/domains/:id/dns', handleDnsSave, [billingAuth]);
+router.post('/api/domains/:id/dns/email', handleDnsEmailSetup, [billingAuth]);
 router.post('/api/support/ticket', handleCreateTicket, [billingAuth]);
 router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingAuth]);
 
