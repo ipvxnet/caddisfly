@@ -83,30 +83,42 @@ export async function checkDomains(env, domains) {
   }));
 }
 
+/** 1-year YourPrice (cents) for a category block within a per-TLD response. */
+function categoryPrice1y(xml, categoryName) {
+  const cat = xmlTags(xml, 'ProductCategory').find((c) => (c.attrs.Name || '').toLowerCase() === categoryName);
+  if (!cat) return null;
+  const prod = xmlTags(cat.inner, 'Product')[0];
+  if (!prod) return null;
+  const p1 = xmlTags(prod.inner, 'Price').find(
+    (pr) => pr.attrs.Duration === '1' && (pr.attrs.DurationType || '').toUpperCase() === 'YEAR'
+  );
+  if (!p1) return null;
+  return Math.round(parseFloat(p1.attrs.YourPrice || p1.attrs.Price || '0') * 100) || null;
+}
+
 /**
  * Wholesale 1-year register + renew prices for our SELL_TLDS.
  * → { com: {register_cents, renew_cents}, … } (cents; YourPrice = what WE pay)
+ *
+ * Scoped PER-TLD (ProductName) and fetched concurrently — the unscoped
+ * users.getPricing returns Namecheap's whole catalog and times out at the
+ * relay. One per-TLD response carries both register + renew categories.
  */
 export async function getWholesalePricing(env) {
+  const rows = await Promise.all(
+    SELL_TLDS.map(async (tld) => {
+      try {
+        const xml = await ncRequest(env, 'namecheap.users.getPricing', { ProductType: 'DOMAIN', ProductName: tld });
+        return { tld, register_cents: categoryPrice1y(xml, 'register'), renew_cents: categoryPrice1y(xml, 'renew') };
+      } catch (e) {
+        console.error(`pricing for .${tld} failed:`, e.message);
+        return { tld, register_cents: null, renew_cents: null };
+      }
+    })
+  );
   const out = {};
-  for (const category of ['REGISTER', 'RENEW']) {
-    const xml = await ncRequest(env, 'namecheap.users.getPricing', {
-      ProductType: 'DOMAIN',
-      ProductCategory: category,
-    });
-    // <Product Name="com"><Price Duration="1" DurationType="YEAR" YourPrice="9.58" …/></Product>
-    for (const p of xmlTags(xml, 'Product')) {
-      const tld = (p.attrs.Name || '').toLowerCase();
-      if (!SELL_TLDS.includes(tld)) continue;
-      const price1y = xmlTags(p.inner, 'Price').find(
-        (pr) => pr.attrs.Duration === '1' && (pr.attrs.DurationType || '').toUpperCase() === 'YEAR'
-      );
-      if (!price1y) continue;
-      const cents = Math.round(parseFloat(price1y.attrs.YourPrice || price1y.attrs.Price || '0') * 100);
-      if (!cents) continue;
-      out[tld] = out[tld] || {};
-      out[tld][category === 'REGISTER' ? 'register_cents' : 'renew_cents'] = cents;
-    }
+  for (const r of rows) {
+    if (r.register_cents && r.renew_cents) out[r.tld] = { register_cents: r.register_cents, renew_cents: r.renew_cents };
   }
   return out;
 }
