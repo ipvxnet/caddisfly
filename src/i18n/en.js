@@ -239,8 +239,8 @@ export const en = {
     agency_name: 'Agency', agency_tag: 'For studios building many sites.', agency_cta: 'Get Agency',
     features: {
       free: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.app subdomain', 'AI builder + 1 refactor', 'AI blog + contact-form inbox', 'HTML export & 2 saved versions', 'Community support'],
-      starter: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '<strong>🛍 Online store</strong> — sell with your own Stripe (10 products)', '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', '5 saved versions', 'Email support'],
-      pro: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '🛍 Online store — 50 products', '5 custom domains', 'Priority AI image generation', '10 saved versions', 'Everything in Starter', 'Priority support'],
+      starter: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '<strong>🛍 Online store</strong> — sell with your own Stripe (10 products)', '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', '✨ AI logo generator', '5 saved versions', 'Email support'],
+      pro: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '🛍 Online store — 50 products', '5 custom domains', 'Priority AI image generation', '✨ AI logo generator', '10 saved versions', 'Everything in Starter', 'Priority support'],
       agency: ['Unlimited sites', '<strong>500 GB+</strong> storage', '8,000 AI credits / mo', '🛍 Online store — unlimited products', 'Unlimited custom domains', 'Bulk refactor', '30 saved versions', 'Everything in Pro', 'Priority+ support'],
     },
     faqs: [
@@ -601,6 +601,23 @@ export const en = {
     ph_features: 'Make the feature descriptions shorter', ph_testimonials: 'Fix the typo in the first quote',
     ph_contact: 'Change the button to “Book Now”', ph_gallery_img: 'Generate a new photo of the storefront',
     ph_gallery: 'Update the gallery heading', ph_footer: 'Update the tagline',
+  },
+
+  logo: {
+    summary: '✨ Logo & Brand',
+    none: 'No logo yet — your site shows the business name as a wordmark.',
+    hint: 'Generate a logo mark with AI. It becomes your header logo, browser icon (favicon), and share image.',
+    brief_ph: 'Optional style notes — e.g. “a fox, warm orange tones”',
+    generate: 'Generate logo options',
+    generating: 'Generating…',
+    cost: 'Generates 4 options for {n} credits. Pick one to apply it, or generate again.',
+    pick: 'Click an option to use it as your logo:',
+    remove: 'Remove logo',
+    upload: 'Or upload your own (PNG, JPG, WebP, SVG — square works best):',
+    err: 'Something went wrong. Try again.',
+    locked: 'AI logo generation is available on paid plans.',
+    upgrade: 'Upgrade to unlock',
+    disclaimer: 'AI-generated marks are not checked against existing trademarks — review before commercial use.',
   },
 
   pick: {

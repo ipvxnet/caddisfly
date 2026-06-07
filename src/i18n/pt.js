@@ -239,8 +239,8 @@ export const pt = {
     agency_name: 'Agency', agency_tag: 'Para estúdios que criam muitos sites.', agency_cta: 'Escolher Agency',
     features: {
       free: ['1 site publicado', '1 GB de armazenamento', '50 créditos de IA / mês', 'Subdomínio caddisfly.app', 'Criador com IA + 1 renovação', 'Blog com IA + caixa de contato', 'Exportação HTML e 2 versões salvas', 'Suporte da comunidade'],
-      starter: ['3 sites publicados', '<strong>25 GB</strong> de armazenamento', '500 créditos de IA / mês', '<strong>🛍 Loja online</strong> — venda com seu próprio Stripe (10 produtos)', '1 domínio próprio', 'Remove “Built with Caddisfly”', 'Geração de imagens com IA', '5 versões salvas', 'Suporte por e-mail'],
-      pro: ['15 sites publicados', '<strong>100 GB</strong> de armazenamento', '2.000 créditos de IA / mês', '🛍 Loja online — 50 produtos', '5 domínios próprios', 'Geração de imagens prioritária', '10 versões salvas', 'Tudo do Starter', 'Suporte prioritário'],
+      starter: ['3 sites publicados', '<strong>25 GB</strong> de armazenamento', '500 créditos de IA / mês', '<strong>🛍 Loja online</strong> — venda com seu próprio Stripe (10 produtos)', '1 domínio próprio', 'Remove “Built with Caddisfly”', 'Geração de imagens com IA', '✨ Gerador de logo com IA', '5 versões salvas', 'Suporte por e-mail'],
+      pro: ['15 sites publicados', '<strong>100 GB</strong> de armazenamento', '2.000 créditos de IA / mês', '🛍 Loja online — 50 produtos', '5 domínios próprios', 'Geração de imagens prioritária', '✨ Gerador de logo com IA', '10 versões salvas', 'Tudo do Starter', 'Suporte prioritário'],
       agency: ['Sites ilimitados', '<strong>500 GB+</strong> de armazenamento', '8.000 créditos de IA / mês', '🛍 Loja online — produtos ilimitados', 'Domínios próprios ilimitados', 'Renovação em massa', '30 versões salvas', 'Tudo do Pro', 'Suporte prioritário+'],
     },
     faqs: [
@@ -595,6 +595,23 @@ export const pt = {
     ph_features: 'Encurte as descrições dos recursos', ph_testimonials: 'Corrija o erro na primeira avaliação',
     ph_contact: 'Mude o botão para “Reservar agora”', ph_gallery_img: 'Gere uma nova foto da loja',
     ph_gallery: 'Atualize o título da galeria', ph_footer: 'Atualize o slogan',
+  },
+
+  logo: {
+    summary: '✨ Logo e marca',
+    none: 'Ainda sem logo — o seu site mostra o nome do negócio como marca de texto.',
+    hint: 'Gere um logo com IA. Ele vira o logo do cabeçalho, o ícone do navegador (favicon) e a imagem de compartilhamento.',
+    brief_ph: 'Notas de estilo opcionais — ex.: “uma raposa, tons quentes de laranja”',
+    generate: 'Gerar opções de logo',
+    generating: 'Gerando…',
+    cost: 'Gera 4 opções por {n} créditos. Escolha uma para aplicar, ou gere novamente.',
+    pick: 'Clique em uma opção para usá-la como seu logo:',
+    remove: 'Remover logo',
+    upload: 'Ou envie o seu (PNG, JPG, WebP, SVG — quadrado funciona melhor):',
+    err: 'Algo deu errado. Tente novamente.',
+    locked: 'A geração de logo com IA está disponível nos planos pagos.',
+    upgrade: 'Faça upgrade para desbloquear',
+    disclaimer: 'Logos gerados por IA não são verificados contra marcas registradas existentes — revise antes de uso comercial.',
   },
 
   pick: {
