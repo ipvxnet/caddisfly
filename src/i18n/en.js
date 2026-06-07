@@ -362,6 +362,29 @@ export const en = {
     no_products: 'No products yet — check back soon!',
   },
 
+  // Order receipt page + buyer confirmation email (SITE's language).
+  rcpt: {
+    title: 'Order confirmed',
+    thanks: 'Thank you for your purchase!',
+    paid_to: 'Your payment to {name} was successful.',
+    order_ref: 'Order reference',
+    date: 'Date',
+    items: 'Items',
+    total: 'Total',
+    receipt_to: 'Confirmation sent to',
+    shipping_to: 'Shipping to',
+    print: '🖨 Save receipt (PDF)',
+    back: '← Back to shop',
+    pending: 'Your payment is still processing — you’ll receive a confirmation by email shortly.',
+    not_found: 'We couldn’t find this order.',
+    // buyer email
+    subject: 'Your order from {name} — {ref}',
+    subject_line: 'Order confirmed ✓',
+    intro: 'Thank you for your purchase from {name}! Here’s your order summary.',
+    view_receipt: 'View receipt',
+    questions: 'Questions about your order? Just reply to this email.',
+  },
+
   // Blog manager (app UI, viewer's language).
   snap: {
     summary: '🕘 Versions — save & restore',
@@ -411,6 +434,10 @@ export const en = {
     limit_reached: 'You’ve reached your plan’s product limit — upgrade to add more.',
     ai_credits_note: 'AI: ~2 credits per description, ~5 per image.',
     bad_price: 'Enter a price of at least 0.50.',
+    orders_heading: '🧾 Orders',
+    no_orders: 'No orders yet — they’ll appear here the moment someone buys.',
+    ord_paid: 'paid',
+    ord_new: 'new',
   },
 
   blogm: {

@@ -358,6 +358,28 @@ export const pt = {
     no_products: 'Ainda não há produtos — volte em breve!',
   },
 
+  // Página de recibo + e-mail de confirmação ao comprador (idioma do SITE).
+  rcpt: {
+    title: 'Pedido confirmado',
+    thanks: 'Obrigado pela sua compra!',
+    paid_to: 'Seu pagamento para {name} foi concluído com sucesso.',
+    order_ref: 'Referência do pedido',
+    date: 'Data',
+    items: 'Itens',
+    total: 'Total',
+    receipt_to: 'Confirmação enviada para',
+    shipping_to: 'Envio para',
+    print: '🖨 Salvar recibo (PDF)',
+    back: '← Voltar à loja',
+    pending: 'Seu pagamento ainda está sendo processado — você receberá uma confirmação por e-mail em breve.',
+    not_found: 'Não encontramos este pedido.',
+    subject: 'Seu pedido de {name} — {ref}',
+    subject_line: 'Pedido confirmado ✓',
+    intro: 'Obrigado pela sua compra em {name}! Aqui está o resumo do seu pedido.',
+    view_receipt: 'Ver recibo',
+    questions: 'Dúvidas sobre seu pedido? Basta responder a este e-mail.',
+  },
+
   snap: {
     summary: '🕘 Versões — salvar e restaurar',
     hint: 'Salve uma versão do seu site antes de grandes mudanças. Restaurar substitui as suas páginas, seções e design atuais (uma cópia do estado atual é salva automaticamente antes). O site publicado é atualizado quando você publica.',
@@ -406,6 +428,10 @@ export const pt = {
     limit_reached: 'Você atingiu o limite de produtos do seu plano — faça upgrade para adicionar mais.',
     ai_credits_note: 'IA: ~2 créditos por descrição, ~5 por imagem.',
     bad_price: 'Informe um preço de pelo menos 0,50.',
+    orders_heading: '🧾 Pedidos',
+    no_orders: 'Ainda não há pedidos — eles aparecerão aqui assim que alguém comprar.',
+    ord_paid: 'pago',
+    ord_new: 'novo',
   },
 
   blogm: {

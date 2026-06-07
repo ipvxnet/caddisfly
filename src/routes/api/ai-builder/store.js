@@ -24,7 +24,12 @@ import {
   signConnectState,
   verifyConnectState,
   createStoreCheckoutSession,
+  getStoreCheckoutSession,
+  verifyWebhook,
 } from '../../../utils/stripe.js';
+import { insertOrderIfNew, getOrdersByProject, markOrdersRead } from '../../../db/store-orders.js';
+import { sendOrderBuyerEmail, sendOrderMerchantEmail } from '../../../utils/email.js';
+import { t } from '../../../i18n/index.js';
 import {
   createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
   countProducts, uniqueProductSlug,
@@ -433,11 +438,15 @@ export async function handleStoreCheckout(ctx) {
       session = await createStoreCheckoutSession(env, {
         account: config.stripe_account_id,
         lineItems,
-        successUrl: `${origin}${path}?paid=1`,
+        // Success lands on OUR receipt page (server-verified order details,
+        // print-to-PDF, triggers order recording + emails). {CHECKOUT_SESSION_ID}
+        // is a literal Stripe placeholder — must not be URL-encoded.
+        successUrl: `${appOrigin}/store/receipt?s=${publicId}&sid={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${origin}${path}?cancelled=1`,
         metadata: {
           type: 'store_order',
           site: publicId,
+          back: `${origin}${path}`.slice(0, 400), // receipt's "back to shop" link
           // compact for the 500-char metadata cap: [[id,qty],…]
           items: JSON.stringify([...wanted]).slice(0, 480),
         },
@@ -454,6 +463,129 @@ export async function handleStoreCheckout(ctx) {
     console.error('store checkout error:', e);
     return json({ success: false, error: 'Could not start checkout — please try again.' }, 500);
   }
+}
+
+// ---- order recording (receipt page + Connect webhook, idempotent) ------------
+
+/** Line items off a retrieved session -> [{name, qty, amount}] (minor units). */
+export function sessionItems(session) {
+  const data = (session.line_items && session.line_items.data) || [];
+  return data.map((li) => ({
+    name: li.description || 'Item',
+    qty: li.quantity || 1,
+    amount: li.amount_total != null ? li.amount_total : 0,
+  }));
+}
+
+/**
+ * Record a paid Checkout Session as an order (idempotent on session id) and —
+ * only on first insert — email the buyer (site language) and the merchant.
+ * Callers: the /store/receipt success page and the Connect webhook.
+ */
+export async function recordStoreOrder(env, publicId, session) {
+  const r = await resolveStoreProject(env, publicId);
+  if (!r) return null;
+  const items = sessionItems(session);
+  const details = session.customer_details || {};
+  const shipping = session.shipping_details || (session.collected_information && session.collected_information.shipping_details) || null;
+
+  const row = await insertOrderIfNew(env.DB, r.projectKey, publicId, {
+    stripe_session_id: session.id,
+    amount_total: session.amount_total || 0,
+    currency: session.currency || 'usd',
+    customer_email: details.email || '',
+    customer_name: details.name || '',
+    shipping_json: shipping ? JSON.stringify(shipping).slice(0, 2000) : '',
+    items_json: JSON.stringify(items).slice(0, 4000),
+  });
+  if (!row) return { isNew: false }; // already recorded (other writer won)
+
+  const appOrigin = env.APP_URL || '';
+  const orderRef = session.id.slice(-8).toUpperCase();
+  const lang = r.language || 'en';
+
+  if (details.email) {
+    await sendOrderBuyerEmail(env, {
+      to: details.email,
+      businessName: r.businessName,
+      orderRef,
+      items,
+      total: session.amount_total || 0,
+      currency: session.currency || 'usd',
+      lang,
+      labels: {
+        subject: t(lang, 'rcpt.subject', { name: r.businessName, ref: orderRef }),
+        subject_line: t(lang, 'rcpt.subject_line'),
+        intro: t(lang, 'rcpt.intro', { name: r.businessName }),
+        order_ref: t(lang, 'rcpt.order_ref'),
+        total: t(lang, 'rcpt.total'),
+        view_receipt: t(lang, 'rcpt.view_receipt'),
+        questions: t(lang, 'rcpt.questions'),
+      },
+      receiptUrl: `${appOrigin}/store/receipt?s=${publicId}&sid=${encodeURIComponent(session.id)}`,
+      merchantEmail: r.email || '',
+    });
+  }
+  if (r.email) {
+    await sendOrderMerchantEmail(env, {
+      to: r.email,
+      siteName: r.businessName,
+      orderRef,
+      buyerEmail: details.email || '',
+      items,
+      total: session.amount_total || 0,
+      currency: session.currency || 'usd',
+      ordersUrl: `${appOrigin}/ai-builder/store/${publicId}`,
+    });
+  }
+  return { isNew: true, order: row };
+}
+
+/**
+ * POST /api/store/webhook — Stripe Connect webhook (events from connected
+ * accounts; configure a "Listen to events on Connected accounts" endpoint in
+ * Stripe pointing here, secret in STRIPE_CONNECT_WEBHOOK_SECRET). Reliability
+ * backstop: records the order even if the buyer never returns to the receipt
+ * page. Idempotent with the receipt-page writer.
+ */
+export async function handleStoreWebhook(ctx) {
+  const { env, request } = ctx;
+  const secret = env.STRIPE_CONNECT_WEBHOOK_SECRET;
+  if (!secret) return json({ success: false, error: 'Webhook not configured' }, 503);
+  let event;
+  try {
+    const raw = await request.text();
+    event = await verifyWebhook(raw, request.headers.get('Stripe-Signature'), secret);
+  } catch (e) {
+    console.error('store webhook signature error:', e.message);
+    return json({ success: false, error: 'Bad signature' }, 400);
+  }
+  try {
+    if (event.type === 'checkout.session.completed' && event.account) {
+      const session = event.data && event.data.object;
+      const meta = (session && session.metadata) || {};
+      if (meta.type === 'store_order' && meta.site && session.payment_status === 'paid') {
+        // Re-fetch with line items expanded (webhook payloads omit them).
+        const full = await getStoreCheckoutSession(env, event.account, session.id);
+        await recordStoreOrder(env, meta.site, full);
+      }
+    }
+    return json({ received: true });
+  } catch (e) {
+    console.error('store webhook error:', e);
+    return json({ success: false }, 500); // non-2xx → Stripe retries
+  }
+}
+
+/** GET /api/ai-builder/:project_id/store/orders — list + clear unread. */
+export async function handleOrderList(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const orders = await getOrdersByProject(env.DB, r.projectKey);
+  // Surface which rows are new, then mark them read (viewing = acknowledging).
+  await markOrdersRead(env.DB, r.projectKey);
+  return json({ success: true, orders });
 }
 
 /** POST /api/ai-builder/:project_id/store/products/:product_id/image — AI product shot. */

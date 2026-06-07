@@ -116,6 +116,11 @@ export async function handleStoreManager(ctx) {
     </div>
 
     <div class="panel">
+      <h2>${tr('storem.orders_heading')} <span class="muted" id="ord-count"></span></h2>
+      <div id="orders-list"><p class="muted">${tr('storem.loading')}</p></div>
+    </div>
+
+    <div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
         <h2 style="margin-bottom:0">${tr('storem.products_heading')} <span class="muted" id="prod-count"></span></h2>
         <button class="btn" id="add-toggle" onclick="toggleAdd()">${tr('storem.add_product')}</button>
@@ -193,6 +198,9 @@ export async function handleStoreManager(ctx) {
         service: ${JSON.stringify(tr('storem.type_service'))},
       },
       badPrice: ${JSON.stringify(tr('storem.bad_price'))},
+      noOrders: ${JSON.stringify(tr('storem.no_orders'))},
+      ordPaid: ${JSON.stringify(tr('storem.ord_paid'))},
+      ordNew: ${JSON.stringify(tr('storem.ord_new'))},
     };
     var LANG = ${JSON.stringify(lang)};
     var CUR = 'usd';
@@ -403,6 +411,44 @@ export async function handleStoreManager(ctx) {
     }
 
     loadProducts();
+
+    // ---- orders -------------------------------------------------------------
+    function orderRow(o) {
+      var items = [];
+      try { items = JSON.parse(o.items_json || '[]'); } catch (e) {}
+      var summary = items.map(function (i) { return i.name + ' × ' + i.qty; }).join(', ');
+      var when = o.created_at ? new Date(o.created_at * 1000).toLocaleString(LANG, { dateStyle: 'medium', timeStyle: 'short' }) : '';
+      var total = (function () {
+        try { return new Intl.NumberFormat(LANG, { style: 'currency', currency: (o.currency || 'usd').toUpperCase() }).format(o.amount_total / 100); }
+        catch (e) { return (o.amount_total / 100).toFixed(2); }
+      })();
+      var div = document.createElement('div');
+      div.className = 'prod';
+      div.innerHTML = '<div class="prod-top"><div class="prod-main">' +
+        '<div class="prod-name"><span class="o-ref"></span> ' +
+        (o.is_read ? '' : '<span class="pill warn">' + T.ordNew + '</span> ') +
+        '<span class="pill ok">' + T.ordPaid + '</span></div>' +
+        '<div class="prod-price"><span class="o-total"></span> · <span class="o-buyer"></span></div>' +
+        '<div class="post-meta muted" style="font-size:.85rem;margin-top:.2rem"><span class="o-items"></span> · <span class="o-when"></span></div>' +
+        '</div></div>';
+      div.querySelector('.o-ref').textContent = '#' + (o.stripe_session_id || '').slice(-8).toUpperCase();
+      div.querySelector('.o-total').textContent = total;
+      div.querySelector('.o-buyer').textContent = (o.customer_name ? o.customer_name + ' · ' : '') + (o.customer_email || '');
+      div.querySelector('.o-items').textContent = summary;
+      div.querySelector('.o-when').textContent = when;
+      return div;
+    }
+    async function loadOrders() {
+      var list = document.getElementById('orders-list');
+      try {
+        var d = await api('GET', '/orders');
+        document.getElementById('ord-count').textContent = '(' + d.orders.length + ')';
+        list.innerHTML = '';
+        if (!d.orders.length) { list.innerHTML = '<p class="muted">' + T.noOrders + '</p>'; return; }
+        d.orders.forEach(function (o) { list.appendChild(orderRow(o)); });
+      } catch (e) { list.innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; }
+    }
+    loadOrders();
   </script>
 </body>
 </html>`;

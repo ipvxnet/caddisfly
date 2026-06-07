@@ -117,6 +117,12 @@ binding = "BROWSER"
 # the ca_… test-mode client id, prod the live one). Until set, the store UI
 # shows "payments not available" (email-stub degradation pattern).
 #   STRIPE_CONNECT_CLIENT_ID     (ca_…)
+#   STRIPE_CONNECT_WEBHOOK_SECRET (whsec_…, from a webhook endpoint created
+#                                 with "Listen to events on Connected accounts"
+#                                 pointing at <APP_ORIGIN>/api/store/webhook,
+#                                 event: checkout.session.completed. Optional —
+#                                 the receipt page also records orders; the
+#                                 webhook is the reliability backstop.)
 # e.g. npx wrangler secret put STRIPE_CONNECT_CLIENT_ID --env preview
 #
 # Custom domains (Cloudflare for SaaS — Custom Hostnames). Until set, the

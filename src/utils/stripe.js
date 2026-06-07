@@ -184,11 +184,11 @@ export async function createStoreCheckoutSession(env, {
 }
 
 /**
- * Retrieve a Checkout Session from a connected account (success-redirect
- * order recording; GET via form-encoded API isn't needed — Stripe allows GET).
+ * Retrieve a Checkout Session (with line items expanded) from a connected
+ * account — used by the receipt page and the Connect webhook to record orders.
  */
 export async function getStoreCheckoutSession(env, account, sessionId) {
-  const res = await fetch(`${STRIPE_API}/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+  const res = await fetch(`${STRIPE_API}/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=line_items`, {
     headers: {
       Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
       'Stripe-Account': account,
