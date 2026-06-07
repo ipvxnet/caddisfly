@@ -13,7 +13,7 @@
 
 import { jsonResponse, htmlResponse } from '../../utils/response.js';
 import {
-  isNamecheapConfigured, checkDomains, getWholesalePricing, registerDomain, setDnsHosts, SELL_TLDS,
+  isNamecheapConfigured, checkDomains, getWholesalePricing, registerDomain, setDnsHosts, getDomainInfo, SELL_TLDS,
 } from '../../utils/namecheap.js';
 import {
   createDomainOrder, getOrderById, getOrdersByEmail, updateOrder, claimOrderForRegistration,
@@ -214,7 +214,26 @@ export async function processDomainOrder(env, orderId, paymentIntentId = null) {
 
   try {
     const contact = JSON.parse(order.registrant_json || '{}');
-    const reg = await registerDomain(env, { domain: order.domain, years: order.years || 1, contact });
+    let reg;
+    try {
+      reg = await registerDomain(env, { domain: order.domain, years: order.years || 1, contact });
+    } catch (e) {
+      // domains.create is NON-IDEMPOTENT: a relay/network timeout doesn't mean
+      // it failed — Namecheap may have completed it. Verify before deciding;
+      // getDomainInfo only succeeds for domains in OUR account.
+      console.error('register threw, verifying ownership:', order.domain, e.message);
+      try {
+        const info = await getDomainInfo(env, order.domain);
+        if (info && info.status) {
+          reg = { registered: true, domain_id: null, transaction_id: null, _recovered: true };
+          await notifyOps(env, `ℹ️ Domain *${order.domain}*: register call errored (${e.message.slice(0, 80)}) but it IS in our account — treating as registered.`);
+        } else {
+          throw e;
+        }
+      } catch (_) {
+        throw e; // genuinely not registered → fail + refund below
+      }
+    }
     await updateOrder(env.DB, order.id, {
       status: 'registered',
       nc_domain_id: reg.domain_id || null,
