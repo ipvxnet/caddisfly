@@ -48,6 +48,15 @@ export async function handleDomainsStorePage(ctx) {
     autorenew: tr('domstore.autorenew'), autorenew_off_note: tr('domstore.autorenew_off_note'),
     reconnect: tr('domstore.reconnect'), reconnecting: tr('domstore.reconnecting'),
     reconnect_ok: tr('domstore.reconnect_ok'), reconnect_fail: tr('domstore.reconnect_fail'),
+    dns: tr('domstore.dns'), dns_title: tr('domstore.dns_title'), dns_intro: tr('domstore.dns_intro'),
+    dns_locked: tr('domstore.dns_locked'), dns_loading: tr('domstore.dns_loading'),
+    dns_add: tr('domstore.dns_add'), dns_save: tr('domstore.dns_save'), dns_saving: tr('domstore.dns_saving'),
+    dns_saved: tr('domstore.dns_saved'), dns_name: tr('domstore.dns_name'), dns_type: tr('domstore.dns_type'),
+    dns_value: tr('domstore.dns_value'), dns_prio: tr('domstore.dns_prio'), dns_ttl: tr('domstore.dns_ttl'),
+    dns_remove: tr('domstore.dns_remove'), dns_empty: tr('domstore.dns_empty'),
+    email_setup: tr('domstore.email_setup'), email_pick: tr('domstore.email_pick'),
+    email_applying: tr('domstore.email_applying'), email_done: tr('domstore.email_done'),
+    email_dkim_note: tr('domstore.email_dkim_note'),
   };
 
   const html = `<!DOCTYPE html>
@@ -98,6 +107,20 @@ export async function handleDomainsStorePage(ctx) {
     .reconnect-btn{background:none;border:1.5px solid var(--line);border-radius:8px;padding:.35rem .8rem;font-size:.8rem;font-weight:700;color:#4a5568;cursor:pointer}
     .reconnect-btn:hover{border-color:#a3b3f5;color:#4338ca}
     .reconnect-btn:disabled{opacity:.6;cursor:default}
+    .dns-card{max-width:680px}
+    .email-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin:.4rem 0 .3rem}
+    .email-row label{font-size:.82rem;font-weight:700;color:#4a5568}
+    .email-row select{padding:.45rem .6rem;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
+    .dns-dkim{font-size:.76rem;color:#a0aec0;margin:0 0 1rem}
+    #dns-table{border-top:1px solid var(--line);padding-top:.6rem}
+    .dns-row{display:grid;grid-template-columns:90px 1fr 1.6fr 60px 28px;gap:.4rem;align-items:center;margin-bottom:.4rem}
+    .dns-row.dns-head{font-size:.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.03em}
+    .dns-row input,.dns-row select{padding:.4rem .5rem;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:.83rem;min-width:0}
+    .dns-row.locked{color:#718096}
+    .dns-row .dns-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.83rem}
+    .dns-lock{text-align:center}
+    .dns-del{background:none;border:none;color:#b91c1c;cursor:pointer;font-size:.9rem}
+    .dns-add{margin:.4rem 0 .2rem;padding:.4rem .8rem;border:1.5px dashed var(--line);border-radius:8px;background:none;font-weight:700;font-size:.82rem;color:#4a5568;cursor:pointer}
   </style>
 </head>
 <body>
@@ -142,6 +165,31 @@ export async function handleDomainsStorePage(ctx) {
       <div class="bm-acts">
         <button class="ghost" onclick="closeBuy()">${tr('domstore.cancel')}</button>
         <button class="go" id="bm-go" onclick="startCheckout(this)">${tr('domstore.continue')}</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dns-modal" onclick="if(event.target===this)closeDns()">
+    <div class="bm-card dns-card">
+      <h2>${tr('domstore.dns_title')}: <span id="dns-domain"></span></h2>
+      <p class="bm-sub">${tr('domstore.dns_intro')}</p>
+      <div class="email-row">
+        <label>${tr('domstore.email_pick')}</label>
+        <select id="email-provider">
+          <option value="">—</option>
+          <option value="google">Google Workspace</option>
+          <option value="microsoft">Microsoft 365</option>
+          <option value="zoho">Zoho Mail</option>
+        </select>
+        <button class="ghost" id="email-go" onclick="applyEmail(this)">${tr('domstore.email_setup')}</button>
+      </div>
+      <p class="dns-dkim">${tr('domstore.email_dkim_note')}</p>
+      <div id="dns-table"><p class="bm-sub">${tr('domstore.dns_loading')}</p></div>
+      <button class="ghost dns-add" onclick="addDnsRow()">${tr('domstore.dns_add')}</button>
+      <p class="bm-err" id="dns-err"></p>
+      <div class="bm-acts">
+        <button class="ghost" onclick="closeDns()">${tr('domstore.cancel')}</button>
+        <button class="go" id="dns-save" onclick="saveDns(this)">${tr('domstore.dns_save')}</button>
       </div>
     </div>
   </div>
@@ -250,6 +298,10 @@ export async function handleDomainsStorePage(ctx) {
             right.appendChild(lbl);
           }
           if (o.status === 'registered') {
+            const dns = document.createElement('button');
+            dns.className = 'reconnect-btn'; dns.textContent = T.dns;
+            dns.onclick = function () { openDns(o.id, o.domain); };
+            right.appendChild(dns);
             const rc = document.createElement('button');
             rc.className = 'reconnect-btn'; rc.textContent = T.reconnect;
             rc.onclick = function () { reconnect(o.id, rc); };
@@ -263,6 +315,96 @@ export async function handleDomainsStorePage(ctx) {
           list.appendChild(row);
         });
       } catch (e) { /* quiet */ }
+    }
+    // ---- DNS records manager ----
+    const DNS_TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'TXT'];
+    let dnsId = 0;
+    function closeDns() { document.getElementById('dns-modal').classList.remove('open'); }
+    async function openDns(id, domain) {
+      dnsId = id;
+      document.getElementById('dns-domain').textContent = domain;
+      document.getElementById('dns-err').textContent = '';
+      document.getElementById('email-provider').value = '';
+      document.getElementById('dns-table').innerHTML = '<p class="bm-sub">' + T.dns_loading + '</p>';
+      document.getElementById('dns-modal').classList.add('open');
+      try {
+        const r = await fetch('/api/domains/' + id + '/dns');
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
+        renderDns(d.records);
+      } catch (e) { document.getElementById('dns-table').innerHTML = '<p class="bm-err">' + (e.message || T.err) + '</p>'; }
+    }
+    function renderDns(records) {
+      const box = document.getElementById('dns-table');
+      box.innerHTML = '';
+      const head = document.createElement('div'); head.className = 'dns-row dns-head';
+      head.innerHTML = '<span>' + T.dns_type + '</span><span>' + T.dns_name + '</span><span>' + T.dns_value + '</span><span>' + T.dns_prio + '</span><span></span>';
+      box.appendChild(head);
+      if (!records.length) { const p = document.createElement('p'); p.className = 'bm-sub'; p.textContent = T.dns_empty; box.appendChild(p); }
+      records.forEach(function (rec) { box.appendChild(dnsRow(rec)); });
+    }
+    function dnsRow(rec) {
+      const row = document.createElement('div'); row.className = 'dns-row' + (rec.locked ? ' locked' : '');
+      if (rec.locked) {
+        row.innerHTML = '<span>' + esc(rec.type) + '</span><span>' + esc(rec.name) + '</span><span class="dns-val">' + esc(rec.address) + '</span><span>—</span><span class="dns-lock" title="' + T.dns_locked + '">🔒</span>';
+        return row;
+      }
+      const typeSel = '<select class="d-type">' + DNS_TYPES.map(function (t) { return '<option' + (t === rec.type ? ' selected' : '') + '>' + t + '</option>'; }).join('') + (DNS_TYPES.indexOf(rec.type) < 0 && rec.type ? '<option selected>' + esc(rec.type) + '</option>' : '') + '</select>';
+      row.innerHTML = typeSel +
+        '<input class="d-name" value="' + esc(rec.name || '@') + '" placeholder="@">' +
+        '<input class="d-addr" value="' + esc(rec.address || '') + '">' +
+        '<input class="d-prio" value="' + esc(rec.mxpref || '10') + '" style="width:60px">' +
+        '<button class="dns-del" title="' + T.dns_remove + '">✕</button>';
+      row.querySelector('.dns-del').onclick = function () { row.remove(); };
+      return row;
+    }
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+    function addDnsRow() {
+      const box = document.getElementById('dns-table');
+      const empty = box.querySelector('p.bm-sub'); if (empty) empty.remove();
+      box.appendChild(dnsRow({ name: '@', type: 'A', address: '', mxpref: '10' }));
+    }
+    function collectDns() {
+      return Array.from(document.querySelectorAll('#dns-table .dns-row:not(.locked):not(.dns-head)')).map(function (row) {
+        return {
+          type: row.querySelector('.d-type').value,
+          name: row.querySelector('.d-name').value.trim() || '@',
+          address: row.querySelector('.d-addr').value.trim(),
+          mxpref: row.querySelector('.d-prio').value.trim() || '10',
+        };
+      }).filter(function (r) { return r.address; });
+    }
+    async function saveDns(btn) {
+      btn.disabled = true; btn.textContent = T.dns_saving;
+      document.getElementById('dns-err').textContent = '';
+      try {
+        const r = await fetch('/api/domains/' + dnsId + '/dns', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: collectDns() }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
+        btn.textContent = T.dns_saved;
+        setTimeout(function () { btn.disabled = false; btn.textContent = T.dns_save; }, 1500);
+      } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.dns_save; }
+    }
+    async function applyEmail(btn) {
+      const provider = document.getElementById('email-provider').value;
+      if (!provider) return;
+      btn.disabled = true; btn.textContent = T.email_applying;
+      document.getElementById('dns-err').textContent = '';
+      try {
+        const r = await fetch('/api/domains/' + dnsId + '/dns/email', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: provider }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
+        btn.textContent = T.email_done;
+        const lr = await fetch('/api/domains/' + dnsId + '/dns'); const ld = await lr.json();
+        if (ld.success) renderDns(ld.records);
+        setTimeout(function () { btn.disabled = false; btn.textContent = T.email_setup; }, 1500);
+      } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.email_setup; }
     }
     async function reconnect(id, btn) {
       btn.disabled = true; btn.textContent = T.reconnecting;

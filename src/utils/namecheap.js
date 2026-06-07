@@ -191,8 +191,25 @@ export async function registerDomain(env, { domain, years = 1, contact, nameserv
 }
 
 /**
+ * Read ALL DNS host records for a domain (Namecheap BasicDNS).
+ * → [{ name, type, address, mxpref, ttl }]
+ */
+export async function getDnsHosts(env, domain) {
+  const [sld, ...rest] = domain.split('.');
+  const xml = await ncRequest(env, 'namecheap.domains.dns.getHosts', { SLD: sld, TLD: rest.join('.') });
+  return xmlTags(xml, 'host').map((h) => ({
+    name: h.attrs.Name || '',
+    type: h.attrs.Type || '',
+    address: h.attrs.Address || '',
+    mxpref: h.attrs.MXPref || '10',
+    ttl: h.attrs.TTL || '1800',
+  }));
+}
+
+/**
  * Replace ALL DNS records for a domain (Namecheap BasicDNS). hosts:
- * [{ name: '@'|'www'|…, type: 'CNAME'|'A'|'URL301'|…, address, ttl? }]
+ * [{ name: '@'|'www'|…, type: 'CNAME'|'A'|'MX'|'TXT'|'URL301'|…, address, mxpref?, ttl? }]
+ * setHosts is all-or-nothing, so callers must pass the COMPLETE desired set.
  */
 export async function setDnsHosts(env, domain, hosts) {
   const [sld, ...rest] = domain.split('.');
@@ -203,7 +220,11 @@ export async function setDnsHosts(env, domain, hosts) {
     params[`RecordType${n}`] = h.type;
     params[`Address${n}`] = h.address;
     params[`TTL${n}`] = h.ttl || 1800;
+    if (h.type === 'MX') params[`MXPref${n}`] = h.mxpref || 10;
   });
+  // Any MX record requires EmailType=MX (else Namecheap ignores MX rows).
+  if (hosts.some((h) => h.type === 'MX')) params.EmailType = 'MX';
+  // setHosts replaces the full set → idempotent → safe to retry on transient 522.
   const xml = await ncRequest(env, 'namecheap.domains.dns.setHosts', params);
   const r = xmlTags(xml, 'DomainDNSSetHostsResult')[0];
   if (!r || r.attrs.IsSuccess !== 'true') throw new Error('Setting DNS records failed');
