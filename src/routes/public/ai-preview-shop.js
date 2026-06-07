@@ -12,6 +12,8 @@ import { ensurePagesForProject, getPagesByProject } from '../../db/ai-pages.js';
 import { getSiteSections } from '../../db/ai-sections.js';
 import { getProductsByProject } from '../../db/products.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../utils/shop-render.js';
+import { getPostsByProject } from '../../db/blog-posts.js';
+import { blogNavPage } from '../../utils/blog-render.js';
 import { assemblePage } from '../../utils/ai-page-assembler.js';
 
 export async function handleAIPreviewShop(ctx) {
@@ -64,6 +66,8 @@ export async function handleAIPreviewShop(ctx) {
     }
 
     const navPages = pages.filter((p) => p.is_visible !== 0);
+    const publishedPosts = await getPostsByProject(env.DB, projectKey, true);
+    if (publishedPosts.length) navPages.push(blogNavPage(language));
     if (allProducts.length) navPages.push(shopNavPage(language));
 
     const html = assemblePage([...header, bodySection, ...footer], config, project, {
