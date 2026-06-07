@@ -569,7 +569,9 @@ export const es = {
     cta_q: '¿No encontraste lo que buscabas?', cta_btn: 'Abrir un ticket de soporte →',
     toc: [
       ['getting-started', 'Primeros pasos'], ['customizing', 'Personalizar tu sitio'],
-      ['publishing', 'Publicar'], ['seo', 'SEO y aparecer en Google'],
+      ['publishing', 'Publicar'], ['store', 'Tienda online'],
+      ['blog', 'Blog y redes sociales'], ['messages', 'Formulario de contacto y bandeja'],
+      ['versions', 'Versiones, copias y exportación'], ['seo', 'SEO y aparecer en Google'],
       ['custom-domains', 'Dominios propios y DNS'], ['plans', 'Planes, créditos y facturación'],
       ['team', 'Miembros del equipo'], ['faq', 'Preguntas frecuentes'],
     ],
@@ -591,6 +593,29 @@ export const es = {
         </ul>`],
       ['publishing', 'Publicar', `
         <p>Haz clic en <strong>Publicar sitio</strong> en Personalizar. Tu sitio se pone en línea en una dirección gratuita como <code>tunegocio.caddisfly.app</code> y te mostramos un enlace. Vuelve a publicar cuando quieras tras hacer cambios — al republicar en un plan de pago también se quita la insignia “Built with Caddisfly”.</p>`],
+      ['store', 'Tienda online', `
+        <p>Vende en tu sitio con tu <strong>propia cuenta de Stripe</strong> — los pagos van directamente a ti; Caddisfly nunca retiene tu dinero ni añade comisión por transacción (se aplican las tarifas estándar de Stripe). Disponible desde el plan Starter.</p>
+        <ol>
+          <li><strong>Conecta Stripe</strong> — abre <strong>🛍 Tienda</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar) y pulsa <strong>Conectar Stripe</strong>. Un clic — sin claves que copiar.</li>
+          <li><strong>Añade productos</strong> — nombre, precio y tipo (físico / digital / servicio). Deja que la IA escriba la descripción (✨) y genere una foto del producto (🖼). ¿Ya vendes con Stripe? <strong>⬇ Importar de Stripe</strong> trae tu catálogo en un clic.</li>
+          <li><strong>Publica</strong> — tu sitio recibe una página <strong>Tienda</strong> y un enlace en el menú automáticamente. Los visitantes añaden al carrito y pagan de forma segura en Stripe (incluye Apple&nbsp;Pay / Google&nbsp;Pay); los productos físicos piden dirección de envío.</li>
+        </ol>
+        <p>Tras cada venta, el comprador llega a una página de recibo (descargable en PDF) y recibe un correo de confirmación; tú recibes un correo de “nuevo pedido” y el pedido aparece en <strong>🧾 Pedidos</strong> en la página Tienda. Los compradores pueden ver su historial cuando quieran con <strong>Mis pedidos</strong> (enlace seguro por correo). Límites de productos: Starter 10 · Pro 50 · Agency ilimitados.</p>`],
+      ['blog', 'Blog y redes sociales', `
+        <p>Abre <strong>📝 Blog</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar). Dale a la IA unas frases sobre lo que debe decir la publicación — redacta el texto completo en el idioma de tu sitio; tú lo editas y publicas. Al publicar, tu sitio gana una página <strong>Blog</strong> y un enlace en el menú (republica desde Personalizar para poner en línea las publicaciones nuevas).</p>
+        <ul>
+          <li><strong>🖼 Portada con IA</strong> — genera una imagen de portada acorde al tema de cada publicación.</li>
+          <li><strong>Pack social</strong> — un clic redacta variantes listas para compartir en X, Instagram y LinkedIn con botones de compartir. Nada se publica automáticamente — tú tienes el control.</li>
+        </ul>`],
+      ['messages', 'Formulario de contacto y bandeja', `
+        <p>El formulario de contacto de tu sitio publicado funciona sin configurar nada. Cada mensaje se guarda en tu <strong>bandeja</strong> (Panel → <strong>Mensajes</strong>, con contador de no leídos) y te llega por correo; al responder ese correo contestas directamente al visitante. El spam se filtra automáticamente.</p>`],
+      ['versions', 'Versiones, copias y exportación', `
+        <ul>
+          <li><strong>Guardar una versión</strong> — en Personalizar, abre <strong>🕘 Versiones</strong> para guardar una copia con nombre de tus páginas, secciones y diseño antes de grandes cambios.</li>
+          <li><strong>Autoguardado</strong> — mientras editas, Caddisfly guarda una versión cada hora (actívalo o desactívalo en el panel de Versiones). Al restaurar, primero se respalda tu estado actual, y tu sitio en línea solo cambia cuando publicas.</li>
+          <li><strong>Retención</strong> — versiones guardadas: Free 2 · Starter 5 · Pro 10 · Agency 30.</li>
+          <li><strong>Exportación HTML</strong> — tu sitio es tuyo: <strong>⬇ Exportar</strong> en el Panel descarga tu sitio publicado como un ZIP que puedes alojar donde quieras. El formulario de contacto y las estadísticas siguen funcionando desde la copia exportada.</li>
+        </ul>`],
       ['seo', 'SEO y aparecer en Google', `
         <p>Cada sitio que publicas está <strong>listo para buscadores desde el primer momento</strong> — sin configuración. Caddisfly añade automáticamente:</p>
         <ul>
@@ -632,6 +657,12 @@ export const es = {
       ['¿Qué son los créditos Caddi?', 'Los créditos se gastan en acciones de IA (generar contenido, crear imágenes con IA, ediciones con IA). Cada plan incluye una asignación mensual que se reinicia cada mes, y además puedes comprar recargas únicas que nunca caducan.'],
       ['¿Cómo funcionan los miembros del equipo?', 'Invita a tu equipo por correo desde tu <strong>Panel</strong>. Reciben un enlace que los identifica y los une a tu equipo, donde pueden acceder a tus sitios. Tú (el propietario) y los administradores pueden invitar, promover o quitar miembros. Plazas: Starter 5, Pro 15, Agency 50 (incluyéndote).'],
       ['¿Mi sitio es bueno para SEO? ¿Tengo que configurar algo?', 'Cada sitio publicado está listo para buscadores automáticamente — títulos, meta descripciones, tarjetas para compartir, datos de negocio de Google (LocalBusiness), una URL canónica, <code>robots.txt</code> y un <code>sitemap.xml</code>, todo generado por ti. Para personalizar una página, abre <strong>Personalizar → 🔎 SEO</strong> y edita el título y la descripción con una vista previa del resultado de Google. Ver <a href="#seo">SEO y aparecer en Google</a>.'],
+      ['¿Puedo vender productos en mi sitio?', 'Sí — desde el plan Starter ($9/mes). Conecta tu propia cuenta de Stripe en la página <strong>🛍 Tienda</strong>, añade productos (la IA puede escribir descripciones y generar fotos — o importa tu catálogo de Stripe en un clic) y publica. Ver <a href="#store">Tienda online</a>.'],
+      ['¿Os quedáis con una parte de mis ventas?', 'No. El pago se procesa en tu propia cuenta de Stripe, así que el dinero va directamente a ti. Solo pagas las tarifas estándar de Stripe — Caddisfly no añade nada encima.'],
+      ['¿Cómo funciona el blog con IA?', 'Abre <strong>📝 Blog</strong>, dale a la IA unas frases y redactará una publicación completa en el idioma de tu sitio — tú la editas, la publicas y republicas tu sitio para ponerla en línea. Con un clic también genera una imagen de portada y publicaciones listas para X, Instagram y LinkedIn. Ver <a href="#blog">Blog y redes sociales</a>.'],
+      ['¿A dónde van los mensajes del formulario de contacto?', 'A tu <strong>bandeja</strong> (Panel → Mensajes) y a tu correo. Responde al correo de aviso para contestar directamente al visitante. El spam se filtra automáticamente.'],
+      ['¿Puedo deshacer cambios o volver a una versión anterior?', 'Sí — abre <strong>🕘 Versiones</strong> en Personalizar. Guarda versiones manualmente antes de grandes cambios, y Caddisfly también autoguarda cada hora mientras editas. Al restaurar se respalda primero tu estado actual, y tu sitio en línea solo cambia cuando publicas. Ver <a href="#versions">Versiones, copias y exportación</a>.'],
+      ['¿Puedo exportar mi sitio web?', 'Sí, en todos los planes — pulsa <strong>⬇ Exportar</strong> en tu Panel para descargar tu sitio publicado como un ZIP de HTML que puedes alojar donde quieras. Sin ataduras: el formulario de contacto y las estadísticas siguen funcionando desde la copia exportada.'],
       ['¿Puedo obtener un reembolso?', 'Las suscripciones se pueden cancelar cuando quieras desde <strong>Facturación</strong> (mantienes el acceso hasta el final del periodo). Las cancelaciones por conveniencia se prorratean según nuestros <a href="/terms">Términos</a>.'],
       ['Necesito ayuda o encontré un error.', 'Abre un ticket desde <a href="/support">Soporte</a> — describe el problema o la solicitud y te responderemos por correo.'],
     ],
