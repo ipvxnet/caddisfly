@@ -648,7 +648,7 @@ export const pt = {
     privacy_note: 'Todos os domínios incluem privacidade WHOIS grátis e renovam automaticamente a cada ano (cancele quando quiser). Compras de domínio não são reembolsáveis após o registro.',
     contact_sub: 'O registro de domínios exige um contato (regras da ICANN). Ele fica privado — a privacidade WHOIS está incluída grátis.',
     f_first: 'Nome', f_last: 'Sobrenome', f_email: 'E-mail', f_address: 'Endereço',
-    f_city: 'Cidade', f_state: 'Estado / província', f_postal: 'CEP / código postal', f_country: 'País (2 letras)',
+    f_city: 'Cidade', f_state: 'Estado / província', f_postal: 'CEP / código postal', f_country: 'País',
     f_phone_cc: 'Código do país (telefone)', f_phone: 'Telefone',
     bad_contact: 'Preencha todos os campos de contato (telefone só dígitos, país com 2 letras).',
     site_label: 'Conectar a um dos seus sites (automático — recomendado)', site_none: 'Não conectar ainda',
@@ -732,6 +732,7 @@ export const pt = {
       ['publishing', 'Publicar'], ['store', 'Loja online'],
       ['blog', 'Blog e redes sociais'], ['messages', 'Formulário de contato e caixa de entrada'],
       ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
+      ['buy-domain', 'Comprar um domínio'],
       ['custom-domains', 'Domínios próprios e DNS'], ['plans', 'Planos, créditos e faturação'],
       ['team', 'Membros da equipe'], ['faq', 'Perguntas frequentes'],
     ],
@@ -796,6 +797,16 @@ export const pt = {
         </ul>
         <p><strong>Ajuste qualquer página:</strong> abra <strong>Personalizar</strong> → o painel <strong>🔎 SEO</strong>. Edite o título e a meta descrição (com pré-visualização do resultado do Google) e defina uma imagem de compartilhamento de todo o site. Deixe algo em branco e usamos os valores automáticos. As mudanças se aplicam na próxima publicação.</p>
         <p>Após publicar, envie o seu <code>sitemap.xml</code> no <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a> para indexar mais rápido.</p>`],
+      ['buy-domain', 'Comprar um domínio', `
+        <p>Ainda não tem um domínio? Compre dentro da Caddisfly e nós o conectamos ao seu site automaticamente — sem configurar DNS. Abra <strong>🌐 Compre um domínio</strong> no seu <a href="/dashboard">Painel</a>.</p>
+        <ol>
+          <li><strong>Pesquise</strong> um nome; as opções disponíveis mostram o preço anual.</li>
+          <li><strong>Escolha um site para conectar</strong> (opcional, mas recomendado) e informe os dados de contato exigidos pela ICANN (ficam privados — a privacidade WHOIS é grátis).</li>
+          <li><strong>Pague</strong> com segurança; o domínio é registrado em seu nome e nós <strong>configuramos o DNS por você</strong> (<code>www</code> → seu site, com a raiz redirecionando para <code>www</code>). Seu <strong>certificado SSL é emitido automaticamente</strong> — seu site fica no ar no seu próprio domínio em minutos.</li>
+        </ol>
+        <p><strong>⚠️ Verifique seu e-mail (exigido pela ICANN):</strong> logo após o primeiro registro, o registro envia um <em>link de verificação</em> (confira a caixa do e-mail de contato que você informou, e a pasta de spam). <strong>Você precisa clicar nele em 15 dias</strong> ou o domínio é suspenso até você fazer isso. É uma etapa única por endereço de e-mail.</p>
+        <p><strong>Renovação automática:</strong> os domínios renovam a cada ano com o seu cartão salvo para o seu site nunca sair do ar. Desative <strong>Renovação automática</strong> na página <strong>Compre um domínio</strong> se preferir deixá-lo expirar. Se a conexão automática não terminou, use <strong>Refazer configuração</strong> ao lado do domínio.</p>
+        <p>Já tem um domínio em outro lugar? Veja <a href="#custom-domains">Domínios próprios e DNS</a>.</p>`],
       ['custom-domains', 'Domínios próprios e DNS', `
         <p>Num plano pago você pode apontar o seu próprio domínio para o site. Abra <strong>🌐 Domínio próprio</strong> (no Personalizar ou no seu <a href="/dashboard">Painel</a>) e informe um domínio.</p>
         <ol>
@@ -831,6 +842,7 @@ export const pt = {
       ['Posso vender produtos no meu site?', 'Sim — a partir do plano Starter ($9/mês). Conecte sua própria conta Stripe na página <strong>🛍 Loja</strong>, adicione produtos (a IA pode escrever descrições e gerar fotos — ou importe seu catálogo do Stripe em um clique) e publique. Ver <a href="#store">Loja online</a>.'],
       ['Vocês ficam com uma parte das minhas vendas?', 'Não. O pagamento é processado na sua própria conta Stripe, então o dinheiro vai direto para você. Você paga apenas as tarifas padrão do Stripe — a Caddisfly não adiciona nada em cima.'],
       ['Posso vender assinaturas ou planos recorrentes?', 'Sim — adicione uma seção de <strong>Preços</strong>, edite-a e anexe um preço recorrente do Stripe a um cartão de plano (ou crie um ali mesmo). O botão do cartão vira um <strong>Assinar</strong> com pagamento real; seu Stripe cuida das renovações e faturas. Ver <a href="#store">Loja online</a>.'],
+      ['Posso comprar um domínio pela Caddisfly?', 'Sim — abra <strong>🌐 Compre um domínio</strong> no seu Painel, pesquise um nome e compre. Nós o registramos em seu nome e o conectamos ao seu site automaticamente com SSL — sem configurar DNS. <strong>Importante:</strong> após a primeira compra você precisa clicar em 15 dias no link de verificação da ICANN enviado por e-mail, ou o domínio é suspenso. Os domínios renovam a cada ano (você pode desativar). Ver <a href="#buy-domain">Comprar um domínio</a>.'],
       ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Ver <a href="#blog">Blog e redes sociais</a>.'],
       ['Para onde vão as mensagens do formulário de contato?', 'Para a sua <strong>caixa de entrada</strong> (Painel → Mensagens) e para o seu e-mail. Responda ao e-mail de aviso para falar diretamente com o visitante. O spam é filtrado automaticamente.'],
       ['Posso desfazer mudanças ou voltar a uma versão anterior?', 'Sim — abra <strong>🕘 Versões</strong> no Personalizar. Salve versões manualmente antes de grandes mudanças, e a Caddisfly também salva automaticamente a cada hora enquanto você edita. Ao restaurar, seu estado atual é salvo primeiro, e o site no ar só muda quando você publica. Ver <a href="#versions">Versões, backups e exportação</a>.'],

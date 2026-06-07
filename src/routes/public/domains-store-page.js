@@ -6,6 +6,7 @@
 import { htmlResponse } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { isNamecheapConfigured } from '../../utils/namecheap.js';
+import { countryOptions } from '../../utils/countries.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -130,7 +131,7 @@ export async function handleDomainsStorePage(ctx) {
         <div><label>${tr('domstore.f_city')}</label><input id="c-city"></div>
         <div><label>${tr('domstore.f_state')}</label><input id="c-state"></div>
         <div><label>${tr('domstore.f_postal')}</label><input id="c-postal"></div>
-        <div><label>${tr('domstore.f_country')}</label><input id="c-country" maxlength="2" placeholder="US" style="text-transform:uppercase"></div>
+        <div><label>${tr('domstore.f_country')}</label><select id="c-country">${countryOptions('US')}</select></div>
         <div><label>${tr('domstore.f_phone_cc')}</label><input id="c-cc" placeholder="1" maxlength="3"></div>
         <div><label>${tr('domstore.f_phone')}</label><input id="c-phone" placeholder="5551234567"></div>
         ${sites.length ? `<div class="full"><label>${tr('domstore.site_label')}</label>

@@ -654,7 +654,7 @@ export const en = {
     privacy_note: 'Every domain includes free WHOIS privacy and renews automatically each year (cancel anytime). Domain purchases are non-refundable once registered.',
     contact_sub: 'Domain registration requires a contact (ICANN rules). It stays private — WHOIS privacy is included free.',
     f_first: 'First name', f_last: 'Last name', f_email: 'Email', f_address: 'Address',
-    f_city: 'City', f_state: 'State / province', f_postal: 'Postal code', f_country: 'Country (2-letter)',
+    f_city: 'City', f_state: 'State / province', f_postal: 'Postal code', f_country: 'Country',
     f_phone_cc: 'Phone country code', f_phone: 'Phone number',
     bad_contact: 'Please fill in all contact fields (phone digits only, 2-letter country code).',
     site_label: 'Connect to one of your sites (automatic — recommended)', site_none: 'Don’t connect yet',
@@ -738,6 +738,7 @@ export const en = {
       ['publishing', 'Publishing'], ['store', 'Online store'],
       ['blog', 'Blog & social posts'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
+      ['buy-domain', 'Buying a domain'],
       ['custom-domains', 'Custom domains & DNS'], ['plans', 'Plans, credits & billing'],
       ['team', 'Team members'], ['faq', 'FAQ'],
     ],
@@ -802,6 +803,16 @@ export const en = {
         </ul>
         <p><strong>Fine-tune any page:</strong> open <strong>Customize</strong> → the <strong>🔎 SEO</strong> panel. Edit the page title and meta description (with a live Google-result preview), and set a site-wide social share image. Leave anything blank and we use the smart auto values. Changes apply the next time you publish.</p>
         <p>After publishing, submit your <code>sitemap.xml</code> in <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a> to get indexed faster.</p>`],
+      ['buy-domain', 'Buying a domain', `
+        <p>Don’t have a domain yet? Buy one right inside Caddisfly and we connect it to your site automatically — no DNS setup. Open <strong>🌐 Buy a domain</strong> from your <a href="/dashboard">Dashboard</a>.</p>
+        <ol>
+          <li><strong>Search</strong> a name; available options show with their yearly price.</li>
+          <li><strong>Choose a site to connect it to</strong> (optional but recommended) and enter the contact details ICANN requires (kept private — free WHOIS privacy is included).</li>
+          <li><strong>Pay</strong> securely; the domain is registered to you and we <strong>set the DNS for you</strong> (<code>www</code> → your site, with the root redirecting to <code>www</code>). Your <strong>SSL certificate issues automatically</strong> — your site is live on your own domain within minutes.</li>
+        </ol>
+        <p><strong>⚠️ Verify your email (required by ICANN):</strong> right after your first registration, the registry emails you a <em>verification link</em> (check the inbox for the contact email you entered, and the spam folder). <strong>You must click it within 15 days</strong> or the domain gets suspended until you do. It’s a one-time step per email address.</p>
+        <p><strong>Auto-renew:</strong> domains renew automatically each year using your saved card so your site never goes dark. Toggle <strong>Auto-renew</strong> off on the <strong>Buy a domain</strong> page if you’d rather let it expire. If the automatic connection didn’t finish, use <strong>Re-run setup</strong> next to the domain.</p>
+        <p>Already own a domain elsewhere? See <a href="#custom-domains">Custom domains &amp; DNS</a> instead.</p>`],
       ['custom-domains', 'Custom domains & DNS', `
         <p>On a paid plan you can point your own domain at your site. Open <strong>🌐 Custom domain</strong> (in Customize or on your <a href="/dashboard">Dashboard</a>) and enter a domain.</p>
         <ol>
@@ -837,6 +848,7 @@ export const en = {
       ['Can I sell products on my site?', 'Yes — from the Starter plan ($9/mo). Connect your own Stripe account on the <strong>🛍 Store</strong> page, add products (AI can write descriptions and generate photos — or import your Stripe catalog in one click), and publish. See <a href="#store">Online store</a>.'],
       ['Do you take a cut of my sales?', 'No. Checkout runs on your own Stripe account, so the money goes straight to you. You pay only Stripe’s standard processing fees — Caddisfly adds nothing on top.'],
       ['Can I sell subscriptions or memberships?', 'Yes — add a <strong>Pricing</strong> section, edit it, and attach a recurring Stripe price to a plan card (or create one in place). The card’s button becomes a live <strong>Subscribe</strong> checkout; your Stripe handles renewals and invoices. See <a href="#store">Online store</a>.'],
+      ['Can I buy a domain through Caddisfly?', 'Yes — open <strong>🌐 Buy a domain</strong> on your Dashboard, search a name, and buy it. We register it to you and connect it to your site automatically with SSL — no DNS setup. <strong>Important:</strong> after your first purchase you must click the ICANN verification link emailed to you within 15 days, or the domain is suspended. Domains auto-renew yearly (you can turn that off). See <a href="#buy-domain">Buying a domain</a>.'],
       ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. See <a href="#blog">Blog &amp; social posts</a>.'],
       ['Where do contact-form messages go?', 'To your <strong>Inbox</strong> (Dashboard → Inbox) and to your email. Reply to the notification email to answer the visitor directly. Spam is filtered automatically.'],
       ['Can I undo changes or go back to an earlier version?', 'Yes — open <strong>🕘 Versions</strong> in Customize. Save versions manually before big changes, and Caddisfly also auto-saves hourly while you edit. Restoring backs up your current state first, and your live site only changes when you publish. See <a href="#versions">Versions, backups &amp; export</a>.'],

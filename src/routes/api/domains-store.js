@@ -23,8 +23,10 @@ import { createDomainCheckoutSession, getPlatformCheckoutSession, refundPaymentI
 import { getBillingAccount } from '../../db/billing.js';
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
-import { createDomain, getDomainByHostname } from '../../db/custom-domains.js';
-import { isSaaSConfigured, createCustomHostname, cnameTarget } from '../../utils/cloudflare-saas.js';
+import { createDomain, getDomainByHostname, updateDomain } from '../../db/custom-domains.js';
+import { isSaaSConfigured, createCustomHostname, getCustomHostname, isActive, cnameTarget } from '../../utils/cloudflare-saas.js';
+import { uploadToR2 } from '../../utils/r2-storage.js';
+import { isValidCountry } from '../../utils/countries.js';
 import { notifyOps } from '../../utils/ops-notify.js';
 import { sendDomainRegisteredEmail, isValidEmail } from '../../utils/email.js';
 import { t, translator } from '../../i18n/index.js';
@@ -126,7 +128,7 @@ function validContact(c) {
     email: s(c.email, 320),
   };
   if (!contact.first_name || !contact.last_name || !contact.address1 || !contact.city || !contact.postal_code) return null;
-  if (!/^[A-Z]{2}$/.test(contact.country)) return null;
+  if (!isValidCountry(contact.country)) return null;
   if (!PHONE_RE.test(contact.phone)) return null;
   if (!isValidEmail(contact.email)) return null;
   return contact;
@@ -227,16 +229,16 @@ export async function autoConnectDomain(env, order) {
   if ((order.ai_project_id || order.project_id) && isSaaSConfigured(env)) {
     try {
       const hostname = `www.${order.domain}`;
-      if (await getDomainByHostname(env.DB, hostname)) {
-        result.hostname = true; // already connected
-      } else {
-        const projectKey = order.ai_project_id ? { aiProjectId: order.ai_project_id } : { projectId: order.project_id };
-        const proj = order.ai_project_id
-          ? await env.DB.prepare('SELECT subdomain FROM ai_projects WHERE id = ?').bind(order.ai_project_id).first()
-          : await env.DB.prepare('SELECT subdomain FROM projects WHERE id = ?').bind(order.project_id).first();
-        if (proj && proj.subdomain) {
+      const projectKey = order.ai_project_id ? { aiProjectId: order.ai_project_id } : { projectId: order.project_id };
+      const proj = order.ai_project_id
+        ? await env.DB.prepare('SELECT subdomain FROM ai_projects WHERE id = ?').bind(order.ai_project_id).first()
+        : await env.DB.prepare('SELECT subdomain FROM projects WHERE id = ?').bind(order.project_id).first();
+
+      if (proj && proj.subdomain) {
+        let rec = await getDomainByHostname(env.DB, hostname);
+        if (!rec) {
           const cf = await createCustomHostname(env, hostname);
-          await createDomain(env.DB, projectKey, {
+          rec = await createDomain(env.DB, projectKey, {
             hostname,
             subdomain: proj.subdomain,
             status: 'pending',
@@ -247,8 +249,24 @@ export async function autoConnectDomain(env, order) {
             dcv_name: cf ? cf.dcv_name : null,
             dcv_value: cf ? cf.dcv_value : null,
           });
-          result.hostname = true;
         }
+        // The pointer (host → subdomain) is what the sites worker resolves —
+        // write it now so the site serves the instant SSL goes active. (The
+        // generic flow only writes it on activation, which nobody polls here.)
+        await uploadToR2(env.STORAGE, `domains/${hostname}`, proj.subdomain, 'text/plain');
+        // Best-effort: advance our SSL status if CF has already validated.
+        if (rec && rec.cf_hostname_id) {
+          try {
+            const state = await getCustomHostname(env, rec.cf_hostname_id);
+            if (state) {
+              await updateDomain(env.DB, rec.id, {
+                status: isActive(state) ? 'active' : 'pending',
+                ssl_status: state.ssl_status,
+              });
+            }
+          } catch (_) { /* status poll is best-effort */ }
+        }
+        result.hostname = true;
       }
     } catch (e) {
       console.error('domain auto-connect failed (non-fatal):', e.message);
