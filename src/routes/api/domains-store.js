@@ -24,7 +24,7 @@ import { getBillingAccount } from '../../db/billing.js';
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { createDomain, getDomainByHostname, updateDomain } from '../../db/custom-domains.js';
-import { isSaaSConfigured, createCustomHostname, getCustomHostname, isActive, cnameTarget } from '../../utils/cloudflare-saas.js';
+import { isSaaSConfigured, createCustomHostname, createWorkerRoute, getCustomHostname, isActive, cnameTarget } from '../../utils/cloudflare-saas.js';
 import { uploadToR2 } from '../../utils/r2-storage.js';
 import { isValidCountry } from '../../utils/countries.js';
 import { notifyOps } from '../../utils/ops-notify.js';
@@ -254,6 +254,9 @@ export async function autoConnectDomain(env, order) {
         // write it now so the site serves the instant SSL goes active. (The
         // generic flow only writes it on activation, which nobody polls here.)
         await uploadToR2(env.STORAGE, `domains/${hostname}`, proj.subdomain, 'text/plain');
+        // Ensure the Worker route exists (heals domains created before the
+        // route step, and any best-effort failure at create time).
+        try { await createWorkerRoute(env, hostname); } catch (e) { console.error('worker route ensure failed:', e.message); }
         // Best-effort: advance our SSL status if CF has already validated.
         if (rec && rec.cf_hostname_id) {
           try {
