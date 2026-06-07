@@ -225,7 +225,10 @@ export async function handleDashboard(ctx) {
   const inner = `
     <div class="dhead">
       <h1>${tr('dash.title')}</h1>
-      <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
+      <div>
+        <a class="btn ghost" href="/domains">${tr('dash.buy_domain')}</a>
+        <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
+      </div>
     </div>
     <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
 

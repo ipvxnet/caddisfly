@@ -6,6 +6,8 @@ import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
 import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
 import { notifyOpsAsync } from '../../utils/ops-notify.js';
+import { processDomainOrder } from './domains-store.js';
+import { updateOrder as updateDomainOrder } from '../../db/domain-orders.js';
 
 const MONTH_SECONDS = 30 * 24 * 60 * 60;
 
@@ -64,6 +66,19 @@ export async function handleStripeWebhook(ctx) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const s = event.data.object;
+
+        // Domain purchase: registration backstop (receipt page is the primary
+        // writer; processDomainOrder claims atomically so this can't double).
+        if (s.metadata && s.metadata.type === 'domain_order' && s.metadata.order_id) {
+          const orderId = parseInt(s.metadata.order_id, 10);
+          if (Number.isFinite(orderId) && s.payment_status === 'paid') {
+            if (s.customer) await updateDomainOrder(env.DB, orderId, { stripe_customer_id: s.customer });
+            const run = processDomainOrder(env, orderId, s.payment_intent || null);
+            if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(run); else await run;
+          }
+          break;
+        }
+
         const email =
           s.client_reference_id ||
           (s.customer_details && s.customer_details.email) ||

@@ -132,6 +132,17 @@ binding = "BROWSER"
 #   SLACK_WEBHOOK_URL  (https://hooks.slack.com/services/…)
 # e.g. npx wrangler secret put SLACK_WEBHOOK_URL --env production
 #
+# Namecheap domain reselling (optional — domain store UI hides until set).
+# All API calls route through the fixed-IP relay on the VPS (Namecheap
+# allowlists caller IPs; Workers have none) — see scripts/nc-relay/README.md.
+#   NC_RELAY_URL          (https://nc-relay.<your-domain>/nc)
+#   NC_RELAY_SECRET       (shared secret, also in the relay's systemd unit)
+#   NAMECHEAP_API_USER    (Namecheap account username)
+#   NAMECHEAP_API_KEY     (Profile → Tools → API Access)
+#   NAMECHEAP_CLIENT_IP   (the relay VPS public IP)
+# Optional var NAMECHEAP_SANDBOX = "1" routes to api.sandbox.namecheap.com.
+# e.g. npx wrangler secret put NC_RELAY_URL --env preview
+#
 # Custom domains (Cloudflare for SaaS — Custom Hostnames). Until set, the
 # "Custom domain" UI shows but registration is disabled. Enable Cloudflare for
 # SaaS on the caddisfly.app zone first.

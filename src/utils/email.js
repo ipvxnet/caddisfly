@@ -542,3 +542,25 @@ export async function sendOrderMerchantEmail(env, {
     return false;
   }
 }
+
+/** Domain-purchase confirmation (transactional; English like other system mail). */
+export async function sendDomainRegisteredEmail(env, { to, domain, autoConnected }) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">🌐 ${domain} is yours!</h1>
+        <p style="color:#444;line-height:1.6;">Your domain <strong>${domain}</strong> is registered, with free WHOIS privacy enabled.</p>
+        ${autoConnected
+          ? `<p style="color:#444;line-height:1.6;">We've already pointed it at your website — <strong>https://www.${domain}</strong> goes live automatically as soon as the SSL certificate is issued (usually a few minutes).</p>`
+          : `<p style="color:#444;line-height:1.6;">Connect it to one of your sites anytime from the <strong>🌐 Custom domain</strong> panel.</p>`}
+        <p style="color:#444;line-height:1.6;">It renews automatically each year using your saved payment method — manage it from your dashboard.</p>
+        <p style="margin:24px 0 0;"><a href="${env.APP_URL || 'https://caddisfly.ai'}/dashboard" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Open dashboard</a></p>
+      </div>
+    </body></html>`;
+  try {
+    return await deliverEmail(env, { to, subject: `Your domain ${domain} is registered 🎉`, html });
+  } catch (e) {
+    console.error('Failed to send domain email:', e.message);
+    return false;
+  }
+}

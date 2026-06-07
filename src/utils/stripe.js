@@ -184,6 +184,46 @@ export async function createStoreCheckoutSession(env, {
 }
 
 /**
+ * Domain-purchase Checkout Session on the PLATFORM account (we are the
+ * merchant — unlike store/subscription checkouts, which run on the customer's
+ * connected account). Saves the card for off-session auto-renewal.
+ */
+export async function createDomainCheckoutSession(env, { email, customerId, name, amountCents, currency, successUrl, cancelUrl, metadata }) {
+  const body = {
+    mode: 'payment',
+    line_items: [{ price_data: { currency: currency || 'usd', unit_amount: amountCents, product_data: { name } }, quantity: 1 }],
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    metadata,
+    payment_intent_data: { metadata, setup_future_usage: 'off_session' },
+  };
+  if (customerId) body.customer = customerId;
+  else {
+    body.customer_email = email;
+    body.customer_creation = 'always'; // off-session renewal needs a customer
+  }
+  return stripeRequest(env, '/checkout/sessions', body);
+}
+
+/** Retrieve a PLATFORM Checkout Session (domain receipts). */
+export async function getPlatformCheckoutSession(env, sessionId) {
+  const res = await fetch(`${STRIPE_API}/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
+    throw new Error(msg);
+  }
+  return json;
+}
+
+/** Refund a payment intent in full (domain registration failed after payment). */
+export async function refundPaymentIntent(env, paymentIntentId) {
+  return stripeRequest(env, '/refunds', { payment_intent: paymentIntentId });
+}
+
+/**
  * List a connected account's active RECURRING prices, product expanded —
  * drives the "attach a Stripe price" dropdown in the pricing-section editor.
  */

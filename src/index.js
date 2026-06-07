@@ -94,6 +94,8 @@ import {
   handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
+import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders } from './routes/api/domains-store.js';
+import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { handleStoreManager } from './routes/public/store-manager.js';
 import { handleStoreReceipt } from './routes/public/store-receipt.js';
 import { handleBuyerOrders, handleBuyerOrdersSend, handleBuyerOrdersAuth } from './routes/public/store-orders.js';
@@ -174,6 +176,13 @@ router.get('/team/accept/:token', handleTeamAccept);
 // Help/docs (public) + support tickets (customer, magic-link auth)
 router.get('/help', handleHelp);
 router.get('/support', handleSupport, [billingAuth]);
+
+// Domain store (Namecheap reselling)
+router.get('/domains', handleDomainsStorePage, [billingAuth]);
+router.get('/domains/receipt', handleDomainReceipt, [billingAuth]);
+router.get('/api/domains/search', handleDomainSearch, [billingAuth]);
+router.post('/api/domains/checkout', handleDomainCheckout, [billingAuth]);
+router.get('/api/domains/orders', handleDomainOrders, [billingAuth]);
 router.post('/api/support/ticket', handleCreateTicket, [billingAuth]);
 router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingAuth]);
 
