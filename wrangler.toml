@@ -125,6 +125,13 @@ binding = "BROWSER"
 #                                 webhook is the reliability backstop.)
 # e.g. npx wrangler secret put STRIPE_CONNECT_CLIENT_ID --env preview
 #
+# Slack operator alerts (optional). A Slack Incoming Webhook URL; when set, the
+# worker posts ops alerts (new/replied support tickets, new subscriptions,
+# cancellations, credit packs) to that channel. Silently skipped when unset
+# (email-stub degradation pattern). Non-production posts are prefixed [preview].
+#   SLACK_WEBHOOK_URL  (https://hooks.slack.com/services/…)
+# e.g. npx wrangler secret put SLACK_WEBHOOK_URL --env production
+#
 # Custom domains (Cloudflare for SaaS — Custom Hostnames). Until set, the
 # "Custom domain" UI shows but registration is disabled. Enable Cloudflare for
 # SaaS on the caddisfly.app zone first.

@@ -442,6 +442,10 @@ export const en = {
     not_accepting: 'This store isn’t accepting payments yet.',
     back_to_shop: 'Shop',
     no_products: 'No products yet — check back soon!',
+    subscribe: 'Subscribe',
+    sub_busy: 'Starting checkout…',
+    sub_error: 'Could not start checkout — please try again.',
+    sub_preview: 'Preview — subscriptions work on your published site.',
   },
 
   // Order receipt page + buyer confirmation email (SITE's language).
@@ -459,6 +463,8 @@ export const en = {
     back: '← Back to shop',
     pending: 'Your payment is still processing — you’ll receive a confirmation by email shortly.',
     not_found: 'We couldn’t find this order.',
+    sub_thanks: 'Subscription confirmed!',
+    sub_note: 'Your subscription renews automatically — invoices and receipts arrive by email from {name}.',
     // buyer email
     subject: 'Your order from {name} — {ref}',
     subject_line: 'Order confirmed ✓',
@@ -592,6 +598,20 @@ export const en = {
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',
     no_photos: 'No photos yet — click “Add photo”.', g_drag: 'Drag to reorder', g_alt_ph: 'Describe this photo (alt text)',
     g_replace: 'Replace', g_replace_t: 'Replace photo', g_remove_t: 'Remove photo',
+    plans: 'Plans', plans_hint: 'Attach a Stripe price to a plan and its button becomes a live “Subscribe” checkout on your published site.',
+    add_plan: '＋ Add plan',
+    plan_name: 'Plan name', plan_price_text: 'Price (display)', plan_period: 'Period', plan_features: 'Features',
+    plan_features_hint: 'One feature per line', plan_highlighted: 'Highlight (“Most popular”)', plan_remove: 'Remove plan',
+    sub_label: '💳 Subscription (via your Stripe)',
+    sub_loading: 'Loading your Stripe prices…',
+    sub_none: '— Not attached (decorative card) —',
+    sub_new: '＋ Create a new recurring price…',
+    sub_connect_first: 'Connect your Stripe account to sell subscriptions.',
+    sub_open_store: 'Open Store settings →',
+    sub_name_ph: 'Plan name on Stripe', sub_amount_ph: 'Amount (e.g. 9.99)',
+    per_month: 'per month', per_year: 'per year',
+    sub_create: 'Create & attach', sub_creating: 'Creating…',
+    sub_err: 'Could not create the price — check the values and try again.',
   },
 
   aip: {
@@ -711,7 +731,8 @@ export const en = {
           <li><strong>Add products</strong> — name, price, type (physical / digital / service). Let AI write the description (✨) and generate a product photo (🖼). Already selling on Stripe? <strong>⬇ Import from Stripe</strong> pulls your catalog in one click.</li>
           <li><strong>Publish</strong> — your site gets a <strong>Shop</strong> page and menu link automatically. Visitors add to cart and check out securely on Stripe (Apple&nbsp;Pay / Google&nbsp;Pay included); physical products collect a shipping address.</li>
         </ol>
-        <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>`],
+        <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>
+        <p><strong>Subscriptions:</strong> sell recurring plans from a <strong>Pricing</strong> section — edit the section, attach one of your Stripe recurring prices to a plan card (or create one right there), and its button becomes a live <strong>Subscribe</strong> checkout. Renewals, invoices, and receipt emails are handled by your Stripe account.</p>`],
       ['blog', 'Blog & social posts', `
         <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>
         <ul>
@@ -771,6 +792,7 @@ export const en = {
       ['Can Caddisfly create a logo for me?', 'Yes — on paid plans, open <strong>✨ Logo &amp; Brand</strong> in Customize and generate 4 AI logo options per run (10 credits); click one to use it as your header logo, favicon, and share image. On any plan you can upload your own logo instead. See <a href="#logo">Logo &amp; branding</a>.'],
       ['Can I sell products on my site?', 'Yes — from the Starter plan ($9/mo). Connect your own Stripe account on the <strong>🛍 Store</strong> page, add products (AI can write descriptions and generate photos — or import your Stripe catalog in one click), and publish. See <a href="#store">Online store</a>.'],
       ['Do you take a cut of my sales?', 'No. Checkout runs on your own Stripe account, so the money goes straight to you. You pay only Stripe’s standard processing fees — Caddisfly adds nothing on top.'],
+      ['Can I sell subscriptions or memberships?', 'Yes — add a <strong>Pricing</strong> section, edit it, and attach a recurring Stripe price to a plan card (or create one in place). The card’s button becomes a live <strong>Subscribe</strong> checkout; your Stripe handles renewals and invoices. See <a href="#store">Online store</a>.'],
       ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. See <a href="#blog">Blog &amp; social posts</a>.'],
       ['Where do contact-form messages go?', 'To your <strong>Inbox</strong> (Dashboard → Inbox) and to your email. Reply to the notification email to answer the visitor directly. Spam is filtered automatically.'],
       ['Can I undo changes or go back to an earlier version?', 'Yes — open <strong>🕘 Versions</strong> in Customize. Save versions manually before big changes, and Caddisfly also auto-saves hourly while you edit. Restoring backs up your current state first, and your live site only changes when you publish. See <a href="#versions">Versions, backups &amp; export</a>.'],

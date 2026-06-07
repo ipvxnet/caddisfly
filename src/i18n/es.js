@@ -438,6 +438,10 @@ export const es = {
     not_accepting: 'Esta tienda aún no acepta pagos.',
     back_to_shop: 'Tienda',
     no_products: 'Aún no hay productos — ¡vuelve pronto!',
+    subscribe: 'Suscribirse',
+    sub_busy: 'Iniciando el pago…',
+    sub_error: 'No se pudo iniciar el pago — inténtalo de nuevo.',
+    sub_preview: 'Vista previa — las suscripciones funcionan en tu sitio publicado.',
   },
 
   // Página de recibo + correo de confirmación al comprador (idioma del SITIO).
@@ -455,6 +459,8 @@ export const es = {
     back: '← Volver a la tienda',
     pending: 'Tu pago aún se está procesando — recibirás una confirmación por correo en breve.',
     not_found: 'No pudimos encontrar este pedido.',
+    sub_thanks: '¡Suscripción confirmada!',
+    sub_note: 'Tu suscripción se renueva automáticamente — las facturas y recibos llegan por correo de {name}.',
     subject: 'Tu pedido de {name} — {ref}',
     subject_line: 'Pedido confirmado ✓',
     intro: '¡Gracias por tu compra en {name}! Aquí tienes el resumen de tu pedido.',
@@ -586,6 +592,20 @@ export const es = {
     ph_send_message: 'Enviar mensaje', ph_gallery: 'Galería', ph_get_started: 'Empezar',
     no_photos: 'Aún no hay fotos — haz clic en “Añadir foto”.', g_drag: 'Arrastra para reordenar', g_alt_ph: 'Describe esta foto (texto alternativo)',
     g_replace: 'Reemplazar', g_replace_t: 'Reemplazar foto', g_remove_t: 'Quitar foto',
+    plans: 'Planes', plans_hint: 'Adjunta un precio de Stripe a un plan y su botón se convierte en un “Suscribirse” con pago real en tu sitio publicado.',
+    add_plan: '＋ Añadir plan',
+    plan_name: 'Nombre del plan', plan_price_text: 'Precio (visible)', plan_period: 'Periodo', plan_features: 'Características',
+    plan_features_hint: 'Una característica por línea', plan_highlighted: 'Destacar (“Más popular”)', plan_remove: 'Quitar plan',
+    sub_label: '💳 Suscripción (con tu Stripe)',
+    sub_loading: 'Cargando tus precios de Stripe…',
+    sub_none: '— Sin adjuntar (tarjeta decorativa) —',
+    sub_new: '＋ Crear un nuevo precio recurrente…',
+    sub_connect_first: 'Conecta tu cuenta de Stripe para vender suscripciones.',
+    sub_open_store: 'Abrir ajustes de Tienda →',
+    sub_name_ph: 'Nombre del plan en Stripe', sub_amount_ph: 'Importe (p. ej. 9.99)',
+    per_month: 'al mes', per_year: 'al año',
+    sub_create: 'Crear y adjuntar', sub_creating: 'Creando…',
+    sub_err: 'No se pudo crear el precio — revisa los valores e inténtalo de nuevo.',
   },
 
   aip: {
@@ -705,7 +725,8 @@ export const es = {
           <li><strong>Añade productos</strong> — nombre, precio y tipo (físico / digital / servicio). Deja que la IA escriba la descripción (✨) y genere una foto del producto (🖼). ¿Ya vendes con Stripe? <strong>⬇ Importar de Stripe</strong> trae tu catálogo en un clic.</li>
           <li><strong>Publica</strong> — tu sitio recibe una página <strong>Tienda</strong> y un enlace en el menú automáticamente. Los visitantes añaden al carrito y pagan de forma segura en Stripe (incluye Apple&nbsp;Pay / Google&nbsp;Pay); los productos físicos piden dirección de envío.</li>
         </ol>
-        <p>Tras cada venta, el comprador llega a una página de recibo (descargable en PDF) y recibe un correo de confirmación; tú recibes un correo de “nuevo pedido” y el pedido aparece en <strong>🧾 Pedidos</strong> en la página Tienda. Los compradores pueden ver su historial cuando quieran con <strong>Mis pedidos</strong> (enlace seguro por correo). Límites de productos: Starter 10 · Pro 50 · Agency ilimitados.</p>`],
+        <p>Tras cada venta, el comprador llega a una página de recibo (descargable en PDF) y recibe un correo de confirmación; tú recibes un correo de “nuevo pedido” y el pedido aparece en <strong>🧾 Pedidos</strong> en la página Tienda. Los compradores pueden ver su historial cuando quieran con <strong>Mis pedidos</strong> (enlace seguro por correo). Límites de productos: Starter 10 · Pro 50 · Agency ilimitados.</p>
+        <p><strong>Suscripciones:</strong> vende planes recurrentes desde una sección de <strong>Precios</strong> — edita la sección, adjunta uno de tus precios recurrentes de Stripe a una tarjeta de plan (o créalo ahí mismo) y su botón se convierte en un <strong>Suscribirse</strong> con pago real. Las renovaciones, facturas y recibos los gestiona tu cuenta de Stripe.</p>`],
       ['blog', 'Blog y redes sociales', `
         <p>Abre <strong>📝 Blog</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar). Dale a la IA unas frases sobre lo que debe decir la publicación — redacta el texto completo en el idioma de tu sitio; tú lo editas y publicas. Al publicar, tu sitio gana una página <strong>Blog</strong> y un enlace en el menú (republica desde Personalizar para poner en línea las publicaciones nuevas).</p>
         <ul>
@@ -765,6 +786,7 @@ export const es = {
       ['¿Puede Caddisfly crear un logo para mí?', 'Sí — en los planes de pago, abre <strong>✨ Logo y marca</strong> en Personalizar y genera 4 opciones de logo con IA por intento (10 créditos); haz clic en una para usarla como logo del encabezado, favicon e imagen para compartir. En cualquier plan puedes subir tu propio logo. Ver <a href="#logo">Logo y marca</a>.'],
       ['¿Puedo vender productos en mi sitio?', 'Sí — desde el plan Starter ($9/mes). Conecta tu propia cuenta de Stripe en la página <strong>🛍 Tienda</strong>, añade productos (la IA puede escribir descripciones y generar fotos — o importa tu catálogo de Stripe en un clic) y publica. Ver <a href="#store">Tienda online</a>.'],
       ['¿Os quedáis con una parte de mis ventas?', 'No. El pago se procesa en tu propia cuenta de Stripe, así que el dinero va directamente a ti. Solo pagas las tarifas estándar de Stripe — Caddisfly no añade nada encima.'],
+      ['¿Puedo vender suscripciones o membresías?', 'Sí — añade una sección de <strong>Precios</strong>, edítala y adjunta un precio recurrente de Stripe a una tarjeta de plan (o créalo ahí mismo). El botón de la tarjeta se convierte en un <strong>Suscribirse</strong> con pago real; tu Stripe gestiona renovaciones y facturas. Ver <a href="#store">Tienda online</a>.'],
       ['¿Cómo funciona el blog con IA?', 'Abre <strong>📝 Blog</strong>, dale a la IA unas frases y redactará una publicación completa en el idioma de tu sitio — tú la editas, la publicas y republicas tu sitio para ponerla en línea. Con un clic también genera una imagen de portada y publicaciones listas para X, Instagram y LinkedIn. Ver <a href="#blog">Blog y redes sociales</a>.'],
       ['¿A dónde van los mensajes del formulario de contacto?', 'A tu <strong>bandeja</strong> (Panel → Mensajes) y a tu correo. Responde al correo de aviso para contestar directamente al visitante. El spam se filtra automáticamente.'],
       ['¿Puedo deshacer cambios o volver a una versión anterior?', 'Sí — abre <strong>🕘 Versiones</strong> en Personalizar. Guarda versiones manualmente antes de grandes cambios, y Caddisfly también autoguarda cada hora mientras editas. Al restaurar se respalda primero tu estado actual, y tu sitio en línea solo cambia cuando publicas. Ver <a href="#versions">Versiones, copias y exportación</a>.'],

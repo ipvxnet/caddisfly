@@ -91,6 +91,7 @@ import {
   handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
   handleProductAIDescribe, handleProductImage, handleStoreCheckout,
   handleStoreWebhook, handleOrderList, handleProductImport,
+  handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
 import { handleStoreManager } from './routes/public/store-manager.js';
@@ -192,6 +193,7 @@ router.post('/api/track', handleTrack);
 router.post('/api/forms/submit', handleFormSubmit);
 // Store checkout — public, called cross-origin by the mini cart on shop pages
 router.post('/api/store/checkout', handleStoreCheckout);
+router.post('/api/store/subscribe', handleStoreSubscribe);
 // Buyer receipt page (Stripe success_url) + Connect webhook (order backstop)
 router.get('/store/receipt', handleStoreReceipt);
 router.post('/api/store/webhook', handleStoreWebhook);
@@ -265,6 +267,8 @@ router.put('/api/ai-builder/:project_id/store/products/:product_id', handleProdu
 router.delete('/api/ai-builder/:project_id/store/products/:product_id', handleProductDelete, PROJ);
 router.get('/api/ai-builder/:project_id/store/orders', handleOrderList, PROJ);
 router.post('/api/ai-builder/:project_id/store/import', handleProductImport, PROJ);
+router.get('/api/ai-builder/:project_id/store/prices', handleSubPriceList, PROJ);
+router.post('/api/ai-builder/:project_id/store/prices', handleSubPriceCreate, PROJ);
 
 // Site version snapshots (save / restore / delete / auto-save toggle)
 router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);

@@ -26,6 +26,10 @@ import {
   createStoreCheckoutSession,
   getStoreCheckoutSession,
   listConnectProducts,
+  listConnectRecurringPrices,
+  getConnectPrice,
+  createConnectSubscriptionPrice,
+  createSubscriptionCheckoutSession,
   verifyWebhook,
 } from '../../../utils/stripe.js';
 import { slugify } from '../../../db/blog-posts.js';
@@ -463,6 +467,155 @@ export async function handleStoreCheckout(ctx) {
     return json({ success: true, url: session.url });
   } catch (e) {
     console.error('store checkout error:', e);
+    return json({ success: false, error: 'Could not start checkout — please try again.' }, 500);
+  }
+}
+
+// ---- Subscriptions via the pricing section -------------------------------
+// Plan cards attach a RECURRING Stripe price from the merchant's connected
+// account (picked from their catalog, or created here — which just makes a
+// real Stripe price, so both paths share one source of truth).
+
+const PRICE_ID_RE = /^price_[A-Za-z0-9]+$/;
+const SUB_INTERVALS = new Set(['month', 'year']);
+
+/** Shape one Stripe price for the editor dropdown. */
+function priceView(p) {
+  return {
+    id: p.id,
+    product_name: (p.product && p.product.name) || p.nickname || p.id,
+    amount: p.unit_amount,
+    currency: p.currency,
+    interval: p.recurring && p.recurring.interval,
+  };
+}
+
+/** GET /api/ai-builder/:project_id/store/prices — recurring prices to attach. */
+export async function handleSubPriceList(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    if (!config.stripe_account_id) {
+      return json({ success: true, connected: false, prices: [] });
+    }
+    const prices = await listConnectRecurringPrices(env, config.stripe_account_id);
+    return json({ success: true, connected: true, prices: prices.map(priceView), currency: config.store_currency || 'usd' });
+  } catch (e) {
+    console.error('sub price list error:', e.message);
+    return json({ success: false, error: e.message.slice(0, 300) }, 502);
+  }
+}
+
+/** POST /api/ai-builder/:project_id/store/prices — create a recurring price
+ *  on the connected account. Body: { name, amount_cents, interval }. */
+export async function handleSubPriceCreate(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+
+    // Selling is a paid feature (same gate as products: free blocked in prod).
+    const tier = await getUserTier(env.DB, r.email);
+    if (env.ENVIRONMENT === 'production' && tier === 'free_trial') {
+      return json({ success: false, error: 'Selling subscriptions requires a paid plan.', billing_url: '/billing' }, 402);
+    }
+
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    if (!config.stripe_account_id) {
+      return json({ success: false, error: 'Connect your Stripe account first.' }, 409);
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const name = (body.name || '').toString().trim().slice(0, 120);
+    const amountCents = parseInt(body.amount_cents, 10);
+    const interval = (body.interval || '').toString();
+    if (!name) return json({ success: false, error: 'Plan name is required' }, 400);
+    if (!Number.isFinite(amountCents) || amountCents < 50 || amountCents > 99999999) {
+      return json({ success: false, error: 'Invalid amount' }, 400);
+    }
+    if (!SUB_INTERVALS.has(interval)) return json({ success: false, error: 'Invalid interval' }, 400);
+
+    const screen = screenContent(name);
+    if (!screen.allowed) return json(policyError(screen), 422);
+
+    const price = await createConnectSubscriptionPrice(env, config.stripe_account_id, {
+      name,
+      amountCents,
+      currency: config.store_currency || 'usd',
+      interval,
+    });
+    return json({ success: true, price: priceView({ ...price, product: { name } }) });
+  } catch (e) {
+    console.error('sub price create error:', e.message);
+    return json({ success: false, error: e.message.slice(0, 300) }, 502);
+  }
+}
+
+/** POST /api/store/subscribe — public; body { s, price, path }. Validates the
+ *  price on the site's connected account (active + recurring), then opens a
+ *  subscription Checkout Session. */
+export async function handleStoreSubscribe(ctx) {
+  const { env, request } = ctx;
+  try {
+    const body = await request.json().catch(() => ({}));
+    const publicId = (body.s || '').toString();
+    if (!PUBLIC_ID_RE.test(publicId)) return json({ success: false, error: 'Unknown site' }, 404);
+
+    const r = await resolveStoreProject(env, publicId);
+    if (!r) return json({ success: false, error: 'Unknown site' }, 404);
+
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    if (!config.stripe_account_id) {
+      return json({ success: false, error: 'This site isn’t accepting payments yet.' }, 503);
+    }
+
+    const priceId = (body.price || '').toString();
+    if (!PRICE_ID_RE.test(priceId)) return json({ success: false, error: 'Unknown plan' }, 400);
+
+    // Server truth: the price must live on THIS merchant's account, be active,
+    // and be recurring. Amount/interval come from Stripe, never the client.
+    let price;
+    try {
+      price = await getConnectPrice(env, config.stripe_account_id, priceId);
+    } catch (e) {
+      console.error('subscribe price lookup failed:', e.message);
+      return json({ success: false, error: 'This plan is not available.' }, 409);
+    }
+    if (!price.active || !price.recurring) {
+      return json({ success: false, error: 'This plan is not available.' }, 409);
+    }
+
+    const appOrigin = env.APP_URL || '';
+    const origin = (request.headers.get('Origin') || appOrigin || '').replace(/\/$/, '');
+    if (!/^https?:\/\/[\w.-]+(:\d+)?$/.test(origin)) {
+      return json({ success: false, error: 'Bad origin' }, 400);
+    }
+    let path = (body.path || '/').toString().split('?')[0].slice(0, 200);
+    if (!path.startsWith('/')) path = '/';
+
+    let session;
+    try {
+      session = await createSubscriptionCheckoutSession(env, {
+        account: config.stripe_account_id,
+        priceId,
+        successUrl: `${appOrigin}/store/receipt?s=${publicId}&sid={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${origin}${path}?cancelled=1`,
+        metadata: {
+          type: 'store_sub',
+          site: publicId,
+          back: `${origin}${path}`.slice(0, 400),
+        },
+      });
+    } catch (e) {
+      // Surface Stripe's message — usually merchant-fixable setup issues.
+      console.error('subscribe (stripe) error:', e.message);
+      return json({ success: false, error: e.message.slice(0, 300) }, 502);
+    }
+    return json({ success: true, url: session.url });
+  } catch (e) {
+    console.error('subscribe error:', e);
     return json({ success: false, error: 'Could not start checkout — please try again.' }, 500);
   }
 }

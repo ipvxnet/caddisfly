@@ -184,6 +184,81 @@ export async function createStoreCheckoutSession(env, {
 }
 
 /**
+ * List a connected account's active RECURRING prices, product expanded —
+ * drives the "attach a Stripe price" dropdown in the pricing-section editor.
+ */
+export async function listConnectRecurringPrices(env, account) {
+  const res = await fetch(`${STRIPE_API}/prices?active=true&type=recurring&limit=100&expand[]=data.product`, {
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Stripe-Account': account,
+    },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
+    throw new Error(msg);
+  }
+  return json.data || [];
+}
+
+/**
+ * Retrieve one price (product expanded) from a connected account — subscribe-
+ * time validation: the price must exist on THIS merchant's account, be active,
+ * and be recurring before we'll create a subscription session for it.
+ */
+export async function getConnectPrice(env, account, priceId) {
+  const res = await fetch(`${STRIPE_API}/prices/${encodeURIComponent(priceId)}?expand[]=product`, {
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Stripe-Account': account,
+    },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
+    throw new Error(msg);
+  }
+  return json;
+}
+
+/**
+ * Create a Product + recurring Price on the connected account ("create a plan
+ * here" path — the result is a normal Stripe price, so both attach paths share
+ * one source of truth).
+ */
+export async function createConnectSubscriptionPrice(env, account, { name, amountCents, currency, interval }) {
+  const product = await stripeRequest(env, '/products', { name }, account);
+  const price = await stripeRequest(
+    env,
+    '/prices',
+    { product: product.id, unit_amount: amountCents, currency, recurring: { interval } },
+    account
+  );
+  return price;
+}
+
+/**
+ * Subscription Checkout Session on the connected account (direct charge — the
+ * merchant's Stripe owns the subscription, invoices, and emails).
+ */
+export async function createSubscriptionCheckoutSession(env, { account, priceId, successUrl, cancelUrl, metadata }) {
+  return stripeRequest(
+    env,
+    '/checkout/sessions',
+    {
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata,
+      subscription_data: { metadata },
+    },
+    account
+  );
+}
+
+/**
  * List a connected account's active products with their default price expanded
  * (catalog import). One page of up to 100 — plenty for our product caps.
  */

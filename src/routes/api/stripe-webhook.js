@@ -5,6 +5,7 @@ import { jsonResponse } from '../../utils/response.js';
 import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
 import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
+import { notifyOpsAsync } from '../../utils/ops-notify.js';
 
 const MONTH_SECONDS = 30 * 24 * 60 * 60;
 
@@ -21,7 +22,7 @@ async function applySubscription(env, sub) {
   const email = await emailForSubscription(env, sub);
   if (!email) {
     console.warn('Subscription event without resolvable email:', sub.id);
-    return;
+    return null;
   }
   const item = sub.items && sub.items.data && sub.items.data[0] ? sub.items.data[0] : null;
   const priceId = item && item.price ? item.price.id : null;
@@ -42,6 +43,7 @@ async function applySubscription(env, sub) {
     fields.plan_interval = plan.interval;
   }
   await upsertBillingAccount(env.DB, email, fields);
+  return { email, plan };
 }
 
 /** POST /api/stripe/webhook */
@@ -77,6 +79,7 @@ export async function handleStripeWebhook(ctx) {
             if (s.customer) {
               await upsertBillingAccount(env.DB, emailNorm, { stripe_customer_id: s.customer });
             }
+            notifyOpsAsync(ctx, `✨ *Credit pack purchased*: ${emailNorm} +${credits} credits`);
           }
           break;
         }
@@ -89,9 +92,13 @@ export async function handleStripeWebhook(ctx) {
         break;
       }
       case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-        await applySubscription(env, event.data.object);
+      case 'customer.subscription.updated': {
+        const applied = await applySubscription(env, event.data.object);
+        if (applied && event.type === 'customer.subscription.created') {
+          notifyOpsAsync(ctx, `💳 *New subscription*: ${applied.email} → ${applied.plan ? `${applied.plan.tier} (${applied.plan.interval})` : 'unknown plan'}`);
+        }
         break;
+      }
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
         const email = await emailForSubscription(env, sub);
@@ -102,6 +109,7 @@ export async function handleStripeWebhook(ctx) {
             subscription_status: 'canceled',
             cancel_at_period_end: 0,
           });
+          notifyOpsAsync(ctx, `🚪 *Subscription canceled*: ${email} → free_trial`);
         }
         break;
       }
