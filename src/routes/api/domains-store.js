@@ -203,6 +203,62 @@ export async function handleDomainCheckout(ctx) {
 }
 
 /**
+ * Auto-connect a registered domain: point DNS at the SaaS edge (www CNAME +
+ * root 301) and, when bound to a site, create the custom hostname so the
+ * existing activation machinery issues SSL. Best-effort + re-runnable (used by
+ * processDomainOrder and the manual /reconnect endpoint). Returns
+ * { dns, hostname } booleans.
+ */
+export async function autoConnectDomain(env, order) {
+  const target = cnameTarget(env) || 'sites.caddisfly.app';
+  const result = { dns: false, hostname: false };
+
+  try {
+    await setDnsHosts(env, order.domain, [
+      { name: 'www', type: 'CNAME', address: `${target}.` },
+      { name: '@', type: 'URL301', address: `https://www.${order.domain}` },
+    ]);
+    result.dns = true;
+  } catch (e) {
+    console.error('domain DNS setup failed (non-fatal):', e.message);
+    await notifyOps(env, `⚠️ Domain *${order.domain}*: DNS setup FAILED: ${e.message}`);
+  }
+
+  if ((order.ai_project_id || order.project_id) && isSaaSConfigured(env)) {
+    try {
+      const hostname = `www.${order.domain}`;
+      if (await getDomainByHostname(env.DB, hostname)) {
+        result.hostname = true; // already connected
+      } else {
+        const projectKey = order.ai_project_id ? { aiProjectId: order.ai_project_id } : { projectId: order.project_id };
+        const proj = order.ai_project_id
+          ? await env.DB.prepare('SELECT subdomain FROM ai_projects WHERE id = ?').bind(order.ai_project_id).first()
+          : await env.DB.prepare('SELECT subdomain FROM projects WHERE id = ?').bind(order.project_id).first();
+        if (proj && proj.subdomain) {
+          const cf = await createCustomHostname(env, hostname);
+          await createDomain(env.DB, projectKey, {
+            hostname,
+            subdomain: proj.subdomain,
+            status: 'pending',
+            cf_hostname_id: cf ? cf.cf_hostname_id : null,
+            ssl_status: cf ? cf.ssl_status : null,
+            cname_target: cf ? cf.cname_target : target,
+            dcv_type: cf ? cf.dcv_type : null,
+            dcv_name: cf ? cf.dcv_name : null,
+            dcv_value: cf ? cf.dcv_value : null,
+          });
+          result.hostname = true;
+        }
+      }
+    } catch (e) {
+      console.error('domain auto-connect failed (non-fatal):', e.message);
+      await notifyOps(env, `⚠️ Domain *${order.domain}*: auto-connect FAILED: ${e.message}`);
+    }
+  }
+  return result;
+}
+
+/**
  * Register + auto-connect a PAID order. Idempotent: exactly one caller wins
  * the claim; the loser sees a non-pending status and exits. Failure after
  * payment = auto-refund + ops alert.
@@ -243,48 +299,7 @@ export async function processDomainOrder(env, orderId, paymentIntentId = null) {
       error: null,
     });
 
-    // Auto-connect: point DNS at the SaaS edge…
-    const target = cnameTarget(env) || 'sites.caddisfly.app';
-    try {
-      await setDnsHosts(env, order.domain, [
-        { name: 'www', type: 'CNAME', address: `${target}.` },
-        { name: '@', type: 'URL301', address: `https://www.${order.domain}` },
-      ]);
-    } catch (e) {
-      console.error('domain DNS setup failed (non-fatal):', e.message);
-      await notifyOps(env, `⚠️ Domain *${order.domain}* registered but DNS setup FAILED: ${e.message}`);
-    }
-
-    // …and create the custom hostname on the bound site (existing machinery
-    // takes it from pending → active and writes the R2 pointer).
-    if ((order.ai_project_id || order.project_id) && isSaaSConfigured(env)) {
-      try {
-        const hostname = `www.${order.domain}`;
-        if (!(await getDomainByHostname(env.DB, hostname))) {
-          const projectKey = order.ai_project_id ? { aiProjectId: order.ai_project_id } : { projectId: order.project_id };
-          const proj = order.ai_project_id
-            ? await env.DB.prepare('SELECT subdomain FROM ai_projects WHERE id = ?').bind(order.ai_project_id).first()
-            : await env.DB.prepare('SELECT subdomain FROM projects WHERE id = ?').bind(order.project_id).first();
-          if (proj && proj.subdomain) {
-            const cf = await createCustomHostname(env, hostname);
-            await createDomain(env.DB, projectKey, {
-              hostname,
-              subdomain: proj.subdomain,
-              status: 'pending',
-              cf_hostname_id: cf ? cf.cf_hostname_id : null,
-              ssl_status: cf ? cf.ssl_status : null,
-              cname_target: cf ? cf.cname_target : target,
-              dcv_type: cf ? cf.dcv_type : null,
-              dcv_name: cf ? cf.dcv_name : null,
-              dcv_value: cf ? cf.dcv_value : null,
-            });
-          }
-        }
-      } catch (e) {
-        console.error('domain auto-connect failed (non-fatal):', e.message);
-        await notifyOps(env, `⚠️ Domain *${order.domain}* registered but auto-connect FAILED: ${e.message}`);
-      }
-    }
+    await autoConnectDomain(env, order); // best-effort; alerts on failure
 
     await notifyOps(env, `💰 *Domain sold*: ${order.domain} → ${order.customer_email} ($${(order.price_cents / 100).toFixed(2)}, wholesale $${(order.wholesale_cents / 100).toFixed(2)})`);
     await sendDomainRegisteredEmail(env, {
@@ -382,4 +397,38 @@ export async function handleDomainOrders(ctx) {
       auto_renew: !!o.auto_renew, registered_at: o.registered_at, expires_at: o.expires_at,
     })),
   });
+}
+
+/** POST /api/domains/:id/auto-renew — toggle a registered domain's auto-renew.
+ *  Body { auto_renew: bool }. Owner-scoped. Our renewal job reads this flag. */
+export async function handleDomainAutoRenew(ctx) {
+  const { env, request, params } = ctx;
+  if (!ctx.billingEmail) return jsonResponse({ success: false, error: 'Sign in first.' }, 401);
+  const order = await getOrderById(env.DB, parseInt(params.id, 10) || 0);
+  if (!order || order.customer_email.toLowerCase() !== ctx.billingEmail.toLowerCase()) {
+    return jsonResponse({ success: false, error: 'Domain not found.' }, 404);
+  }
+  if (order.status !== 'registered') {
+    return jsonResponse({ success: false, error: 'Only registered domains can change auto-renew.' }, 409);
+  }
+  const body = await request.json().catch(() => ({}));
+  const on = body.auto_renew ? 1 : 0;
+  await updateOrder(env.DB, order.id, { auto_renew: on });
+  return jsonResponse({ success: true, auto_renew: !!on });
+}
+
+/** POST /api/domains/:id/reconnect — re-run auto-connect (DNS + custom
+ *  hostname) for a registered domain whose first attempt flaked. Owner-scoped. */
+export async function handleDomainReconnect(ctx) {
+  const { env, params } = ctx;
+  if (!ctx.billingEmail) return jsonResponse({ success: false, error: 'Sign in first.' }, 401);
+  const order = await getOrderById(env.DB, parseInt(params.id, 10) || 0);
+  if (!order || order.customer_email.toLowerCase() !== ctx.billingEmail.toLowerCase()) {
+    return jsonResponse({ success: false, error: 'Domain not found.' }, 404);
+  }
+  if (order.status !== 'registered') {
+    return jsonResponse({ success: false, error: 'This domain isn’t registered yet.' }, 409);
+  }
+  const r = await autoConnectDomain(env, order);
+  return jsonResponse({ success: r.dns, dns: r.dns, hostname: r.hostname });
 }

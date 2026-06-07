@@ -38,12 +38,19 @@ function decodeXml(s) {
   return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Relay/edge connection hiccups (522/502/503/504) are transient — retry the
+// SAFE/idempotent commands. NEVER retry domains.create (non-idempotent).
+const TRANSIENT = new Set([502, 503, 504, 522, 524]);
+
 /**
  * Low-level call: POST params to the relay, verify ApiResponse Status="OK".
+ * @param {object} opts - { retries } (default 2; pass 0 for non-idempotent calls)
  * @returns {Promise<string>} raw XML
  */
-export async function ncRequest(env, command, params = {}) {
+export async function ncRequest(env, command, params = {}, opts = {}) {
   if (!isNamecheapConfigured(env)) throw new Error('Namecheap is not configured');
+  const retries = opts.retries != null ? opts.retries : 2;
   const body = new URLSearchParams({
     ApiUser: env.NAMECHEAP_API_USER,
     ApiKey: env.NAMECHEAP_API_KEY,
@@ -56,11 +63,23 @@ export async function ncRequest(env, command, params = {}) {
   }
   if (env.NAMECHEAP_SANDBOX === '1') body.set('__host', SANDBOX_HOST);
 
-  const res = await fetch(env.NC_RELAY_URL, {
-    method: 'POST',
-    headers: { 'X-Relay-Secret': env.NC_RELAY_SECRET, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
+  let res, lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt) await sleep(500 * attempt);
+    try {
+      res = await fetch(env.NC_RELAY_URL, {
+        method: 'POST',
+        headers: { 'X-Relay-Secret': env.NC_RELAY_SECRET, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+    } catch (e) {
+      lastErr = e; res = null;
+      if (attempt < retries) continue;
+      throw new Error(`Namecheap relay unreachable: ${e.message}`);
+    }
+    if (TRANSIENT.has(res.status) && attempt < retries) { lastErr = new Error(`relay ${res.status}`); continue; }
+    break;
+  }
   const xml = await res.text();
   if (!res.ok) throw new Error(`Namecheap relay ${res.status}`);
 
@@ -157,7 +176,9 @@ export async function registerDomain(env, { domain, years = 1, contact, nameserv
     ...contactParams(contact),
   };
   if (nameservers) params.Nameservers = nameservers.join(',');
-  const xml = await ncRequest(env, 'namecheap.domains.create', params);
+  // NEVER retry registration — it's non-idempotent (the caller verifies with
+  // getDomainInfo on error instead).
+  const xml = await ncRequest(env, 'namecheap.domains.create', params, { retries: 0 });
   const r = xmlTags(xml, 'DomainCreateResult')[0];
   if (!r || r.attrs.Registered !== 'true') throw new Error('Registration was not confirmed by Namecheap');
   return {
