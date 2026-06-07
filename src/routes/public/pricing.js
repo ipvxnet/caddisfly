@@ -137,6 +137,7 @@ export async function handlePricing(ctx) {
         <div class="small">${tr('pricing.vs_small')}</div>
       </div>
       <p class="note">${tr('pricing.note')}</p>
+      <p class="note" style="margin-top:.4rem"><a href="/compare" style="color:var(--p2);font-weight:700">${tr('pricing.compare_link')}</a> · <a href="/speed" style="color:var(--p2);font-weight:700">${tr('pricing.speed_link')}</a></p>
     </div></section>
 
     <section><div class="wrap faq">
