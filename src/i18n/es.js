@@ -397,6 +397,17 @@ export const es = {
     total: '{n} mensajes', unread: '{n} nuevos', new: 'nuevo',
     reply: 'Responder', delete: 'Eliminar', delete_confirm: '¿Eliminar este mensaje?',
     empty: 'Aún no hay mensajes. Cuando los visitantes envíen el formulario de contacto de tu sitio publicado, sus mensajes aparecerán aquí.',
+    notify_label: 'Las notificaciones van a',
+    notify_hint: 'Los mensajes nuevos se envían por correo aquí (déjalo en blanco para usar el correo de tu cuenta). Guarda y luego envía una prueba para verificar la entrega.',
+    notify_save: 'Guardar', notify_saved: 'Guardado ✓ — las notificaciones irán a la nueva dirección.',
+    notify_invalid: 'Introduce una dirección de correo válida.',
+    test_btn: 'Enviar correo de prueba', test_sending: 'Enviando…',
+    test_ok: 'Correo de prueba enviado a {to} — revisa tu bandeja (y el spam).',
+    test_fail: 'No se pudo entregar el correo de prueba. Revisa la dirección o contacta con soporte.',
+    err: 'Algo salió mal. Inténtalo de nuevo.',
+    mail_sent_title: 'Correo de notificación entregado',
+    mail_failed_title: 'El correo de notificación no se pudo enviar',
+    mail_skipped_title: 'Correo omitido (límite diario de notificaciones) — el mensaje está guardado aquí',
   },
 
   blogw: {

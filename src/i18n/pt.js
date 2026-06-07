@@ -397,6 +397,17 @@ export const pt = {
     total: '{n} mensagens', unread: '{n} novas', new: 'nova',
     reply: 'Responder', delete: 'Excluir', delete_confirm: 'Excluir esta mensagem?',
     empty: 'Ainda não há mensagens. Quando os visitantes enviarem o formulário de contato do seu site publicado, as mensagens aparecerão aqui.',
+    notify_label: 'As notificações vão para',
+    notify_hint: 'Mensagens novas são enviadas por e-mail para cá (deixe em branco para usar o e-mail da sua conta). Salve e envie um teste para verificar a entrega.',
+    notify_save: 'Salvar', notify_saved: 'Salvo ✓ — as notificações irão para o novo endereço.',
+    notify_invalid: 'Informe um endereço de e-mail válido.',
+    test_btn: 'Enviar e-mail de teste', test_sending: 'Enviando…',
+    test_ok: 'E-mail de teste enviado para {to} — verifique sua caixa de entrada (e o spam).',
+    test_fail: 'O e-mail de teste não pôde ser entregue. Verifique o endereço ou contate o suporte.',
+    err: 'Algo deu errado. Tente novamente.',
+    mail_sent_title: 'E-mail de notificação entregue',
+    mail_failed_title: 'O e-mail de notificação falhou',
+    mail_skipped_title: 'E-mail pulado (limite diário de notificações) — a mensagem está salva aqui',
   },
 
   blogw: {

@@ -400,6 +400,17 @@ export const en = {
     total: '{n} messages', unread: '{n} new', new: 'new',
     reply: 'Reply', delete: 'Delete', delete_confirm: 'Delete this message?',
     empty: 'No messages yet. When visitors submit the contact form on your published site, their messages appear here.',
+    notify_label: 'Notifications go to',
+    notify_hint: 'New messages are emailed here (leave blank to use your account email). Save, then send a test to verify delivery.',
+    notify_save: 'Save', notify_saved: 'Saved ✓ — notifications will go to the new address.',
+    notify_invalid: 'Enter a valid email address.',
+    test_btn: 'Send test email', test_sending: 'Sending…',
+    test_ok: 'Test email sent to {to} — check your inbox (and spam folder).',
+    test_fail: 'The test email could not be delivered. Check the address, or contact support.',
+    err: 'Something went wrong. Try again.',
+    mail_sent_title: 'Notification email delivered',
+    mail_failed_title: 'Notification email failed to send',
+    mail_skipped_title: 'Email skipped (daily notification cap) — the message is safe here',
   },
 
   // Published-site blog widget (baked in the SITE's language at render time).

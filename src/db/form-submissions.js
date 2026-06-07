@@ -20,6 +20,11 @@ export async function getSubmissionsBySite(db, publicId, limit = 200) {
   return results || [];
 }
 
+/** Record whether the owner-notification email went out ('sent'|'failed'|'skipped'). */
+export async function setEmailStatus(db, id, status) {
+  await db.prepare('UPDATE form_submissions SET email_status = ? WHERE id = ?').bind(status, id).run();
+}
+
 /** Unread count for one site — drives the dashboard badge. */
 export async function countUnread(db, publicId) {
   const r = await db
