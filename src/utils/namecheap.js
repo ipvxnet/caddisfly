@@ -231,6 +231,17 @@ export async function setDnsHosts(env, domain, hosts) {
   return true;
 }
 
+/**
+ * Renew a domain for N years. Non-idempotent (charges the operator's NC
+ * balance) — caller must guard against double-runs. → { domain_id, charged }
+ */
+export async function renewDomain(env, domain, years = 1) {
+  const xml = await ncRequest(env, 'namecheap.domains.renew', { DomainName: domain, Years: years }, { retries: 0 });
+  const r = xmlTags(xml, 'DomainRenewResult')[0];
+  if (!r || r.attrs.Renew !== 'true') throw new Error('Renewal was not confirmed by Namecheap');
+  return { domain_id: r.attrs.DomainID || null, charged: r.attrs.ChargedAmount || null };
+}
+
 /** Basic domain info (expiry, status). */
 export async function getDomainInfo(env, domain) {
   const xml = await ncRequest(env, 'namecheap.domains.getInfo', { DomainName: domain });

@@ -43,9 +43,20 @@ export async function getOrdersByEmail(db, email) {
   return results || [];
 }
 
+/** Registered domains expiring within `withinDays` — the renewal/reminder set. */
+export async function getExpiringDomains(db, nowTs, withinDays = 30) {
+  const cutoff = nowTs + withinDays * 86400;
+  const { results } = await db
+    .prepare("SELECT * FROM domain_orders WHERE status = 'registered' AND expires_at IS NOT NULL AND expires_at <= ? ORDER BY expires_at ASC")
+    .bind(cutoff)
+    .all();
+  return results || [];
+}
+
 const ORDER_FIELDS = new Set([
   'status', 'error', 'stripe_customer_id', 'nc_domain_id', 'nc_transaction_id',
   'auto_renew', 'registered_at', 'expires_at', 'stripe_session_id',
+  'renewal_attempts', 'renewal_last_at',
 ]);
 
 export async function updateOrder(db, id, fields) {

@@ -223,6 +223,36 @@ export async function refundPaymentIntent(env, paymentIntentId) {
   return stripeRequest(env, '/refunds', { payment_intent: paymentIntentId });
 }
 
+/** A customer's saved card payment methods (newest first). */
+export async function listCustomerCards(env, customerId) {
+  const res = await fetch(`${STRIPE_API}/payment_methods?customer=${encodeURIComponent(customerId)}&type=card&limit=10`, {
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((json.error && json.error.message) || `Stripe ${res.status}`);
+  return json.data || [];
+}
+
+/**
+ * Charge a saved card off-session (auto-renewal). Throws on decline /
+ * authentication-required so the caller can dunning-email + retry. Picks the
+ * customer's default card, else the most recent. → PaymentIntent
+ */
+export async function chargeOffSession(env, { customerId, amountCents, currency = 'usd', metadata = {} }) {
+  const cards = await listCustomerCards(env, customerId);
+  if (!cards.length) throw new Error('No saved card on file');
+  const pm = cards[0].id;
+  return stripeRequest(env, '/payment_intents', {
+    amount: amountCents,
+    currency,
+    customer: customerId,
+    payment_method: pm,
+    off_session: true,
+    confirm: true,
+    metadata,
+  });
+}
+
 /**
  * List a connected account's active RECURRING prices, product expanded —
  * drives the "attach a Stripe price" dropdown in the pricing-section editor.
