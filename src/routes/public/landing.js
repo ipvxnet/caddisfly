@@ -139,9 +139,12 @@ export async function handleLanding(ctx) {
     /* Features */
     #features{background:var(--soft);border-top:1px solid var(--line)}
     .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
-    .feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem}
+    .feat{display:block;background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;color:inherit;transition:transform .18s,box-shadow .18s,border-color .18s}
+    .feat:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(15,18,34,.08);border-color:var(--p1)}
     .feat .ic{font-size:1.5rem;margin-bottom:.6rem}
     .feat h4{color:var(--ink);font-size:1.05rem;font-weight:700;margin-bottom:.3rem}
+    .feat h4 .more{color:var(--p2);font-weight:700;font-size:.85rem;opacity:0;transition:opacity .18s;margin-left:.25rem}
+    .feat:hover h4 .more{opacity:1}
     .feat p{font-size:.92rem}
 
     /* CTA banner */
@@ -280,13 +283,21 @@ export async function handleLanding(ctx) {
       <div class="wrap">
         <div class="sec-head"><h2>${tr('landing.feats_title')}</h2></div>
         <div class="feats">
-          <div class="feat"><div class="ic">🗂️</div><h4>${tr('landing.feat_multipage_t')}</h4><p>${tr('landing.feat_multipage_d')}</p></div>
-          <div class="feat"><div class="ic">🔎</div><h4>${tr('landing.feat_seo_t')}</h4><p>${tr('landing.feat_seo_d')}</p></div>
-          <div class="feat"><div class="ic">✨</div><h4>${tr('landing.feat_aiedit_t')}</h4><p>${tr('landing.feat_aiedit_d')}</p></div>
-          <div class="feat"><div class="ic">🎨</div><h4>${tr('landing.feat_themes_t')}</h4><p>${tr('landing.feat_themes_d')}</p></div>
-          <div class="feat"><div class="ic">🖼️</div><h4>${tr('landing.feat_photos_t')}</h4><p>${tr('landing.feat_photos_d')}</p></div>
-          <div class="feat"><div class="ic">📱</div><h4>${tr('landing.feat_responsive_t')}</h4><p>${tr('landing.feat_responsive_d')}</p></div>
-          <div class="feat"><div class="ic">🚀</div><h4>${tr('landing.feat_publish_t')}</h4><p>${tr('landing.feat_publish_d')}</p></div>
+          ${[
+            ['🗂️', 'multipage', '/help#customizing'],
+            ['🛍', 'store', '/help#store'],
+            ['📝', 'blog', '/help#blog'],
+            ['🔎', 'seo', '/help#seo'],
+            ['✨', 'aiedit', '/help#customizing'],
+            ['🎨', 'themes', '/help#customizing'],
+            ['🖼️', 'photos', '/help#customizing'],
+            ['📬', 'forms', '/help#messages'],
+            ['🕘', 'versions', '/help#versions'],
+            ['⬇️', 'export', '/help#versions'],
+            ['📱', 'responsive', '/help#publishing'],
+            ['🚀', 'publish', '/help#publishing'],
+          ].map(([ic, key, href]) => `
+          <a class="feat" href="${href}"><div class="ic">${ic}</div><h4>${tr(`landing.feat_${key}_t`)}<span class="more">→</span></h4><p>${tr(`landing.feat_${key}_d`)}</p></a>`).join('')}
         </div>
       </div>
     </section>
