@@ -5,6 +5,7 @@
 import { redirect } from '../../utils/response.js';
 import { createTicket, getTicketByPublicId, addMessage } from '../../db/tickets.js';
 import { sendTicketEmail } from '../../utils/email.js';
+import { notifyOpsAsync } from '../../utils/ops-notify.js';
 
 // Where staff notifications go: first ADMIN_EMAILS entry, else ADMIN_EMAIL.
 function adminInbox(env) {
@@ -38,6 +39,9 @@ export async function handleCreateTicket(ctx) {
 
   const ticket = await createTicket(env.DB, { email, subject, type, body: message });
 
+  // Slack ops alert (best-effort, off the response path).
+  notifyOpsAsync(ctx, `🎫 *New ${type} ticket* from ${email}\n*${subject}*\n>${message.slice(0, 280).replace(/\n/g, '\n>')}\n<${url.origin}/admin/tickets?t=${ticket.public_id}|Open in admin>`);
+
   // Notify staff (best-effort).
   const inbox = adminInbox(env);
   if (inbox) {
@@ -69,6 +73,9 @@ export async function handleReplyTicket(ctx) {
   if (!message) return redirect(`/support?t=${ticket.public_id}`, 303);
 
   await addMessage(env.DB, ticket, { authorEmail: email, isStaff: false, body: message });
+
+  // Slack ops alert (best-effort, off the response path).
+  notifyOpsAsync(ctx, `💬 *Ticket reply* from ${email} on "${ticket.subject}"\n>${message.slice(0, 280).replace(/\n/g, '\n>')}\n<${url.origin}/admin/tickets?t=${ticket.public_id}|Open in admin>`);
 
   const inbox = adminInbox(env);
   if (inbox) {
