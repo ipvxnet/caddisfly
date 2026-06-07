@@ -442,6 +442,9 @@ export const pt = {
     sub_busy: 'Iniciando o pagamento…',
     sub_error: 'Não foi possível iniciar o pagamento — tente novamente.',
     sub_preview: 'Pré-visualização — as assinaturas funcionam no seu site publicado.',
+    feat_heading: 'Nossos produtos',
+    feat_cta: 'Visite a loja',
+    feat_empty: 'Ainda não há produtos — adicione produtos na sua página Loja e eles aparecerão aqui automaticamente.',
   },
 
   // Página de recibo + e-mail de confirmação ao comprador (idioma do SITE).
@@ -606,6 +609,9 @@ export const pt = {
     per_month: 'por mês', per_year: 'por ano',
     sub_create: 'Criar e anexar', sub_creating: 'Criando…',
     sub_err: 'Não foi possível criar o preço — verifique os valores e tente novamente.',
+    feat_count: 'Produtos a exibir', feat_heading_ph: 'Nossos produtos', feat_cta_ph: 'Visite a loja',
+    feat_hint: 'Mostra seus produtos mais recentes automaticamente — adicione ou edite na',
+    feat_store_link: '🛍 página Loja →',
   },
 
   aip: {
@@ -726,6 +732,7 @@ export const pt = {
           <li><strong>Publique</strong> — seu site ganha uma página <strong>Loja</strong> e um link no menu automaticamente. Os visitantes adicionam ao carrinho e pagam com segurança no Stripe (inclui Apple&nbsp;Pay / Google&nbsp;Pay); produtos físicos pedem endereço de entrega.</li>
         </ol>
         <p>Após cada venda, o comprador chega a uma página de recibo (salvável em PDF) e recebe um e-mail de confirmação; você recebe um e-mail de “novo pedido” e o pedido aparece em <strong>🧾 Pedidos</strong> na página Loja. Os compradores podem rever o histórico quando quiserem em <strong>Meus pedidos</strong> (link seguro por e-mail). Limites de produtos: Starter 10 · Pro 50 · Agency ilimitados.</p>
+        <p><strong>Destaque produtos onde quiser:</strong> no Personalizar, <strong>+ Adicionar seção → 🛍 Produtos da loja</strong> coloca seus itens mais recentes (com adicionar ao carrinho) em qualquer página — a página inicial é um ótimo lugar. Atualiza automaticamente conforme você adiciona produtos.</p>
         <p><strong>Assinaturas:</strong> venda planos recorrentes a partir de uma seção de <strong>Preços</strong> — edite a seção, anexe um dos seus preços recorrentes do Stripe a um cartão de plano (ou crie um ali mesmo) e o botão dele vira um <strong>Assinar</strong> com pagamento real. Renovações, faturas e recibos ficam por conta da sua conta Stripe.</p>`],
       ['blog', 'Blog e redes sociais', `
         <p>Abra <strong>📝 Blog</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar). Dê à IA algumas frases sobre o que a publicação deve dizer — ela redige o texto completo no idioma do seu site; você edita e publica. Ao publicar, seu site ganha uma página <strong>Blog</strong> e um link no menu (republique pelo Personalizar para colocar novas publicações no ar).</p>

@@ -48,6 +48,8 @@ import { blogPostTemplate } from './blog/post.js';
 // Shop (synthetic, like blog — products live in the `products` table)
 import { shopGridTemplate } from './shop/grid.js';
 import { shopProductTemplate } from './shop/product.js';
+// Featured products — a real ADDABLE body section (live product injection)
+import { featuredProductsTemplate } from './shop/featured.js';
 
 /**
  * Template registry
@@ -116,6 +118,10 @@ export const TEMPLATE_REGISTRY = {
   },
   blog_post: {
     default: blogPostTemplate,
+  },
+  products: {
+    grid: featuredProductsTemplate,
+    default: featuredProductsTemplate,
   },
   shop_list: {
     default: shopGridTemplate,

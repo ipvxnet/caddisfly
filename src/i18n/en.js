@@ -446,6 +446,9 @@ export const en = {
     sub_busy: 'Starting checkout…',
     sub_error: 'Could not start checkout — please try again.',
     sub_preview: 'Preview — subscriptions work on your published site.',
+    feat_heading: 'Our products',
+    feat_cta: 'Visit the shop',
+    feat_empty: 'No products yet — add products on your Store page and they’ll appear here automatically.',
   },
 
   // Order receipt page + buyer confirmation email (SITE's language).
@@ -612,6 +615,9 @@ export const en = {
     per_month: 'per month', per_year: 'per year',
     sub_create: 'Create & attach', sub_creating: 'Creating…',
     sub_err: 'Could not create the price — check the values and try again.',
+    feat_count: 'Products to show', feat_heading_ph: 'Our products', feat_cta_ph: 'Visit the shop',
+    feat_hint: 'Shows your newest products automatically — add or edit them on the',
+    feat_store_link: '🛍 Store page →',
   },
 
   aip: {
@@ -732,6 +738,7 @@ export const en = {
           <li><strong>Publish</strong> — your site gets a <strong>Shop</strong> page and menu link automatically. Visitors add to cart and check out securely on Stripe (Apple&nbsp;Pay / Google&nbsp;Pay included); physical products collect a shipping address.</li>
         </ol>
         <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>
+        <p><strong>Feature products anywhere:</strong> in Customize, <strong>+ Add section → 🛍 Shop products</strong> drops your newest items (with add-to-cart) onto any page — the home page is a great spot. It updates automatically as you add products.</p>
         <p><strong>Subscriptions:</strong> sell recurring plans from a <strong>Pricing</strong> section — edit the section, attach one of your Stripe recurring prices to a plan card (or create one right there), and its button becomes a live <strong>Subscribe</strong> checkout. Renewals, invoices, and receipt emails are handled by your Stripe account.</p>`],
       ['blog', 'Blog & social posts', `
         <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>

@@ -167,6 +167,7 @@ export async function handleAIBuilderDeploy(ctx) {
         trackId: publicId, // cookieless analytics beacon on published pages
         appOrigin, // absolute beacon target (works on both serving surfaces)
         lang: siteLang,
+        products: activeProducts, // 🛍 featured-products section (live data)
         // SEO: per-page overrides + site social image + business identity.
         seoTitle: page.seo_title || null,
         seoDescription: page.seo_description || null,

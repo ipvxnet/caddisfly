@@ -442,6 +442,9 @@ export const es = {
     sub_busy: 'Iniciando el pago…',
     sub_error: 'No se pudo iniciar el pago — inténtalo de nuevo.',
     sub_preview: 'Vista previa — las suscripciones funcionan en tu sitio publicado.',
+    feat_heading: 'Nuestros productos',
+    feat_cta: 'Visita la tienda',
+    feat_empty: 'Aún no hay productos — añade productos en tu página Tienda y aparecerán aquí automáticamente.',
   },
 
   // Página de recibo + correo de confirmación al comprador (idioma del SITIO).
@@ -606,6 +609,9 @@ export const es = {
     per_month: 'al mes', per_year: 'al año',
     sub_create: 'Crear y adjuntar', sub_creating: 'Creando…',
     sub_err: 'No se pudo crear el precio — revisa los valores e inténtalo de nuevo.',
+    feat_count: 'Productos a mostrar', feat_heading_ph: 'Nuestros productos', feat_cta_ph: 'Visita la tienda',
+    feat_hint: 'Muestra tus productos más recientes automáticamente — añádelos o edítalos en la',
+    feat_store_link: '🛍 página Tienda →',
   },
 
   aip: {
@@ -726,6 +732,7 @@ export const es = {
           <li><strong>Publica</strong> — tu sitio recibe una página <strong>Tienda</strong> y un enlace en el menú automáticamente. Los visitantes añaden al carrito y pagan de forma segura en Stripe (incluye Apple&nbsp;Pay / Google&nbsp;Pay); los productos físicos piden dirección de envío.</li>
         </ol>
         <p>Tras cada venta, el comprador llega a una página de recibo (descargable en PDF) y recibe un correo de confirmación; tú recibes un correo de “nuevo pedido” y el pedido aparece en <strong>🧾 Pedidos</strong> en la página Tienda. Los compradores pueden ver su historial cuando quieran con <strong>Mis pedidos</strong> (enlace seguro por correo). Límites de productos: Starter 10 · Pro 50 · Agency ilimitados.</p>
+        <p><strong>Destaca productos donde quieras:</strong> en Personalizar, <strong>+ Añadir sección → 🛍 Productos de la tienda</strong> coloca tus artículos más recientes (con añadir al carrito) en cualquier página — la página de inicio es un gran lugar. Se actualiza automáticamente al añadir productos.</p>
         <p><strong>Suscripciones:</strong> vende planes recurrentes desde una sección de <strong>Precios</strong> — edita la sección, adjunta uno de tus precios recurrentes de Stripe a una tarjeta de plan (o créalo ahí mismo) y su botón se convierte en un <strong>Suscribirse</strong> con pago real. Las renovaciones, facturas y recibos los gestiona tu cuenta de Stripe.</p>`],
       ['blog', 'Blog y redes sociales', `
         <p>Abre <strong>📝 Blog</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar). Dale a la IA unas frases sobre lo que debe decir la publicación — redacta el texto completo en el idioma de tu sitio; tú lo editas y publicas. Al publicar, tu sitio gana una página <strong>Blog</strong> y un enlace en el menú (republica desde Personalizar para poner en línea las publicaciones nuevas).</p>
