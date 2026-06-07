@@ -13,7 +13,7 @@ import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
 import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
 import { canDeploy, canManageDomains } from '../../middleware/project-access.js';
-import { getCreditState } from '../../utils/credits.js';
+import { getCreditState, CREDIT_COSTS } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
 import { translator } from '../../i18n/index.js';
@@ -374,6 +374,21 @@ export async function handleAIBuilderCustomize(ctx) {
     .serp-title { color: #1a0dab; font-size: 1rem; font-weight: 500; margin: .15rem 0; line-height: 1.3; }
     .serp-desc { color: #4d5156; font-size: .82rem; line-height: 1.45; }
     .seo-saved { color: #03894a; font-size: .82rem; font-weight: 700; margin-left: .6rem; }
+
+    /* Logo panel */
+    #logo-current { display: flex; align-items: center; gap: .8rem; margin-bottom: .4rem; }
+    #logo-current img { height: 48px; width: 48px; object-fit: contain; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 4px; }
+    #logo-options { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .6rem; }
+    #logo-options > p { grid-column: 1 / -1; margin: 0; }
+    .logo-option { display: flex; align-items: center; gap: .55rem; padding: .55rem .6rem; background: #fff;
+      border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; font: inherit; }
+    .logo-option:hover { border-color: #a3b3f5; }
+    .logo-option.selected { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.18); }
+    .logo-option img { height: 40px; width: 40px; object-fit: contain; flex: none; }
+    .logo-option-name { font-weight: 700; font-size: .85rem; color: #1a202c; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+    .logo-upload { display: block; margin-top: .7rem; font-size: .85rem; color: #4a5568; }
+    .logo-upload input { display: block; margin-top: .3rem; font-size: .8rem; }
+    .logo-disclaimer { font-size: .75rem; color: #a0aec0; margin-top: .7rem; }
     ${DOMAINS_CSS}
 
     .page-tabs {
@@ -697,6 +712,26 @@ export async function handleAIBuilderCustomize(ctx) {
           </div>
         </details>
 
+        <details class="design-group" id="logo-group">
+          <summary>${tr('logo.summary')}</summary>
+          <div class="design-group-body">
+            <div id="logo-current">
+              ${config.logo_url
+                ? `<img src="${esc(config.logo_url)}" alt="logo"><button class="link-btn danger" onclick="removeLogo()">${tr('logo.remove')}</button>`
+                : `<p class="seo-hint">${tr('logo.none')}</p>`}
+            </div>
+            <p class="seo-hint">${tr('logo.hint')}</p>
+            ${creditState.tier === 'free_trial' && env.ENVIRONMENT === 'production'
+              ? `<p class="seo-hint">🔒 ${tr('logo.locked')} <a href="/billing" style="font-weight:700">${tr('logo.upgrade')}</a></p>`
+              : `<input type="text" id="logo-brief" class="seo-input" maxlength="200" placeholder="${tr('logo.brief_ph')}">
+            <button class="add-section-btn" id="logo-gen-btn" onclick="generateLogos(this)">${tr('logo.generate')}</button>
+            <p class="seo-hint">${tr('logo.cost', { n: CREDIT_COSTS.logo })}</p>
+            <div id="logo-options"></div>`}
+            <label class="logo-upload">${tr('logo.upload')} <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadLogo(this)"></label>
+            <p class="logo-disclaimer">${tr('logo.disclaimer')}</p>
+          </div>
+        </details>
+
         <details class="design-group" id="seo-group">
           <summary>${tr('cust.seo_summary')}</summary>
           <div class="design-group-body">
@@ -866,6 +901,76 @@ export async function handleAIBuilderCustomize(ctx) {
       finally { btn.disabled = false; }
     }
     seoSync();
+
+    // ---- Logo panel (AI generate / pick / upload / remove) ----
+    const LOGO_T = ${JSON.stringify({
+      generate: tr('logo.generate'),
+      generating: tr('logo.generating'),
+      pick: tr('logo.pick'),
+      none: tr('logo.none'),
+      remove: tr('logo.remove'),
+      err: tr('logo.err'),
+    })};
+    async function generateLogos(btn) {
+      btn.disabled = true; btn.textContent = LOGO_T.generating;
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/logo/generate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brief: document.getElementById('logo-brief').value.trim() }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || LOGO_T.err);
+        const box = document.getElementById('logo-options');
+        box.innerHTML = '<p class="seo-hint">' + LOGO_T.pick + '</p>';
+        d.options.forEach(function (u) {
+          const card = document.createElement('button');
+          card.className = 'logo-option'; card.type = 'button';
+          const img = document.createElement('img'); img.src = u; img.alt = 'logo option';
+          const nm = document.createElement('span'); nm.className = 'logo-option-name';
+          nm.textContent = d.business_name || '';
+          card.appendChild(img); card.appendChild(nm);
+          card.onclick = function () { setLogo(u, card); };
+          box.appendChild(card);
+        });
+      } catch (e) { alert(e.message || LOGO_T.err); }
+      finally { btn.disabled = false; btn.textContent = LOGO_T.generate; }
+    }
+    async function setLogo(url, card) {
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/logo', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || LOGO_T.err);
+        renderCurrentLogo(d.logo_url);
+        document.querySelectorAll('.logo-option.selected').forEach(function (el) { el.classList.remove('selected'); });
+        if (card) card.classList.add('selected');
+        const f = document.getElementById('preview-iframe'); f.src = f.src; // reflect the new header logo
+      } catch (e) { alert(e.message || LOGO_T.err); }
+    }
+    function removeLogo() { setLogo(''); }
+    function renderCurrentLogo(url) {
+      const box = document.getElementById('logo-current');
+      box.innerHTML = '';
+      if (!url) { box.innerHTML = '<p class="seo-hint">' + LOGO_T.none + '</p>'; return; }
+      const img = document.createElement('img'); img.src = url; img.alt = 'logo';
+      const btn = document.createElement('button'); btn.className = 'link-btn danger'; btn.type = 'button';
+      btn.textContent = LOGO_T.remove; btn.onclick = removeLogo;
+      box.appendChild(img); box.appendChild(btn);
+    }
+    async function uploadLogo(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const fd = new FormData(); fd.append('file', file); fd.append('asset_type', 'logo');
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/upload', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || LOGO_T.err);
+        await setLogo(d.url);
+      } catch (e) { alert(e.message || LOGO_T.err); }
+      finally { input.value = ''; }
+    }
 
     // ---- Pages (multi-page) ----
     function gotoPage(slug) {

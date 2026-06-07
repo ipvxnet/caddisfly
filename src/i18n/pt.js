@@ -239,8 +239,8 @@ export const pt = {
     agency_name: 'Agency', agency_tag: 'Para estúdios que criam muitos sites.', agency_cta: 'Escolher Agency',
     features: {
       free: ['1 site publicado', '1 GB de armazenamento', '50 créditos de IA / mês', 'Subdomínio caddisfly.app', 'Criador com IA + 1 renovação', 'Blog com IA + caixa de contato', 'Exportação HTML e 2 versões salvas', 'Suporte da comunidade'],
-      starter: ['3 sites publicados', '<strong>25 GB</strong> de armazenamento', '500 créditos de IA / mês', '<strong>🛍 Loja online</strong> — venda com seu próprio Stripe (10 produtos)', '1 domínio próprio', 'Remove “Built with Caddisfly”', 'Geração de imagens com IA', '5 versões salvas', 'Suporte por e-mail'],
-      pro: ['15 sites publicados', '<strong>100 GB</strong> de armazenamento', '2.000 créditos de IA / mês', '🛍 Loja online — 50 produtos', '5 domínios próprios', 'Geração de imagens prioritária', '10 versões salvas', 'Tudo do Starter', 'Suporte prioritário'],
+      starter: ['3 sites publicados', '<strong>25 GB</strong> de armazenamento', '500 créditos de IA / mês', '<strong>🛍 Loja online</strong> — venda com seu próprio Stripe (10 produtos)', '1 domínio próprio', 'Remove “Built with Caddisfly”', 'Geração de imagens com IA', '✨ Gerador de logo com IA', '5 versões salvas', 'Suporte por e-mail'],
+      pro: ['15 sites publicados', '<strong>100 GB</strong> de armazenamento', '2.000 créditos de IA / mês', '🛍 Loja online — 50 produtos', '5 domínios próprios', 'Geração de imagens prioritária', '✨ Gerador de logo com IA', '10 versões salvas', 'Tudo do Starter', 'Suporte prioritário'],
       agency: ['Sites ilimitados', '<strong>500 GB+</strong> de armazenamento', '8.000 créditos de IA / mês', '🛍 Loja online — produtos ilimitados', 'Domínios próprios ilimitados', 'Renovação em massa', '30 versões salvas', 'Tudo do Pro', 'Suporte prioritário+'],
     },
     faqs: [
@@ -597,6 +597,23 @@ export const pt = {
     ph_gallery: 'Atualize o título da galeria', ph_footer: 'Atualize o slogan',
   },
 
+  logo: {
+    summary: '✨ Logo e marca',
+    none: 'Ainda sem logo — o seu site mostra o nome do negócio como marca de texto.',
+    hint: 'Gere um logo com IA. Ele vira o logo do cabeçalho, o ícone do navegador (favicon) e a imagem de compartilhamento.',
+    brief_ph: 'Notas de estilo opcionais — ex.: “uma raposa, tons quentes de laranja”',
+    generate: 'Gerar opções de logo',
+    generating: 'Gerando…',
+    cost: 'Gera 4 opções por {n} créditos. Escolha uma para aplicar, ou gere novamente.',
+    pick: 'Clique em uma opção para usá-la como seu logo:',
+    remove: 'Remover logo',
+    upload: 'Ou envie o seu (PNG, JPG, WebP, SVG — quadrado funciona melhor):',
+    err: 'Algo deu errado. Tente novamente.',
+    locked: 'A geração de logo com IA está disponível nos planos pagos.',
+    upgrade: 'Faça upgrade para desbloquear',
+    disclaimer: 'Logos gerados por IA não são verificados contra marcas registradas existentes — revise antes de uso comercial.',
+  },
+
   pick: {
     tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.',
     font_title: '🔤 Fontes', font_hint: 'Troque a tipografia. Os tamanhos e o layout permanecem.',
@@ -637,6 +654,7 @@ export const pt = {
     cta_q: 'Não encontrou o que precisava?', cta_btn: 'Abrir um ticket de suporte →',
     toc: [
       ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
+      ['logo', 'Logo e marca'],
       ['publishing', 'Publicar'], ['store', 'Loja online'],
       ['blog', 'Blog e redes sociais'], ['messages', 'Formulário de contato e caixa de entrada'],
       ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
@@ -659,6 +677,14 @@ export const pt = {
           <li><strong>Galeria</strong> — abra o editor de uma galeria para reordenar (arrastar), substituir, remover ou adicionar fotos individuais (sem regerar com IA).</li>
           <li><strong>Design</strong> — o painel 🎨 Design troca o tema, as cores e as fontes de todo o site de uma vez.</li>
         </ul>`],
+      ['logo', 'Logo e marca', `
+        <p>Dê ao seu site uma marca de verdade pelo painel <strong>✨ Logo e marca</strong> no Personalizar:</p>
+        <ul>
+          <li><strong>Gerar com IA</strong> (planos pagos) — adicione notas de estilo opcionais (“uma raposa, tons quentes de laranja”) e receba <strong>4 opções de logo</strong> por tentativa (10 créditos). Clique em uma para aplicá-la.</li>
+          <li><strong>Ou envie o seu</strong> — PNG, JPG, WebP ou SVG; quadrado funciona melhor. Disponível em todos os planos.</li>
+        </ul>
+        <p>Seu logo é aplicado em todo lugar de uma vez: no <strong>cabeçalho do site</strong>, no <strong>ícone da aba do navegador</strong> (favicon) e como <strong>imagem de compartilhamento</strong> quando suas páginas são divulgadas nas redes sociais. Republique para colocá-lo no ar. Você pode removê-lo ou substituí-lo quando quiser.</p>
+        <p><em>Nota:</em> logos gerados por IA não são verificados contra marcas registradas existentes — revise antes de uso comercial.</p>`],
       ['publishing', 'Publicar', `
         <p>Clique em <strong>Publicar site</strong> no Personalizar. O seu site fica no ar num endereço gratuito como <code>seunegocio.caddisfly.app</code> e mostramos um link. Republique quando quiser após mudanças — republicar num plano pago também remove o selo “Built with Caddisfly”.</p>`],
       ['store', 'Loja online', `
@@ -725,6 +751,7 @@ export const pt = {
       ['O que são créditos Caddi?', 'Os créditos são gastos em ações de IA (gerar conteúdo, criar imagens com IA, edições com IA). Cada plano inclui uma cota mensal que reinicia todo mês, e você ainda pode comprar recargas únicas que nunca expiram.'],
       ['Como funcionam os membros da equipe?', 'Convide a sua equipe por e-mail pelo seu <strong>Painel</strong>. Eles recebem um link que os identifica e os adiciona à sua equipe, onde podem acessar os seus sites. Você (o proprietário) e os administradores podem convidar, promover ou remover membros. Vagas: Starter 5, Pro 15, Agency 50 (incluindo você).'],
       ['O meu site é bom para SEO? Preciso configurar algo?', 'Cada site publicado fica pronto para buscadores automaticamente — títulos, meta descrições, cartões de compartilhamento, dados de negócio do Google (LocalBusiness), um URL canônico, <code>robots.txt</code> e um <code>sitemap.xml</code>, tudo gerado para você. Para personalizar uma página, abra <strong>Personalizar → 🔎 SEO</strong> e edite o título e a descrição com pré-visualização do resultado do Google. Ver <a href="#seo">SEO e aparecer no Google</a>.'],
+      ['A Caddisfly pode criar um logo para mim?', 'Sim — nos planos pagos, abra <strong>✨ Logo e marca</strong> no Personalizar e gere 4 opções de logo com IA por tentativa (10 créditos); clique em uma para usá-la como logo do cabeçalho, favicon e imagem de compartilhamento. Em qualquer plano você pode enviar o seu próprio logo. Ver <a href="#logo">Logo e marca</a>.'],
       ['Posso vender produtos no meu site?', 'Sim — a partir do plano Starter ($9/mês). Conecte sua própria conta Stripe na página <strong>🛍 Loja</strong>, adicione produtos (a IA pode escrever descrições e gerar fotos — ou importe seu catálogo do Stripe em um clique) e publique. Ver <a href="#store">Loja online</a>.'],
       ['Vocês ficam com uma parte das minhas vendas?', 'Não. O pagamento é processado na sua própria conta Stripe, então o dinheiro vai direto para você. Você paga apenas as tarifas padrão do Stripe — a Caddisfly não adiciona nada em cima.'],
       ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Ver <a href="#blog">Blog e redes sociais</a>.'],

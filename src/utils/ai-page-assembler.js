@@ -76,7 +76,7 @@ export function assemblePage(sections, config, project, opts = {}) {
  * so a site is SEO-ready with zero input; `seoTitle`/`seoDescription`/`socialImage`
  * (set in the customize SEO panel) override the auto values.
  */
-function seoHead(seo, fallbackTitle) {
+function seoHead(seo, fallbackTitle, logoUrl = '') {
   const s = seo || {};
   const biz = s.business || {};
   const e = escapeHtml;
@@ -84,8 +84,13 @@ function seoHead(seo, fallbackTitle) {
   const pageTitle = s.pageTitle || fallbackTitle || bizName;
   const metaTitle = s.seoTitle || (pageTitle && pageTitle !== bizName ? `${pageTitle} | ${bizName}` : bizName);
   const metaDesc = s.seoDescription || biz.description || `${bizName} — official website.`;
-  const ogImage = s.socialImage || biz.logo || '';
+  let ogImage = s.socialImage || biz.logo || logoUrl || '';
   const canonical = s.canonicalUrl || '';
+  // og:image must be absolute for crawlers — anchor relative asset URLs
+  // (/preview-asset/…) to the canonical host when we know it.
+  if (ogImage.startsWith('/') && canonical) {
+    try { ogImage = new URL(canonical).origin + ogImage; } catch { /* keep relative */ }
+  }
 
   const tags = [
     `<title>${e(metaTitle)}</title>`,
@@ -124,6 +129,19 @@ function seoHead(seo, fallbackTitle) {
 export function buildHTMLDocument({ title, body, config, seo = null }) {
   const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '', lang = 'en' } = config;
 
+  // Brand favicon from the site logo (AI-generated or uploaded). Relative
+  // /preview-asset/ URLs resolve on the app origin, subdomains, and custom
+  // domains alike (the sites worker serves them from R2).
+  const logoUrl = config.logo_url || '';
+  const faviconMime = logoUrl.endsWith('.svg') ? 'image/svg+xml'
+    : logoUrl.endsWith('.png') ? 'image/png'
+    : logoUrl.endsWith('.webp') ? 'image/webp'
+    : 'image/jpeg';
+  const faviconTags = logoUrl
+    ? `<link rel="icon" type="${faviconMime}" href="${escapeHtml(logoUrl)}">
+  <link rel="apple-touch-icon" href="${escapeHtml(logoUrl)}">`
+    : '';
+
   // Dark themes carry surface tokens; inject a global override layer when active.
   const theme = getTheme(config.style_theme);
   const isDark = theme && theme.mode === 'dark';
@@ -137,7 +155,8 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  ${seoHead(seo, title)}
+  ${seoHead(seo, title, logoUrl)}
+  ${faviconTags}
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
