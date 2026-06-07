@@ -71,6 +71,7 @@ import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete } from './routes/api/forms.js';
 import { handleFormsInbox } from './routes/public/forms-inbox.js';
 import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
+import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
 import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
@@ -82,6 +83,15 @@ import {
 } from './routes/api/ai-builder/snapshots.js';
 import { autoSnapshotAfterEdit } from './utils/site-snapshot.js';
 import { handleSiteExport } from './routes/api/ai-builder/export.js';
+import {
+  handleStoreStripeStatus, handleStoreStripeConnect, handleStoreStripeDisconnect,
+  handleStripeConnectCallback,
+  handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
+  handleProductAIDescribe, handleProductImage, handleStoreCheckout,
+  handleStoreWebhook, handleOrderList,
+} from './routes/api/ai-builder/store.js';
+import { handleStoreManager } from './routes/public/store-manager.js';
+import { handleStoreReceipt } from './routes/public/store-receipt.js';
 
 // Hourly auto-save, edit-driven: wrap state-changing project routes so a
 // successful edit kicks maybeAutoSnapshot off the response path (waitUntil).
@@ -132,13 +142,16 @@ router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, pr
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
 router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics);
-// Blog preview routes MUST register before the generic :page_slug routes
-// (the router is first-match; "blog" would otherwise resolve as a page slug).
+// Blog/shop preview routes MUST register before the generic :page_slug routes
+// (the router is first-match; "blog"/"shop" would otherwise resolve as page slugs).
 router.get('/ai-preview/:project_id/blog/:post_slug', handleAIPreviewBlog);
 router.get('/ai-preview/:project_id/blog', handleAIPreviewBlog);
+router.get('/ai-preview/:project_id/shop/:product_slug', handleAIPreviewShop);
+router.get('/ai-preview/:project_id/shop', handleAIPreviewShop);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
 router.get('/site/:project_id/blog/:post_slug', handlePublishedSite);
+router.get('/site/:project_id/shop/:product_slug', handlePublishedSite);
 router.get('/site/:project_id', handlePublishedSite);
 router.get('/site/:project_id/:page_slug', handlePublishedSite);
 
@@ -171,6 +184,11 @@ router.post('/api/track', handleTrack);
 
 // Contact-form submissions from published sites (public, cross-origin like /api/track)
 router.post('/api/forms/submit', handleFormSubmit);
+// Store checkout — public, called cross-origin by the mini cart on shop pages
+router.post('/api/store/checkout', handleStoreCheckout);
+// Buyer receipt page (Stripe success_url) + Connect webhook (order backstop)
+router.get('/store/receipt', handleStoreReceipt);
+router.post('/api/store/webhook', handleStoreWebhook);
 
 // AI Builder API routes
 router.post('/api/ai-builder/create', handleAIBuilderCreate);
@@ -215,6 +233,23 @@ router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
+
+// Store manager + Stripe Connect (owner-facing; same access model as customize).
+// The OAuth callback is public — Stripe redirects the browser there; the
+// HMAC-signed state (minted by the gated connect endpoint) authorizes it.
+router.get('/ai-builder/store/:project_id', handleStoreManager, PROJ);
+router.get('/api/ai-builder/:project_id/store/stripe', handleStoreStripeStatus, PROJ);
+router.post('/api/ai-builder/:project_id/store/stripe/connect', handleStoreStripeConnect, PROJ);
+router.post('/api/ai-builder/:project_id/store/stripe/disconnect', handleStoreStripeDisconnect, PROJ);
+router.get('/store/stripe/callback', handleStripeConnectCallback);
+// Products (first-match: the specific ai-describe route before :product_id)
+router.get('/api/ai-builder/:project_id/store/products', handleProductList, PROJ);
+router.post('/api/ai-builder/:project_id/store/products/ai-describe', handleProductAIDescribe, PROJ);
+router.post('/api/ai-builder/:project_id/store/products', handleProductCreate, PROJ);
+router.post('/api/ai-builder/:project_id/store/products/:product_id/image', handleProductImage, PROJ);
+router.put('/api/ai-builder/:project_id/store/products/:product_id', handleProductUpdate, PROJ);
+router.delete('/api/ai-builder/:project_id/store/products/:product_id', handleProductDelete, PROJ);
+router.get('/api/ai-builder/:project_id/store/orders', handleOrderList, PROJ);
 
 // Site version snapshots (save / restore / delete / auto-save toggle)
 router.get('/api/ai-builder/:project_id/snapshots', handleSnapshotList, PROJ);

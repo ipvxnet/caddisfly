@@ -103,11 +103,11 @@ export function baseCss() {
     .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
     .brand{display:flex;align-items:center;gap:.55rem;font-weight:800;font-size:1.15rem;color:var(--ink)}
     .brand svg{width:30px;height:30px}.brand .ai{color:var(--muted);font-weight:700}
-    .nav-links{display:flex;align-items:center;gap:1.75rem}
-    .nav-links a{font-weight:600;font-size:.93rem;color:var(--body)}
+    .nav-links{display:flex;align-items:center;gap:clamp(.7rem,1.8vw,1.75rem)}
+    .nav-links a{font-weight:600;font-size:.93rem;color:var(--body);white-space:nowrap}
     .nav-links a:hover{color:var(--ink)}
     .nav-links a.active{color:var(--p2)}
-    .nav .btn{padding:.55rem 1.05rem}
+    .nav .btn{padding:.55rem 1.05rem;white-space:nowrap}
     .credit-pill{display:inline-flex;align-items:center;gap:.3rem;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.4rem .85rem;font-weight:800;font-size:.9rem;color:var(--p2);line-height:1}
     .credit-pill strong{font-weight:900}
     .credit-pill:hover{border-color:var(--p1);color:var(--p1)}
@@ -115,7 +115,14 @@ export function baseCss() {
     .foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
     .foot .brand{font-size:1rem;color:var(--ink)}.foot .brand svg{width:24px;height:24px}
     .foot-links a{color:var(--body);font-weight:600}.foot-links a:hover{color:var(--p2)}
-    @media (max-width:820px){.nav-links a:not(.btn):not(.credit-pill){display:none}}`;
+    @media (max-width:1020px){.nav-links a:not(.btn):not(.credit-pill){display:none}}
+    @media (max-width:480px){
+      .nav{flex-wrap:wrap;height:auto;min-height:60px;padding:.55rem 0;row-gap:.45rem}
+      .nav-links{gap:.55rem;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+      .nav .btn{padding:.45rem .75rem;font-size:.82rem}
+      .brand{font-size:1.02rem}.brand svg{width:26px;height:26px}
+      .credit-pill{padding:.3rem .65rem;font-size:.82rem}
+    }`;
 }
 
 /** Shared sticky header. activePath highlights the matching nav link.

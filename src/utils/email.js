@@ -439,3 +439,79 @@ export function isValidEmail(email) {
 export function sanitizeEmail(email) {
   return email.trim().toLowerCase();
 }
+
+// ---- store order emails (commerce v1) ---------------------------------------
+
+const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+function orderItemsTable(items, total, currency, lang, labels) {
+  const money = (cents) => {
+    try { return new Intl.NumberFormat(lang, { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100); }
+    catch { return `${(cents / 100).toFixed(2)} ${currency.toUpperCase()}`; }
+  };
+  const rows = items
+    .map((i) => `<tr><td style="padding:6px 0;color:#444;">${escHtml(i.name)} × ${i.qty}</td><td style="padding:6px 0;color:#444;text-align:right;">${money(i.amount)}</td></tr>`)
+    .join('');
+  return `<table style="width:100%;border-collapse:collapse;margin:14px 0;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
+    ${rows}
+    <tr><td style="padding:10px 0;font-weight:700;color:#111;">${escHtml(labels.total)}</td><td style="padding:10px 0;font-weight:700;color:#111;text-align:right;">${money(total)}</td></tr>
+  </table>`;
+}
+
+/**
+ * Buyer-facing order confirmation (sent in the SITE's language; reply-to the
+ * merchant so questions go to the store owner, not to us).
+ */
+export async function sendOrderBuyerEmail(env, {
+  to, businessName, orderRef, items, total, currency, lang, labels, receiptUrl, merchantEmail,
+}) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 6px;">${escHtml(labels.subject_line)}</h1>
+        <p style="color:#444;line-height:1.6;">${escHtml(labels.intro)}</p>
+        <p style="color:#666;font-size:13px;margin:14px 0 2px;">${escHtml(labels.order_ref)}: <strong>${escHtml(orderRef)}</strong></p>
+        ${orderItemsTable(items, total, currency, lang, labels)}
+        ${receiptUrl ? `<p style="margin:20px 0 0;"><a href="${receiptUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">${escHtml(labels.view_receipt)}</a></p>` : ''}
+        <p style="color:#666;font-size:13px;margin-top:22px;">${escHtml(labels.questions)}</p>
+      </div>
+    </body></html>`;
+  try {
+    return await deliverEmail(env, {
+      to,
+      subject: labels.subject,
+      html,
+      replyTo: merchantEmail || undefined,
+    });
+  } catch (e) {
+    console.error('Failed to send buyer order email:', e);
+    return false;
+  }
+}
+
+/** Merchant-facing "new order" notification (English; operator-side). */
+export async function sendOrderMerchantEmail(env, {
+  to, siteName, orderRef, buyerEmail, items, total, currency, ordersUrl,
+}) {
+  const labels = { total: 'Total' };
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">🛍 New order on ${escHtml(siteName)}</h1>
+        <p style="color:#444;line-height:1.6;">Order <strong>${escHtml(orderRef)}</strong> from <strong>${escHtml(buyerEmail || 'a customer')}</strong>. The payment landed directly in your Stripe account.</p>
+        ${orderItemsTable(items, total, currency, 'en', labels)}
+        ${ordersUrl ? `<p style="margin:20px 0 0;"><a href="${ordersUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Open orders</a></p>` : ''}
+      </div>
+    </body></html>`;
+  try {
+    return await deliverEmail(env, {
+      to,
+      subject: `🛍 New order on ${siteName} — ${orderRef}`,
+      html,
+      replyTo: buyerEmail || undefined,
+    });
+  } catch (e) {
+    console.error('Failed to send merchant order email:', e);
+    return false;
+  }
+}

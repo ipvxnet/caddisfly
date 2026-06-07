@@ -15,6 +15,8 @@ import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
 import { canDeploy } from '../../../middleware/project-access.js';
 import { getPostsByProject } from '../../../db/blog-posts.js';
 import { blogNavPage, blogListSection, blogPostSection } from '../../../utils/blog-render.js';
+import { getProductsByProject } from '../../../db/products.js';
+import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -103,6 +105,12 @@ export async function handleAIBuilderDeploy(ctx) {
     const siteLang = (aiProject && aiProject.language) || (regularProjectRow && regularProjectRow.language) || 'en';
     const publishedPosts = await getPostsByProject(env.DB, projectKey, true);
     if (publishedPosts.length) navPages.push(blogNavPage(siteLang));
+
+    // Shop: active products become /shop + /shop/<slug> pages with a Shop nav
+    // link (synthetic, like the blog; see utils/shop-render.js).
+    const activeProducts = await getProductsByProject(env.DB, projectKey, true);
+    const storeCurrency = config.store_currency || 'usd';
+    if (activeProducts.length) navPages.push(shopNavPage(siteLang));
 
     // Shared site sections (header/footer) — rendered on every page.
     const siteSections = await getSiteSections(env.DB, projectKey, true);
@@ -227,6 +235,53 @@ export async function handleAIBuilderDeploy(ctx) {
             // relative /preview-asset/ URLs.
             socialImage: post.cover_image
               ? (post.cover_image.startsWith('/') ? `${subdomainBase}${post.cover_image}` : post.cover_image)
+              : config.social_image || null,
+          }
+        );
+      }
+    }
+
+    // Bake the shop: index + one page per active product, in BOTH copies
+    // (/site/:id and the subdomain). Hidden products never publish. The cart
+    // JS inside the shop templates POSTs to the app origin (forms pattern);
+    // checkout requires the merchant's connected Stripe account at call time.
+    if (activeProducts.length) {
+      const shopCommon = {
+        pages: navPages,
+        currentSlug: 'shop',
+        preordered: true,
+        hideBadge: tier !== 'free_trial',
+        trackId: publicId,
+        appOrigin,
+        lang: siteLang,
+        business,
+      };
+      const writeShopPage = async (slugPath, sectionFor, seo) => {
+        // /site/:id copy
+        const idSections = [...header, sectionFor(`/site/${publicId}`), ...footer];
+        const idHtml = assemblePage(idSections, config, projectView, { ...shopCommon, ...seo, previewBase: `/site/${publicId}` });
+        await uploadToR2(env.STORAGE, `published/${publicId}/${slugPath}.html`, idHtml, 'text/html; charset=utf-8');
+        // Subdomain copy (nav rooted at /)
+        const subSections = [...header, sectionFor(''), ...footer];
+        const subHtml = assemblePage(subSections, config, projectView, { ...shopCommon, ...seo, previewBase: '' });
+        await uploadToR2(env.STORAGE, `sites/${subdomain}/${slugPath}.html`, subHtml, 'text/html; charset=utf-8');
+      };
+
+      await writeShopPage(
+        'shop',
+        (base) => shopListSection(activeProducts, base, storeCurrency, siteLang),
+        { canonicalUrl: `${subdomainBase}/shop`, pageTitle: 'Shop' }
+      );
+      for (const product of activeProducts) {
+        await writeShopPage(
+          `shop/${product.slug}`,
+          (base) => shopProductSection(product, base, storeCurrency),
+          {
+            canonicalUrl: `${subdomainBase}/shop/${product.slug}`,
+            pageTitle: product.name,
+            seoDescription: (product.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) || null,
+            socialImage: product.image
+              ? (product.image.startsWith('/') ? `${subdomainBase}${product.image}` : product.image)
               : config.social_image || null,
           }
         );

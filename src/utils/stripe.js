@@ -66,14 +66,17 @@ function toForm(obj) {
   return params;
 }
 
-async function stripeRequest(env, path, body) {
+async function stripeRequest(env, path, body, stripeAccount = null) {
   if (!isStripeConfigured(env)) throw new Error('Stripe is not configured');
+  const headers = {
+    Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  // Act on a connected account (Connect direct charge / read).
+  if (stripeAccount) headers['Stripe-Account'] = stripeAccount;
   const res = await fetch(`${STRIPE_API}${path}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers,
     body: toForm(body).toString(),
   });
   const json = await res.json().catch(() => ({}));
@@ -146,6 +149,59 @@ export async function createCreditCheckoutSession(env, { email, pack, successUrl
   return stripeRequest(env, '/checkout/sessions', body);
 }
 
+// Countries we offer in Stripe Checkout's shipping-address collector when a
+// cart contains physical goods (Checkout requires an explicit allowlist).
+// Broad coverage of our customer base; configurable per store later.
+export const SHIPPING_COUNTRIES = [
+  'US', 'CA', 'MX', 'BR', 'AR', 'CL', 'CO', 'PE', 'UY',
+  'GB', 'IE', 'PT', 'ES', 'FR', 'DE', 'IT', 'NL', 'BE', 'AT', 'CH',
+  'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'RO',
+  'AU', 'NZ', 'JP', 'SG', 'AE', 'ZA', 'IN',
+];
+
+/**
+ * Commerce v1: create a one-time Checkout Session ON the merchant's connected
+ * account (direct charge — funds settle to the merchant; we never hold money).
+ * Line items use inline price_data; amounts come from OUR products table, never
+ * from the client. The webhook/success path reads metadata.{type,site,items}.
+ * @returns {Promise<{id:string,url:string}>}
+ */
+export async function createStoreCheckoutSession(env, {
+  account, lineItems, successUrl, cancelUrl, metadata, collectShipping = false,
+}) {
+  const body = {
+    mode: 'payment',
+    line_items: lineItems,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    metadata,
+    payment_intent_data: { metadata },
+  };
+  if (collectShipping) {
+    body.shipping_address_collection = { allowed_countries: SHIPPING_COUNTRIES };
+  }
+  return stripeRequest(env, '/checkout/sessions', body, account);
+}
+
+/**
+ * Retrieve a Checkout Session (with line items expanded) from a connected
+ * account — used by the receipt page and the Connect webhook to record orders.
+ */
+export async function getStoreCheckoutSession(env, account, sessionId) {
+  const res = await fetch(`${STRIPE_API}/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=line_items`, {
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Stripe-Account': account,
+    },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
+    throw new Error(msg);
+  }
+  return json;
+}
+
 /**
  * Create a Billing Portal session so a customer can manage/cancel their plan.
  * @returns {Promise<{id:string,url:string}>}
@@ -210,4 +266,109 @@ export async function verifyWebhook(rawBody, sigHeader, secret, toleranceSec = 3
   }
 
   return JSON.parse(rawBody);
+}
+
+// ---- Stripe Connect (Standard accounts, OAuth) — commerce v1 ----------------
+// Merchants connect their OWN Stripe account in one OAuth click; Checkout
+// Sessions are then created on the connected account so funds go straight to
+// the merchant (we never touch the money — no PCI/KYC burden on us).
+//
+// Configuration (per-environment):
+//   Var:    STRIPE_CONNECT_CLIENT_ID (ca_…, from Stripe → Settings → Connect)
+//   The redirect URI <origin>/store/stripe/callback must be allow-listed in
+//   the same Connect settings page for BOTH preview and prod origins.
+// When unset, the store UI degrades to "not configured" (email-stub pattern).
+
+const CONNECT_API = 'https://connect.stripe.com';
+
+/** Whether Stripe Connect OAuth is configured for this environment. */
+export function isConnectConfigured(env) {
+  return !!(env && env.STRIPE_SECRET_KEY && env.STRIPE_CONNECT_CLIENT_ID);
+}
+
+/** The connect.stripe.com authorize URL to send the merchant to. */
+export function connectAuthorizeUrl(env, { state, redirectUri, email }) {
+  const p = new URLSearchParams({
+    response_type: 'code',
+    client_id: env.STRIPE_CONNECT_CLIENT_ID,
+    scope: 'read_write',
+    redirect_uri: redirectUri,
+    state,
+  });
+  if (email) p.set('stripe_user[email]', email); // prefill their signup/login
+  return `${CONNECT_API}/oauth/authorize?${p.toString()}`;
+}
+
+async function connectRequest(env, path, body) {
+  if (!isStripeConfigured(env)) throw new Error('Stripe is not configured');
+  const res = await fetch(`${CONNECT_API}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: toForm(body).toString(),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = json.error_description || (json.error && json.error.message) || json.error || `Stripe Connect ${res.status}`;
+    throw new Error(msg);
+  }
+  return json;
+}
+
+/**
+ * Exchange the OAuth authorization code for the connected account id.
+ * @returns {Promise<string>} the acct_… id
+ */
+export async function exchangeConnectCode(env, code) {
+  const out = await connectRequest(env, '/oauth/token', {
+    grant_type: 'authorization_code',
+    code,
+  });
+  if (!out.stripe_user_id) throw new Error('Stripe did not return an account id');
+  return out.stripe_user_id;
+}
+
+/** Revoke our platform's access to a connected account (merchant disconnect). */
+export async function deauthorizeConnect(env, accountId) {
+  return connectRequest(env, '/oauth/deauthorize', {
+    client_id: env.STRIPE_CONNECT_CLIENT_ID,
+    stripe_user_id: accountId,
+  });
+}
+
+// ---- signed OAuth state ------------------------------------------------------
+// The callback is a public GET (browser redirect from Stripe), so the state is
+// the capability: `<projectId>.<exp>.<hmac>` keyed off STRIPE_SECRET_KEY. It can
+// only be minted by our project-gated connect endpoint and expires in 30 min.
+// This matches the app's link-based access model (see middleware/project-access).
+
+async function hmacHex(secret, payload) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  return hex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload)));
+}
+
+/** Mint a signed state token binding the OAuth flow to one project. */
+export async function signConnectState(env, projectId, ttlSec = 1800) {
+  const exp = Math.floor(Date.now() / 1000) + ttlSec;
+  const sig = await hmacHex(env.STRIPE_SECRET_KEY, `connect:${projectId}.${exp}`);
+  return `${projectId}.${exp}.${sig}`;
+}
+
+/** Verify a state token; returns the projectId or null (bad sig / expired). */
+export async function verifyConnectState(env, state) {
+  const parts = String(state || '').split('.');
+  if (parts.length !== 3) return null;
+  const [projectId, exp, sig] = parts;
+  if (!/^\d+$/.test(exp) || Number(exp) < Math.floor(Date.now() / 1000)) return null;
+  const expected = await hmacHex(env.STRIPE_SECRET_KEY, `connect:${projectId}.${exp}`);
+  if (!safeEqual(expected, sig)) return null;
+  return projectId;
 }

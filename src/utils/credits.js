@@ -14,7 +14,7 @@ import {
 export const MONTHLY_CREDITS = { free_trial: 50, starter: 500, pro: 2000, agency: 8000 };
 
 // Cost per metered AI action (indicative; tune to measured per-call spend).
-export const CREDIT_COSTS = { generate: 20, image: 5, text_edit: 1, enrich: 10, blog_post: 10, social_pack: 2 };
+export const CREDIT_COSTS = { generate: 20, image: 5, text_edit: 1, enrich: 10, blog_post: 10, social_pack: 2, product_desc: 2 };
 
 // Published-site cap per tier (Agency = unlimited).
 export const PUBLISH_LIMITS = { free_trial: 1, starter: 3, pro: 15, agency: Infinity };
@@ -27,6 +27,11 @@ export const TEAM_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: 50 };
 
 // Saved site versions kept per tier (oldest pruned beyond the cap).
 export const SNAPSHOT_LIMITS = { free_trial: 2, starter: 5, pro: 10, agency: 30 };
+
+// Store products per tier (commerce v1 — "sell online for $9" undercuts
+// Wix's $29 commerce floor; caps protect the Pro upsell). Free can browse the
+// store manager but not list products. Enforced in production only.
+export const PRODUCT_LIMITS = { free_trial: 0, starter: 10, pro: 50, agency: Infinity };
 
 /** Team seat cap for a tier (defaults to free). */
 export function teamLimit(tier) {

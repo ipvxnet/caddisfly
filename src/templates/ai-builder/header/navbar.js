@@ -55,10 +55,18 @@ export function navbarTemplate(data, config) {
     ? `${pageLinks}\n      ${phoneLink}`
     : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}">Contact</a>`;
 
+  // Multi-page sites get a hamburger on small screens (the link row would
+  // otherwise wrap into a wall of links). Single-page anchor navs stay as-is.
+  const toggle = pageLinks
+    ? `<button class="nav-toggle" aria-label="Menu" aria-expanded="false"
+        onclick="var n=this.closest('.site-nav');var o=n.classList.toggle('nav-open');this.setAttribute('aria-expanded',o);this.textContent=o?'✕':'☰'">☰</button>`
+    : '';
+
   return `
-<header class="site-nav">
+<header class="site-nav${pageLinks ? ' has-menu' : ''}">
   <div class="site-nav-inner">
     <a class="nav-brand" href="${escapeAttr(homeHref)}">${brand}</a>
+    ${toggle}
     <nav class="nav-actions">
       ${actions}
     </nav>
@@ -139,11 +147,26 @@ export function navbarTemplate(data, config) {
   border-bottom-color: ${primaryColor};
 }
 
-@media (max-width: 600px) {
-  .site-nav-inner { padding: 0.6rem 1rem; flex-wrap: wrap; }
-  .nav-phone { display: none; }
+.nav-toggle { display: none; background: none; border: 1.5px solid rgba(0,0,0,0.12); border-radius: 8px;
+  font-size: 1.05rem; line-height: 1; padding: 0.4rem 0.6rem; cursor: pointer; color: #2d3748; }
+
+@media (max-width: 768px) {
+  .site-nav-inner { padding: 0.6rem 1rem; }
   .nav-logo { height: 32px; }
-  .nav-actions { gap: 0.85rem; flex-wrap: wrap; }
+  /* Multi-page sites: collapse the link row behind a hamburger dropdown. */
+  .site-nav.has-menu .nav-toggle { display: inline-flex; }
+  .site-nav.has-menu .nav-actions { display: none; }
+  .site-nav.has-menu.nav-open .nav-actions {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.95rem;
+    position: absolute; top: 100%; left: 0; right: 0; background: #ffffff;
+    padding: 1rem 1.25rem 1.2rem; border-bottom: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  }
+  .site-nav.has-menu .nav-link { font-size: 1.02rem; }
+  /* Single-page anchor nav: keep the compact wrap behavior. */
+  .site-nav:not(.has-menu) .site-nav-inner { flex-wrap: wrap; }
+  .site-nav:not(.has-menu) .nav-phone { display: none; }
+  .site-nav:not(.has-menu) .nav-actions { gap: 0.85rem; flex-wrap: wrap; }
 }
 </style>
   `.trim();

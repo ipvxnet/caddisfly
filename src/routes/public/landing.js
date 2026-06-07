@@ -70,15 +70,15 @@ export async function handleLanding(ctx) {
     .brand{display:flex;align-items:center;gap:.55rem;font-weight:800;font-size:1.15rem;color:var(--ink)}
     .brand svg{width:30px;height:30px}
     .brand .ai{color:var(--muted);font-weight:700}
-    .nav-links{display:flex;align-items:center;gap:1.75rem}
-    .nav-links a{font-weight:600;font-size:.93rem;color:var(--body)}
+    .nav-links{display:flex;align-items:center;gap:clamp(.7rem,1.8vw,1.75rem)}
+    .nav-links a{font-weight:600;font-size:.93rem;color:var(--body);white-space:nowrap}
     .nav-links a:hover{color:var(--ink)}
     .btn{display:inline-flex;align-items:center;gap:.45rem;font-weight:700;border-radius:11px;padding:.7rem 1.25rem;cursor:pointer;border:none;font-size:.95rem;transition:transform .15s,box-shadow .15s,filter .15s;font-family:inherit}
     .btn-primary{background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(118,75,162,.28)}
     .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(118,75,162,.36)}
     .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
     .btn-ghost:hover{border-color:var(--p1);color:var(--p2)}
-    .nav .btn{padding:.55rem 1.05rem}
+    .nav .btn{padding:.55rem 1.05rem;white-space:nowrap}
 
     /* Hero */
     .hero{position:relative;text-align:center;padding:5.5rem 0 4rem;overflow:hidden}
@@ -158,11 +158,17 @@ export async function handleLanding(ctx) {
     .foot .brand svg{width:24px;height:24px}
     .foot-links a{color:var(--body);font-weight:600}.foot-links a:hover{color:var(--p2)}
 
+    @media (max-width:1020px){.nav-links a:not(.btn){display:none}}
     @media (max-width:820px){
-      .nav-links a:not(.btn){display:none}
       .paths,.steps,.feats{grid-template-columns:1fr}
       section.block{padding:3.2rem 0}
       .hero{padding:3.5rem 0 2.5rem}
+    }
+    @media (max-width:480px){
+      .nav{flex-wrap:wrap;height:auto;min-height:60px;padding:.55rem 0;row-gap:.45rem}
+      .nav-links{gap:.55rem;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+      .nav .btn{padding:.45rem .75rem;font-size:.82rem}
+      .brand{font-size:1.02rem}.brand svg{width:26px;height:26px}
     }
   </style>
 </head>
