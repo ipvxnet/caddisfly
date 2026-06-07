@@ -16,7 +16,8 @@
 import { jsonResponse } from '../../utils/response.js';
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
-import { createSubmission, countRecentByHash, countSince, deleteSubmission } from '../../db/form-submissions.js';
+import { createSubmission, countRecentByHash, countSince, deleteSubmission, setEmailStatus } from '../../db/form-submissions.js';
+import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId, updateWebsiteConfigById, createWebsiteConfig } from '../../db/ai-config.js';
 import { sendFormSubmissionEmail, isValidEmail } from '../../utils/email.js';
 import { limitsDisabled } from '../../utils/rate-limiter.js';
 import { t } from '../../i18n/index.js';
@@ -31,11 +32,20 @@ async function sha256Hex(text) {
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Resolve a published site's owner + display name from either project table. */
+/** Resolve a published site's owner + display name from either project table.
+ *  notifyEmail = where notifications actually go (per-site override, else the
+ *  owner's account email). */
 async function resolveSite(db, publicId) {
   const aiProject = await getAIProjectByProjectId(db, publicId);
   if (aiProject) {
-    return { ownerEmail: aiProject.customer_email, siteName: aiProject.project_name || 'Your website' };
+    const config = await getWebsiteConfigByAIProjectId(db, aiProject.id);
+    return {
+      ownerEmail: aiProject.customer_email,
+      notifyEmail: (config && config.notify_email) || aiProject.customer_email,
+      siteName: aiProject.project_name || 'Your website',
+      projectKey: { aiProjectId: aiProject.id },
+      config,
+    };
   }
   const rp = await getProjectByPreviewId(db, publicId);
   if (rp) {
@@ -44,9 +54,31 @@ async function resolveSite(db, publicId) {
       const p = JSON.parse(rp.company_profile_json || '{}');
       if (p && p.name) name = p.name;
     } catch { /* ignore */ }
-    return { ownerEmail: rp.customer_email, siteName: name };
+    const config = await getWebsiteConfigByRegularProjectId(db, rp.id);
+    return {
+      ownerEmail: rp.customer_email,
+      notifyEmail: (config && config.notify_email) || rp.customer_email,
+      siteName: name,
+      projectKey: { projectId: rp.id },
+      config,
+    };
   }
   return null;
+}
+
+/** Send the owner notification with one retry; record the outcome on the row. */
+async function notifyOwnerAndRecord(env, db, submissionId, payload) {
+  let status = 'failed';
+  try {
+    const ok = (await sendFormSubmissionEmail(env, payload)) || (await sendFormSubmissionEmail(env, payload));
+    status = ok ? 'sent' : 'failed';
+  } catch (e) {
+    console.error('form-submission email failed:', e.message);
+  }
+  if (submissionId != null) {
+    await setEmailStatus(db, submissionId, status).catch(() => {});
+  }
+  return status;
 }
 
 export async function handleFormSubmit(ctx) {
@@ -94,7 +126,7 @@ export async function handleFormSubmit(ctx) {
     }
 
     const sentToday = await countSince(env.DB, publicId, dayStartTs); // pre-insert count = emails already triggered
-    await createSubmission(env.DB, {
+    const submission = await createSubmission(env.DB, {
       public_id: publicId,
       name,
       email,
@@ -103,27 +135,84 @@ export async function handleFormSubmit(ctx) {
       visitor_hash: visitorHash,
       created_at: ts,
     });
+    const submissionId = submission && submission.id;
 
-    // Notify the owner (best-effort, off the response path). Capped per day so a
-    // burst can't flood their mailbox — the inbox still has everything.
-    if (site.ownerEmail && sentToday < EMAIL_DAILY_CAP) {
+    // Notify the owner (best-effort, off the response path, one retry; the
+    // outcome lands on the row as email_status). Capped per day so a burst
+    // can't flood their mailbox — the inbox still has everything.
+    if (site.notifyEmail && sentToday < EMAIL_DAILY_CAP) {
       const inboxUrl = `${env.APP_URL || ''}/ai-builder/forms/${publicId}`;
-      const send = sendFormSubmissionEmail(env, {
-        to: site.ownerEmail,
+      const send = notifyOwnerAndRecord(env, env.DB, submissionId, {
+        to: site.notifyEmail,
         siteName: site.siteName,
         fromName: name,
         fromEmail: email,
         message,
         pagePath,
         inboxUrl,
-      }).catch((e) => console.error('form-submission email failed:', e.message));
+      });
       if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(send);
       else await send;
+    } else if (submissionId != null) {
+      await setEmailStatus(env.DB, submissionId, 'skipped').catch(() => {});
     }
 
     return jsonResponse({ success: true });
   } catch (e) {
     console.error('form submit error:', e.message);
+    return jsonResponse({ success: false, error: 'Something went wrong' }, 500);
+  }
+}
+
+/** POST /api/ai-builder/:project_id/forms/test — send a real test notification
+ *  through the full pipeline so the owner can verify delivery themselves. */
+export async function handleFormTest(ctx) {
+  const { env, params } = ctx;
+  try {
+    const site = await resolveSite(env.DB, params.project_id);
+    if (!site) return jsonResponse({ success: false, error: 'Project not found' }, 404);
+    if (!site.notifyEmail) return jsonResponse({ success: false, error: 'No notification address on file' }, 400);
+
+    const inboxUrl = `${env.APP_URL || ''}/ai-builder/forms/${params.project_id}`;
+    const status = await notifyOwnerAndRecord(env, env.DB, null, {
+      to: site.notifyEmail,
+      siteName: site.siteName,
+      fromName: 'Caddisfly delivery test',
+      fromEmail: site.notifyEmail,
+      message:
+        'This is a test of your contact-form notifications. If you are reading this, delivery works — messages from your website will arrive here.',
+      pagePath: '/contact',
+      inboxUrl,
+    });
+    return jsonResponse({ success: true, sent: status === 'sent', to: site.notifyEmail });
+  } catch (e) {
+    console.error('form test email error:', e.message);
+    return jsonResponse({ success: false, error: 'Something went wrong' }, 500);
+  }
+}
+
+/** PUT /api/ai-builder/:project_id/forms/settings — set/clear the per-site
+ *  notification address ('' reverts to the owner's account email). */
+export async function handleFormSettings(ctx) {
+  const { request, env, params } = ctx;
+  try {
+    const site = await resolveSite(env.DB, params.project_id);
+    if (!site) return jsonResponse({ success: false, error: 'Project not found' }, 404);
+
+    const body = await request.json().catch(() => ({}));
+    const notifyEmail = (body.notify_email || '').toString().trim().slice(0, 320);
+    if (notifyEmail && !isValidEmail(notifyEmail)) {
+      return jsonResponse({ success: false, error: t(ctx.lang, 'finbox.notify_invalid') }, 400);
+    }
+
+    const config = site.config || (await createWebsiteConfig(env.DB, site.projectKey.aiProjectId
+      ? { ai_project_id: site.projectKey.aiProjectId }
+      : { project_id: site.projectKey.projectId }));
+    await updateWebsiteConfigById(env.DB, config.id, { notify_email: notifyEmail || null });
+
+    return jsonResponse({ success: true, notify_email: notifyEmail || null, default_email: site.ownerEmail });
+  } catch (e) {
+    console.error('form settings error:', e.message);
     return jsonResponse({ success: false, error: 'Something went wrong' }, 500);
   }
 }

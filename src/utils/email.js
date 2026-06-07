@@ -21,8 +21,12 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
  * @returns {Promise<boolean>} true if a transport accepted the message, false if
  *   none is configured. Throws if a configured transport rejects the send.
  */
-async function deliverEmail(env, { to, subject, html, replyTo }) {
-  const from = env.EMAIL_FROM || 'noreply@caddisfly.ai';
+async function deliverEmail(env, { to, subject, html, replyTo, fromName }) {
+  const fromAddr = env.EMAIL_FROM || 'noreply@caddisfly.ai';
+  // Optional display name ("Vito's Pizzeria via Caddisfly <noreply@…>") so the
+  // owner's inbox shows WHICH site wrote, not a bare noreply address.
+  const safeName = fromName ? String(fromName).replace(/[<>"\r\n]/g, '').trim().slice(0, 80) : '';
+  const from = safeName ? `${safeName} <${fromAddr}>` : fromAddr;
 
   if (env.RESEND_API_KEY) {
     const res = await fetch(RESEND_ENDPOINT, {
@@ -365,6 +369,7 @@ export async function sendFormSubmissionEmail(env, { to, siteName, fromName, fro
       subject: `New message from ${siteName}`,
       html,
       replyTo: fromEmail || undefined,
+      fromName: `${siteName} via Caddisfly`,
     });
     if (sent) return true;
     if (isProduction) {
