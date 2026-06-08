@@ -339,12 +339,34 @@ function builderEditOverlay(lang) {
     if (current && (to === null || !current.contains(to))) clearCurrent();
   });
   window.addEventListener('scroll', function(){ if (current) place(current); }, { passive: true });
-  pill.addEventListener('click', function(e){
+  // Map the clicked element to an editor field hint (heading/link/image/text).
+  function hintFor(el, sec){
+    var node = el;
+    while (node && node !== sec){
+      var tag = node.tagName;
+      if (tag === 'A' || tag === 'BUTTON') return 'link';
+      if (tag === 'IMG') return 'image';
+      if (/^H[1-6]$/.test(tag)) return 'heading';
+      node = node.parentElement;
+    }
+    if (el.closest && el.closest('p')) return 'text';
+    return null; // → section-level edit
+  }
+  function sendEdit(sec, field){
+    var id = sec.id.replace('ai-sec-','');
+    try { window.parent.postMessage({ source: 'caddisfly-preview', type: 'edit-section', sectionId: id, field: field || null }, '*'); } catch (err) {}
+  }
+  // The pill = section-level edit.
+  pill.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); if (current) sendEdit(current, null); });
+  // Clicking the content itself = element-level edit (deep-links the field).
+  // Capture phase + preventDefault so links don't navigate inside the builder.
+  document.addEventListener('click', function(e){
+    if (e.target === pill) return;
+    var sec = sectionFor(e.target);
+    if (!sec) return;
     e.preventDefault(); e.stopPropagation();
-    if (!current) return;
-    var id = current.id.replace('ai-sec-','');
-    try { window.parent.postMessage({ source: 'caddisfly-preview', type: 'edit-section', sectionId: id }, '*'); } catch (err) {}
-  });
+    sendEdit(sec, hintFor(e.target, sec));
+  }, true);
   document.body.appendChild(pill);
 })();
 </script>`;
