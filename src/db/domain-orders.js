@@ -56,7 +56,7 @@ export async function getExpiringDomains(db, nowTs, withinDays = 30) {
 const ORDER_FIELDS = new Set([
   'status', 'error', 'stripe_customer_id', 'nc_domain_id', 'nc_transaction_id',
   'auto_renew', 'registered_at', 'expires_at', 'stripe_session_id',
-  'renewal_attempts', 'renewal_last_at', 'renewal_session_id',
+  'renewal_attempts', 'renewal_last_at', 'renewal_session_id', 'dns_cache', 'dns_synced_at',
 ]);
 
 /**
