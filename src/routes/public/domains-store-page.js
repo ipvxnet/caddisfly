@@ -48,6 +48,7 @@ export async function handleDomainsStorePage(ctx) {
     autorenew: tr('domstore.autorenew'), autorenew_off_note: tr('domstore.autorenew_off_note'),
     reconnect: tr('domstore.reconnect'), reconnecting: tr('domstore.reconnecting'),
     reconnect_ok: tr('domstore.reconnect_ok'), reconnect_fail: tr('domstore.reconnect_fail'),
+    renew_now: tr('domstore.renew_now'), renew_starting: tr('domstore.renew_starting'),
     dns: tr('domstore.dns'), dns_title: tr('domstore.dns_title'), dns_intro: tr('domstore.dns_intro'),
     dns_locked: tr('domstore.dns_locked'), dns_loading: tr('domstore.dns_loading'),
     dns_add: tr('domstore.dns_add'), dns_save: tr('domstore.dns_save'), dns_saving: tr('domstore.dns_saving'),
@@ -326,6 +327,10 @@ export async function handleDomainsStorePage(ctx) {
             dns.className = 'reconnect-btn'; dns.textContent = T.dns;
             dns.onclick = function () { openDns(o.id, o.domain); };
             right.appendChild(dns);
+            const rn = document.createElement('button');
+            rn.className = 'reconnect-btn'; rn.textContent = T.renew_now;
+            rn.onclick = function () { renewNow(o.id, rn); };
+            right.appendChild(rn);
             const rc = document.createElement('button');
             rc.className = 'reconnect-btn'; rc.textContent = T.reconnect;
             rc.onclick = function () { reconnect(o.id, rc); };
@@ -465,6 +470,15 @@ export async function handleDomainsStorePage(ctx) {
         if (!r.ok || !d.dns) throw new Error(T.reconnect_fail);
         btn.textContent = T.reconnect_ok;
       } catch (e) { btn.disabled = false; btn.textContent = T.reconnect; alert(e.message || T.reconnect_fail); }
+    }
+    async function renewNow(id, btn) {
+      btn.disabled = true; btn.textContent = T.renew_starting;
+      try {
+        const r = await fetch('/api/domains/' + id + '/renew-checkout', { method: 'POST' });
+        const d = await r.json();
+        if (!r.ok || !d.success || !d.url) throw new Error((d && d.error) || T.err);
+        location.href = d.url;
+      } catch (e) { btn.disabled = false; btn.textContent = T.renew_now; alert(e.message || T.err); }
     }
     async function setAutoRenew(id, cb) {
       const want = cb.checked;

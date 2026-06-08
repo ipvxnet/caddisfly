@@ -13,11 +13,11 @@
 
 import { jsonResponse, htmlResponse } from '../../utils/response.js';
 import {
-  isNamecheapConfigured, checkDomains, getWholesalePricing, registerDomain, setDnsHosts, getDnsHosts, getDomainInfo, SELL_TLDS,
+  isNamecheapConfigured, checkDomains, getWholesalePricing, registerDomain, renewDomain, setDnsHosts, getDnsHosts, getDomainInfo, SELL_TLDS,
 } from '../../utils/namecheap.js';
 import {
   createDomainOrder, getOrderById, getOrdersByEmail, updateOrder, claimOrderForRegistration,
-  getCachedPrices, upsertPrice,
+  claimRenewalSession, getCachedPrices, upsertPrice,
 } from '../../db/domain-orders.js';
 import { createDomainCheckoutSession, getPlatformCheckoutSession, refundPaymentIntent } from '../../utils/stripe.js';
 import { getBillingAccount } from '../../db/billing.js';
@@ -30,7 +30,7 @@ import { isValidCountry } from '../../utils/countries.js';
 import { notifyOps } from '../../utils/ops-notify.js';
 import { audit } from '../../utils/audit.js';
 import { insertAuditLog } from '../../db/audit-logs.js';
-import { sendDomainRegisteredEmail, isValidEmail } from '../../utils/email.js';
+import { sendDomainRegisteredEmail, sendDomainRenewedEmail, isValidEmail } from '../../utils/email.js';
 import { t, translator } from '../../i18n/index.js';
 
 // Retail = wholesale + flat markup (cents). Floor guards against a bad cache.
@@ -441,6 +441,93 @@ export async function handleDomainAutoRenew(ctx) {
   await updateOrder(env.DB, order.id, { auto_renew: on });
   audit(ctx, 'domain.auto_renew', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { auto_renew: !!on } });
   return jsonResponse({ success: true, auto_renew: !!on });
+}
+
+// ---- Manual "renew now" checkout (dead card / auto-renew off) -------------
+const RENEW_MARKUP_CENTS = 500;
+
+/** POST /api/domains/:id/renew-checkout — pay-now renewal for a registered
+ *  domain. Charges the retail renew price via a platform Checkout session. */
+export async function handleRenewCheckout(ctx) {
+  const { env, url } = ctx;
+  if (!ctx.billingEmail) return jsonResponse({ success: false, error: 'Sign in first.' }, 401);
+  const order = await getOrderById(env.DB, parseInt(ctx.params.id, 10) || 0);
+  if (!order || order.customer_email.toLowerCase() !== ctx.billingEmail.toLowerCase()) {
+    return jsonResponse({ success: false, error: 'Domain not found.' }, 404);
+  }
+  if (order.status !== 'registered') return jsonResponse({ success: false, error: 'This domain isn’t registered.' }, 409);
+  try {
+    const tld = order.domain.slice(order.domain.indexOf('.') + 1);
+    const prices = await pricesByTld(env);
+    const p = prices.get(tld);
+    if (!p || !p.renew_cents) return jsonResponse({ success: false, error: t(ctx.lang, 'domstore.err') }, 502);
+    const amount = Math.max(p.renew_cents + RENEW_MARKUP_CENTS, p.renew_cents + 100, 300);
+
+    const acct = await getBillingAccount(env.DB, order.customer_email);
+    const session = await createDomainCheckoutSession(env, {
+      email: order.customer_email,
+      customerId: acct && acct.stripe_customer_id ? acct.stripe_customer_id : null,
+      name: `Renew ${order.domain} — 1 year`,
+      amountCents: amount,
+      currency: order.currency || 'usd',
+      successUrl: `${url.origin}/domains/renew-receipt?o=${order.id}&sid={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${url.origin}/domains?cancelled=1`,
+      metadata: { type: 'domain_renewal_manual', order_id: String(order.id), domain: order.domain },
+    });
+    return jsonResponse({ success: true, url: session.url });
+  } catch (e) {
+    console.error('renew checkout error:', e.message);
+    return jsonResponse({ success: false, error: e.message.slice(0, 200) }, 502);
+  }
+}
+
+/** Process a PAID manual renewal once (claimed by Stripe session). Renews at
+ *  Namecheap, pushes expiry +1yr, resets dunning. Shared by receipt + webhook. */
+export async function processManualRenewal(env, orderId, sessionId) {
+  const order = await getOrderById(env.DB, orderId);
+  if (!order || order.status !== 'registered') return;
+  if (!(await claimRenewalSession(env.DB, order.id, sessionId))) return; // already done
+  try {
+    await renewDomain(env, order.domain, 1);
+    const base = Math.max(order.expires_at || 0, Math.floor(Date.now() / 1000));
+    const newExpiry = base + 365 * 86400;
+    await updateOrder(env.DB, order.id, { expires_at: newExpiry, renewal_attempts: 0, error: null });
+    await sendDomainRenewedEmail(env, { to: order.customer_email, domain: order.domain, expiresLabel: new Date(newExpiry * 1000).toISOString().slice(0, 10) }).catch(() => {});
+    await notifyOps(env, `🔁 *Domain renewed (manual)*: ${order.domain} → ${order.customer_email}`);
+    await insertAuditLog(env.DB, { user_email: order.customer_email, team_owner_email: order.customer_email, action: 'domain.renew', resource_type: 'domain', resource_id: order.domain, resource_name: order.domain, status: 'success', metadata: JSON.stringify({ manual: true }) }).catch(() => {});
+  } catch (e) {
+    // Paid but Namecheap renew failed — release the claim so a retry can run, alert ops.
+    console.error('manual renew failed:', order.domain, e.message);
+    await updateOrder(env.DB, order.id, { renewal_session_id: null, error: e.message.slice(0, 300) }).catch(() => {});
+    await notifyOps(env, `🚨 *Manual renewal CHARGED but Namecheap renew FAILED*: ${order.domain} (${order.customer_email}) — ${e.message.slice(0, 140)} (order #${order.id})`);
+  }
+}
+
+/** GET /domains/renew-receipt?o&sid — post-payment renewal status page. */
+export async function handleRenewReceipt(ctx) {
+  const { env, query, url } = ctx;
+  const lang = ctx.lang || 'en';
+  const tr = translator(lang);
+  if (!ctx.billingEmail) return Response.redirect(`${url.origin}/billing?next=${encodeURIComponent(url.pathname + url.search)}`, 302);
+  const order = await getOrderById(env.DB, parseInt(query.o, 10) || 0);
+  if (!order || order.customer_email.toLowerCase() !== ctx.billingEmail.toLowerCase()) {
+    return htmlResponse(receiptShell(tr('domstore.r_notfound'), `<p>${tr('domstore.r_notfound')}</p>`), 404);
+  }
+  const sid = (query.sid || '').toString();
+  try {
+    const session = await getPlatformCheckoutSession(env, sid);
+    if (session && session.payment_status === 'paid' && (session.metadata || {}).order_id === String(order.id)) {
+      const run = processManualRenewal(env, order.id, sid);
+      if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(run); else await run;
+    }
+  } catch (e) { console.error('renew receipt session check:', e.message); }
+
+  const fresh = await getOrderById(env.DB, order.id);
+  const done = fresh.renewal_session_id === sid && !fresh.error;
+  const body = done
+    ? `<div class="ok">✓</div><h1>${tr('domstore.rn_done')}</h1><p>${tr('domstore.rn_done_sub', { domain: fresh.domain })}</p><p><a class="btn" href="/domains">${tr('domstore.r_dashboard')}</a></p>`
+    : `<div class="spin"></div><h1>${tr('domstore.rn_working')}</h1><p>${tr('domstore.rn_working_sub', { domain: fresh.domain })}</p>`;
+  return htmlResponse(receiptShell(tr('domstore.rn_title'), body, !done));
 }
 
 // ---- DNS records manager (Caddisfly-purchased domains) -------------------
