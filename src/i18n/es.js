@@ -256,7 +256,7 @@ export const es = {
     meta_title: 'Panel — Caddisfly',
     title: 'Tus sitios web',
     plan_billing: 'Plan y facturación →',
-    buy_domain: '🌐 Compra un dominio',
+    buy_domain: '🌐 Dominios',
     signed_in_as: 'Sesión iniciada como',
     support: 'Soporte', help: 'Ayuda', sign_out: 'Cerrar sesión',
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
@@ -637,8 +637,8 @@ export const es = {
 
   domstore: {
     meta_title: 'Compra un dominio — Caddisfly',
-    title: '🌐 Compra un dominio',
-    sub: 'Busca, compra y lo conectamos a tu sitio automáticamente — SSL incluido, sin configurar DNS.',
+    title: '🌐 Dominios',
+    sub: 'Compra un dominio nuevo — lo conectamos automáticamente con SSL — o gestiona DNS, correo y renovaciones de tus dominios abajo.',
     coming_soon: 'La compra de dominios está casi lista — vuelve pronto.',
     search_ph: 'tunegocio.com', search_btn: 'Buscar', searching: 'Comprobando disponibilidad…',
     results_empty: 'Sin resultados — prueba otro nombre.',
@@ -713,6 +713,8 @@ export const es = {
     ssl_note: '🔒 Tu certificado SSL se emite automáticamente una vez que el registro esté activo — normalmente unos minutos. Luego haz clic en <em>Comprobar estado</em>.',
     check_status: 'Comprobar estado', remove: 'Quitar',
     none_yet: 'Aún no hay ningún dominio propio conectado.',
+    hub_link: '¿Compraste tu dominio con Caddisfly? {link} para gestionar su DNS, correo, renovación automática y renovaciones.',
+    hub_link_a: 'Ir a la página de Dominios →',
     not_enabled: 'Los dominios propios aún no están habilitados en este entorno — el formulario está aquí para la configuración.',
     connect: 'Conectar dominio',
     tip: 'Consejo: usa un subdominio como <code>www.</code> o <code>shop.</code> — funcionan en cualquier proveedor de DNS. Un dominio raíz a secas (<code>tunegocio.com</code>) necesita ALIAS / aplanamiento de CNAME, que algunos proveedores (p. ej. GoDaddy, Namecheap) no admiten.',
