@@ -475,15 +475,23 @@ async function ownDomainOrder(ctx, requireRegistered = true) {
   return order;
 }
 
+/** Is the domain currently connected to a site? (www custom hostname exists).
+ *  The site-connection records are only "locked" while a connection exists —
+ *  once disconnected, the customer can freely edit/delete them. */
+async function isConnected(db, domain) {
+  return !!(await getDomainByHostname(db, `www.${domain}`).catch(() => null));
+}
+
 /** GET /api/domains/:id/dns — current records (locked ones flagged). */
 export async function handleDnsList(ctx) {
   const { env } = ctx;
   const order = await ownDomainOrder(ctx);
   if (order instanceof Response) return order;
   try {
+    const connected = await isConnected(env.DB, order.domain);
     const hosts = await getDnsHosts(env, order.domain);
-    const records = hosts.map((h) => ({ ...h, locked: isLockedRow(h) }));
-    return jsonResponse({ success: true, domain: order.domain, records });
+    const records = hosts.map((h) => ({ ...h, locked: connected && isLockedRow(h) }));
+    return jsonResponse({ success: true, domain: order.domain, connected, records });
   } catch (e) {
     console.error('dns list error:', e.message);
     return jsonResponse({ success: false, error: 'Could not load DNS records — try again.' }, 502);
@@ -515,17 +523,22 @@ export async function handleDnsSave(ctx) {
   const order = await ownDomainOrder(ctx);
   if (order instanceof Response) return order;
   try {
+    const connected = await isConnected(env.DB, order.domain);
     const body = await request.json().catch(() => ({}));
     const raw = Array.isArray(body.records) ? body.records.slice(0, 100) : [];
-    // Drop anything that collides with our locked records (we re-add them).
     const editable = [];
     for (const r of raw) {
       const c = cleanRecord(r);
       if (!c) return jsonResponse({ success: false, error: t(ctx.lang, 'domstore.dns_bad') }, 400);
-      if (isLockedRow(c)) continue;
+      // While CONNECTED, drop client copies of the locked site records (we
+      // re-add them so the site can't be disconnected by editing DNS). While
+      // DISCONNECTED, there's nothing to protect — keep exactly what's sent.
+      if (connected && isLockedRow(c)) continue;
       editable.push(c);
     }
-    const full = [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...editable];
+    const full = connected
+      ? [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...editable]
+      : editable;
     await setDnsHosts(env, order.domain, full);
     audit(ctx, 'domain.dns_edit', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { records: editable.length } });
     return jsonResponse({ success: true });
