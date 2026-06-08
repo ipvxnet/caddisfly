@@ -2,8 +2,13 @@
 // Large quote format testimonials
 
 export function testimonialsQuotesTemplate(data, config) {
-  const { heading, testimonials } = data;
-  const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
+  const { heading = 'What Our Customers Say', testimonials } = data;
+  const {
+    primary_color: primaryColor = '#667eea',
+    secondary_color: secondaryColor = '#764ba2',
+    font_heading: fontHeading = 'Inter',
+    font_body: fontBody = 'Inter',
+  } = config;
 
   // Default testimonials if not provided
   const testimonialList = testimonials || [
@@ -34,23 +39,30 @@ export function testimonialsQuotesTemplate(data, config) {
 
     <div class="quotes-grid">
       ${testimonialList
-        .map(
-          (testimonial, index) => `
+        .map((testimonial, index) => {
+          // Accept both schemas: editor/cards use {text,name,role}; quotes use {quote,author,position}.
+          const quote = testimonial.quote || testimonial.text || '';
+          const author = testimonial.author || testimonial.name || 'Anonymous';
+          const position = testimonial.position || testimonial.role || '';
+          const avatarHtml = testimonial.avatar
+            ? `<img src="${testimonial.avatar}" alt="${author}" class="author-avatar">`
+            : `<div class="author-avatar" style="background:${primaryColor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.4rem;">${(author || 'A').charAt(0)}</div>`;
+          return `
         <div class="quote-card" data-index="${index}">
           <div class="quote-mark" style="color: ${primaryColor};">"</div>
           <blockquote class="quote-text" style="font-family: ${fontBody};">
-            ${testimonial.quote}
+            ${quote}
           </blockquote>
           <div class="quote-author">
-            <img src="${testimonial.avatar}" alt="${testimonial.author}" class="author-avatar">
+            ${avatarHtml}
             <div class="author-info">
-              <div class="author-name">${testimonial.author}</div>
-              <div class="author-position" style="color: ${primaryColor};">${testimonial.position}</div>
+              <div class="author-name">${author}</div>
+              <div class="author-position" style="color: ${primaryColor};">${position}</div>
             </div>
           </div>
         </div>
-      `
-        )
+      `;
+        })
         .join('')}
     </div>
   </div>

@@ -10,7 +10,7 @@ const escA = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"
 
 export function pricingTablesTemplate(data, config) {
   const { heading, description = '', plans } = data;
-  const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Live-checkout wiring (published pages only — previews show a notice,
   // same contract as the contact form: trackId/appOrigin via renderConfig).
