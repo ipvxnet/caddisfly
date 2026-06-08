@@ -258,13 +258,14 @@ export const en = {
     plan_billing: 'Plan & billing →',
     buy_domain: '🌐 Domains',
     signed_in_as: 'Signed in as',
-    support: 'Support', help: 'Help', sign_out: 'Sign out',
+    support: 'Support', activity: 'Activity', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet',
     customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', store: 'Store', open: 'Open ↗',
     republish_note: 'New this week: mobile-friendly menus, working contact forms, blog and online store. Open Customize and hit Publish to apply the latest improvements to your live site.',
     dismiss: 'Dismiss',
     export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
+    delete_site: 'Delete',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',
     your_team: 'Your team', team_owned_by: 'Team · owned by {owner}',
@@ -392,6 +393,15 @@ export const en = {
     preview: 'The contact form becomes active when you publish your site.',
     err_fields: 'Please fill out your name, a valid email, and a message.',
     err_rate: 'Too many messages — please try again later.',
+  },
+
+  act: {
+    meta_title: 'Activity — Caddisfly', title: 'Activity log',
+    sub: 'A record of significant actions on your account and team. Read-only.',
+    search_ph: 'Search user, resource, or action…',
+    all_actions: 'All actions', all_status: 'All statuses', filter: 'Filter', clear: 'Clear',
+    when: 'When', user: 'User', action: 'Action', resource: 'Details', status: 'Status',
+    ok: 'OK', error: 'Error', empty: 'No activity yet.', prev: '← Newer', next: 'Older →',
   },
 
   finbox: {
@@ -733,6 +743,27 @@ export const en = {
     could_not_check: 'Could not check status right now.',
     disconnect_confirm: 'Disconnect this domain from your site?',
     could_not_remove: 'Could not remove the domain.',
+  },
+
+  // Offboarding wizard (delete a website).
+  offb: {
+    title: 'Delete website', loading: 'Loading…', err: 'Something went wrong. Try again.',
+    cancel: 'Cancel', close: 'Close',
+    step_unpub: 'Step 1 of 3 · Unpublish', step_dns: 'Step · Disconnect domains', step_delete: 'Final step · Delete',
+    unpub_h: 'Your website is live', unpub_p: 'Take it offline first. This removes it from the web; nothing is deleted yet.',
+    unpub_btn: 'Take offline', unpub_busy: 'Taking offline…',
+    dns_h: 'A custom domain is connected', dns_p: 'Disconnect it before deleting. Your domain stays registered to you — only the connection to this site is removed.',
+    dns_btn: 'Disconnect domain(s)', dns_busy: 'Disconnecting…',
+    del_h: 'Delete this website permanently', del_warn: '⚠️ This cannot be undone. Pages, sections, design, images, blog posts, products, and the contact inbox for this site will be permanently deleted. Your sales records and any domains you own are kept.',
+    del_type: 'Type DELETE to confirm:',
+    dns_persist: 'Heads-up: DNS records on your purchased domain stay until you remove them.',
+    del_cleanup: 'Also clean up the DNS records I no longer need (keeps your email/MX records).',
+    del_btn: 'Delete website', del_busy: 'Deleting…',
+    why_h: 'Why are you leaving? (optional)',
+    why_expensive: 'Too expensive', why_features: 'Lack of features',
+    why_experiment: 'I was just experimenting', why_other: 'Other',
+    why_feedback_ph: 'Tell us more (optional) — your feedback helps.',
+    done_h: 'Website deleted', done_p: 'Your website has been permanently deleted.',
   },
 
   help: {

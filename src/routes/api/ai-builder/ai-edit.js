@@ -3,6 +3,7 @@
 //   POST /api/ai-builder/:project_id/sections/:section_id/ai-edit/apply   (apply)
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { audit } from '../../../utils/audit.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
 import { callWorkersAI, extractJSON } from '../../../utils/ai-content-generator.js';
@@ -141,6 +142,7 @@ export async function handleAIEditApply(ctx) {
 
     // Charge AI credits for the edit (after success).
     await chargeCredits(env, env.DB, email, editCost);
+    audit(ctx, 'credit.ai_edit', { teamOwner: email, resourceType: 'section', resourceId: section_id, metadata: { credits: editCost, images: imageActions.length } });
 
     return json({ success: true, content: merged });
   } catch (error) {

@@ -7,6 +7,7 @@
 // only — the navbar pairs it with the typeset business name (navbar.js brand).
 
 import { resolveStoreProject as resolveProject, getOrCreateConfig } from './store.js';
+import { audit } from '../../../utils/audit.js';
 import { updateWebsiteConfigById } from '../../../db/ai-config.js';
 import { getSiteSections, updateSectionContent } from '../../../db/ai-sections.js';
 import { generateImageToR2 } from './ai-edit.js';
@@ -94,6 +95,7 @@ export async function handleLogoGenerate(ctx) {
 
     // Charge once per batch (after success), even if some options failed.
     await chargeCredits(env, env.DB, r.email, cost);
+    audit(ctx, 'credit.logo', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, resourceName: r.businessName, metadata: { credits: cost, options: options.length } });
 
     return json({ success: true, options, business_name: r.businessName });
   } catch (error) {

@@ -4,6 +4,7 @@
 
 import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
+import { audit } from '../../utils/audit.js';
 import { setCookie, clearCookie } from '../../utils/crypto.js';
 import {
   getBillingAccount,
@@ -277,6 +278,7 @@ export async function handleBillingVerify(ctx) {
     return redirect('/billing?expired=1', 303);
   }
   const session = await createBillingSession(env.DB, email);
+  audit({ ...ctx, billingEmail: email }, 'auth.login', { teamOwner: email, resourceType: 'account', resourceId: email });
 
   // Honor a stored post-login destination (set at login), else /billing.
   let dest = '/billing';

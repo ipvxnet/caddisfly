@@ -78,6 +78,7 @@ function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
           <a class="btn ghost" href="/ai-builder/store/${esc(site.id)}">${tr('dash.store')}</a>
           ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
           ${live ? `<a class="btn ghost" href="/api/ai-builder/${esc(site.id)}/export" title="${tr('dash.export_title')}">${tr('dash.export')}</a>` : ''}
+          <button class="btn ghost danger" data-id="${esc(site.id)}" data-name="${esc(site.name)}" onclick="openOffboard(this)">${tr('dash.delete_site')}</button>
         </div>
       </div>
       ${domainsBlock}
@@ -230,7 +231,7 @@ export async function handleDashboard(ctx) {
         <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
       </div>
     </div>
-    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
+    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/activity">${tr('dash.activity')}</a> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
 
     ${ownSites.some((s) => s.subdomain) ? `
     <div class="note-banner" id="republish-note" hidden>
@@ -309,11 +310,35 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .invite-role,.role-select{padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.85rem;background:#fff;text-transform:capitalize;cursor:pointer}
     .role-legend{font-size:.78rem;margin-top:.7rem}
     @media (max-width:560px){.site-top,.member{align-items:flex-start}}
+    .btn.ghost.danger{color:#b91c1c;border-color:#fed7d7}
+    .btn.ghost.danger:hover{background:#fef2f2}
+    #offb-modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:1rem;z-index:60}
+    #offb-modal.open{display:flex}
+    .offb-card{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1.8rem}
+    .offb-card h2{font-size:1.25rem;color:var(--ink);margin:0 0 .3rem}
+    .offb-step{color:var(--muted);font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
+    .offb-card p{color:var(--body);line-height:1.6;margin:.5rem 0}
+    .offb-warn{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:.7rem .9rem;color:#991b1b;font-size:.9rem}
+    .offb-dom{font-size:.86rem;color:#4a5568;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:.4rem .7rem;margin:.3rem 0}
+    .offb-confirm{width:100%;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:9px;font:inherit;margin:.6rem 0;letter-spacing:.05em}
+    .offb-check{display:flex;align-items:flex-start;gap:.5rem;font-size:.86rem;color:#4a5568;margin:.6rem 0}
+    .offb-check input{margin-top:.2rem}
+    .offb-acts{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.2rem;flex-wrap:wrap}
+    .offb-acts .ghost{background:none;border:1.5px solid var(--line);border-radius:10px;padding:.6rem 1.1rem;font-weight:700;cursor:pointer;color:#4a5568}
+    .offb-acts .go{background:var(--grad);color:#fff;border:none;border-radius:10px;padding:.6rem 1.3rem;font-weight:800;cursor:pointer}
+    .offb-acts .go.danger{background:#dc2626}
+    .offb-acts .go:disabled{opacity:.5;cursor:default}
+    .offb-err{color:#b91c1c;font-size:.85rem;min-height:1.1em;margin:.4rem 0 0}
+    .offb-why{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:.8rem .9rem;margin:.8rem 0}
+    .offb-why-h{font-weight:700;color:var(--ink);margin:0 0 .5rem}
+    .offb-radio{display:flex;align-items:center;gap:.5rem;font-size:.9rem;color:#4a5568;padding:.22rem 0;cursor:pointer}
+    .offb-why textarea{margin-top:.5rem}
   </style>
 </head>
 <body>
   ${siteHeader('/dashboard', headerOpts)}
   <main><div class="bwrap">${inner}</div></main>
+  <div id="offb-modal" onclick="if(event.target===this)offbClose()"><div class="offb-card" id="offb-card"></div></div>
   ${siteFooter({ lang })}
   <script>
     async function postTeam(path, body) {
@@ -344,6 +369,125 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
       catch (e) { alert(e.message); }
     }
     ${domainsJs(lang)}
+
+    // ---- Offboarding Wizard ----
+    const OFFB_T = ${JSON.stringify({
+      title: tr('offb.title'),
+      step_unpub: tr('offb.step_unpub'), step_dns: tr('offb.step_dns'), step_delete: tr('offb.step_delete'),
+      unpub_h: tr('offb.unpub_h'), unpub_p: tr('offb.unpub_p'), unpub_btn: tr('offb.unpub_btn'), unpub_busy: tr('offb.unpub_busy'),
+      dns_h: tr('offb.dns_h'), dns_p: tr('offb.dns_p'), dns_btn: tr('offb.dns_btn'), dns_busy: tr('offb.dns_busy'),
+      del_h: tr('offb.del_h'), del_warn: tr('offb.del_warn'), del_type: tr('offb.del_type'),
+      del_cleanup: tr('offb.del_cleanup'), del_btn: tr('offb.del_btn'), del_busy: tr('offb.del_busy'),
+      cancel: tr('offb.cancel'), err: tr('offb.err'), loading: tr('offb.loading'),
+      done_h: tr('offb.done_h'), done_p: tr('offb.done_p'), close: tr('offb.close'),
+      dns_persist: tr('offb.dns_persist'),
+      why_h: tr('offb.why_h'), why_expensive: tr('offb.why_expensive'), why_features: tr('offb.why_features'),
+      why_experiment: tr('offb.why_experiment'), why_other: tr('offb.why_other'), why_feedback_ph: tr('offb.why_feedback_ph'),
+    })};
+    let OFFB = { id: '', name: '' };
+    function offbClose(){ document.getElementById('offb-modal').classList.remove('open'); }
+    function offbEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+    async function openOffboard(btn){
+      OFFB = { id: btn.dataset.id, name: btn.dataset.name || '' };
+      const card = document.getElementById('offb-card');
+      card.innerHTML = '<p>'+OFFB_T.loading+'</p>';
+      document.getElementById('offb-modal').classList.add('open');
+      await offbLoad();
+    }
+    async function offbLoad(){
+      try {
+        const r = await fetch('/api/ai-builder/'+encodeURIComponent(OFFB.id)+'/offboard');
+        const d = await r.json();
+        if(!r.ok || !d.success) throw new Error((d&&d.error)||OFFB_T.err);
+        offbRender(d);
+      } catch(e){ document.getElementById('offb-card').innerHTML = '<p class="offb-err">'+offbEsc(e.message)+'</p><div class="offb-acts"><button class="ghost" onclick="offbClose()">'+OFFB_T.close+'</button></div>'; }
+    }
+    function offbHeader(step){ return '<div class="offb-step">'+step+'</div><h2>'+OFFB_T.title+': '+offbEsc(OFFB.name)+'</h2>'; }
+    function offbRender(d){
+      const card = document.getElementById('offb-card');
+      if (d.published) {
+        card.innerHTML = offbHeader(OFFB_T.step_unpub)
+          + '<h2 style="font-size:1.05rem">'+OFFB_T.unpub_h+'</h2><p>'+OFFB_T.unpub_p+'</p><p class="offb-err" id="offb-err"></p>'
+          + '<div class="offb-acts"><button class="ghost" onclick="offbClose()">'+OFFB_T.cancel+'</button>'
+          + '<button class="go" id="offb-go" onclick="offbUnpublish(this)">'+OFFB_T.unpub_btn+'</button></div>';
+        return;
+      }
+      if (d.domains && d.domains.length) {
+        card.innerHTML = offbHeader(OFFB_T.step_dns)
+          + '<h2 style="font-size:1.05rem">'+OFFB_T.dns_h+'</h2><p>'+OFFB_T.dns_p+'</p>'
+          + d.domains.map(function(x){ return '<div class="offb-dom">'+offbEsc(x.hostname)+'</div>'; }).join('')
+          + '<p class="offb-err" id="offb-err"></p>'
+          + '<div class="offb-acts"><button class="ghost" onclick="offbClose()">'+OFFB_T.cancel+'</button>'
+          + '<button class="go" id="offb-go" onclick="offbDisconnect(this)" data-doms=\\''+JSON.stringify(d.domains.map(function(x){return x.id;}))+'\\'>'+OFFB_T.dns_btn+'</button></div>';
+        return;
+      }
+      // Final delete step.
+      var cleanup = d.has_bought_dns
+        ? '<p>'+OFFB_T.dns_persist+'</p><label class="offb-check"><input type="checkbox" id="offb-cleanup"> <span>'+OFFB_T.del_cleanup+'</span></label>'
+        : '';
+      var why = '<div class="offb-why"><p class="offb-why-h">'+OFFB_T.why_h+'</p>'
+        + ['expensive','features','experiment','other'].map(function(k){
+            return '<label class="offb-radio"><input type="radio" name="offbwhy" value="'+k+'" onchange="offbWhy()"> '+OFFB_T['why_'+k]+'</label>'; }).join('')
+        + '<textarea id="offb-feedback" class="offb-confirm" hidden rows="2" placeholder="'+OFFB_T.why_feedback_ph+'"></textarea></div>';
+      card.innerHTML = offbHeader(OFFB_T.step_delete)
+        + '<h2 style="font-size:1.05rem">'+OFFB_T.del_h+'</h2>'
+        + '<p class="offb-warn">'+OFFB_T.del_warn+'</p>'
+        + why
+        + '<p>'+OFFB_T.del_type+'</p>'
+        + '<input class="offb-confirm" id="offb-confirm" placeholder="DELETE" oninput="offbCheck()" autocomplete="off">'
+        + cleanup
+        + '<p class="offb-err" id="offb-err"></p>'
+        + '<div class="offb-acts"><button class="ghost" onclick="offbClose()">'+OFFB_T.cancel+'</button>'
+        + '<button class="go danger" id="offb-go" disabled onclick="offbDelete(this)">'+OFFB_T.del_btn+'</button></div>';
+    }
+    function offbCheck(){
+      var v = (document.getElementById('offb-confirm').value||'').trim().toUpperCase();
+      document.getElementById('offb-go').disabled = v !== 'DELETE';
+    }
+    function offbWhy(){
+      var sel = document.querySelector('input[name=offbwhy]:checked');
+      var fb = document.getElementById('offb-feedback');
+      if (fb) fb.hidden = !(sel && sel.value === 'other');
+    }
+    function offbErr(m){ var e=document.getElementById('offb-err'); if(e) e.textContent = m; }
+    async function offbUnpublish(btn){
+      btn.disabled = true; btn.textContent = OFFB_T.unpub_busy;
+      try { var r = await fetch('/api/ai-builder/'+encodeURIComponent(OFFB.id)+'/unpublish',{method:'POST'}); var d = await r.json();
+        if(!r.ok||!d.success) throw new Error((d&&d.error)||OFFB_T.err); await offbLoad(); }
+      catch(e){ offbErr(e.message); btn.disabled=false; btn.textContent=OFFB_T.unpub_btn; }
+    }
+    async function offbDisconnect(btn){
+      var ids = []; try { ids = JSON.parse(btn.dataset.doms); } catch(_){}
+      btn.disabled = true; btn.textContent = OFFB_T.dns_busy;
+      try {
+        for (var i=0;i<ids.length;i++){
+          var r = await fetch('/api/ai-builder/'+encodeURIComponent(OFFB.id)+'/domains/'+ids[i],{method:'DELETE'});
+          var d = await r.json().catch(function(){return {};});
+          if(!r.ok||!d.success) throw new Error((d&&d.error)||OFFB_T.err);
+        }
+        await offbLoad();
+      } catch(e){ offbErr(e.message); btn.disabled=false; btn.textContent=OFFB_T.dns_btn; }
+    }
+    async function offbDelete(btn){
+      var cleanupEl = document.getElementById('offb-cleanup');
+      var whyEl = document.querySelector('input[name=offbwhy]:checked');
+      var fbEl = document.getElementById('offb-feedback');
+      btn.disabled = true; btn.textContent = OFFB_T.del_busy;
+      try {
+        var r = await fetch('/api/ai-builder/'+encodeURIComponent(OFFB.id)+'/delete',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            confirm: document.getElementById('offb-confirm').value.trim(),
+            cleanup_dns: !!(cleanupEl && cleanupEl.checked),
+            reason: whyEl ? whyEl.value : '',
+            feedback: fbEl ? (fbEl.value||'').trim() : ''
+          })
+        });
+        var d = await r.json();
+        if(!r.ok||!d.success) throw new Error((d&&d.error)||OFFB_T.err);
+        document.getElementById('offb-card').innerHTML = '<h2>'+OFFB_T.done_h+'</h2><p>'+OFFB_T.done_p+'</p><div class="offb-acts"><button class="go" onclick="location.reload()">'+OFFB_T.close+'</button></div>';
+      } catch(e){ offbErr(e.message); btn.disabled=false; btn.textContent=OFFB_T.del_btn; }
+    }
   </script>
 </body>
 </html>`;

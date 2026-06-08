@@ -62,8 +62,10 @@ import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
 import { handleSupport } from './routes/public/support.js';
+import { handleActivity } from './routes/public/activity.js';
 import { handleCreateTicket, handleReplyTicket } from './routes/api/support.js';
 import { handleAdminTickets, handleAdminTicketReply, handleAdminTicketStatus } from './routes/admin/tickets.js';
+import { handleAdminAudit } from './routes/admin/audit.js';
 import { handleAdminLegal, handleAdminLegalSave } from './routes/admin/legal.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
@@ -97,6 +99,7 @@ import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSave, handleDnsEmailSetup } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
+import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 
 /** GET /api/admin/domains/renew?dry=1&now=<unix> — manual renewal run
  *  (admin-only test). `now` simulates a date so dry-runs can preview the
@@ -189,6 +192,7 @@ router.get('/team/accept/:token', handleTeamAccept);
 // Help/docs (public) + support tickets (customer, magic-link auth)
 router.get('/help', handleHelp);
 router.get('/support', handleSupport, [billingAuth]);
+router.get('/activity', handleActivity, [billingAuth]);
 
 // Domain store (Namecheap reselling)
 router.get('/domains', handleDomainsStorePage, [billingAuth]);
@@ -257,6 +261,9 @@ router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
 router.post('/api/ai-builder/:project_id/logo/generate', handleLogoGenerate, PROJ);
 router.post('/api/ai-builder/:project_id/logo', autoSnap(handleLogoSet), PROJ);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
+router.get('/api/ai-builder/:project_id/offboard', handleOffboardStatus, PROJ);
+router.post('/api/ai-builder/:project_id/unpublish', handleUnpublish, PROJ);
+router.post('/api/ai-builder/:project_id/delete', handleDeleteSite, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);
@@ -322,6 +329,7 @@ router.post('/api/stripe/webhook', handleStripeWebhook);
 router.get('/logout', handleLogout, [authMiddleware]);
 router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
 router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddleware]);
+router.get('/admin/audit', handleAdminAudit, [authMiddleware, adminMiddleware]);
 router.get('/api/admin/domains/renew', handleAdminRenewRun, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);

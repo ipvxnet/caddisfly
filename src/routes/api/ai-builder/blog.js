@@ -14,6 +14,7 @@
 // to republish so the static R2 copies pick the post up.
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { audit } from '../../../utils/audit.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import {
   createPost, getPostsByProject, getPostById, updatePost, deletePost, uniquePostSlug,
@@ -161,6 +162,7 @@ ${POLICY_INSTRUCTION}`;
     if (!outScreen.allowed) return json(policyError(outScreen), 422);
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.blog_post);
+    audit(ctx, 'credit.blog_draft', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.blog_post } });
 
     const title = String(draft.title).slice(0, 200);
     const slug = await uniquePostSlug(env.DB, r.projectKey, title);
@@ -267,6 +269,7 @@ export async function handleBlogCover(ctx) {
 
     const url = await generateImageToR2(env, params.project_id, prompt);
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.image);
+    audit(ctx, 'credit.blog_image', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.image } });
     const updated = await updatePost(env.DB, r.projectKey, post.id, { cover_image: url });
     return json({ success: true, cover_image: url, post: updated });
   } catch (e) {
@@ -316,6 +319,7 @@ ${POLICY_INSTRUCTION}`;
     }
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.social_pack);
+    audit(ctx, 'credit.social_pack', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.social_pack } });
 
     const fill = (s) => String(s || '').replace(/\{URL\}/g, postUrl || '').trim();
     return json({ success: true, social: { x: fill(pack.xpost), instagram: fill(pack.instagram), linkedin: fill(pack.linkedin) } });

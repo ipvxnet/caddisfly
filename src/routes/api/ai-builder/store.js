@@ -44,6 +44,7 @@ import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS, PRODUCT_LIMITS } from '../../../utils/credits.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
+import { audit } from '../../../utils/audit.js';
 import { generateImageToR2 } from './ai-edit.js';
 
 function json(body, status = 200) {
@@ -149,6 +150,7 @@ export async function handleStoreStripeDisconnect(ctx) {
     }
     await updateWebsiteConfigById(env.DB, config.id, { stripe_account_id: '' });
   }
+  audit(ctx, 'stripe.disconnect', { teamOwner: resolved.email, resourceType: 'site', resourceId: params.project_id });
   return json({ success: true, connected: false });
 }
 
@@ -180,6 +182,7 @@ export async function handleStripeConnectCallback(ctx) {
     const accountId = await exchangeConnectCode(env, code);
     const config = await getOrCreateConfig(env.DB, resolved.projectKey);
     await updateWebsiteConfigById(env.DB, config.id, { stripe_account_id: accountId });
+    audit(ctx, 'stripe.connect', { teamOwner: resolved.email, resourceType: 'site', resourceId: projectId, metadata: { account: accountId } });
     return back(projectId, 'connected=1');
   } catch (e) {
     console.error('Stripe Connect exchange failed:', e.message);
@@ -357,6 +360,7 @@ ${POLICY_INSTRUCTION}`;
     if (!outScreen.allowed) return json(policyError(outScreen), 422);
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.product_desc);
+    audit(ctx, 'credit.product_desc', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.product_desc } });
     return json({ success: true, description: description.slice(0, 5000) });
   } catch (e) {
     console.error('product ai-describe error:', e);
@@ -841,6 +845,7 @@ export async function handleProductImage(ctx) {
 
     const url = await generateImageToR2(env, params.project_id, prompt);
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.image);
+    audit(ctx, 'credit.product_image', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.image } });
     const updated = await updateProduct(env.DB, r.projectKey, product.id, { image: url });
     return json({ success: true, image: url, product: updated });
   } catch (e) {
