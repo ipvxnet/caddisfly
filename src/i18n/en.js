@@ -57,6 +57,14 @@ export const en = {
     refactor_agree: 'I agree to the {terms} and {privacy}.',
     refactor_btn: 'Get my free preview',
     refactor_note: 'We’ll email you a link to confirm and build your preview.',
+    refactor_almost: 'Almost there! Check your email and click the link to build your preview.',
+    rf_sending: 'Sending…',
+    rf_err_email: 'Please enter a valid email.',
+    rf_err_url: 'Please enter a valid website URL.',
+    rf_err_agree: 'Please agree to the Terms of Service and Privacy Policy to continue.',
+    rf_err_generic: 'Something went wrong. Please try again.',
+    rf_err_network: 'Network error. Please check your connection and try again.',
+    rf_view_now: 'View your preview now →',
 
     how_title: 'How it works',
     feats_title: 'Everything you need to ship',
@@ -401,6 +409,8 @@ export const en = {
     preview: 'The contact form becomes active when you publish your site.',
     err_fields: 'Please fill out your name, a valid email, and a message.',
     err_rate: 'Too many messages — please try again later.',
+    heading: 'Get In Touch', sub: "We'd love to hear from you",
+    name: 'Your Name', email: 'Email Address', message: 'Message', send: 'Send Message',
   },
 
   act: {
@@ -608,6 +618,9 @@ export const en = {
     g_pages: 'Pages', g_sections: 'Sections', g_actions: 'Actions', g_web: 'Web address',
     use_web: 'Link to', top: 'Top of page', call: 'Call', email: 'Email', none: 'No link',
     missing: 'This points to {a}, which no longer exists on your site.',
+    sec_contact: 'Contact', sec_services: 'Services', sec_about: 'About', sec_pricing: 'Pricing',
+    sec_gallery: 'Gallery', sec_testimonials: 'Testimonials', sec_features: 'Features',
+    sec_cta: 'Call to action', sec_blog: 'Blog', sec_shop: 'Shop', sec_products: 'Products', sec_stats: 'Stats',
   },
   sed: {
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',

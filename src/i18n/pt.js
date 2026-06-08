@@ -56,6 +56,14 @@ export const pt = {
     refactor_url: 'O URL do seu site',
     refactor_agree: 'Concordo com os {terms} e a {privacy}.',
     refactor_btn: 'Obter minha pré-visualização grátis',
+    refactor_almost: 'Quase lá! Verifique seu e-mail e clique no link para criar sua prévia.',
+    rf_sending: 'Enviando…',
+    rf_err_email: 'Digite um e-mail válido.',
+    rf_err_url: 'Digite uma URL de site válida.',
+    rf_err_agree: 'Aceite os Termos de Serviço e a Política de Privacidade para continuar.',
+    rf_err_generic: 'Algo deu errado. Tente novamente.',
+    rf_err_network: 'Erro de rede. Verifique sua conexão e tente novamente.',
+    rf_view_now: 'Ver sua prévia agora →',
     refactor_note: 'Enviaremos um link por e-mail para confirmar e criar a sua pré-visualização.',
 
     how_title: 'Como funciona',
@@ -398,6 +406,8 @@ export const pt = {
     preview: 'O formulário de contato é ativado quando você publica o seu site.',
     err_fields: 'Preencha o seu nome, um e-mail válido e uma mensagem.',
     err_rate: 'Muitas mensagens — tente novamente mais tarde.',
+    heading: 'Entre em contato', sub: 'Adoraríamos ouvir você',
+    name: 'Seu nome', email: 'E-mail', message: 'Mensagem', send: 'Enviar mensagem',
   },
 
   act: {
@@ -602,6 +612,9 @@ export const pt = {
     g_pages: 'Páginas', g_sections: 'Seções', g_actions: 'Ações', g_web: 'Endereço web',
     use_web: 'Vincular a', top: 'Topo da página', call: 'Ligar', email: 'E-mail', none: 'Sem link',
     missing: 'Aponta para {a}, que não existe mais no seu site.',
+    sec_contact: 'Contato', sec_services: 'Serviços', sec_about: 'Sobre', sec_pricing: 'Preços',
+    sec_gallery: 'Galeria', sec_testimonials: 'Avaliações', sec_features: 'Recursos',
+    sec_cta: 'Chamada para ação', sec_blog: 'Blog', sec_shop: 'Loja', sec_products: 'Produtos', sec_stats: 'Estatísticas',
   },
   sed: {
     edit_section: 'Editar seção', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Salvar alterações',

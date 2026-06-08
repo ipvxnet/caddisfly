@@ -54,7 +54,7 @@ export async function handleVerify(ctx) {
   }
   if (project.enrichment_status === 'running') {
     // Build already in flight — show the fun page; it polls until ready.
-    return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(Date.now()), (ctx && ctx.lang) || 'en'));
+    return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(Date.now(), (ctx && ctx.lang) || 'en'), (ctx && ctx.lang) || 'en'));
   }
   if (project.enrichment_status === 'failed') {
     return htmlResponse(
@@ -98,7 +98,7 @@ export async function handleVerify(ctx) {
     status: 'enriching',
   });
 
-  return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(now), (ctx && ctx.lang) || 'en'));
+  return htmlResponse(buildingPage(project.preview_id, token, cannedJoke(now, (ctx && ctx.lang) || 'en'), (ctx && ctx.lang) || 'en'));
 }
 
 /**

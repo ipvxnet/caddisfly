@@ -56,6 +56,14 @@ export const es = {
     refactor_url: 'La URL de tu web',
     refactor_agree: 'Acepto los {terms} y la {privacy}.',
     refactor_btn: 'Obtener mi vista previa gratis',
+    refactor_almost: '¡Casi listo! Revisa tu correo y haz clic en el enlace para crear tu vista previa.',
+    rf_sending: 'Enviando…',
+    rf_err_email: 'Introduce un correo válido.',
+    rf_err_url: 'Introduce una URL de sitio web válida.',
+    rf_err_agree: 'Acepta los Términos del servicio y la Política de privacidad para continuar.',
+    rf_err_generic: 'Algo salió mal. Inténtalo de nuevo.',
+    rf_err_network: 'Error de red. Revisa tu conexión e inténtalo de nuevo.',
+    rf_view_now: 'Ver tu vista previa ahora →',
     refactor_note: 'Te enviaremos un enlace por correo para confirmar y crear tu vista previa.',
 
     how_title: 'Cómo funciona',
@@ -398,6 +406,8 @@ export const es = {
     preview: 'El formulario de contacto se activa cuando publicas tu sitio.',
     err_fields: 'Completa tu nombre, un email válido y un mensaje.',
     err_rate: 'Demasiados mensajes — inténtalo de nuevo más tarde.',
+    heading: 'Ponte en contacto', sub: 'Nos encantaría saber de ti',
+    name: 'Tu nombre', email: 'Correo electrónico', message: 'Mensaje', send: 'Enviar mensaje',
   },
 
   act: {
@@ -602,6 +612,9 @@ export const es = {
     g_pages: 'Páginas', g_sections: 'Secciones', g_actions: 'Acciones', g_web: 'Dirección web',
     use_web: 'Enlazar a', top: 'Inicio de la página', call: 'Llamar', email: 'Correo', none: 'Sin enlace',
     missing: 'Apunta a {a}, que ya no existe en tu sitio.',
+    sec_contact: 'Contacto', sec_services: 'Servicios', sec_about: 'Acerca de', sec_pricing: 'Precios',
+    sec_gallery: 'Galería', sec_testimonials: 'Reseñas', sec_features: 'Características',
+    sec_cta: 'Llamado a la acción', sec_blog: 'Blog', sec_shop: 'Tienda', sec_products: 'Productos', sec_stats: 'Estadísticas',
   },
   sed: {
     edit_section: 'Editar sección', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Guardar cambios',

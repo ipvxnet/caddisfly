@@ -18,6 +18,7 @@ import { extractSectionsFromHTML, getDefaultVariant } from '../../../utils/ai-co
 import { createSection } from '../../../db/ai-sections.js';
 import { createWebsiteConfig } from '../../../db/ai-config.js';
 import { assemblePage } from '../../../utils/ai-page-assembler.js';
+import { translator } from '../../../i18n/index.js';
 
 /**
  * Handles preview creation requests
@@ -412,7 +413,7 @@ async function handleVerificationRequest(env, project, website, email, request) 
       success: true,
       previewId: project.preview_id,
       status: 'awaiting_verification',
-      message: 'Almost there! Check your email and click the link to build your preview.',
+      message: translator(language)('landing.refactor_almost'),
     }),
     {
       status: 200,

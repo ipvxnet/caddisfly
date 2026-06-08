@@ -1,36 +1,22 @@
 // Testimonials Quotes Template
 // Large quote format testimonials
 
+import { TESTIMONIAL_DEFAULTS } from './cards.js';
+
 export function testimonialsQuotesTemplate(data, config) {
-  const { heading = 'What Our Customers Say', testimonials } = data;
   const {
     primary_color: primaryColor = '#667eea',
     secondary_color: secondaryColor = '#764ba2',
     font_heading: fontHeading = 'Inter',
     font_body: fontBody = 'Inter',
   } = config;
+  const lang = config.lang || 'en';
+  const tx = TESTIMONIAL_DEFAULTS[lang] || TESTIMONIAL_DEFAULTS.en;
+  const { heading = tx.heading, testimonials } = data;
 
-  // Default testimonials if not provided
-  const testimonialList = testimonials || [
-    {
-      quote: 'Working with this team has been transformative for our business. Their expertise and dedication are unmatched.',
-      author: 'Jessica Martinez',
-      position: 'CEO, TechCorp',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-    },
-    {
-      quote: 'The level of professionalism and quality delivered exceeded all our expectations. Highly recommended!',
-      author: 'Robert Chen',
-      position: 'Founder, StartupXYZ',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-    },
-    {
-      quote: 'Outstanding service from start to finish. They truly understand what it takes to succeed in this industry.',
-      author: 'Amanda Williams',
-      position: 'Director, Global Inc',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200',
-    },
-  ];
+  // Default testimonials if not provided (localized; rendered via the
+  // quote||text / author||name / position||role fallbacks below).
+  const testimonialList = testimonials || tx.items;
 
   return `
 <section class="testimonials-quotes" style="background: linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15);">

@@ -1,5 +1,35 @@
 // Testimonials Section with Cards
 
+// Localized section title + placeholder testimonials (shown until the user/AI
+// fills real ones). Shared with the quotes variant. Items use {name,role,text}
+// — the quotes template accepts that schema too.
+export const TESTIMONIAL_DEFAULTS = {
+  en: {
+    heading: 'What Our Customers Say', sub: 'Testimonials',
+    items: [
+      { name: 'John Doe', role: 'Customer', text: 'Great service!', rating: 5 },
+      { name: 'Jane Smith', role: 'Client', text: 'Highly recommend!', rating: 5 },
+      { name: 'Bob Johnson', role: 'Partner', text: 'Excellent work!', rating: 5 },
+    ],
+  },
+  es: {
+    heading: 'Lo que dicen nuestros clientes', sub: 'Testimonios',
+    items: [
+      { name: 'Juan Pérez', role: 'Cliente', text: '¡Excelente servicio!', rating: 5 },
+      { name: 'María García', role: 'Clienta', text: '¡Muy recomendable!', rating: 5 },
+      { name: 'Carlos López', role: 'Socio', text: '¡Trabajo excelente!', rating: 5 },
+    ],
+  },
+  pt: {
+    heading: 'O que nossos clientes dizem', sub: 'Depoimentos',
+    items: [
+      { name: 'João Silva', role: 'Cliente', text: 'Ótimo serviço!', rating: 5 },
+      { name: 'Maria Santos', role: 'Cliente', text: 'Recomendo muito!', rating: 5 },
+      { name: 'Carlos Souza', role: 'Parceiro', text: 'Trabalho excelente!', rating: 5 },
+    ],
+  },
+};
+
 /**
  * Generates a testimonials section with cards
  * @param {object} data - Content data
@@ -7,14 +37,12 @@
  * @returns {string} HTML template
  */
 export function testimonialsCardsTemplate(data, config) {
+  const lang = config.lang || 'en';
+  const tx = TESTIMONIAL_DEFAULTS[lang] || TESTIMONIAL_DEFAULTS.en;
   const {
-    heading = 'What Our Customers Say',
-    subheading = 'Testimonials',
-    testimonials = [
-      { name: 'John Doe', role: 'Customer', text: 'Great service!', rating: 5 },
-      { name: 'Jane Smith', role: 'Client', text: 'Highly recommend!', rating: 5 },
-      { name: 'Bob Johnson', role: 'Partner', text: 'Excellent work!', rating: 5 },
-    ],
+    heading = tx.heading,
+    subheading = tx.sub,
+    testimonials = tx.items,
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
 

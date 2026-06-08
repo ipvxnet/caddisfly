@@ -21,12 +21,22 @@ const PAGE_DEFS = [
 const SITE_LEVEL = new Set(['header', 'footer']);
 const COLLAPSE_THRESHOLD = 3; // ≤3 body sections → single Home page
 
+// Localized page names (slugs stay English — they're URLs/anchors). nav_label +
+// title use these so the generated site's menu is in the site's language.
+const PAGE_NAMES = {
+  en: { home: 'Home', about: 'About', services: 'Services', gallery: 'Gallery', contact: 'Contact' },
+  es: { home: 'Inicio', about: 'Acerca de', services: 'Servicios', gallery: 'Galería', contact: 'Contacto' },
+  pt: { home: 'Início', about: 'Sobre', services: 'Serviços', gallery: 'Galeria', contact: 'Contato' },
+};
+
 /**
  * @param {string[]} sectionTypes - section types in generation order
+ * @param {string} lang - site language (localizes nav_label/title)
  * @returns {{ pages: Array<{slug,title,nav_label,order,is_home}>, assign: (type:string)=>string }}
  *   `assign(type)` → the page slug for a body section type ('home' fallback).
  */
-export function planPages(sectionTypes) {
+export function planPages(sectionTypes, lang = 'en') {
+  const names = PAGE_NAMES[lang] || PAGE_NAMES.en;
   const bodyTypes = (sectionTypes || []).filter((t) => !SITE_LEVEL.has(t));
 
   const typeToSlug = {};
@@ -37,7 +47,7 @@ export function planPages(sectionTypes) {
   const distinctSlugs = new Set(bodyTypes.map(slugOf));
   if (bodyTypes.length <= COLLAPSE_THRESHOLD || distinctSlugs.size <= 1) {
     return {
-      pages: [{ slug: 'home', title: 'Home', nav_label: 'Home', order: 0, is_home: 1 }],
+      pages: [{ slug: 'home', title: names.home, nav_label: names.home, order: 0, is_home: 1 }],
       assign: () => 'home',
     };
   }
@@ -49,8 +59,8 @@ export function planPages(sectionTypes) {
     if (def.slug === 'home' || present) {
       pages.push({
         slug: def.slug,
-        title: def.title,
-        nav_label: def.nav_label,
+        title: names[def.slug] || def.title,
+        nav_label: names[def.slug] || def.nav_label,
         order: order++,
         is_home: def.slug === 'home' ? 1 : 0,
       });

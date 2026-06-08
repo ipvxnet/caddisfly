@@ -6,18 +6,19 @@ import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, getSiteSections } from '../../../db/ai-sections.js';
 import { getPagesByProject } from '../../../db/ai-pages.js';
 import { generateSectionEditorModal } from '../../../components/section-editor-modal.js';
+import { translator } from '../../../i18n/index.js';
 
-// Friendly names for in-page section anchors (page names come localized from
-// nav_label). Falls back to the humanized type for anything not listed.
-const SECTION_NAMES = {
-  contact: 'Contact', services: 'Services', about: 'About', pricing: 'Pricing',
-  gallery: 'Gallery', testimonials: 'Testimonials', features: 'Features',
-  cta: 'Call to action', blog_list: 'Blog', shop_list: 'Shop', products: 'Products', stats: 'Stats',
+// Section type → i18n key for its friendly anchor name (lp.sec_*). Page names
+// come localized from nav_label; unmapped types fall back to a humanized type.
+const SECTION_NAME_KEY = {
+  contact: 'sec_contact', services: 'sec_services', about: 'sec_about', pricing: 'sec_pricing',
+  gallery: 'sec_gallery', testimonials: 'sec_testimonials', features: 'sec_features',
+  cta: 'sec_cta', blog_list: 'sec_blog', shop_list: 'sec_shop', products: 'sec_products', stats: 'sec_stats',
 };
 const SKIP_ANCHOR_TYPES = new Set(['header', 'footer', 'hero']);
 
 /** Build the link-picker destination list (pages, section anchors, phone/email). */
-async function buildLinkData(db, projectKey) {
+async function buildLinkData(db, projectKey, tr) {
   const [pages, sections] = await Promise.all([
     getPagesByProject(db, projectKey).catch(() => []),
     getSiteSections(db, projectKey, true).catch(() => []),
@@ -33,7 +34,9 @@ async function buildLinkData(db, projectKey) {
     const t = s.section_type;
     if (SKIP_ANCHOR_TYPES.has(t) || seen.has(t)) continue;
     seen.add(t);
-    secOut.push({ label: SECTION_NAMES[t] || (t.charAt(0).toUpperCase() + t.slice(1)), anchor: `#${t}` });
+    const key = SECTION_NAME_KEY[t];
+    const label = key ? tr(`lp.${key}`) : (t.charAt(0).toUpperCase() + t.slice(1));
+    secOut.push({ label, anchor: `#${t}` });
   }
   const pageOut = (pages || [])
     .filter((p) => p.is_visible !== 0)
@@ -77,11 +80,13 @@ export async function handleGetSectionEditor(ctx) {
     }
 
     // Destinations for the "Link to" picker (pages, section anchors, phone/email).
+    const lang = (ctx && ctx.lang) || 'en';
+    const tr = translator(lang);
     const projectKey = aiProject ? { aiProjectId: aiProject.id } : { projectId: regularProject.id };
-    const linkData = await buildLinkData(env.DB, projectKey).catch(() => null);
+    const linkData = await buildLinkData(env.DB, projectKey, tr).catch(() => null);
 
     // Generate modal HTML (in the viewer's UI language)
-    const html = generateSectionEditorModal(section, projectPreviewId, (ctx && ctx.lang) || 'en', linkData);
+    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData);
 
     return new Response(html, {
       status: 200,
