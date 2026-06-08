@@ -63,6 +63,10 @@ export async function ncRequest(env, command, params = {}, opts = {}) {
   }
   if (env.NAMECHEAP_SANDBOX === '1') body.set('__host', SANDBOX_HOST);
 
+  // Bound every attempt so a hung relay/Namecheap call can't make the request
+  // hang forever (the cause of "never loads"). Reads are fast when healthy;
+  // create/renew pass a longer timeout (the relay's own upstream cap is ~90s).
+  const timeoutMs = opts.timeoutMs || 15000;
   let res, lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt) await sleep(500 * attempt);
@@ -71,9 +75,11 @@ export async function ncRequest(env, command, params = {}, opts = {}) {
         method: 'POST',
         headers: { 'X-Relay-Secret': env.NC_RELAY_SECRET, 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body.toString(),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (e) {
       lastErr = e; res = null;
+      // Timeouts/network errors are transient → retry the safe commands.
       if (attempt < retries) continue;
       throw new Error(`Namecheap relay unreachable: ${e.message}`);
     }
@@ -178,7 +184,7 @@ export async function registerDomain(env, { domain, years = 1, contact, nameserv
   if (nameservers) params.Nameservers = nameservers.join(',');
   // NEVER retry registration — it's non-idempotent (the caller verifies with
   // getDomainInfo on error instead).
-  const xml = await ncRequest(env, 'namecheap.domains.create', params, { retries: 0 });
+  const xml = await ncRequest(env, 'namecheap.domains.create', params, { retries: 0, timeoutMs: 95000 });
   const r = xmlTags(xml, 'DomainCreateResult')[0];
   if (!r || r.attrs.Registered !== 'true') throw new Error('Registration was not confirmed by Namecheap');
   return {
@@ -236,7 +242,7 @@ export async function setDnsHosts(env, domain, hosts) {
  * balance) — caller must guard against double-runs. → { domain_id, charged }
  */
 export async function renewDomain(env, domain, years = 1) {
-  const xml = await ncRequest(env, 'namecheap.domains.renew', { DomainName: domain, Years: years }, { retries: 0 });
+  const xml = await ncRequest(env, 'namecheap.domains.renew', { DomainName: domain, Years: years }, { retries: 0, timeoutMs: 95000 });
   const r = xmlTags(xml, 'DomainRenewResult')[0];
   if (!r || r.attrs.Renew !== 'true') throw new Error('Renewal was not confirmed by Namecheap');
   return { domain_id: r.attrs.DomainID || null, charged: r.attrs.ChargedAmount || null };
