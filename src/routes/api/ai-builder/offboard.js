@@ -168,16 +168,17 @@ export async function handleDeleteSite(ctx) {
       }
     }
 
-    // 3) Unpublish (remove R2 output).
-    if (r.subdomain) {
-      for (const prefix of [`published/${r.publicId}/`, `sites/${r.subdomain}/`]) {
-        let cursor;
-        do {
-          const listed = await env.STORAGE.list({ prefix, cursor });
-          await Promise.all((listed.objects || []).map((o) => env.STORAGE.delete(o.key)));
-          cursor = listed.truncated ? listed.cursor : null;
-        } while (cursor);
-      }
+    // 3) Remove ALL of this site's R2 objects: published copies, subdomain
+    //    copies, AND uploaded/AI-generated assets (else image blobs orphan).
+    const prefixes = [`published/${r.publicId}/`, `assets/${r.publicId}/`];
+    if (r.subdomain) prefixes.push(`sites/${r.subdomain}/`);
+    for (const prefix of prefixes) {
+      let cursor;
+      do {
+        const listed = await env.STORAGE.list({ prefix, cursor });
+        await Promise.all((listed.objects || []).map((o) => env.STORAGE.delete(o.key)));
+        cursor = listed.truncated ? listed.cursor : null;
+      } while (cursor);
     }
 
     // 4) Delete site content. KEEP store_orders + domain_orders (money/ownership).
