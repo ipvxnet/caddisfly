@@ -96,7 +96,10 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
 .ai-edit-genvid { margin:0 0 0.7rem; padding-bottom:0.7rem; border-bottom:1px solid #ede9fe; }
 .ai-edit-genvid #ai-edit-genvid-prompt { margin-bottom:0.45rem; }
 .ai-edit-genvid-btn { width:100%; padding:0.6rem; border:none; border-radius:8px; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; }
-.ai-edit-genvid-btn:disabled { opacity:0.7; cursor:default; }
+.ai-edit-genvid-btn:disabled { opacity:0.9; cursor:default; }
+.ai-edit-genvid-btn.busy { animation:aiGvPulse 1.1s ease-in-out infinite; }
+@keyframes aiGvPulse { 0%,100%{ opacity:0.95 } 50%{ opacity:0.6 } }
+.ai-edit-own-status.working { color:#7c3aed; font-weight:700; }
 .ai-edit-genvid-note { font-size:0.72rem; color:#9ca3af; margin:0.35rem 0 0; }
 .ai-edit-typing { font-size:0.8rem; color:#7c3aed; }
 </style>
@@ -225,17 +228,21 @@ async function aiEditPostApply(payload) {
 async function aiEditGenVideo() {
   var btn = document.getElementById('ai-edit-genvid-btn');
   var status = document.getElementById('ai-edit-own-status');
-  if (!confirm(${JSON.stringify(tr('aip.gen_video_confirm'))})) return;
-  if (btn) { btn.disabled = true; btn.textContent = ${JSON.stringify(tr('aip.gen_video_busy'))}; }
-  if (status) status.textContent = ${JSON.stringify(tr('aip.gen_video_wait'))};
+  if (btn && btn.disabled) return; // already generating — ignore double-click
+  // Immediate, unmistakable feedback (no blocking confirm — it can be suppressed).
+  if (btn) { btn.disabled = true; btn.classList.add('busy'); btn.textContent = ${JSON.stringify(tr('aip.gen_video_busy'))}; }
+  if (status) { status.classList.add('working'); status.textContent = ${JSON.stringify(tr('aip.gen_video_wait'))}; }
+  if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.gen_video_wait'))}, 'info');
   var brief = ((document.getElementById('ai-edit-genvid-prompt') || {}).value || '').trim();
   try {
     const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/hero-video/generate\`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief })
     });
-    const data = await res.json();
-    if (!data.success) {
-      if (status) status.textContent = data.upgrade_message || data.error || ${JSON.stringify(tr('aip.gen_video_fail'))};
+    const data = await res.json().catch(function(){ return {}; });
+    if (!res.ok || !data.success) {
+      var msg = data.upgrade_message || data.error || ${JSON.stringify(tr('aip.gen_video_fail'))};
+      if (status) status.textContent = msg;
+      if (typeof showNotification === 'function') showNotification(msg, 'error');
       return;
     }
     const iframe = document.getElementById('preview-iframe');
@@ -244,8 +251,10 @@ async function aiEditGenVideo() {
     if (status) status.textContent = '';
   } catch (e) {
     if (status) status.textContent = ${JSON.stringify(tr('aip.gen_video_fail'))};
+    if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.gen_video_fail'))}, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = ${JSON.stringify(tr('aip.gen_video'))}; }
+    if (status) status.classList.remove('working');
+    if (btn) { btn.disabled = false; btn.classList.remove('busy'); btn.textContent = ${JSON.stringify(tr('aip.gen_video'))}; }
   }
 }
 
