@@ -57,6 +57,8 @@ export async function handleDomainsStorePage(ctx) {
     email_setup: tr('domstore.email_setup'), email_pick: tr('domstore.email_pick'),
     email_applying: tr('domstore.email_applying'), email_done: tr('domstore.email_done'),
     email_dkim_note: tr('domstore.email_dkim_note'),
+    email_mx_host: tr('domstore.email_mx_host'), email_mx_prio: tr('domstore.email_mx_prio'),
+    email_need_mx: tr('domstore.email_need_mx'),
   };
 
   const html = `<!DOCTYPE html>
@@ -112,6 +114,13 @@ export async function handleDomainsStorePage(ctx) {
     .email-row label{font-size:.82rem;font-weight:700;color:#4a5568}
     .email-row select{padding:.45rem .6rem;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
     .dns-dkim{font-size:.76rem;color:#a0aec0;margin:0 0 1rem}
+    #email-custom{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:.8rem .9rem;margin:.2rem 0 1rem}
+    #email-custom .bm-sub{margin:0 0 .6rem}
+    .ec-label{display:block;font-size:.76rem;font-weight:700;color:#4a5568;margin:.6rem 0 .25rem}
+    .ec-input{width:100%;padding:.45rem .6rem;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.84rem}
+    .ec-mx{display:flex;gap:.4rem;margin-bottom:.4rem;align-items:center}
+    .ec-mx .ec-mx-host{flex:1}.ec-mx .ec-mx-prio{width:90px}
+    .ec-dkim{display:flex;gap:.4rem}.ec-dkim .ec-input:first-child{max-width:38%}
     #dns-table{border-top:1px solid var(--line);padding-top:.6rem}
     .dns-row{display:grid;grid-template-columns:90px 1fr 1.6fr 60px 28px;gap:.4rem;align-items:center;margin-bottom:.4rem}
     .dns-row.dns-head{font-size:.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.03em}
@@ -175,13 +184,28 @@ export async function handleDomainsStorePage(ctx) {
       <p class="bm-sub">${tr('domstore.dns_intro')}</p>
       <div class="email-row">
         <label>${tr('domstore.email_pick')}</label>
-        <select id="email-provider">
+        <select id="email-provider" onchange="emailProviderChange()">
           <option value="">—</option>
           <option value="google">Google Workspace</option>
           <option value="microsoft">Microsoft 365</option>
           <option value="zoho">Zoho Mail</option>
+          <option value="custom">${tr('domstore.email_custom')}</option>
         </select>
         <button class="ghost" id="email-go" onclick="applyEmail(this)">${tr('domstore.email_setup')}</button>
+      </div>
+      <div id="email-custom" hidden>
+        <p class="bm-sub">${tr('domstore.email_custom_hint')}</p>
+        <div id="email-mx"></div>
+        <button type="button" class="dns-add" onclick="addMxRow()">${tr('domstore.email_add_mx')}</button>
+        <label class="ec-label">${tr('domstore.email_spf')}</label>
+        <input class="ec-input" id="ec-spf" placeholder="v=spf1 include:… ~all">
+        <label class="ec-label">${tr('domstore.email_dmarc')}</label>
+        <input class="ec-input" id="ec-dmarc" placeholder="v=DMARC1; p=none;">
+        <label class="ec-label">${tr('domstore.email_dkim')}</label>
+        <div class="ec-dkim">
+          <input class="ec-input" id="ec-dkim-name" placeholder="${tr('domstore.email_dkim_name')}">
+          <input class="ec-input" id="ec-dkim-val" placeholder="${tr('domstore.email_dkim_val')}">
+        </div>
       </div>
       <p class="dns-dkim">${tr('domstore.email_dkim_note')}</p>
       <div id="dns-table"><p class="bm-sub">${tr('domstore.dns_loading')}</p></div>
@@ -325,6 +349,9 @@ export async function handleDomainsStorePage(ctx) {
       document.getElementById('dns-domain').textContent = domain;
       document.getElementById('dns-err').textContent = '';
       document.getElementById('email-provider').value = '';
+      document.getElementById('email-custom').hidden = true;
+      document.getElementById('email-mx').innerHTML = '';
+      ['ec-spf','ec-dmarc','ec-dkim-name','ec-dkim-val'].forEach(function(i){ var el=document.getElementById(i); if(el) el.value=''; });
       document.getElementById('dns-table').innerHTML = '<p class="bm-sub">' + T.dns_loading + '</p>';
       document.getElementById('dns-modal').classList.add('open');
       try {
@@ -388,15 +415,39 @@ export async function handleDomainsStorePage(ctx) {
         setTimeout(function () { btn.disabled = false; btn.textContent = T.dns_save; }, 1500);
       } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.dns_save; }
     }
+    function emailProviderChange() {
+      var custom = document.getElementById('email-provider').value === 'custom';
+      var box = document.getElementById('email-custom');
+      if (box) box.hidden = !custom;
+      if (custom && !document.querySelector('#email-mx .ec-mx')) addMxRow();
+    }
+    function addMxRow() {
+      var wrap = document.getElementById('email-mx');
+      var row = document.createElement('div'); row.className = 'ec-mx';
+      row.innerHTML = '<input class="ec-input ec-mx-host" placeholder="' + T.email_mx_host + '">'
+        + '<input class="ec-input ec-mx-prio" type="number" min="0" value="10" placeholder="' + T.email_mx_prio + '">'
+        + '<button type="button" class="dns-del" onclick="this.closest(\\'.ec-mx\\').remove()">✕</button>';
+      wrap.appendChild(row);
+    }
     async function applyEmail(btn) {
       const provider = document.getElementById('email-provider').value;
       if (!provider) return;
+      const payload = { provider: provider };
+      if (provider === 'custom') {
+        payload.mx = Array.from(document.querySelectorAll('#email-mx .ec-mx')).map(function (r) {
+          return { host: r.querySelector('.ec-mx-host').value.trim(), priority: r.querySelector('.ec-mx-prio').value.trim() };
+        }).filter(function (m) { return m.host; });
+        payload.spf = document.getElementById('ec-spf').value.trim();
+        payload.dmarc = document.getElementById('ec-dmarc').value.trim();
+        payload.dkim = { name: document.getElementById('ec-dkim-name').value.trim(), value: document.getElementById('ec-dkim-val').value.trim() };
+        if (!payload.mx.length) { document.getElementById('dns-err').textContent = T.email_need_mx; return; }
+      }
       btn.disabled = true; btn.textContent = T.email_applying;
       document.getElementById('dns-err').textContent = '';
       try {
         const r = await fetch('/api/domains/' + dnsId + '/dns/email', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: provider }),
+          body: JSON.stringify(payload),
         });
         const d = await r.json();
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);

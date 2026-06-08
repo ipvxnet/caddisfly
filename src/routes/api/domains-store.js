@@ -556,8 +556,35 @@ const EMAIL_PRESETS = {
   zoho: { mx: [['mx.zoho.com', 10], ['mx2.zoho.com', 20]], spf: 'v=spf1 include:zoho.com ~all' },
 };
 
-/** POST /api/domains/:id/dns/email — merge a provider's MX + SPF into the
- *  current records (replaces any existing MX / root SPF). Body { provider }. */
+const HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+\.?$/;
+
+/** Build the added records for a CUSTOM email setup from the request body.
+ *  Body: { mx:[{host,priority}], spf?, dmarc?, dkim?:{name,value} }. */
+function customEmailRecords(body) {
+  const added = [];
+  const mx = Array.isArray(body.mx) ? body.mx.slice(0, 5) : [];
+  for (const m of mx) {
+    const host = String((m && m.host) || '').trim().replace(/\.$/, '');
+    if (!host || !HOST_RE.test(host)) continue;
+    const pref = parseInt(m && m.priority, 10);
+    added.push({ name: '@', type: 'MX', address: host, mxpref: String(Number.isFinite(pref) && pref >= 0 ? pref : 10), ttl: '1800' });
+  }
+  if (!added.length) return null; // at least one valid MX required
+  const spf = String(body.spf || '').trim();
+  if (spf) added.push({ name: '@', type: 'TXT', address: spf.slice(0, 512), ttl: '1800', mxpref: '10' });
+  const dmarc = String(body.dmarc || '').trim();
+  if (dmarc) added.push({ name: '_dmarc', type: 'TXT', address: dmarc.slice(0, 512), ttl: '1800', mxpref: '10' });
+  const dkimName = String((body.dkim && body.dkim.name) || '').trim().replace(/\.$/, '');
+  const dkimVal = String((body.dkim && body.dkim.value) || '').trim();
+  if (dkimName && dkimVal && /^[a-zA-Z0-9._-]+$/.test(dkimName)) {
+    added.push({ name: dkimName, type: 'TXT', address: dkimVal.slice(0, 2048), ttl: '1800', mxpref: '10' });
+  }
+  return added;
+}
+
+/** POST /api/domains/:id/dns/email — merge an email provider's records into
+ *  the current set (replaces existing MX + the records being re-set). Body:
+ *  { provider } for a preset, or { provider:'custom', mx, spf, dmarc, dkim }. */
 export async function handleDnsEmailSetup(ctx) {
   const { env, request } = ctx;
   const order = await ownDomainOrder(ctx);
@@ -565,21 +592,38 @@ export async function handleDnsEmailSetup(ctx) {
   try {
     const body = await request.json().catch(() => ({}));
     const key = String(body.provider || '').toLowerCase();
-    const presetDef = EMAIL_PRESETS[key];
-    if (!presetDef) return jsonResponse({ success: false, error: 'Unknown email provider.' }, 400);
-    const preset = typeof presetDef === 'function' ? presetDef(order.domain) : presetDef;
 
-    const current = (await getDnsHosts(env, order.domain)).filter((h) => !isLockedRow(h));
-    // Strip existing MX + any root SPF TXT (we replace them), keep the rest.
-    const kept = current.filter(
-      (h) => h.type !== 'MX' && !(h.type === 'TXT' && h.name === '@' && /^v=spf1/i.test(h.address))
-    );
-    const added = [
-      ...preset.mx.map(([host, pref]) => ({ name: '@', type: 'MX', address: host, mxpref: String(pref), ttl: '1800' })),
-      { name: '@', type: 'TXT', address: preset.spf, ttl: '1800', mxpref: '10' },
-    ];
-    const full = [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...kept, ...added];
-    await setDnsHosts(env, order.domain, full);
+    let added;
+    if (key === 'custom') {
+      added = customEmailRecords(body);
+      if (!added) return jsonResponse({ success: false, error: t(ctx.lang, 'domstore.email_need_mx') }, 400);
+    } else {
+      const presetDef = EMAIL_PRESETS[key];
+      if (!presetDef) return jsonResponse({ success: false, error: 'Unknown email provider.' }, 400);
+      const preset = typeof presetDef === 'function' ? presetDef(order.domain) : presetDef;
+      added = [
+        ...preset.mx.map(([host, pref]) => ({ name: '@', type: 'MX', address: host, mxpref: String(pref), ttl: '1800' })),
+        { name: '@', type: 'TXT', address: preset.spf, ttl: '1800', mxpref: '10' },
+      ];
+    }
+
+    const connected = await isConnected(env.DB, order.domain);
+    const current = (await getDnsHosts(env, order.domain)).filter((h) => !(connected && isLockedRow(h)));
+    // Strip existing MX + any TXT we're re-setting (match by host name), keep the rest.
+    const addedTxtNames = new Set(added.filter((a) => a.type === 'TXT').map((a) => a.name));
+    const addedRootSpf = added.some((a) => a.type === 'TXT' && a.name === '@' && /^v=spf1/i.test(a.address));
+    const kept = current.filter((h) => {
+      if (h.type === 'MX') return false;
+      if (h.type === 'TXT' && addedTxtNames.has(h.name)) {
+        // Only drop the root TXT if we're replacing the SPF specifically.
+        if (h.name === '@') return !(addedRootSpf && /^v=spf1/i.test(h.address));
+        return false;
+      }
+      return true;
+    });
+    const base = connected ? lockedRecords(order.domain).map(({ locked, ...h }) => h) : [];
+    await setDnsHosts(env, order.domain, [...base, ...kept, ...added]);
+    audit(ctx, 'domain.dns_edit', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { email_provider: key } });
     return jsonResponse({ success: true });
   } catch (e) {
     console.error('dns email setup error:', e.message);
