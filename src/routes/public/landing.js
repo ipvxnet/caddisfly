@@ -334,6 +334,17 @@ export async function handleLanding(ctx) {
       var spin = document.getElementById('refactor-spin');
       var ok = document.getElementById('refactor-ok');
       var bad = document.getElementById('refactor-bad');
+      var RF = ${JSON.stringify({
+        btn: tr('landing.refactor_btn'),
+        sending: tr('landing.rf_sending'),
+        err_email: tr('landing.rf_err_email'),
+        err_url: tr('landing.rf_err_url'),
+        err_agree: tr('landing.rf_err_agree'),
+        err_generic: tr('landing.rf_err_generic'),
+        err_network: tr('landing.rf_err_network'),
+        check_fallback: tr('landing.refactor_almost'),
+        view_now: tr('landing.rf_view_now'),
+      })};
 
       function isEmail(v){ return v && v.indexOf('@') > 0 && v.length > 3; }
       function isUrl(v){
@@ -350,12 +361,12 @@ export async function handleLanding(ctx) {
         var email = emailInput.value.trim();
         var website = siteInput.value.trim();
         var bad1 = false;
-        if (!isEmail(email)) { emailErr.textContent = 'Please enter a valid email.'; emailErr.classList.add('show'); emailInput.classList.add('error'); bad1 = true; }
-        if (!isUrl(website)) { siteErr.textContent = 'Please enter a valid website URL.'; siteErr.classList.add('show'); siteInput.classList.add('error'); bad1 = true; }
-        if (!document.getElementById('refactor-agree').checked) { bad.textContent = 'Please agree to the Terms of Service and Privacy Policy to continue.'; bad.classList.add('show'); bad1 = true; }
+        if (!isEmail(email)) { emailErr.textContent = RF.err_email; emailErr.classList.add('show'); emailInput.classList.add('error'); bad1 = true; }
+        if (!isUrl(website)) { siteErr.textContent = RF.err_url; siteErr.classList.add('show'); siteInput.classList.add('error'); bad1 = true; }
+        if (!document.getElementById('refactor-agree').checked) { bad.textContent = RF.err_agree; bad.classList.add('show'); bad1 = true; }
         if (bad1) return;
 
-        btn.disabled = true; label.textContent = 'Sending…'; spin.classList.add('show');
+        btn.disabled = true; label.textContent = RF.sending; spin.classList.add('show');
         try {
           var res = await fetch('/api/preview/create', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -363,19 +374,19 @@ export async function handleLanding(ctx) {
           });
           var data = await res.json();
           if (data.success) {
-            var html = data.message || 'Check your email to confirm and build your preview.';
-            if (data.previewUrl) { html += '<br><br><a href="' + data.previewUrl + '" target="_blank" style="font-weight:700;color:#22543d">View your preview now →</a>'; }
+            var html = data.message || RF.check_fallback;
+            if (data.previewUrl) { html += '<br><br><a href="' + data.previewUrl + '" target="_blank" style="font-weight:700;color:#22543d">' + RF.view_now + '</a>'; }
             ok.innerHTML = html; ok.classList.add('show');
             form.reset();
           } else {
-            bad.textContent = data.error || 'Something went wrong. Please try again.';
+            bad.textContent = data.error || RF.err_generic;
             bad.classList.add('show');
           }
         } catch(err) {
-          bad.textContent = 'Network error. Please check your connection and try again.';
+          bad.textContent = RF.err_network;
           bad.classList.add('show');
         } finally {
-          btn.disabled = false; label.textContent = 'Get my free preview'; spin.classList.remove('show');
+          btn.disabled = false; label.textContent = RF.btn; spin.classList.remove('show');
         }
       });
     })();
