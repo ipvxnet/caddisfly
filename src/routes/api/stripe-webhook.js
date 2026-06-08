@@ -105,6 +105,11 @@ export async function handleStripeWebhook(ctx) {
             if (s.customer) {
               await upsertBillingAccount(env.DB, emailNorm, { stripe_customer_id: s.customer });
             }
+            // Ledger entry for the admin revenue panel (idempotent via session).
+            await env.DB.prepare(
+              `INSERT INTO credit_pack_purchases (email, credits, amount_cents, stripe_session_id)
+               VALUES (?, ?, ?, ?) ON CONFLICT(stripe_session_id) DO NOTHING`
+            ).bind(emailNorm, credits, s.amount_total || 0, s.id).run().catch(() => {});
             notifyOpsAsync(ctx, `✨ *Credit pack purchased*: ${emailNorm} +${credits} credits`);
           }
           break;
