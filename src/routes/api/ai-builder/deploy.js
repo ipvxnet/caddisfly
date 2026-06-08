@@ -2,6 +2,7 @@
 // Publish a (multi-page) site: render each page to R2 and serve it at /site/:id.
 
 import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
+import { audit } from '../../../utils/audit.js';
 import { getProjectByPreviewId, updateProject } from '../../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../../db/ai-config.js';
 import { ensurePagesForProject, getPagesByProject } from '../../../db/ai-pages.js';
@@ -309,6 +310,8 @@ export async function handleAIBuilderDeploy(ctx) {
       // Mark refactor projects deployed too so the publish-count cap is consistent.
       await updateProject(env.DB, regularProjectRow.id, { status: 'deployed' });
     }
+
+    audit(ctx, 'site.publish', { teamOwner: email, resourceType: 'site', resourceId: publicId, resourceName: projectView.project_name, metadata: { subdomain } });
 
     return json({
       success: true,

@@ -9,6 +9,7 @@
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
+import { audit } from '../../../utils/audit.js';
 import { DOMAIN_LIMITS } from '../../../utils/credits.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import {
@@ -107,6 +108,7 @@ export async function handleAddDomain(ctx) {
     dcv_value: cf ? cf.dcv_value : null,
   });
 
+  audit(ctx, 'domain.connect', { teamOwner: proj.email, resourceType: 'domain', resourceId: hostname, resourceName: hostname });
   return json({ success: true, domain: rec, configured: isSaaSConfigured(env) });
 }
 
@@ -165,6 +167,7 @@ export async function handleRemoveDomain(ctx) {
     console.error('pointer delete error (continuing):', e.message);
   }
   await deleteDomain(env.DB, rec.id);
+  audit(ctx, 'domain.disconnect', { resourceType: 'domain', resourceId: rec.hostname, resourceName: rec.hostname });
   return json({ success: true });
 }
 

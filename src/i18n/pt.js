@@ -258,7 +258,7 @@ export const pt = {
     plan_billing: 'Plano e faturação →',
     buy_domain: '🌐 Domínios',
     signed_in_as: 'Sessão iniciada como',
-    support: 'Suporte', help: 'Ajuda', sign_out: 'Sair',
+    support: 'Suporte', activity: 'Atividade', help: 'Ajuda', sign_out: 'Sair',
     no_sites: 'Você ainda não tem sites.', build_one: 'Crie um →',
     live: 'No ar', not_published: 'Ainda não publicado',
     customize: 'Personalizar', analytics: 'Estatísticas', inbox: 'Mensagens', blog: 'Blog', store: 'Loja', open: 'Abrir ↗',
@@ -390,6 +390,15 @@ export const pt = {
     preview: 'O formulário de contato é ativado quando você publica o seu site.',
     err_fields: 'Preencha o seu nome, um e-mail válido e uma mensagem.',
     err_rate: 'Muitas mensagens — tente novamente mais tarde.',
+  },
+
+  act: {
+    meta_title: 'Atividade — Caddisfly', title: 'Registro de atividade',
+    sub: 'Um registro das ações importantes na sua conta e equipe. Somente leitura.',
+    search_ph: 'Buscar usuário, recurso ou ação…',
+    all_actions: 'Todas as ações', all_status: 'Todos os status', filter: 'Filtrar', clear: 'Limpar',
+    when: 'Quando', user: 'Usuário', action: 'Ação', resource: 'Detalhes', status: 'Status',
+    ok: 'OK', error: 'Erro', empty: 'Ainda não há atividade.', prev: '← Mais recentes', next: 'Mais antigas →',
   },
 
   finbox: {
@@ -743,6 +752,10 @@ export const pt = {
     dns_persist: 'Atenção: os registros DNS do seu domínio comprado permanecem até você removê-los.',
     del_cleanup: 'Limpar também os registros DNS de que não preciso mais (mantém seus registros de e-mail/MX).',
     del_btn: 'Excluir site', del_busy: 'Excluindo…',
+    why_h: 'Por que você está saindo? (opcional)',
+    why_expensive: 'Muito caro', why_features: 'Faltam recursos',
+    why_experiment: 'Eu estava só experimentando', why_other: 'Outro',
+    why_feedback_ph: 'Conte-nos mais (opcional) — seu feedback ajuda.',
     done_h: 'Site excluído', done_p: 'Seu site foi excluído permanentemente.',
   },
 

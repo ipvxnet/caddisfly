@@ -258,7 +258,7 @@ export const es = {
     plan_billing: 'Plan y facturación →',
     buy_domain: '🌐 Dominios',
     signed_in_as: 'Sesión iniciada como',
-    support: 'Soporte', help: 'Ayuda', sign_out: 'Cerrar sesión',
+    support: 'Soporte', activity: 'Actividad', help: 'Ayuda', sign_out: 'Cerrar sesión',
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
     live: 'En línea', not_published: 'Aún no publicado',
     customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', store: 'Tienda', open: 'Abrir ↗',
@@ -390,6 +390,15 @@ export const es = {
     preview: 'El formulario de contacto se activa cuando publicas tu sitio.',
     err_fields: 'Completa tu nombre, un email válido y un mensaje.',
     err_rate: 'Demasiados mensajes — inténtalo de nuevo más tarde.',
+  },
+
+  act: {
+    meta_title: 'Actividad — Caddisfly', title: 'Registro de actividad',
+    sub: 'Un registro de las acciones importantes en tu cuenta y equipo. Solo lectura.',
+    search_ph: 'Buscar usuario, recurso o acción…',
+    all_actions: 'Todas las acciones', all_status: 'Todos los estados', filter: 'Filtrar', clear: 'Limpiar',
+    when: 'Cuándo', user: 'Usuario', action: 'Acción', resource: 'Detalles', status: 'Estado',
+    ok: 'OK', error: 'Error', empty: 'Aún no hay actividad.', prev: '← Más recientes', next: 'Más antiguas →',
   },
 
   finbox: {
@@ -743,6 +752,10 @@ export const es = {
     dns_persist: 'Aviso: los registros DNS de tu dominio comprado permanecen hasta que los elimines.',
     del_cleanup: 'Limpiar también los registros DNS que ya no necesito (mantiene tus registros de correo/MX).',
     del_btn: 'Eliminar sitio web', del_busy: 'Eliminando…',
+    why_h: '¿Por qué te vas? (opcional)',
+    why_expensive: 'Demasiado caro', why_features: 'Faltan funciones',
+    why_experiment: 'Solo estaba probando', why_other: 'Otro',
+    why_feedback_ph: 'Cuéntanos más (opcional) — tu opinión nos ayuda.',
     done_h: 'Sitio web eliminado', done_p: 'Tu sitio web se ha eliminado permanentemente.',
   },
 

@@ -14,6 +14,7 @@ import {
 } from '../../db/teams.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { isValidEmail, sanitizeEmail, sendTeamInviteEmail } from '../../utils/email.js';
+import { audit } from '../../utils/audit.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -63,6 +64,7 @@ export async function handleTeamInvite(ctx) {
   const row = await createInvite(env.DB, { ownerEmail: owner, memberEmail: member, role, invitedBy: ctx.billingEmail });
   const inviteUrl = `${url.origin}/team/accept/${row.invite_token}`;
   await sendTeamInviteEmail(env, member, inviteUrl, owner);
+  audit(ctx, 'team.invite', { teamOwner: owner, resourceType: 'member', resourceId: member, resourceName: member, metadata: { role } });
 
   return json({ success: true, member: { email: member, role, status: row.status } });
 }
@@ -81,6 +83,7 @@ export async function handleTeamRole(ctx) {
   if (!existing) return json({ success: false, error: 'That person is not on this team.' }, 404);
 
   await setMemberRole(env.DB, owner, member, role);
+  audit(ctx, 'team.role', { teamOwner: owner, resourceType: 'member', resourceId: member, resourceName: member, metadata: { role } });
   return json({ success: true, member: { email: member, role } });
 }
 
@@ -97,5 +100,6 @@ export async function handleTeamRemove(ctx) {
   if (!existing) return json({ success: false, error: 'That person is not on this team.' }, 404);
 
   await removeMember(env.DB, owner, member);
+  audit(ctx, 'team.remove', { teamOwner: owner, resourceType: 'member', resourceId: member, resourceName: member });
   return json({ success: true });
 }

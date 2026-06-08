@@ -31,7 +31,11 @@ export async function insertAuditLog(db, e) {
 export async function queryAuditLogs(db, opts = {}) {
   const where = [];
   const binds = [];
-  if (opts.teamOwner) { where.push('team_owner_email = ?'); binds.push(opts.teamOwner); }
+  if (Array.isArray(opts.teamOwners)) {
+    if (!opts.teamOwners.length) return []; // no allowed scope → nothing
+    where.push(`team_owner_email IN (${opts.teamOwners.map(() => '?').join(',')})`);
+    binds.push(...opts.teamOwners);
+  } else if (opts.teamOwner) { where.push('team_owner_email = ?'); binds.push(opts.teamOwner); }
   if (opts.action) { where.push('action = ?'); binds.push(opts.action); }
   if (opts.status) { where.push('status = ?'); binds.push(opts.status); }
   if (opts.q) {

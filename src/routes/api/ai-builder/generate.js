@@ -2,6 +2,7 @@
 // Generate website preview from conversation answers
 
 import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
+import { audit } from '../../../utils/audit.js';
 import { getAnsweredConversations } from '../../../db/ai-conversations.js';
 import { createSection } from '../../../db/ai-sections.js';
 import { createPage } from '../../../db/ai-pages.js';
@@ -230,6 +231,8 @@ export async function handleAIBuilderGenerate(ctx) {
 
     // Charge AI credits for the generation (after success)
     await chargeCredits(env, env.DB, project.customer_email, CREDIT_COSTS.generate);
+    audit(ctx, 'credit.site_generate', { teamOwner: project.customer_email, resourceType: 'site', resourceId: project.project_id, resourceName: project.project_name, metadata: { credits: CREDIT_COSTS.generate } });
+    audit(ctx, 'site.create', { teamOwner: project.customer_email, resourceType: 'site', resourceId: project.project_id, resourceName: project.project_name });
 
     return new Response(
       JSON.stringify({

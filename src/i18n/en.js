@@ -258,7 +258,7 @@ export const en = {
     plan_billing: 'Plan & billing →',
     buy_domain: '🌐 Domains',
     signed_in_as: 'Signed in as',
-    support: 'Support', help: 'Help', sign_out: 'Sign out',
+    support: 'Support', activity: 'Activity', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet',
     customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', store: 'Store', open: 'Open ↗',
@@ -393,6 +393,15 @@ export const en = {
     preview: 'The contact form becomes active when you publish your site.',
     err_fields: 'Please fill out your name, a valid email, and a message.',
     err_rate: 'Too many messages — please try again later.',
+  },
+
+  act: {
+    meta_title: 'Activity — Caddisfly', title: 'Activity log',
+    sub: 'A record of significant actions on your account and team. Read-only.',
+    search_ph: 'Search user, resource, or action…',
+    all_actions: 'All actions', all_status: 'All statuses', filter: 'Filter', clear: 'Clear',
+    when: 'When', user: 'User', action: 'Action', resource: 'Details', status: 'Status',
+    ok: 'OK', error: 'Error', empty: 'No activity yet.', prev: '← Newer', next: 'Older →',
   },
 
   finbox: {
@@ -750,6 +759,10 @@ export const en = {
     dns_persist: 'Heads-up: DNS records on your purchased domain stay until you remove them.',
     del_cleanup: 'Also clean up the DNS records I no longer need (keeps your email/MX records).',
     del_btn: 'Delete website', del_busy: 'Deleting…',
+    why_h: 'Why are you leaving? (optional)',
+    why_expensive: 'Too expensive', why_features: 'Lack of features',
+    why_experiment: 'I was just experimenting', why_other: 'Other',
+    why_feedback_ph: 'Tell us more (optional) — your feedback helps.',
     done_h: 'Website deleted', done_p: 'Your website has been permanently deleted.',
   },
 

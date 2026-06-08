@@ -231,7 +231,7 @@ export async function handleDashboard(ctx) {
         <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
       </div>
     </div>
-    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
+    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/activity">${tr('dash.activity')}</a> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
 
     ${ownSites.some((s) => s.subdomain) ? `
     <div class="note-banner" id="republish-note" hidden>
@@ -329,6 +329,10 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .offb-acts .go.danger{background:#dc2626}
     .offb-acts .go:disabled{opacity:.5;cursor:default}
     .offb-err{color:#b91c1c;font-size:.85rem;min-height:1.1em;margin:.4rem 0 0}
+    .offb-why{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:.8rem .9rem;margin:.8rem 0}
+    .offb-why-h{font-weight:700;color:var(--ink);margin:0 0 .5rem}
+    .offb-radio{display:flex;align-items:center;gap:.5rem;font-size:.9rem;color:#4a5568;padding:.22rem 0;cursor:pointer}
+    .offb-why textarea{margin-top:.5rem}
   </style>
 </head>
 <body>
@@ -419,9 +423,14 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
       var cleanup = d.has_bought_dns
         ? '<p>'+OFFB_T.dns_persist+'</p><label class="offb-check"><input type="checkbox" id="offb-cleanup"> <span>'+OFFB_T.del_cleanup+'</span></label>'
         : '';
+      var why = '<div class="offb-why"><p class="offb-why-h">'+OFFB_T.why_h+'</p>'
+        + ['expensive','features','experiment','other'].map(function(k){
+            return '<label class="offb-radio"><input type="radio" name="offbwhy" value="'+k+'" onchange="offbWhy()"> '+OFFB_T['why_'+k]+'</label>'; }).join('')
+        + '<textarea id="offb-feedback" class="offb-confirm" hidden rows="2" placeholder="'+OFFB_T.why_feedback_ph+'"></textarea></div>';
       card.innerHTML = offbHeader(OFFB_T.step_delete)
         + '<h2 style="font-size:1.05rem">'+OFFB_T.del_h+'</h2>'
         + '<p class="offb-warn">'+OFFB_T.del_warn+'</p>'
+        + why
         + '<p>'+OFFB_T.del_type+'</p>'
         + '<input class="offb-confirm" id="offb-confirm" placeholder="DELETE" oninput="offbCheck()" autocomplete="off">'
         + cleanup
@@ -432,6 +441,11 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     function offbCheck(){
       var v = (document.getElementById('offb-confirm').value||'').trim().toUpperCase();
       document.getElementById('offb-go').disabled = v !== 'DELETE';
+    }
+    function offbWhy(){
+      var sel = document.querySelector('input[name=offbwhy]:checked');
+      var fb = document.getElementById('offb-feedback');
+      if (fb) fb.hidden = !(sel && sel.value === 'other');
     }
     function offbErr(m){ var e=document.getElementById('offb-err'); if(e) e.textContent = m; }
     async function offbUnpublish(btn){
@@ -454,11 +468,18 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     }
     async function offbDelete(btn){
       var cleanupEl = document.getElementById('offb-cleanup');
+      var whyEl = document.querySelector('input[name=offbwhy]:checked');
+      var fbEl = document.getElementById('offb-feedback');
       btn.disabled = true; btn.textContent = OFFB_T.del_busy;
       try {
         var r = await fetch('/api/ai-builder/'+encodeURIComponent(OFFB.id)+'/delete',{
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ confirm: document.getElementById('offb-confirm').value.trim(), cleanup_dns: !!(cleanupEl && cleanupEl.checked) })
+          body: JSON.stringify({
+            confirm: document.getElementById('offb-confirm').value.trim(),
+            cleanup_dns: !!(cleanupEl && cleanupEl.checked),
+            reason: whyEl ? whyEl.value : '',
+            feedback: fbEl ? (fbEl.value||'').trim() : ''
+          })
         });
         var d = await r.json();
         if(!r.ok||!d.success) throw new Error((d&&d.error)||OFFB_T.err);

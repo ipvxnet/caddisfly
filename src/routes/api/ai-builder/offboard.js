@@ -196,10 +196,16 @@ export async function handleDeleteSite(ctx) {
     if (r.kind === 'ai') await deleteAIProject(env.DB, r.row.id);
     else await deleteProject(env.DB, r.row.id);
 
+    const reason = (body.reason || '').toString().slice(0, 40);
+    const feedback = (body.feedback || '').toString().slice(0, 1000);
     audit(ctx, 'site.delete', {
       teamOwner: r.email, resourceType: 'site', resourceId: r.publicId, resourceName: r.name,
-      metadata: { domains_disconnected: domains.length, dns_cleaned: dnsCleaned },
+      metadata: { domains_disconnected: domains.length, dns_cleaned: dnsCleaned, reason: reason || null, feedback: feedback || null },
     });
+    // Separate churn-reason entry so it's easy to filter/analyze on its own.
+    if (reason) {
+      audit(ctx, 'churn.reason', { teamOwner: r.email, resourceType: 'site', resourceId: r.publicId, resourceName: r.name, metadata: { reason, feedback: feedback || null } });
+    }
     return json({ success: true, dns_cleaned: dnsCleaned });
   } catch (e) {
     console.error('delete site error:', e.message);

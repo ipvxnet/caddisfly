@@ -28,6 +28,8 @@ import { isSaaSConfigured, createCustomHostname, createWorkerRoute, getCustomHos
 import { uploadToR2 } from '../../utils/r2-storage.js';
 import { isValidCountry } from '../../utils/countries.js';
 import { notifyOps } from '../../utils/ops-notify.js';
+import { audit } from '../../utils/audit.js';
+import { insertAuditLog } from '../../db/audit-logs.js';
 import { sendDomainRegisteredEmail, isValidEmail } from '../../utils/email.js';
 import { t, translator } from '../../i18n/index.js';
 
@@ -323,6 +325,8 @@ export async function processDomainOrder(env, orderId, paymentIntentId = null) {
     await autoConnectDomain(env, order); // best-effort; alerts on failure
 
     await notifyOps(env, `💰 *Domain sold*: ${order.domain} → ${order.customer_email} ($${(order.price_cents / 100).toFixed(2)}, wholesale $${(order.wholesale_cents / 100).toFixed(2)})`);
+    // processDomainOrder runs off-path (waitUntil) without a request ctx — log directly.
+    await insertAuditLog(env.DB, { user_email: order.customer_email, team_owner_email: order.customer_email, action: 'domain.purchase', resource_type: 'domain', resource_id: order.domain, resource_name: order.domain, status: 'success', metadata: JSON.stringify({ price_cents: order.price_cents }) }).catch(() => {});
     await sendDomainRegisteredEmail(env, {
       to: order.customer_email,
       domain: order.domain,
@@ -435,6 +439,7 @@ export async function handleDomainAutoRenew(ctx) {
   const body = await request.json().catch(() => ({}));
   const on = body.auto_renew ? 1 : 0;
   await updateOrder(env.DB, order.id, { auto_renew: on });
+  audit(ctx, 'domain.auto_renew', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { auto_renew: !!on } });
   return jsonResponse({ success: true, auto_renew: !!on });
 }
 
@@ -522,6 +527,7 @@ export async function handleDnsSave(ctx) {
     }
     const full = [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...editable];
     await setDnsHosts(env, order.domain, full);
+    audit(ctx, 'domain.dns_edit', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { records: editable.length } });
     return jsonResponse({ success: true });
   } catch (e) {
     console.error('dns save error:', e.message);

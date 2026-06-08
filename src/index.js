@@ -62,8 +62,10 @@ import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
 import { handleSupport } from './routes/public/support.js';
+import { handleActivity } from './routes/public/activity.js';
 import { handleCreateTicket, handleReplyTicket } from './routes/api/support.js';
 import { handleAdminTickets, handleAdminTicketReply, handleAdminTicketStatus } from './routes/admin/tickets.js';
+import { handleAdminAudit } from './routes/admin/audit.js';
 import { handleAdminLegal, handleAdminLegalSave } from './routes/admin/legal.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
@@ -190,6 +192,7 @@ router.get('/team/accept/:token', handleTeamAccept);
 // Help/docs (public) + support tickets (customer, magic-link auth)
 router.get('/help', handleHelp);
 router.get('/support', handleSupport, [billingAuth]);
+router.get('/activity', handleActivity, [billingAuth]);
 
 // Domain store (Namecheap reselling)
 router.get('/domains', handleDomainsStorePage, [billingAuth]);
@@ -326,6 +329,7 @@ router.post('/api/stripe/webhook', handleStripeWebhook);
 router.get('/logout', handleLogout, [authMiddleware]);
 router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
 router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddleware]);
+router.get('/admin/audit', handleAdminAudit, [authMiddleware, adminMiddleware]);
 router.get('/api/admin/domains/renew', handleAdminRenewRun, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
