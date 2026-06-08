@@ -419,24 +419,13 @@ async function saveSectionChanges(event) {
     }
   }
 
-  // Gallery images travel as a JSON blob in a hidden field (array of objects);
-  // expand it into content.images.
-  if (content.images_json !== undefined) {
-    try { content.images = JSON.parse(content.images_json) || []; } catch (e) { content.images = []; }
-    delete content.images_json;
-  }
-
-  // Pricing plans use the same hidden-JSON pattern.
-  if (content.plans_json !== undefined) {
-    try { content.plans = JSON.parse(content.plans_json) || []; } catch (e) { content.plans = []; }
-    delete content.plans_json;
-  }
-
-  // Footer links (label + destination + new_tab) — same hidden-JSON pattern.
-  if (content.links_json !== undefined) {
-    try { content.links = JSON.parse(content.links_json) || []; } catch (e) { content.links = []; }
-    delete content.links_json;
-  }
+  // Array sections (gallery images, pricing plans, footer links, services,
+  // testimonials) travel as a hidden <key>_json blob — expand each into content[key].
+  Object.keys(content).filter((k) => k.endsWith('_json')).forEach((k) => {
+    const base = k.slice(0, -5);
+    try { content[base] = JSON.parse(content[k]) || []; } catch (e) { content[base] = []; }
+    delete content[k];
+  });
 
   saveBtn.disabled = true;
   saveBtn.textContent = ${JSON.stringify(tr('sed.saving'))};
@@ -930,9 +919,64 @@ function generateAboutFields(content, tr) {
   `;
 }
 
-function generateServicesFields(content, tr) {
-  const services = content.services || [];
+// Generic list-item repeater (services, testimonials): rows of fields backed by
+// a hidden <key>_json blob that the save handler expands into content[key].
+// fields: [{ key, kind?: 'short'|'textarea', num?: bool, ph?: string }]
+function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel }) {
+  const cell = (f, it) => {
+    const v = it && it[f.key] != null ? String(it[f.key]) : '';
+    const num = f.num ? ' data-num="1"' : '';
+    return f.kind === 'textarea'
+      ? `<textarea class="rep-input" data-k="${f.key}"${num} rows="2" placeholder="${escapeHtml(f.ph || '')}">${escapeHtml(v)}</textarea>`
+      : `<input type="text" class="rep-input${f.kind === 'short' ? ' rep-short' : ''}" data-k="${f.key}"${num} placeholder="${escapeHtml(f.ph || '')}" value="${escapeHtml(v)}">`;
+  };
+  const row = (it) => `<div class="rep-row">${fields.map((f) => cell(f, it)).join('')}<button type="button" class="rep-remove" title="${escapeHtml(removeLabel)}" onclick="var p=this.closest('.rep');this.closest('.rep-row').remove();p.__sync&&p.__sync()">&times;</button></div>`;
+  const list = Array.isArray(items) ? items : [];
+  return `
+    <input type="hidden" id="${jsonKey}_json" name="${jsonKey}_json" value="${escapeHtml(JSON.stringify(list))}">
+    <div class="rep" id="rep-${jsonKey}">
+      <div class="rep-rows">${list.map(row).join('')}</div>
+      <template class="rep-tpl">${row({})}</template>
+      <button type="button" class="btn-secondary rep-add">${escapeHtml(addLabel)}</button>
+    </div>
+    <style>
+      .rep-row{display:flex;gap:.4rem;align-items:flex-start;margin-bottom:.5rem;padding:.55rem;background:#f8fafc;border-radius:8px}
+      .rep-input{flex:1;padding:.5rem .6rem;border:2px solid #e2e8f0;border-radius:8px;font:inherit;font-size:.88rem}
+      .rep-input.rep-short{flex:0 0 60px;text-align:center}
+      .rep-remove{border:none;background:none;color:#a0aec0;font-size:1.3rem;cursor:pointer;line-height:1;padding:.1rem .3rem;align-self:center}
+    </style>
+    <script>
+      (function(){
+        var rep = document.getElementById('rep-${jsonKey}');
+        if (!rep || rep.__ready) return; rep.__ready = true;
+        var hidden = document.getElementById('${jsonKey}_json');
+        var rows = rep.querySelector('.rep-rows');
+        var tpl = rep.querySelector('.rep-tpl');
+        function sync(){
+          var arr = [];
+          rows.querySelectorAll('.rep-row').forEach(function(r){
+            var o = {}, any = false;
+            r.querySelectorAll('.rep-input').forEach(function(inp){
+              var v = inp.value.trim();
+              o[inp.dataset.k] = inp.dataset.num ? (parseInt(v, 10) || 0) : v;
+              if (v) any = true;
+            });
+            if (any) arr.push(o);
+          });
+          hidden.value = JSON.stringify(arr);
+        }
+        rep.__sync = sync;
+        rep.addEventListener('input', sync);
+        rep.querySelector('.rep-add').addEventListener('click', function(){
+          rows.appendChild(tpl.content.firstElementChild.cloneNode(true)); sync();
+        });
+        sync();
+      })();
+    </script>
+  `;
+}
 
+function generateServicesFields(content, tr) {
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -941,13 +985,20 @@ function generateServicesFields(content, tr) {
 
     <div class="form-group">
       <label for="subheading">${tr('sed.subheading')}</label>
-      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
 
-    <p style="font-weight: 600; margin: 1.5rem 0 1rem;">${tr('sed.services_soon')}</p>
-    <p style="color: #718096; font-size: 0.875rem;">
-      ${tr('sed.services_count', { n: services.length })}
-    </p>
+    <div class="form-group">
+      <label>${tr('sed.services')}</label>
+      ${buildRepeater({
+        jsonKey: 'services', items: content.services, addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'),
+        fields: [
+          { key: 'icon', kind: 'short', ph: '🚀' },
+          { key: 'title', ph: tr('sed.svc_title_ph') },
+          { key: 'description', kind: 'textarea', ph: tr('sed.svc_desc_ph') },
+        ],
+      })}
+    </div>
   `;
 }
 
@@ -960,12 +1011,21 @@ function generateTestimonialsFields(content, tr) {
 
     <div class="form-group">
       <label for="subheading">${tr('sed.subheading')}</label>
-      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
 
-    <p style="color: #718096; font-size: 0.875rem; margin-top: 1rem;">
-      ${tr('sed.testimonials_soon')}
-    </p>
+    <div class="form-group">
+      <label>${tr('sed.testimonials')}</label>
+      ${buildRepeater({
+        jsonKey: 'testimonials', items: content.testimonials, addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'),
+        fields: [
+          { key: 'name', ph: tr('sed.tst_name_ph') },
+          { key: 'role', ph: tr('sed.tst_role_ph') },
+          { key: 'text', kind: 'textarea', ph: tr('sed.tst_text_ph') },
+          { key: 'rating', kind: 'short', num: true, ph: '5' },
+        ],
+      })}
+    </div>
   `;
 }
 
