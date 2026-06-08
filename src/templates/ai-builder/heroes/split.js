@@ -12,6 +12,7 @@ export function heroSplitTemplate(data, config) {
     subheading = 'Your business tagline',
     cta_text = 'Get Started',
     cta_link = '#contact',
+    cta_link_new_tab = false,
     image_url = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
@@ -22,7 +23,7 @@ export function heroSplitTemplate(data, config) {
     <div class="hero-split-content">
       <h1 class="hero-split-heading">${heading}</h1>
       <p class="hero-split-subheading">${subheading}</p>
-      <a href="${cta_link}" class="hero-split-cta">${cta_text}</a>
+      <a href="${cta_link}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''} class="hero-split-cta">${cta_text}</a>
     </div>
     <div class="hero-split-image">
       <img src="${image_url}" alt="${heading}" />

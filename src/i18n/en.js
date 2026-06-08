@@ -601,6 +601,13 @@ export const en = {
     no_posts: 'No posts yet. Describe your first post above and let the AI draft it.',
   },
 
+  lp: {
+    search_ph: 'Search pages & sections, or paste a link…',
+    new_tab: 'Open in a new tab',
+    g_pages: 'Pages', g_sections: 'Sections', g_actions: 'Actions', g_web: 'Web address',
+    use_web: 'Link to', top: 'Top of page', call: 'Call', email: 'Email', none: 'No link',
+    missing: 'This points to {a}, which no longer exists on your site.',
+  },
   sed: {
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',
@@ -615,6 +622,8 @@ export const en = {
     testimonials_soon: 'Individual testimonial editing coming soon.', submit_button: 'Submit Button Text',
     photos: 'Photos', photos_hint: '· drag-free reorder, replace, or remove — no new AI images', add_photo: '＋ Add photo',
     business_name: 'Business Name', tagline: 'Tagline', copyright: 'Copyright Text',
+    footer_links: 'Footer links', footer_links_hint: 'Quick links in the footer. Pick a page/section or paste a web address.',
+    link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',
     no_photos: 'No photos yet — click “Add photo”.', g_drag: 'Drag to reorder', g_alt_ph: 'Describe this photo (alt text)',

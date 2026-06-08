@@ -45,7 +45,7 @@ export function footerMultiColumnTemplate(data, config) {
     <div class="footer-links">
       <h4 class="footer-links-heading">Quick Links</h4>
       <ul class="footer-links-list">
-        ${links.map((link) => `<li><a href="${link.url}">${link.label}</a></li>`).join('')}
+        ${links.map((link) => `<li><a href="${link.url}"${link.new_tab ? ' target="_blank" rel="noopener"' : ''}>${link.label}</a></li>`).join('')}
       </ul>
     </div>
     <div class="footer-social">
