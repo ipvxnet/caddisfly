@@ -71,7 +71,6 @@ export function generateColorPicker(config, projectId, lang = 'en') {
 
   <div class="picker-actions">
     <button class="btn-secondary" onclick="resetColors()">${tr('pick.reset_default')}</button>
-    <button class="btn-primary" onclick="saveColors()" id="save-colors-btn">${tr('pick.apply_colors')}</button>
   </div>
 </div>
 
@@ -222,29 +221,28 @@ window.currentColors = {
 };
 window.colorPickerProjectId = '${projectId}';
 
+// Colors apply INSTANTLY (like theme + fonts). Inputs fire on commit (change),
+// preset/reset apply at once; a short debounce coalesces quick primary→secondary
+// edits into a single save + preview reload.
+let colorApplyTimer = null;
+function scheduleColorApply() {
+  if (colorApplyTimer) clearTimeout(colorApplyTimer);
+  colorApplyTimer = setTimeout(applyColorsNow, 450);
+}
+
 function updateColor(type, value) {
   window.currentColors[type] = value;
-
-  // Update text input
   document.getElementById(\`\${type}-color-text\`).value = value;
-
-  // Update preview
   updatePreview();
+  scheduleColorApply();
 }
 
 function updateColorFromText(type, value) {
-  // Validate hex color
-  if (!/^#[0-9A-F]{6}$/i.test(value)) {
-    return;
-  }
-
+  if (!/^#[0-9A-F]{6}$/i.test(value)) return;
   window.currentColors[type] = value;
-
-  // Update color picker
   document.getElementById(\`\${type}-color\`).value = value;
-
-  // Update preview
   updatePreview();
+  scheduleColorApply();
 }
 
 function updatePreview() {
@@ -255,26 +253,19 @@ function updatePreview() {
 function applyPalette(primary, secondary) {
   window.currentColors.primary = primary;
   window.currentColors.secondary = secondary;
-
-  // Update all inputs
   document.getElementById('primary-color').value = primary;
   document.getElementById('primary-color-text').value = primary;
   document.getElementById('secondary-color').value = secondary;
   document.getElementById('secondary-color-text').value = secondary;
-
-  // Update preview
   updatePreview();
+  scheduleColorApply();
 }
 
 function resetColors() {
   applyPalette('#667eea', '#764ba2');
 }
 
-async function saveColors() {
-  const btn = document.getElementById('save-colors-btn');
-  btn.disabled = true;
-  btn.textContent = ${JSON.stringify(tr('pick.applying'))};
-
+async function applyColorsNow() {
   try {
     const response = await fetch(\`/api/ai-builder/\${window.colorPickerProjectId}/config/colors\`, {
       method: 'PUT',
@@ -284,28 +275,13 @@ async function saveColors() {
         secondary_color: window.currentColors.secondary
       })
     });
-
     const data = await response.json();
-
-    if (data.success) {
-      // Reload preview iframe
-      const previewIframe = document.getElementById('preview-iframe');
-      if (previewIframe) {
-        previewIframe.contentWindow.location.reload();
-      }
-
-      // Show success notification
-      showNotification(${JSON.stringify(tr('pick.colors_updated'))}, 'success');
-
-      btn.textContent = ${JSON.stringify(tr('pick.apply_colors'))};
-      btn.disabled = false;
-    } else {
-      throw new Error(data.error || ${JSON.stringify(tr('pick.colors_failed'))});
-    }
+    if (!data.success) throw new Error(data.error || ${JSON.stringify(tr('pick.colors_failed'))});
+    const previewIframe = document.getElementById('preview-iframe');
+    if (previewIframe) previewIframe.contentWindow.location.reload();
+    showNotification(${JSON.stringify(tr('pick.colors_updated'))}, 'success');
   } catch (error) {
-    alert(${JSON.stringify(tr('pick.colors_failed'))} + ': ' + error.message);
-    btn.disabled = false;
-    btn.textContent = ${JSON.stringify(tr('pick.apply_colors'))};
+    showNotification(${JSON.stringify(tr('pick.colors_failed'))} + ': ' + error.message, 'error');
   }
 }
 
