@@ -99,7 +99,7 @@ export async function handlePreviewCreate(ctx) {
     // We do a cheap best-effort static fetch here only to get a business-name
     // hint for a better Places query — no browser rendering, no paid calls.
     if (useTemplates) {
-      return await handleVerificationRequest(env, project, normalizedWebsite, sanitizedEmail, request);
+      return await handleVerificationRequest(env, project, normalizedWebsite, sanitizedEmail, request, language);
     }
 
     // Step 2: Scrape website (legacy CSS-only path — unchanged)
@@ -375,7 +375,7 @@ function getBaseUrl(request) {
  * @param {Request} request - HTTP request (for base URL)
  * @returns {Response} HTTP response
  */
-async function handleVerificationRequest(env, project, website, email, request) {
+async function handleVerificationRequest(env, project, website, email, request, language = 'en') {
   // Cheap, best-effort static fetch — bot protection may block it; that's fine.
   let scrapeSignal = null;
   try {
