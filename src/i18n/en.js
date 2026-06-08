@@ -409,6 +409,8 @@ export const en = {
     preview: 'The contact form becomes active when you publish your site.',
     err_fields: 'Please fill out your name, a valid email, and a message.',
     err_rate: 'Too many messages — please try again later.',
+    heading: 'Get In Touch', sub: "We'd love to hear from you",
+    name: 'Your Name', email: 'Email Address', message: 'Message', send: 'Send Message',
   },
 
   act: {

@@ -9,21 +9,20 @@ import { t } from '../../../i18n/index.js';
  * @returns {string} HTML template
  */
 export function contactFormTemplate(data, config) {
-  const {
-    heading = 'Get In Touch',
-    subheading = "We'd love to hear from you",
-    button_text = 'Send Message',
-    phone = '',
-    address = '',
-    email = '',
-  } = data;
-  const { primary_color = '#667eea', font_heading = 'Inter' } = config;
-
   // Real submissions (published pages only): the assembler threads trackId +
   // appOrigin + lang through renderConfig, so the form bakes its endpoint and
   // localized status messages at render time. Previews (no trackId) show a
   // "form activates on publish" note instead of posting.
   const lang = config.lang || 'en';
+  const {
+    heading = t(lang, 'formw.heading'),
+    subheading = t(lang, 'formw.sub'),
+    button_text = t(lang, 'formw.send'),
+    phone = '',
+    address = '',
+    email = '',
+  } = data;
+  const { primary_color = '#667eea', font_heading = 'Inter' } = config;
   const siteId = config.trackId || '';
   const endpoint = `${config.appOrigin || ''}/api/forms/submit`;
   const attr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -51,16 +50,16 @@ export function contactFormTemplate(data, config) {
       data-msg-error="${attr(t(lang, 'formw.error'))}" data-msg-preview="${attr(t(lang, 'formw.preview'))}">
       <div class="form-row">
         <div class="form-group">
-          <label for="name">Your Name</label>
+          <label for="name">${t(lang, 'formw.name')}</label>
           <input type="text" id="name" name="name" required />
         </div>
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="email">${t(lang, 'formw.email')}</label>
           <input type="email" id="email" name="email" required />
         </div>
       </div>
       <div class="form-group">
-        <label for="message">Message</label>
+        <label for="message">${t(lang, 'formw.message')}</label>
         <textarea id="message" name="message" rows="5" required></textarea>
       </div>
       <!-- Honeypot: humans never see it; bots that fill it are silently dropped -->

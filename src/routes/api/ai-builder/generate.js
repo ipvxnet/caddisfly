@@ -145,7 +145,7 @@ export async function handleAIBuilderGenerate(ctx) {
 
     // Multi-page: split sections across pages (deterministic blueprint; thin
     // sites collapse to a single Home page). Create the page rows up front.
-    const { pages: pagePlan, assign } = planPages(sectionsToGenerate);
+    const { pages: pagePlan, assign } = planPages(sectionsToGenerate, project.language || 'en');
     const pageIdBySlug = {};
     for (const p of pagePlan) {
       const row = await createPage(env.DB, {

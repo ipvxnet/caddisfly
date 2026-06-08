@@ -5,7 +5,7 @@
 import { aiJoke } from '../../utils/jokes.js';
 
 export async function handleJoke(ctx) {
-  const joke = await aiJoke(ctx.env);
+  const joke = await aiJoke(ctx.env, (ctx && ctx.lang) || 'en');
   return new Response(JSON.stringify({ joke }), {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });

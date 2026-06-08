@@ -406,6 +406,8 @@ export const pt = {
     preview: 'O formulário de contato é ativado quando você publica o seu site.',
     err_fields: 'Preencha o seu nome, um e-mail válido e uma mensagem.',
     err_rate: 'Muitas mensagens — tente novamente mais tarde.',
+    heading: 'Entre em contato', sub: 'Adoraríamos ouvir você',
+    name: 'Seu nome', email: 'E-mail', message: 'Mensagem', send: 'Enviar mensagem',
   },
 
   act: {
