@@ -112,7 +112,7 @@ export async function generateAndStore(env, project, profile) {
   });
 
   // 5. Multi-page split (deterministic blueprint; thin sites collapse to Home).
-  const { pages: pagePlan, assign } = planPages(sections.map((s) => s.type));
+  const { pages: pagePlan, assign } = planPages(sections.map((s) => s.type), context.language || 'en');
   const pageIdBySlug = {};
   for (const p of pagePlan) {
     const row = await createPage(env.DB, {
