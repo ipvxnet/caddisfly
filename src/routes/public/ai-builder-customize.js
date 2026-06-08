@@ -1506,6 +1506,16 @@ export async function handleAIBuilderCustomize(ctx) {
         if (f) { sessionStorage.removeItem('cf_flash'); const o = JSON.parse(f); showNotification(o.msg, o.type || 'success'); }
       } catch (e) {}
     })();
+
+    // Click-to-edit: the preview iframe posts the section id of the "✎ Edit"
+    // pill the user clicked; open that section's editor (which also focuses it).
+    window.addEventListener('message', function (e) {
+      if (e.origin !== window.location.origin) return;
+      const d = e.data;
+      if (!d || d.source !== 'caddisfly-preview' || d.type !== 'edit-section') return;
+      const id = parseInt(d.sectionId, 10);
+      if (!isNaN(id)) editSection(id);
+    });
   </script>
 </body>
 </html>
