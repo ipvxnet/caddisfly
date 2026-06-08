@@ -6,7 +6,7 @@ import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
 import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
 import { notifyOpsAsync } from '../../utils/ops-notify.js';
-import { processDomainOrder } from './domains-store.js';
+import { processDomainOrder, processManualRenewal } from './domains-store.js';
 import { updateOrder as updateDomainOrder } from '../../db/domain-orders.js';
 
 const MONTH_SECONDS = 30 * 24 * 60 * 60;
@@ -74,6 +74,17 @@ export async function handleStripeWebhook(ctx) {
           if (Number.isFinite(orderId) && s.payment_status === 'paid') {
             if (s.customer) await updateDomainOrder(env.DB, orderId, { stripe_customer_id: s.customer });
             const run = processDomainOrder(env, orderId, s.payment_intent || null);
+            if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(run); else await run;
+          }
+          break;
+        }
+
+        // Manual "renew now" backstop (receipt page is the primary writer;
+        // processManualRenewal claims by session id so this can't double).
+        if (s.metadata && s.metadata.type === 'domain_renewal_manual' && s.metadata.order_id) {
+          const orderId = parseInt(s.metadata.order_id, 10);
+          if (Number.isFinite(orderId) && s.payment_status === 'paid') {
+            const run = processManualRenewal(env, orderId, s.id);
             if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(run); else await run;
           }
           break;

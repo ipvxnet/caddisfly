@@ -56,8 +56,21 @@ export async function getExpiringDomains(db, nowTs, withinDays = 30) {
 const ORDER_FIELDS = new Set([
   'status', 'error', 'stripe_customer_id', 'nc_domain_id', 'nc_transaction_id',
   'auto_renew', 'registered_at', 'expires_at', 'stripe_session_id',
-  'renewal_attempts', 'renewal_last_at',
+  'renewal_attempts', 'renewal_last_at', 'renewal_session_id',
 ]);
+
+/**
+ * Atomically claim a manual-renewal Stripe session for one order. Returns true
+ * for exactly the FIRST caller (receipt page vs webhook) for a given session —
+ * so a single payment renews the domain once.
+ */
+export async function claimRenewalSession(db, id, sessionId) {
+  const r = await db
+    .prepare("UPDATE domain_orders SET renewal_session_id = ?, updated_at = unixepoch() WHERE id = ? AND COALESCE(renewal_session_id,'') != ?")
+    .bind(sessionId, id, sessionId)
+    .run();
+  return !!(r && r.meta && r.meta.changes);
+}
 
 export async function updateOrder(db, id, fields) {
   const sets = [];
