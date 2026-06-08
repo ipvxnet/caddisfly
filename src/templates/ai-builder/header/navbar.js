@@ -14,6 +14,7 @@ export function navbarTemplate(data, config) {
     business_name = 'Home',
     phone = '',
     cta_link = '#contact',
+    cta_link_new_tab = false,
   } = data;
   const primaryColor = config.primary_color || '#667eea';
   const fontHeading = config.font_heading || 'Inter';
@@ -53,7 +54,7 @@ export function navbarTemplate(data, config) {
 
   const actions = pageLinks
     ? `${pageLinks}\n      ${phoneLink}`
-    : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}">Contact</a>`;
+    : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''}>Contact</a>`;
 
   // Multi-page sites get a hamburger on small screens (the link row would
   // otherwise wrap into a wall of links). Single-page anchor navs stay as-is.

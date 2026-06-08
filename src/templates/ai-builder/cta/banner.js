@@ -2,7 +2,7 @@
 // Call-to-action banner section
 
 export function ctaBannerTemplate(data, config) {
-  const { heading, description = '', cta_text, cta_url } = data;
+  const { heading, description = '', cta_text, cta_url, cta_url_new_tab = false } = data;
   const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
 
   return `
@@ -17,7 +17,7 @@ export function ctaBannerTemplate(data, config) {
       </p>
     </div>
     <div class="cta-action">
-      <a href="${cta_url || '#contact'}" class="cta-button">
+      <a href="${cta_url || '#contact'}"${cta_url_new_tab ? ' target="_blank" rel="noopener"' : ''} class="cta-button">
         ${cta_text || 'Get Started'}
       </a>
     </div>

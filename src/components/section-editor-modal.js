@@ -783,6 +783,10 @@ function generateFormFields(sectionType, content, tr, projectId = '') {
       return generateGalleryFields(content, tr);
     case 'footer':
       return generateFooterFields(content, tr);
+    case 'header':
+      return generateHeaderFields(content, tr);
+    case 'cta':
+      return generateCtaFields(content, tr);
     case 'pricing':
       return generatePricingFields(content, tr);
     case 'products':
@@ -1078,6 +1082,52 @@ function generateFooterFields(content, tr) {
     </script>
   `;
     })()}
+  `;
+}
+
+// Header / navbar: brand name, phone, and the CTA link (shown on single-page
+// sites; multi-page navs use the page links instead). Logo lives in Design.
+function generateHeaderFields(content, tr) {
+  return `
+    <div class="form-group">
+      <label for="business_name">${tr('sed.business_name')}</label>
+      <input type="text" id="business_name" name="business_name" value="${escapeHtml(content.business_name || '')}">
+    </div>
+
+    <div class="form-group">
+      <label for="phone">${tr('sed.phone')}</label>
+      <input type="text" id="phone" name="phone" value="${escapeHtml(content.phone || '')}" placeholder="(555) 123-4567">
+    </div>
+
+    <div class="form-group">
+      <label>${tr('sed.button_link')}</label>
+      ${renderLinkField({ name: 'cta_link', value: content.cta_link || '#contact', newTab: !!content.cta_link_new_tab })}
+    </div>
+  `;
+}
+
+// CTA banner: heading, description, button text, and the button link.
+function generateCtaFields(content, tr) {
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" required>
+    </div>
+
+    <div class="form-group">
+      <label for="description">${tr('sed.description')}</label>
+      <input type="text" id="description" name="description" value="${escapeHtml(content.description || '')}">
+    </div>
+
+    <div class="form-group">
+      <label for="cta_text">${tr('sed.button_text')}</label>
+      <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || '')}">
+    </div>
+
+    <div class="form-group">
+      <label>${tr('sed.button_link')}</label>
+      ${renderLinkField({ name: 'cta_url', value: content.cta_url || '#contact', newTab: !!content.cta_url_new_tab })}
+    </div>
   `;
 }
 
