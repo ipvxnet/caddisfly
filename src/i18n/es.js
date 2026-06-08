@@ -617,6 +617,7 @@ export const es = {
     testimonials_soon: 'La edición individual de reseñas llega pronto.', submit_button: 'Texto del botón de envío',
     photos: 'Fotos', photos_hint: '· reordena, reemplaza o quita — sin nuevas imágenes de IA', add_photo: '＋ Añadir foto',
     business_name: 'Nombre del negocio', tagline: 'Eslogan', copyright: 'Texto de copyright',
+    phone: 'Teléfono', description: 'Descripción',
     footer_links: 'Enlaces del pie', footer_links_hint: 'Enlaces rápidos del pie. Elige una página/sección o pega una dirección web.',
     link_label: 'Texto del enlace', add_link: '＋ Añadir enlace', link_remove: 'Quitar enlace',
     ph_about_us: 'Sobre nosotros', ph_our_services: 'Nuestros servicios', ph_testimonials: 'Testimonios', ph_get_in_touch: 'Contáctanos',
