@@ -338,6 +338,8 @@ export async function handleAIBuilderCustomize(ctx) {
 
     .ai-edit-btn:hover { filter: brightness(1.08); }
 
+    .field-flash { animation: fieldFlash 1.7s ease-out; border-radius: 8px; }
+    @keyframes fieldFlash { 0%, 40% { box-shadow: 0 0 0 3px rgba(124,58,237,0.55); background: rgba(124,58,237,0.06); } 100% { box-shadow: 0 0 0 3px rgba(124,58,237,0); background: transparent; } }
     .builder-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; border-bottom: 2px solid #edf0f5; }
     .builder-tab { flex: 1; padding: 0.6rem 0.4rem; border: none; background: none; font-size: 0.92rem; font-weight: 700; color: #718096; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
     .builder-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
@@ -1323,7 +1325,7 @@ export async function handleAIBuilderCustomize(ctx) {
       setTimeout(apply, 600);
     })();
 
-    async function editSection(sectionId) {
+    async function editSection(sectionId, fieldHint) {
       // Focus/scroll the preview to this section (visible thanks to the left-docked modal).
       focusSection(sectionId);
       try {
@@ -1354,9 +1356,37 @@ export async function handleAIBuilderCustomize(ctx) {
           host.appendChild(s);
           old.remove();
         });
+
+        if (fieldHint) focusEditorField(fieldHint);
       } catch (error) {
         alert(${JSON.stringify(tr('cust.err_load_editor'))} + error.message);
       }
+    }
+
+    // Deep-link to a field after the editor loads (element-level click-to-edit):
+    // open the manual-edit form, scroll to + flash the matching field, focus it.
+    function focusEditorField(hint) {
+      const MAP = { heading: ['heading'], text: ['subheading', 'description', 'tagline'], link: ['cta_link', 'cta_url'], image: ['image_url'] };
+      const names = MAP[hint] || [];
+      setTimeout(() => {
+        const host = document.getElementById('section-editor-host');
+        if (!host) return;
+        const det = host.querySelector('details.manual-edit');
+        if (det) det.open = true;
+        let el = null;
+        for (const n of names) { el = host.querySelector('[name="' + n + '"]'); if (el) break; }
+        if (!el) return;
+        let focusEl = el;
+        if (el.type === 'hidden') {
+          const lp = el.closest('.lp');
+          focusEl = lp ? lp.querySelector('.lp-search') : null; // link picker search box; image stays scroll-only
+        }
+        const group = el.closest('.form-group') || el;
+        group.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        group.classList.add('field-flash');
+        setTimeout(() => group.classList.remove('field-flash'), 1700);
+        if (focusEl && focusEl.focus) { try { focusEl.focus({ preventScroll: true }); } catch (e) {} }
+      }, 280);
     }
 
     async function switchTemplate(event) {
@@ -1525,7 +1555,7 @@ export async function handleAIBuilderCustomize(ctx) {
       const d = e.data;
       if (!d || d.source !== 'caddisfly-preview' || d.type !== 'edit-section') return;
       const id = parseInt(d.sectionId, 10);
-      if (!isNaN(id)) { switchPanel('content'); editSection(id); }
+      if (!isNaN(id)) { switchPanel('content'); editSection(id, d.field); }
     });
   </script>
 </body>
