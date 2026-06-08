@@ -381,6 +381,8 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
       cancel: tr('offb.cancel'), err: tr('offb.err'), loading: tr('offb.loading'),
       done_h: tr('offb.done_h'), done_p: tr('offb.done_p'), close: tr('offb.close'),
       dns_persist: tr('offb.dns_persist'),
+      why_h: tr('offb.why_h'), why_expensive: tr('offb.why_expensive'), why_features: tr('offb.why_features'),
+      why_experiment: tr('offb.why_experiment'), why_other: tr('offb.why_other'), why_feedback_ph: tr('offb.why_feedback_ph'),
     })};
     let OFFB = { id: '', name: '' };
     function offbClose(){ document.getElementById('offb-modal').classList.remove('open'); }
