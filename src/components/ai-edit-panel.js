@@ -45,6 +45,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
     <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
       ${isHero ? `<div class="ai-edit-genvid">
+        <input type="text" id="ai-edit-genvid-prompt" class="ai-edit-input" maxlength="200" placeholder="${tr('aip.gen_video_ph')}">
         <button type="button" class="ai-edit-genvid-btn" id="ai-edit-genvid-btn" onclick="aiEditGenVideo()">${tr('aip.gen_video')}</button>
         <p class="ai-edit-genvid-note">${tr('aip.gen_video_note')}</p>
       </div>` : ''}
@@ -93,6 +94,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
 .ai-edit-remove:hover { background:#fef2f2; }
 .ai-edit-own-status { font-size:0.78rem; color:#7c3aed; min-height:1em; }
 .ai-edit-genvid { margin:0 0 0.7rem; padding-bottom:0.7rem; border-bottom:1px solid #ede9fe; }
+.ai-edit-genvid #ai-edit-genvid-prompt { margin-bottom:0.45rem; }
 .ai-edit-genvid-btn { width:100%; padding:0.6rem; border:none; border-radius:8px; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; }
 .ai-edit-genvid-btn:disabled { opacity:0.7; cursor:default; }
 .ai-edit-genvid-note { font-size:0.72rem; color:#9ca3af; margin:0.35rem 0 0; }
@@ -226,9 +228,10 @@ async function aiEditGenVideo() {
   if (!confirm(${JSON.stringify(tr('aip.gen_video_confirm'))})) return;
   if (btn) { btn.disabled = true; btn.textContent = ${JSON.stringify(tr('aip.gen_video_busy'))}; }
   if (status) status.textContent = ${JSON.stringify(tr('aip.gen_video_wait'))};
+  var brief = ((document.getElementById('ai-edit-genvid-prompt') || {}).value || '').trim();
   try {
     const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/hero-video/generate\`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief })
     });
     const data = await res.json();
     if (!data.success) {
