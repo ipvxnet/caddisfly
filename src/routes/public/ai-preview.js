@@ -190,6 +190,7 @@ export async function handleAIPreview(ctx) {
       currentSlug: page ? page.slug : 'home',
       previewBase: `/ai-preview/${project.project_id}`,
       embed,
+      editOverlay: embed, // hover "✎ Edit" affordance — only in the customize iframe
       preordered: true,
       lang: siteLang,
       products: activeProducts, // 🛍 featured-products section (live data)

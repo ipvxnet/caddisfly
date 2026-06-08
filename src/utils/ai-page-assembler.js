@@ -3,6 +3,7 @@
 
 import { renderSection } from '../templates/ai-builder/registry.js';
 import { getTheme, darkModeCss } from './site-themes.js';
+import { translator } from '../i18n/index.js';
 
 // Google Fonts that ship a single (400) weight only — requesting extra weights in
 // the css2 URL returns HTTP 400 and breaks the whole stylesheet, so omit the axis.
@@ -29,14 +30,14 @@ function fontFamilyParam(name, weights) {
 export function assemblePage(sections, config, project, opts = {}) {
   const {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
-    hideBadge = false, trackId = null, appOrigin = '',
+    hideBadge = false, trackId = null, appOrigin = '', editOverlay = false,
     seoTitle = null, seoDescription = null, socialImage = null, canonicalUrl = null, pageTitle = null, business = null,
     lang = 'en', products = null,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
   // ignore it). `products` feeds the 🛍 featured-products section live data.
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products };
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, editOverlay };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.
@@ -175,7 +176,7 @@ function seoHead(seo, fallbackTitle, logoUrl = '') {
  * @returns {string} Complete HTML document
  */
 export function buildHTMLDocument({ title, body, config, seo = null }) {
-  const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '', lang = 'en' } = config;
+  const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '', lang = 'en', editOverlay = false } = config;
 
   // Brand favicon from the site logo (AI-generated or uploaded). Relative
   // /preview-asset/ URLs resolve on the app origin, subdomains, and custom
@@ -297,8 +298,56 @@ ${trackId ? `<!-- Caddisfly analytics (cookieless) -->
     });
   });
 </script>
+${editOverlay ? builderEditOverlay(lang) : ''}
 </body>
 </html>`;
+}
+
+/**
+ * Builder-only click-to-edit overlay (injected ONLY into the customize iframe).
+ * Hovering a section outlines it and shows a floating "✎ Edit" pill; clicking
+ * the pill postMessages the parent customize page to open that section's editor.
+ * Runs only inside the iframe (window.self !== window.top).
+ */
+function builderEditOverlay(lang) {
+  // Reuse the localized edit word, but drop any leading emoji (cust.edit is the
+  // "✨ Edit" AI button) so the pill reads a clean "✎ Edit".
+  const raw = translator(lang || 'en')('cust.edit') || 'Edit';
+  const clean = String(raw).replace(/^[^A-Za-zÀ-ɏ]+/, '').trim() || 'Edit';
+  const safeLabel = clean.replace(/[<>&"'\\]/g, '');
+  return `<script>
+(function(){
+  if (window.self === window.top) return; // builder iframe only
+  var LABEL = ${JSON.stringify(safeLabel)};
+  var current = null;
+  var pill = document.createElement('button');
+  pill.type = 'button';
+  pill.textContent = '\\u270E ' + LABEL;
+  pill.style.cssText = 'position:fixed;z-index:2147483647;display:none;align-items:center;background:#7c3aed;color:#fff;border:none;border-radius:999px;padding:6px 13px;font:600 13px system-ui,-apple-system,sans-serif;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.28);';
+  function place(sec){ var r = sec.getBoundingClientRect(); pill.style.top = Math.max(8, r.top + 8) + 'px'; pill.style.left = Math.min(window.innerWidth - 96, Math.max(8, r.right - 92)) + 'px'; }
+  function sectionFor(el){ while (el && el !== document.body){ if (el.id && el.id.indexOf('ai-sec-') === 0) return el; el = el.parentElement; } return null; }
+  function clearCurrent(){ if (current){ current.style.outline=''; current.style.outlineOffset=''; } current = null; pill.style.display='none'; }
+  document.addEventListener('mouseover', function(e){
+    var sec = sectionFor(e.target);
+    if (!sec) return;
+    if (sec !== current){ if (current){ current.style.outline=''; current.style.outlineOffset=''; } current = sec; sec.style.outline='2px solid #7c3aed'; sec.style.outlineOffset='-2px'; }
+    pill.style.display='inline-flex'; place(sec);
+  });
+  document.addEventListener('mouseout', function(e){
+    var to = e.relatedTarget;
+    if (to === pill) return;
+    if (current && (to === null || !current.contains(to))) clearCurrent();
+  });
+  window.addEventListener('scroll', function(){ if (current) place(current); }, { passive: true });
+  pill.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    if (!current) return;
+    var id = current.id.replace('ai-sec-','');
+    try { window.parent.postMessage({ source: 'caddisfly-preview', type: 'edit-section', sectionId: id }, '*'); } catch (err) {}
+  });
+  document.body.appendChild(pill);
+})();
+</script>`;
 }
 
 /**
