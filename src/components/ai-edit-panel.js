@@ -236,7 +236,7 @@ async function aiEditGenVideo() {
   var brief = ((document.getElementById('ai-edit-genvid-prompt') || {}).value || '').trim();
   try {
     const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/hero-video/generate\`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief, section_id: window.currentSectionId })
     });
     const data = await res.json().catch(function(){ return {}; });
     if (!res.ok || !data.success) {

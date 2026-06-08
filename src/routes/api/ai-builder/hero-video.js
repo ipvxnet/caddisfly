@@ -7,7 +7,7 @@
 
 import { resolveStoreProject as resolveProject } from './store.js';
 import { audit } from '../../../utils/audit.js';
-import { getSiteSections, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
+import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
 import { generateImageToR2 } from './ai-edit.js';
 import { generateImageToVideo, isVideoGenConfigured } from '../../../utils/ai-video.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
@@ -37,8 +37,8 @@ export async function handleGenerateHeroVideo(ctx) {
     const r = await resolveProject(env, params.project_id);
     if (!r) return json({ success: false, error: 'Project not found' }, 404);
 
-    let brief = '';
-    try { const body = await request.json(); brief = (body.brief || '').toString().trim().slice(0, 200); } catch { /* empty ok */ }
+    let brief = '', sectionId = 0;
+    try { const body = await request.json(); brief = (body.brief || '').toString().trim().slice(0, 200); sectionId = parseInt(body.section_id, 10) || 0; } catch { /* empty ok */ }
     if (brief) { const screen = screenContent(brief); if (!screen.allowed) return json(policyError(screen), 422); }
 
     // Paid feature (prod-gated, like logo/Flux).
@@ -53,10 +53,11 @@ export async function handleGenerateHeroVideo(ctx) {
     const afford = await canAfford(env, env.DB, r.email, cost);
     if (!afford.ok) return json(formatCreditError(afford.state, 'background video'), 402);
 
-    // Find the hero section.
-    const sections = await getSiteSections(env.DB, r.projectKey);
-    const hero = (sections || []).find((s) => s.section_type === 'hero');
-    if (!hero) return json({ success: false, error: 'This site has no hero section to animate.' }, 400);
+    // Animate the section the user is editing (the hero), verifying it's ours.
+    if (!sectionId) return json({ success: false, error: 'No section selected.' }, 400);
+    const hero = await getSectionById(env.DB, sectionId);
+    const owns = hero && (r.projectKey.aiProjectId != null ? hero.ai_project_id === r.projectKey.aiProjectId : hero.project_id === r.projectKey.projectId);
+    if (!hero || !owns) return json({ success: false, error: 'Section not found.' }, 404);
     let heroContent = {};
     try { heroContent = JSON.parse(hero.content_json || '{}'); } catch { heroContent = {}; }
 
