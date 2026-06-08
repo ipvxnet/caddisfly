@@ -341,6 +341,7 @@ export const pt = {
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
     store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site',
+    tab_content: 'Conteúdo', tab_design: 'Design',
     status_published: 'Publicado', status_draft: 'Rascunho',
     status_published_title: 'O site está no ar. Publique novamente para aplicar suas últimas mudanças.',
     status_draft_title: 'Ainda não publicado — faça o deploy para colocá-lo no ar.',
