@@ -1004,7 +1004,11 @@ function generateServicesFields(content, tr) {
     <div class="form-group">
       <label>${tr('sed.services')}</label>
       ${buildRepeater({
-        jsonKey: 'services', items: content.services, addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_service'),
+        jsonKey: 'services', items: (Array.isArray(content.services) && content.services.length) ? content.services : [
+          { icon: '🚀', title: 'Service 1', description: 'Description of service 1' },
+          { icon: '💡', title: 'Service 2', description: 'Description of service 2' },
+          { icon: '⭐', title: 'Service 3', description: 'Description of service 3' },
+        ], addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_service'),
         fields: [
           { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
           { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
@@ -1030,7 +1034,11 @@ function generateTestimonialsFields(content, tr) {
     <div class="form-group">
       <label>${tr('sed.testimonials')}</label>
       ${buildRepeater({
-        jsonKey: 'testimonials', items: content.testimonials, addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
+        jsonKey: 'testimonials', items: (Array.isArray(content.testimonials) && content.testimonials.length) ? content.testimonials : [
+          { name: 'John Doe', role: 'Customer', text: 'Great service!', rating: 5 },
+          { name: 'Jane Smith', role: 'Client', text: 'Highly recommend!', rating: 5 },
+          { name: 'Bob Johnson', role: 'Partner', text: 'Excellent work!', rating: 5 },
+        ], addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
         fields: [
           { key: 'name', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
           { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
