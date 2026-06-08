@@ -87,8 +87,8 @@ export async function handleDomainsStorePage(ctx) {
     .note{color:var(--muted);font-size:.92rem}
     .empty-note{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1rem 1.2rem;color:#92400e;margin-bottom:1.4rem}
     /* contact modal */
-    #buy-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:1rem;z-index:50}
-    #buy-modal.open{display:flex}
+    #buy-modal,#dns-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:1rem;z-index:50}
+    #buy-modal.open,#dns-modal.open{display:flex}
     .bm-card{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:92vh;overflow:auto;padding:1.6rem 1.8rem}
     .bm-card h2{font-size:1.2rem;color:var(--ink);margin-bottom:.2rem}
     .bm-card .bm-sub{color:var(--muted);font-size:.88rem;margin-bottom:1rem}
