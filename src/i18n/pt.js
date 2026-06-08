@@ -265,6 +265,7 @@ export const pt = {
     republish_note: 'Novidades desta semana: menus adaptados ao celular, formulários de contato funcionais, blog e loja online. Abra Personalizar e clique em Publicar para aplicar as melhorias mais recentes ao seu site.',
     dismiss: 'Fechar',
     export: '⬇ Exportar', export_title: 'Baixe o seu site publicado como HTML (seu para hospedar onde quiser)',
+    delete_site: 'Excluir',
     custom_domain: 'Domínio próprio',
     shared_by: 'Sites compartilhados por {owner}', no_sites_yet: 'Ainda não há sites.',
     your_team: 'A sua equipe', team_owned_by: 'Equipe · de {owner}',
@@ -727,6 +728,22 @@ export const pt = {
     could_not_check: 'Não foi possível verificar o status agora.',
     disconnect_confirm: 'Desconectar este domínio do seu site?',
     could_not_remove: 'Não foi possível remover o domínio.',
+  },
+
+  offb: {
+    title: 'Excluir site', loading: 'Carregando…', err: 'Algo deu errado. Tente novamente.',
+    cancel: 'Cancelar', close: 'Fechar',
+    step_unpub: 'Passo 1 de 3 · Despublicar', step_dns: 'Passo · Desconectar domínios', step_delete: 'Passo final · Excluir',
+    unpub_h: 'Seu site está no ar', unpub_p: 'Primeiro tire-o do ar. Isso o remove da web; nada é excluído ainda.',
+    unpub_btn: 'Tirar do ar', unpub_busy: 'Tirando do ar…',
+    dns_h: 'Há um domínio próprio conectado', dns_p: 'Desconecte-o antes de excluir. Seu domínio continua registrado em seu nome — apenas a conexão com este site é removida.',
+    dns_btn: 'Desconectar domínio(s)', dns_busy: 'Desconectando…',
+    del_h: 'Excluir este site permanentemente', del_warn: '⚠️ Isso não pode ser desfeito. Páginas, seções, design, imagens, posts do blog, produtos e a caixa de contato deste site serão excluídos permanentemente. Seus registros de vendas e os domínios que você possui são mantidos.',
+    del_type: 'Digite DELETE para confirmar:',
+    dns_persist: 'Atenção: os registros DNS do seu domínio comprado permanecem até você removê-los.',
+    del_cleanup: 'Limpar também os registros DNS de que não preciso mais (mantém seus registros de e-mail/MX).',
+    del_btn: 'Excluir site', del_busy: 'Excluindo…',
+    done_h: 'Site excluído', done_p: 'Seu site foi excluído permanentemente.',
   },
 
   help: {

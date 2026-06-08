@@ -265,6 +265,7 @@ export const es = {
     republish_note: 'Novedades de esta semana: menús adaptados a móvil, formularios de contacto funcionales, blog y tienda online. Abre Personalizar y pulsa Publicar para aplicar las últimas mejoras a tu sitio.',
     dismiss: 'Cerrar',
     export: '⬇ Exportar', export_title: 'Descarga tu sitio publicado como HTML (tuyo para alojarlo donde quieras)',
+    delete_site: 'Eliminar',
     custom_domain: 'Dominio propio',
     shared_by: 'Sitios compartidos por {owner}', no_sites_yet: 'Aún no hay sitios web.',
     your_team: 'Tu equipo', team_owned_by: 'Equipo · de {owner}',
@@ -727,6 +728,22 @@ export const es = {
     could_not_check: 'No se pudo comprobar el estado ahora mismo.',
     disconnect_confirm: '¿Desconectar este dominio de tu sitio?',
     could_not_remove: 'No se pudo quitar el dominio.',
+  },
+
+  offb: {
+    title: 'Eliminar sitio web', loading: 'Cargando…', err: 'Algo salió mal. Inténtalo de nuevo.',
+    cancel: 'Cancelar', close: 'Cerrar',
+    step_unpub: 'Paso 1 de 3 · Despublicar', step_dns: 'Paso · Desconectar dominios', step_delete: 'Paso final · Eliminar',
+    unpub_h: 'Tu sitio web está en línea', unpub_p: 'Primero ponlo fuera de línea. Esto lo retira de la web; aún no se elimina nada.',
+    unpub_btn: 'Poner fuera de línea', unpub_busy: 'Poniendo fuera de línea…',
+    dns_h: 'Hay un dominio propio conectado', dns_p: 'Desconéctalo antes de eliminar. Tu dominio sigue registrado a tu nombre — solo se quita la conexión con este sitio.',
+    dns_btn: 'Desconectar dominio(s)', dns_busy: 'Desconectando…',
+    del_h: 'Eliminar este sitio web permanentemente', del_warn: '⚠️ Esto no se puede deshacer. Las páginas, secciones, diseño, imágenes, entradas del blog, productos y la bandeja de contacto de este sitio se eliminarán permanentemente. Tus registros de ventas y los dominios que poseas se conservan.',
+    del_type: 'Escribe DELETE para confirmar:',
+    dns_persist: 'Aviso: los registros DNS de tu dominio comprado permanecen hasta que los elimines.',
+    del_cleanup: 'Limpiar también los registros DNS que ya no necesito (mantiene tus registros de correo/MX).',
+    del_btn: 'Eliminar sitio web', del_busy: 'Eliminando…',
+    done_h: 'Sitio web eliminado', done_p: 'Tu sitio web se ha eliminado permanentemente.',
   },
 
   help: {

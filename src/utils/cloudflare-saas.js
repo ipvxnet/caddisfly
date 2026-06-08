@@ -117,6 +117,20 @@ export async function createCustomHostname(env, hostname) {
   return { ...extractRecords(result), cname_target: cnameTarget(env) };
 }
 
+/** Delete the Worker route `<hostname>/*` (cleanup on disconnect/offboard).
+ *  Best-effort: finds the route by pattern, deletes it. No-op if none. */
+export async function deleteWorkerRoute(env, hostname) {
+  try {
+    const routes = await cfRequest(env, 'GET', '/workers/routes');
+    const match = (routes || []).find((r) => r.pattern === `${hostname}/*`);
+    if (match) await cfRequest(env, 'DELETE', `/workers/routes/${match.id}`);
+    return true;
+  } catch (e) {
+    console.error('worker route delete failed (ignored):', e.message);
+    return false;
+  }
+}
+
 /** Fetch current state of a custom hostname. */
 export async function getCustomHostname(env, id) {
   const result = await cfRequest(env, 'GET', `/custom_hostnames/${id}`);

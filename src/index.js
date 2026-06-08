@@ -97,6 +97,7 @@ import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSave, handleDnsEmailSetup } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
+import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 
 /** GET /api/admin/domains/renew?dry=1&now=<unix> — manual renewal run
  *  (admin-only test). `now` simulates a date so dry-runs can preview the
@@ -257,6 +258,9 @@ router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
 router.post('/api/ai-builder/:project_id/logo/generate', handleLogoGenerate, PROJ);
 router.post('/api/ai-builder/:project_id/logo', autoSnap(handleLogoSet), PROJ);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
+router.get('/api/ai-builder/:project_id/offboard', handleOffboardStatus, PROJ);
+router.post('/api/ai-builder/:project_id/unpublish', handleUnpublish, PROJ);
+router.post('/api/ai-builder/:project_id/delete', handleDeleteSite, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);

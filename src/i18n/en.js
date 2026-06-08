@@ -265,6 +265,7 @@ export const en = {
     republish_note: 'New this week: mobile-friendly menus, working contact forms, blog and online store. Open Customize and hit Publish to apply the latest improvements to your live site.',
     dismiss: 'Dismiss',
     export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
+    delete_site: 'Delete',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',
     your_team: 'Your team', team_owned_by: 'Team · owned by {owner}',
@@ -733,6 +734,23 @@ export const en = {
     could_not_check: 'Could not check status right now.',
     disconnect_confirm: 'Disconnect this domain from your site?',
     could_not_remove: 'Could not remove the domain.',
+  },
+
+  // Offboarding wizard (delete a website).
+  offb: {
+    title: 'Delete website', loading: 'Loading…', err: 'Something went wrong. Try again.',
+    cancel: 'Cancel', close: 'Close',
+    step_unpub: 'Step 1 of 3 · Unpublish', step_dns: 'Step · Disconnect domains', step_delete: 'Final step · Delete',
+    unpub_h: 'Your website is live', unpub_p: 'Take it offline first. This removes it from the web; nothing is deleted yet.',
+    unpub_btn: 'Take offline', unpub_busy: 'Taking offline…',
+    dns_h: 'A custom domain is connected', dns_p: 'Disconnect it before deleting. Your domain stays registered to you — only the connection to this site is removed.',
+    dns_btn: 'Disconnect domain(s)', dns_busy: 'Disconnecting…',
+    del_h: 'Delete this website permanently', del_warn: '⚠️ This cannot be undone. Pages, sections, design, images, blog posts, products, and the contact inbox for this site will be permanently deleted. Your sales records and any domains you own are kept.',
+    del_type: 'Type DELETE to confirm:',
+    dns_persist: 'Heads-up: DNS records on your purchased domain stay until you remove them.',
+    del_cleanup: 'Also clean up the DNS records I no longer need (keeps your email/MX records).',
+    del_btn: 'Delete website', del_busy: 'Deleting…',
+    done_h: 'Website deleted', done_p: 'Your website has been permanently deleted.',
   },
 
   help: {
