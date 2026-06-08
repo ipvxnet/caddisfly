@@ -595,6 +595,13 @@ export const es = {
     no_posts: 'Aún no hay publicaciones. Describe tu primera publicación arriba y deja que la IA la redacte.',
   },
 
+  lp: {
+    search_ph: 'Busca páginas y secciones, o pega un enlace…',
+    new_tab: 'Abrir en una pestaña nueva',
+    g_pages: 'Páginas', g_sections: 'Secciones', g_actions: 'Acciones', g_web: 'Dirección web',
+    use_web: 'Enlazar a', top: 'Inicio de la página', call: 'Llamar', email: 'Correo', none: 'Sin enlace',
+    missing: 'Apunta a {a}, que ya no existe en tu sitio.',
+  },
   sed: {
     edit_section: 'Editar sección', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Guardar cambios',
     saving: 'Guardando…', updated: '¡Sección actualizada!', save_failed: 'No se pudieron guardar los cambios', save_failed_p: 'No se pudo guardar: ',
@@ -609,6 +616,8 @@ export const es = {
     testimonials_soon: 'La edición individual de reseñas llega pronto.', submit_button: 'Texto del botón de envío',
     photos: 'Fotos', photos_hint: '· reordena, reemplaza o quita — sin nuevas imágenes de IA', add_photo: '＋ Añadir foto',
     business_name: 'Nombre del negocio', tagline: 'Eslogan', copyright: 'Texto de copyright',
+    footer_links: 'Enlaces del pie', footer_links_hint: 'Enlaces rápidos del pie. Elige una página/sección o pega una dirección web.',
+    link_label: 'Texto del enlace', add_link: '＋ Añadir enlace', link_remove: 'Quitar enlace',
     ph_about_us: 'Sobre nosotros', ph_our_services: 'Nuestros servicios', ph_testimonials: 'Testimonios', ph_get_in_touch: 'Contáctanos',
     ph_send_message: 'Enviar mensaje', ph_gallery: 'Galería', ph_get_started: 'Empezar',
     no_photos: 'Aún no hay fotos — haz clic en “Añadir foto”.', g_drag: 'Arrastra para reordenar', g_alt_ph: 'Describe esta foto (texto alternativo)',

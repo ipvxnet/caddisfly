@@ -7,7 +7,7 @@
  * @returns {string} HTML template
  */
 export function heroCenteredTemplate(data, config) {
-  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_link = '#contact' } = data;
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_link = '#contact', cta_link_new_tab = false } = data;
   const { primary_color = '#667eea', secondary_color = '#764ba2', font_heading = 'Inter' } = config;
 
   return `
@@ -15,7 +15,7 @@ export function heroCenteredTemplate(data, config) {
   <div class="hero-content">
     <h1 class="hero-heading">${heading}</h1>
     <p class="hero-subheading">${subheading}</p>
-    <a href="${cta_link}" class="hero-cta">${cta_text}</a>
+    <a href="${cta_link}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''} class="hero-cta">${cta_text}</a>
   </div>
 </section>
 

@@ -2,6 +2,7 @@
 // Generates an HTML modal for editing section content
 
 import { generateAIEditPanel } from './ai-edit-panel.js';
+import { renderLinkField, linkPickerAssets } from './link-picker.js';
 import { translator } from '../i18n/index.js';
 
 /**
@@ -11,9 +12,10 @@ import { translator } from '../i18n/index.js';
  * @param {string} lang - UI language
  * @returns {string} Modal HTML
  */
-export function generateSectionEditorModal(section, projectId, lang = 'en') {
+export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null) {
   const tr = translator(lang);
   const content = JSON.parse(section.content_json || '{}');
+  const lpData = linkData || { pages: [], sections: [], phone: '', email: '' };
 
   return `
 <div id="section-editor-modal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
@@ -25,6 +27,8 @@ export function generateSectionEditorModal(section, projectId, lang = 'en') {
 
     <div class="modal-body">
       ${generateAIEditPanel(section, projectId, lang)}
+      <script>window.linkPickerData = ${JSON.stringify(lpData)};</script>
+      ${linkPickerAssets(lang)}
 
       <details class="manual-edit">
         <summary>${tr('sed.edit_manual')}</summary>
@@ -426,6 +430,12 @@ async function saveSectionChanges(event) {
   if (content.plans_json !== undefined) {
     try { content.plans = JSON.parse(content.plans_json) || []; } catch (e) { content.plans = []; }
     delete content.plans_json;
+  }
+
+  // Footer links (label + destination + new_tab) — same hidden-JSON pattern.
+  if (content.links_json !== undefined) {
+    try { content.links = JSON.parse(content.links_json) || []; } catch (e) { content.links = []; }
+    delete content.links_json;
   }
 
   saveBtn.disabled = true;
@@ -867,8 +877,8 @@ function generateHeroFields(content, tr) {
     </div>
 
     <div class="form-group">
-      <label for="cta_link">${tr('sed.button_link')}</label>
-      <input type="text" id="cta_link" name="cta_link" value="${escapeHtml(content.cta_link || '#contact')}">
+      <label>${tr('sed.button_link')}</label>
+      ${renderLinkField({ name: 'cta_link', value: content.cta_link || '#contact', newTab: !!content.cta_link_new_tab })}
     </div>
 
     <div class="form-group">
@@ -1014,6 +1024,60 @@ function generateFooterFields(content, tr) {
       <label for="copyright">${tr('sed.copyright')}</label>
       <input type="text" id="copyright" name="copyright" value="${escapeHtml(content.copyright || '')}" required>
     </div>
+
+    ${(() => {
+      const links = Array.isArray(content.links) ? content.links : [];
+      const row = (lnk = {}) => `
+      <div class="footer-link-row">
+        <input type="text" class="fl-label" placeholder="${tr('sed.link_label')}" value="${escapeHtml(lnk.label || '')}">
+        ${renderLinkField({ value: lnk.url || '', newTab: !!lnk.new_tab })}
+        <button type="button" class="fl-remove" onclick="removeFooterLink(this)" title="${tr('sed.link_remove')}">&times;</button>
+      </div>`;
+      return `
+    <input type="hidden" id="links_json" name="links_json" value="${escapeHtml(JSON.stringify(links))}">
+    <div class="form-group">
+      <label>${tr('sed.footer_links')}</label>
+      <small style="display:block;color:#718096;margin-bottom:.4rem">${tr('sed.footer_links_hint')}</small>
+      <div id="footer-links">${links.map(row).join('')}</div>
+      <template id="footer-link-tpl">${row({})}</template>
+      <button type="button" class="btn-secondary" onclick="addFooterLink()">${tr('sed.add_link')}</button>
+    </div>
+    <style>
+      .footer-link-row{display:flex;gap:.5rem;align-items:flex-start;margin-bottom:.6rem;padding:.6rem;background:#f8fafc;border-radius:8px}
+      .footer-link-row .fl-label{flex:0 0 30%;padding:.6rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem}
+      .footer-link-row .lp{flex:1}
+      .footer-link-row .fl-remove{border:none;background:none;color:#a0aec0;font-size:1.3rem;cursor:pointer;line-height:1;padding:.2rem .4rem}
+    </style>
+    <script>
+      (function(){
+        var wrap = document.getElementById('footer-links');
+        if (!wrap || wrap.__flReady) return; wrap.__flReady = true;
+        function sync(){
+          var arr = [];
+          wrap.querySelectorAll('.footer-link-row').forEach(function(r){
+            var label = (r.querySelector('.fl-label')||{}).value || '';
+            var url = (r.querySelector('.lp-value')||{}).value || '';
+            var cb = r.querySelector('.lp-newtab-cb');
+            label = label.trim(); url = url.trim();
+            if (label || url) arr.push({ label: label, url: url, new_tab: cb && cb.checked ? 1 : 0 });
+          });
+          var h = document.getElementById('links_json'); if (h) h.value = JSON.stringify(arr);
+        }
+        wrap.addEventListener('input', sync);
+        wrap.addEventListener('lp-change', sync);
+        window.addFooterLink = function(){
+          var tpl = document.getElementById('footer-link-tpl');
+          var node = tpl.content.firstElementChild.cloneNode(true);
+          wrap.appendChild(node);
+          if (window.initLinkPickers) window.initLinkPickers(node);
+          sync();
+        };
+        window.removeFooterLink = function(btn){ var r = btn.closest('.footer-link-row'); if (r){ r.remove(); sync(); } };
+        sync();
+      })();
+    </script>
+  `;
+    })()}
   `;
 }
 
