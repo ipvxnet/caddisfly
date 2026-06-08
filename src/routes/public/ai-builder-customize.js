@@ -374,6 +374,10 @@ export async function handleAIBuilderCustomize(ctx) {
     .serp-title { color: #1a0dab; font-size: 1rem; font-weight: 500; margin: .15rem 0; line-height: 1.3; }
     .serp-desc { color: #4d5156; font-size: .82rem; line-height: 1.45; }
     .seo-saved { color: #03894a; font-size: .82rem; font-weight: 700; margin-left: .6rem; }
+    .pub-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; font-weight: 700; padding: .3rem .65rem; border-radius: 999px; white-space: nowrap; }
+    .pub-badge::before { content: '●'; font-size: .7em; }
+    .pub-badge.pub { background: #e6f7ef; color: #03894a; }
+    .pub-badge.draft { background: #edf0f5; color: #64748b; }
 
     /* Logo panel */
     #logo-current { display: flex; align-items: center; gap: .8rem; margin-bottom: .4rem; }
@@ -661,6 +665,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <a href="/ai-builder/blog/${project.project_id}" class="btn btn-secondary" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
       <a href="/ai-builder/store/${project.project_id}" class="btn btn-secondary" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
+      <span class="pub-badge ${currentSubdomain ? 'pub' : 'draft'}" id="pub-badge" title="${currentSubdomain ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${currentSubdomain ? tr('cust.status_published') : tr('cust.status_draft')}</span>
       ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite()">${tr('cust.deploy')}</button>` : ''}
     </div>
   </div>
@@ -850,6 +855,7 @@ export async function handleAIBuilderCustomize(ctx) {
         const r = await fetch('/api/ai-builder/' + projectId + '/snapshots/' + id + '/restore', { method: 'POST' });
         const d = await r.json();
         if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
+        flashToast(${JSON.stringify(tr('cust.toast_snapshot_restored'))});
         location.reload();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = SNAP_T.restore; }
     }
@@ -895,7 +901,7 @@ export async function handleAIBuilderCustomize(ctx) {
           }),
         });
         const d = await r.json();
-        if (d.success) { const s = document.getElementById('seo-saved'); s.hidden = false; setTimeout(() => { s.hidden = true; }, 2200); }
+        if (d.success) showNotification(${JSON.stringify(tr('cust.toast_seo_saved'))}, 'success');
         else alert(d.error || ${JSON.stringify(tr('cust.could_not_save_seo'))});
       } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; }
@@ -947,6 +953,7 @@ export async function handleAIBuilderCustomize(ctx) {
         document.querySelectorAll('.logo-option.selected').forEach(function (el) { el.classList.remove('selected'); });
         if (card) card.classList.add('selected');
         const f = document.getElementById('preview-iframe'); f.src = f.src; // reflect the new header logo
+        showNotification(url ? ${JSON.stringify(tr('cust.toast_logo_updated'))} : ${JSON.stringify(tr('cust.toast_logo_removed'))}, 'success');
       } catch (e) { alert(e.message || LOGO_T.err); }
     }
     function removeLogo() { setLogo(''); }
@@ -989,7 +996,7 @@ export async function handleAIBuilderCustomize(ctx) {
           body: JSON.stringify({ nav_label: label })
         });
         const d = await r.json();
-        if (d.success) gotoPage(d.page.slug); else alert(d.error || 'Failed to add page');
+        if (d.success) { flashToast(${JSON.stringify(tr('cust.toast_page_added'))}); gotoPage(d.page.slug); } else alert(d.error || 'Failed to add page');
       } catch (e) { alert(${JSON.stringify(tr('cust.err_add_page'))} + e.message); }
     }
 
@@ -1036,7 +1043,7 @@ export async function handleAIBuilderCustomize(ctx) {
           body: JSON.stringify({ section_type: type, variant: variant, page_slug: currentPageSlug })
         });
         const d = await r.json();
-        if (d.success) location.reload(); else alert(d.error || 'Failed to add section');
+        if (d.success) { flashToast(${JSON.stringify(tr('cust.toast_section_added'))}); location.reload(); } else alert(d.error || 'Failed to add section');
       } catch (e) { alert(${JSON.stringify(tr('cust.err_add_section'))} + e.message); }
     }
 
@@ -1046,7 +1053,7 @@ export async function handleAIBuilderCustomize(ctx) {
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/sections/\${id}\`, { method: 'DELETE' });
         const d = await r.json();
-        if (d.success) location.reload(); else alert(d.error || 'Failed to delete section');
+        if (d.success) { flashToast(${JSON.stringify(tr('cust.toast_section_removed'))}); location.reload(); } else alert(d.error || 'Failed to delete section');
       } catch (e) { alert(${JSON.stringify(tr('cust.err_del_section'))} + e.message); }
     }
 
@@ -1059,7 +1066,7 @@ export async function handleAIBuilderCustomize(ctx) {
           body: JSON.stringify({ nav_label: label })
         });
         const d = await r.json();
-        if (d.success) location.reload(); else alert(d.error || 'Failed to rename');
+        if (d.success) { flashToast(${JSON.stringify(tr('cust.toast_page_renamed'))}); location.reload(); } else alert(d.error || 'Failed to rename');
       } catch (e) { alert(${JSON.stringify(tr('cust.err_rename'))} + e.message); }
     }
 
@@ -1068,7 +1075,7 @@ export async function handleAIBuilderCustomize(ctx) {
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, { method: 'DELETE' });
         const d = await r.json();
-        if (d.success) gotoPage('home'); else alert(d.error || 'Failed to delete');
+        if (d.success) { flashToast(${JSON.stringify(tr('cust.toast_page_deleted'))}); gotoPage('home'); } else alert(d.error || 'Failed to delete');
       } catch (e) { alert(${JSON.stringify(tr('cust.err_del'))} + e.message); }
     }
 
@@ -1424,6 +1431,8 @@ export async function handleAIBuilderCustomize(ctx) {
         const data = await response.json();
 
         if (data.success) {
+          const badge = document.getElementById('pub-badge');
+          if (badge) { badge.classList.remove('draft'); badge.classList.add('pub'); badge.textContent = ${JSON.stringify(tr('cust.status_published'))}; }
           showDeploySuccess(data.deployed_url || data.subdomain_url || data.site_url);
         } else {
           throw new Error(data.error || 'Deployment failed');
@@ -1485,6 +1494,18 @@ export async function handleAIBuilderCustomize(ctx) {
         setTimeout(() => notification.remove(), 300);
       }, 2000);
     }
+
+    // Feedback that survives a page reload/navigation: the action stashes a
+    // message, and we surface it once the new page loads.
+    function flashToast(message, type) {
+      try { sessionStorage.setItem('cf_flash', JSON.stringify({ msg: message, type: type || 'success' })); } catch (e) {}
+    }
+    (function () {
+      try {
+        const f = sessionStorage.getItem('cf_flash');
+        if (f) { sessionStorage.removeItem('cf_flash'); const o = JSON.parse(f); showNotification(o.msg, o.type || 'success'); }
+      } catch (e) {}
+    })();
   </script>
 </body>
 </html>
