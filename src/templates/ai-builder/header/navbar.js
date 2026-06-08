@@ -35,6 +35,7 @@ export function navbarTemplate(data, config) {
   const previewBase = config.previewBase || '';
   const currentSlug = config.currentSlug || '';
   const embedSuffix = config.embed ? '?embed=1' : '';
+  const contactLabel = { en: 'Contact', es: 'Contacto', pt: 'Contato' }[config.lang] || 'Contact';
   // previewBase is '' for SUBDOMAIN copies (nav rooted at /) — that's a valid
   // base, not "no pages". Gating links on `previewBase` truthiness left
   // subdomain-served sites with NO nav menu at all (links like `/about` are
@@ -54,7 +55,7 @@ export function navbarTemplate(data, config) {
 
   const actions = pageLinks
     ? `${pageLinks}\n      ${phoneLink}`
-    : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''}>Contact</a>`;
+    : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''}>${escapeHtml(contactLabel)}</a>`;
 
   // Multi-page sites get a hamburger on small screens (the link row would
   // otherwise wrap into a wall of links). Single-page anchor navs stay as-is.
