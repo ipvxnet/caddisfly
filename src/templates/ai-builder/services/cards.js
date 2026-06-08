@@ -3,7 +3,7 @@
 
 export function servicesCardsTemplate(data, config) {
   const { heading, description = '', services } = data;
-  const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default services if not provided
   const serviceList = services || [

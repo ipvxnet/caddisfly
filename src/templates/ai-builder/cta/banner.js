@@ -3,7 +3,7 @@
 
 export function ctaBannerTemplate(data, config) {
   const { heading, description = '', cta_text, cta_url, cta_url_new_tab = false } = data;
-  const { primaryColor, secondaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `
 <section class="cta-banner" style="background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});">

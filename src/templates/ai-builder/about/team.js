@@ -3,7 +3,7 @@
 
 export function aboutTeamTemplate(data, config) {
   const { heading, description = '', team_members } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default team members if not provided
   const members = team_members || [

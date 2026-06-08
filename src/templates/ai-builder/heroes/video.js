@@ -3,7 +3,7 @@
 
 export function heroVideoTemplate(data, config) {
   const { heading, subheading, cta_text, cta_url, video_url, background_image } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Use background image as fallback if no video
   const backgroundStyle = video_url

@@ -3,7 +3,7 @@
 
 export function aboutTimelineTemplate(data, config) {
   const { heading, description = '', milestones } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default milestones if not provided
   const timelineItems = milestones || [

@@ -3,7 +3,7 @@
 
 export function heroMinimalTemplate(data, config) {
   const { heading, subheading, cta_text, cta_url } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `
 <section class="hero-minimal">

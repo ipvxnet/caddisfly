@@ -3,7 +3,7 @@
 
 export function galleryCarouselTemplate(data, config) {
   const { heading, description = '', images } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default images if not provided
   const galleryImages = images || [

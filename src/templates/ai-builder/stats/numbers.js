@@ -3,7 +3,7 @@
 
 export function statsNumbersTemplate(data, config) {
   const { heading, stats } = data;
-  const { primaryColor, fontHeading, fontBody } = config;
+  const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default stats if not provided
   const statsList = stats || [
