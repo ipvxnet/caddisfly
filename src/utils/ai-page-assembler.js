@@ -42,32 +42,79 @@ export function assemblePage(sections, config, project, opts = {}) {
   // footer assembled by the caller); otherwise sort a COPY by section_order.
   const ordered = preordered ? sections.slice() : sections.slice().sort((a, b) => a.section_order - b.section_order);
 
-  const renderedSections = ordered
-    .filter((section) => section.is_visible)
+  const visibleSections = ordered.filter((section) => section.is_visible);
+  // Section types present on THIS page — used to decide whether a `#type` link
+  // resolves here or must route to another page (multi-page sites).
+  const currentTypes = new Set(visibleSections.map((s) => s.section_type));
+  const seenTypes = new Set();
+
+  const renderedSections = visibleSections
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
       // Use html_template field if available, otherwise check contentData._variant
       const variant = section.html_template || contentData._variant || 'default';
 
       const rendered = renderSection(section.section_type, contentData, renderConfig, variant);
+      // Semantic anchor target (e.g. id="contact") so in-page links like
+      // `#contact` resolve regardless of which variant rendered — but only the
+      // FIRST section of each type, and only if the template didn't already emit
+      // that id (avoids duplicate ids).
+      const type = section.section_type;
+      let semanticAnchor = '';
+      if (type && !seenTypes.has(type)) {
+        seenTypes.add(type);
+        if (!rendered.includes(`id="${type}"`)) {
+          semanticAnchor = `<span id="${escapeHtml(type)}" aria-hidden="true" style="display:block;scroll-margin-top:70px"></span>`;
+        }
+      }
       // Wrap in a stable anchor so the customize page can scroll the preview to a
       // section by its DB id (matches the left-panel section list's data-section-id).
       const anchorId = section.id != null ? `ai-sec-${section.id}` : '';
+      const inner = `${semanticAnchor}${rendered}`;
       return anchorId
-        ? `<div id="${anchorId}" style="scroll-margin-top: 70px;">${rendered}</div>`
-        : rendered;
+        ? `<div id="${anchorId}" style="scroll-margin-top: 70px;">${inner}</div>`
+        : inner;
     })
     .join('\n\n');
+
+  // Multi-page link fix: a `#contact`-style link whose target section lives on a
+  // DIFFERENT page can't resolve in-page — rewrite it to that page's route (same
+  // format the navbar uses). Same-page anchors (and bare `#`) are left alone.
+  const body = rewriteCrossPageAnchors(renderedSections, { pages, currentSlug, previewBase, embed, currentTypes });
 
   // Build complete HTML document
   const html = buildHTMLDocument({
     title: project.project_name || 'My Website',
-    body: renderedSections,
+    body,
     config: renderConfig,
     seo: { seoTitle, seoDescription, socialImage, canonicalUrl, pageTitle, business },
   });
 
   return html;
+}
+
+/**
+ * Rewrite cross-page in-page anchors to page routes on multi-page sites.
+ * Hero CTAs / footers emit `#contact`, `#services`, `#about` (single-page
+ * assumption). When the matching section lives on a SEPARATE page, that anchor
+ * can never resolve — so point it at the page route instead (same `${base}/${slug}`
+ * format the navbar uses). Anchors whose target is on the current page, bare
+ * `#`, and external/route links are left untouched.
+ * @returns {string} HTML with cross-page anchors rewritten
+ */
+function rewriteCrossPageAnchors(html, { pages, currentSlug, previewBase, embed, currentTypes }) {
+  const visiblePages = Array.isArray(pages) ? pages.filter((p) => p.is_visible !== 0) : [];
+  if (visiblePages.length <= 1) return html; // single-page: anchors stay in-page
+  const pageSlugs = new Set(visiblePages.map((p) => p.slug));
+  const base = previewBase || '';
+  const embedSuffix = embed ? '?embed=1' : '';
+  return html.replace(/href="#([A-Za-z0-9_-]+)"/g, (match, anchor) => {
+    if (currentTypes && currentTypes.has(anchor)) return match; // resolves on this page
+    if (pageSlugs.has(anchor) && anchor !== currentSlug) {
+      return `href="${escapeHtml(`${base}/${anchor}${embedSuffix}`)}"`;
+    }
+    return match; // unknown anchor — leave as-is
+  });
 }
 
 /**
