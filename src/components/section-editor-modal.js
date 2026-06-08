@@ -30,7 +30,7 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
       <script>window.linkPickerData = ${JSON.stringify(lpData)};</script>
       ${linkPickerAssets(lang)}
 
-      <details class="manual-edit">
+      <details class="manual-edit" open>
         <summary>${tr('sed.edit_manual')}</summary>
         <form id="section-edit-form" onsubmit="saveSectionChanges(event)">
           ${generateFormFields(section.section_type, content, tr, projectId)}
@@ -919,42 +919,55 @@ function generateAboutFields(content, tr) {
   `;
 }
 
-// Generic list-item repeater (services, testimonials): rows of fields backed by
-// a hidden <key>_json blob that the save handler expands into content[key].
-// fields: [{ key, kind?: 'short'|'textarea', num?: bool, ph?: string }]
-function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel }) {
-  const cell = (f, it) => {
+// Generic list-item repeater (services, testimonials): each item is a LABELED
+// CARD ("Testimonial 1", with Name/Role/Quote/… fields) so per-item editing is
+// obvious. Backed by a hidden <key>_json blob the save handler expands into
+// content[key]. fields: [{ key, label, kind?: 'short'|'textarea', num?, ph? }]
+function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabel }) {
+  const field = (f, it) => {
     const v = it && it[f.key] != null ? String(it[f.key]) : '';
     const num = f.num ? ' data-num="1"' : '';
-    return f.kind === 'textarea'
+    const input = f.kind === 'textarea'
       ? `<textarea class="rep-input" data-k="${f.key}"${num} rows="2" placeholder="${escapeHtml(f.ph || '')}">${escapeHtml(v)}</textarea>`
       : `<input type="text" class="rep-input${f.kind === 'short' ? ' rep-short' : ''}" data-k="${f.key}"${num} placeholder="${escapeHtml(f.ph || '')}" value="${escapeHtml(v)}">`;
+    return `<div class="rep-field"><label>${escapeHtml(f.label || f.key)}</label>${input}</div>`;
   };
-  const row = (it) => `<div class="rep-row">${fields.map((f) => cell(f, it)).join('')}<button type="button" class="rep-remove" title="${escapeHtml(removeLabel)}" onclick="var p=this.closest('.rep');this.closest('.rep-row').remove();p.__sync&&p.__sync()">&times;</button></div>`;
+  const item = (it) => `<div class="rep-item">
+        <div class="rep-item-head"><span class="rep-item-title">${escapeHtml(itemLabel || 'Item')}</span>
+          <button type="button" class="rep-remove" onclick="var p=this.closest('.rep');this.closest('.rep-item').remove();p.__sync&&p.__sync()">✕ ${escapeHtml(removeLabel)}</button></div>
+        ${fields.map((f) => field(f, it)).join('')}
+      </div>`;
   const list = Array.isArray(items) ? items : [];
   return `
     <input type="hidden" id="${jsonKey}_json" name="${jsonKey}_json" value="${escapeHtml(JSON.stringify(list))}">
     <div class="rep" id="rep-${jsonKey}">
-      <div class="rep-rows">${list.map(row).join('')}</div>
-      <template class="rep-tpl">${row({})}</template>
+      <div class="rep-items">${list.map(item).join('')}</div>
+      <template class="rep-tpl">${item({})}</template>
       <button type="button" class="btn-secondary rep-add">${escapeHtml(addLabel)}</button>
     </div>
     <style>
-      .rep-row{display:flex;gap:.4rem;align-items:flex-start;margin-bottom:.5rem;padding:.55rem;background:#f8fafc;border-radius:8px}
-      .rep-input{flex:1;padding:.5rem .6rem;border:2px solid #e2e8f0;border-radius:8px;font:inherit;font-size:.88rem}
-      .rep-input.rep-short{flex:0 0 60px;text-align:center}
-      .rep-remove{border:none;background:none;color:#a0aec0;font-size:1.3rem;cursor:pointer;line-height:1;padding:.1rem .3rem;align-self:center}
+      #rep-${jsonKey} .rep-items{counter-reset:repn}
+      #rep-${jsonKey} .rep-item{border:1px solid #e2e8f0;border-radius:10px;padding:.85rem;margin-bottom:.7rem;background:#fff}
+      #rep-${jsonKey} .rep-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem}
+      #rep-${jsonKey} .rep-item-title{font-weight:700;font-size:.8rem;color:#4a5568}
+      #rep-${jsonKey} .rep-item-title::after{counter-increment:repn;content:' ' counter(repn)}
+      #rep-${jsonKey} .rep-remove{border:none;background:none;color:#e53e3e;font-size:.78rem;font-weight:700;cursor:pointer;padding:.1rem .3rem}
+      #rep-${jsonKey} .rep-field{margin-bottom:.5rem}
+      #rep-${jsonKey} .rep-field:last-child{margin-bottom:0}
+      #rep-${jsonKey} .rep-field label{display:block;font-size:.72rem;font-weight:600;color:#718096;margin-bottom:.2rem}
+      #rep-${jsonKey} .rep-input{width:100%;padding:.5rem .6rem;border:2px solid #e2e8f0;border-radius:8px;font:inherit;font-size:.88rem}
+      #rep-${jsonKey} .rep-input.rep-short{width:80px;text-align:center}
     </style>
     <script>
       (function(){
         var rep = document.getElementById('rep-${jsonKey}');
         if (!rep || rep.__ready) return; rep.__ready = true;
         var hidden = document.getElementById('${jsonKey}_json');
-        var rows = rep.querySelector('.rep-rows');
+        var items = rep.querySelector('.rep-items');
         var tpl = rep.querySelector('.rep-tpl');
         function sync(){
           var arr = [];
-          rows.querySelectorAll('.rep-row').forEach(function(r){
+          items.querySelectorAll('.rep-item').forEach(function(r){
             var o = {}, any = false;
             r.querySelectorAll('.rep-input').forEach(function(inp){
               var v = inp.value.trim();
@@ -968,7 +981,7 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel }) {
         rep.__sync = sync;
         rep.addEventListener('input', sync);
         rep.querySelector('.rep-add').addEventListener('click', function(){
-          rows.appendChild(tpl.content.firstElementChild.cloneNode(true)); sync();
+          items.appendChild(tpl.content.firstElementChild.cloneNode(true)); sync();
         });
         sync();
       })();
@@ -991,11 +1004,11 @@ function generateServicesFields(content, tr) {
     <div class="form-group">
       <label>${tr('sed.services')}</label>
       ${buildRepeater({
-        jsonKey: 'services', items: content.services, addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'),
+        jsonKey: 'services', items: content.services, addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_service'),
         fields: [
-          { key: 'icon', kind: 'short', ph: '🚀' },
-          { key: 'title', ph: tr('sed.svc_title_ph') },
-          { key: 'description', kind: 'textarea', ph: tr('sed.svc_desc_ph') },
+          { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
+          { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
+          { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.svc_desc_ph') },
         ],
       })}
     </div>
@@ -1017,12 +1030,12 @@ function generateTestimonialsFields(content, tr) {
     <div class="form-group">
       <label>${tr('sed.testimonials')}</label>
       ${buildRepeater({
-        jsonKey: 'testimonials', items: content.testimonials, addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'),
+        jsonKey: 'testimonials', items: content.testimonials, addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
         fields: [
-          { key: 'name', ph: tr('sed.tst_name_ph') },
-          { key: 'role', ph: tr('sed.tst_role_ph') },
-          { key: 'text', kind: 'textarea', ph: tr('sed.tst_text_ph') },
-          { key: 'rating', kind: 'short', num: true, ph: '5' },
+          { key: 'name', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
+          { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
+          { key: 'text', label: tr('sed.f_quote'), kind: 'textarea', ph: tr('sed.tst_text_ph') },
+          { key: 'rating', label: tr('sed.f_rating'), kind: 'short', num: true, ph: '5' },
         ],
       })}
     </div>
