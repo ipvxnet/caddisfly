@@ -131,6 +131,9 @@ export async function handleDomainsStorePage(ctx) {
     .dns-lock{text-align:center}
     .dns-del{background:none;border:none;color:#b91c1c;cursor:pointer;font-size:.9rem}
     .dns-add{margin:.4rem 0 .2rem;padding:.4rem .8rem;border:1.5px dashed var(--line);border-radius:8px;background:none;font-weight:700;font-size:.82rem;color:#4a5568;cursor:pointer}
+    .dns-loading{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:.9rem;padding:1.2rem .2rem}
+    .dns-spin{width:18px;height:18px;border:2.5px solid #e2e8f0;border-top-color:#667eea;border-radius:50%;display:inline-block;animation:dspin .8s linear infinite}
+    @keyframes dspin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -348,7 +351,9 @@ export async function handleDomainsStorePage(ctx) {
     // ---- DNS records manager ----
     const DNS_TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'TXT'];
     let dnsId = 0;
-    function closeDns() { document.getElementById('dns-modal').classList.remove('open'); }
+    function closeDns() { dnsSeq++; document.getElementById('dns-modal').classList.remove('open'); }
+    var dnsCache = {};   // id -> records (instant render on reopen, then resync)
+    var dnsSeq = 0;      // guards against a slow fetch rendering after a newer open
     async function openDns(id, domain) {
       dnsId = id;
       document.getElementById('dns-domain').textContent = domain;
@@ -357,14 +362,22 @@ export async function handleDomainsStorePage(ctx) {
       document.getElementById('email-custom').hidden = true;
       document.getElementById('email-mx').innerHTML = '';
       ['ec-spf','ec-dmarc','ec-dkim-name','ec-dkim-val'].forEach(function(i){ var el=document.getElementById(i); if(el) el.value=''; });
-      document.getElementById('dns-table').innerHTML = '<p class="bm-sub">' + T.dns_loading + '</p>';
       document.getElementById('dns-modal').classList.add('open');
+      var seq = ++dnsSeq;
+      // Show cached records instantly (then refresh); else a spinner.
+      if (dnsCache[id]) renderDns(dnsCache[id]);
+      else document.getElementById('dns-table').innerHTML = '<div class="dns-loading"><span class="dns-spin"></span>' + T.dns_loading + '</div>';
       try {
         const r = await fetch('/api/domains/' + id + '/dns');
         const d = await r.json();
+        if (seq !== dnsSeq) return; // a newer open (or close) superseded this
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
+        dnsCache[id] = d.records;
         renderDns(d.records);
-      } catch (e) { document.getElementById('dns-table').innerHTML = '<p class="bm-err">' + (e.message || T.err) + '</p>'; }
+      } catch (e) {
+        if (seq !== dnsSeq || dnsCache[id]) return; // keep cached view on a refresh error
+        document.getElementById('dns-table').innerHTML = '<p class="bm-err">' + (e.message || T.err) + '</p>';
+      }
     }
     function renderDns(records) {
       const box = document.getElementById('dns-table');
@@ -416,6 +429,7 @@ export async function handleDomainsStorePage(ctx) {
         });
         const d = await r.json();
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
+        delete dnsCache[dnsId]; // server may re-inject locked records — refetch next open
         btn.textContent = T.dns_saved;
         setTimeout(function () { btn.disabled = false; btn.textContent = T.dns_save; }, 1500);
       } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.dns_save; }
@@ -458,7 +472,7 @@ export async function handleDomainsStorePage(ctx) {
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
         btn.textContent = T.email_done;
         const lr = await fetch('/api/domains/' + dnsId + '/dns'); const ld = await lr.json();
-        if (ld.success) renderDns(ld.records);
+        if (ld.success) { dnsCache[dnsId] = ld.records; renderDns(ld.records); }
         setTimeout(function () { btn.disabled = false; btn.textContent = T.email_setup; }, 1500);
       } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.email_setup; }
     }
