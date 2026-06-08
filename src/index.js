@@ -98,6 +98,7 @@ import {
   handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
+import { handleGenerateHeroVideo } from './routes/api/ai-builder/hero-video.js';
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSync, handleDnsSave, handleDnsEmailSetup, handleRenewCheckout, handleRenewReceipt } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
@@ -264,6 +265,7 @@ router.put('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleUpdatePa
 router.delete('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleDeletePage), PROJ);
 router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
 router.post('/api/ai-builder/:project_id/logo/generate', handleLogoGenerate, PROJ);
+router.post('/api/ai-builder/:project_id/hero-video/generate', handleGenerateHeroVideo, PROJ);
 router.post('/api/ai-builder/:project_id/logo', autoSnap(handleLogoSet), PROJ);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.get('/api/ai-builder/:project_id/offboard', handleOffboardStatus, PROJ);

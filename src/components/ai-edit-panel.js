@@ -44,6 +44,10 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
   <details class="ai-edit-own">
     <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
+      ${isHero ? `<div class="ai-edit-genvid">
+        <button type="button" class="ai-edit-genvid-btn" id="ai-edit-genvid-btn" onclick="aiEditGenVideo()">${tr('aip.gen_video')}</button>
+        <p class="ai-edit-genvid-note">${tr('aip.gen_video_note')}</p>
+      </div>` : ''}
       <label class="ai-edit-own-label">${tr('aip.upload_file')}</label>
       <input type="file" id="ai-edit-file" accept="image/*${isHero ? ',video/mp4,video/webm' : ''}" onchange="aiEditUpload(this)">
       <label class="ai-edit-own-label">${tr('aip.or_paste_url')}</label>
@@ -88,6 +92,10 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
 .ai-edit-remove { margin-top:0.6rem; background:#fff; color:#b91c1c; border:1px solid #fecaca; padding:0.5rem 0.8rem; border-radius:8px; cursor:pointer; font-size:0.82rem; font-weight:600; }
 .ai-edit-remove:hover { background:#fef2f2; }
 .ai-edit-own-status { font-size:0.78rem; color:#7c3aed; min-height:1em; }
+.ai-edit-genvid { margin:0 0 0.7rem; padding-bottom:0.7rem; border-bottom:1px solid #ede9fe; }
+.ai-edit-genvid-btn { width:100%; padding:0.6rem; border:none; border-radius:8px; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; }
+.ai-edit-genvid-btn:disabled { opacity:0.7; cursor:default; }
+.ai-edit-genvid-note { font-size:0.72rem; color:#9ca3af; margin:0.35rem 0 0; }
 .ai-edit-typing { font-size:0.8rem; color:#7c3aed; }
 </style>
 
@@ -209,6 +217,33 @@ async function aiEditPostApply(payload) {
   }
   if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.section_updated'))}, 'success');
   return data;
+}
+
+// ---- AI background video (hero) ----
+async function aiEditGenVideo() {
+  var btn = document.getElementById('ai-edit-genvid-btn');
+  var status = document.getElementById('ai-edit-own-status');
+  if (!confirm(${JSON.stringify(tr('aip.gen_video_confirm'))})) return;
+  if (btn) { btn.disabled = true; btn.textContent = ${JSON.stringify(tr('aip.gen_video_busy'))}; }
+  if (status) status.textContent = ${JSON.stringify(tr('aip.gen_video_wait'))};
+  try {
+    const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/hero-video/generate\`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (!data.success) {
+      if (status) status.textContent = data.upgrade_message || data.error || ${JSON.stringify(tr('aip.gen_video_fail'))};
+      return;
+    }
+    const iframe = document.getElementById('preview-iframe');
+    if (iframe) iframe.contentWindow.location.reload();
+    if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.gen_video_done'))}, 'success');
+    if (status) status.textContent = '';
+  } catch (e) {
+    if (status) status.textContent = ${JSON.stringify(tr('aip.gen_video_fail'))};
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = ${JSON.stringify(tr('aip.gen_video'))}; }
+  }
 }
 
 // ---- "Use my own" media ----
