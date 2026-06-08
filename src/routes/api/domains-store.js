@@ -569,19 +569,43 @@ async function isConnected(db, domain) {
   return !!(await getDomainByHostname(db, `www.${domain}`).catch(() => null));
 }
 
-/** GET /api/domains/:id/dns — current records (locked ones flagged). */
+/** Shape cached/fresh hosts for the client (flag the locked site records). */
+async function withLocked(env, order, hosts) {
+  const connected = await isConnected(env.DB, order.domain);
+  return { connected, records: hosts.map((h) => ({ ...h, locked: connected && isLockedRow(h) })) };
+}
+
+/** Write the registrar's records to the D1 cache (instant render next time). */
+async function cacheDns(env, orderId, hosts) {
+  await updateOrder(env.DB, orderId, { dns_cache: JSON.stringify(hosts), dns_synced_at: Math.floor(Date.now() / 1000) }).catch(() => {});
+}
+
+/** GET /api/domains/:id/dns — INSTANT: returns the D1-cached records (no
+ *  registrar call). The client renders these read-only, then calls /dns/sync. */
 export async function handleDnsList(ctx) {
   const { env } = ctx;
   const order = await ownDomainOrder(ctx);
   if (order instanceof Response) return order;
+  let cached = [];
+  try { cached = order.dns_cache ? JSON.parse(order.dns_cache) : []; } catch { cached = []; }
+  const { connected, records } = await withLocked(env, order, cached);
+  return jsonResponse({ success: true, domain: order.domain, connected, records, cached: !!order.dns_cache, synced_at: order.dns_synced_at || null });
+}
+
+/** GET /api/domains/:id/dns/sync — LIVE: fetch from the registrar (slow/cold),
+ *  refresh the D1 cache, return fresh records. */
+export async function handleDnsSync(ctx) {
+  const { env } = ctx;
+  const order = await ownDomainOrder(ctx);
+  if (order instanceof Response) return order;
   try {
-    const connected = await isConnected(env.DB, order.domain);
     const hosts = await getDnsHosts(env, order.domain);
-    const records = hosts.map((h) => ({ ...h, locked: connected && isLockedRow(h) }));
-    return jsonResponse({ success: true, domain: order.domain, connected, records });
+    await cacheDns(env, order.id, hosts);
+    const { connected, records } = await withLocked(env, order, hosts);
+    return jsonResponse({ success: true, domain: order.domain, connected, records, cached: false, synced_at: Math.floor(Date.now() / 1000) });
   } catch (e) {
-    console.error('dns list error:', e.message);
-    return jsonResponse({ success: false, error: 'Could not load DNS records — try again.' }, 502);
+    console.error('dns sync error:', e.message);
+    return jsonResponse({ success: false, error: 'Could not reach the registrar — try Refresh.' }, 502);
   }
 }
 
@@ -627,6 +651,7 @@ export async function handleDnsSave(ctx) {
       ? [...lockedRecords(order.domain).map(({ locked, ...h }) => h), ...editable]
       : editable;
     await setDnsHosts(env, order.domain, full);
+    await cacheDns(env, order.id, full); // keep the D1 cache current
     audit(ctx, 'domain.dns_edit', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { records: editable.length } });
     return jsonResponse({ success: true });
   } catch (e) {
@@ -709,7 +734,9 @@ export async function handleDnsEmailSetup(ctx) {
       return true;
     });
     const base = connected ? lockedRecords(order.domain).map(({ locked, ...h }) => h) : [];
-    await setDnsHosts(env, order.domain, [...base, ...kept, ...added]);
+    const fullSet = [...base, ...kept, ...added];
+    await setDnsHosts(env, order.domain, fullSet);
+    await cacheDns(env, order.id, fullSet);
     audit(ctx, 'domain.dns_edit', { teamOwner: order.customer_email, resourceType: 'domain', resourceId: order.domain, resourceName: order.domain, metadata: { email_provider: key } });
     return jsonResponse({ success: true });
   } catch (e) {

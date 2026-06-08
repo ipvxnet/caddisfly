@@ -51,6 +51,8 @@ export async function handleDomainsStorePage(ctx) {
     renew_now: tr('domstore.renew_now'), renew_starting: tr('domstore.renew_starting'),
     dns: tr('domstore.dns'), dns_title: tr('domstore.dns_title'), dns_intro: tr('domstore.dns_intro'),
     dns_locked: tr('domstore.dns_locked'), dns_loading: tr('domstore.dns_loading'),
+    dns_syncing: tr('domstore.dns_syncing'), dns_synced: tr('domstore.dns_synced'),
+    dns_sync_fail: tr('domstore.dns_sync_fail'), dns_refresh: tr('domstore.dns_refresh'), dns_slow: tr('domstore.dns_slow'),
     dns_add: tr('domstore.dns_add'), dns_save: tr('domstore.dns_save'), dns_saving: tr('domstore.dns_saving'),
     dns_saved: tr('domstore.dns_saved'), dns_name: tr('domstore.dns_name'), dns_type: tr('domstore.dns_type'),
     dns_value: tr('domstore.dns_value'), dns_prio: tr('domstore.dns_prio'), dns_ttl: tr('domstore.dns_ttl'),
@@ -132,8 +134,13 @@ export async function handleDomainsStorePage(ctx) {
     .dns-del{background:none;border:none;color:#b91c1c;cursor:pointer;font-size:.9rem}
     .dns-add{margin:.4rem 0 .2rem;padding:.4rem .8rem;border:1.5px dashed var(--line);border-radius:8px;background:none;font-weight:700;font-size:.82rem;color:#4a5568;cursor:pointer}
     .dns-loading{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:.9rem;padding:1.2rem .2rem}
-    .dns-spin{width:18px;height:18px;border:2.5px solid #e2e8f0;border-top-color:#667eea;border-radius:50%;display:inline-block;animation:dspin .8s linear infinite}
+    .dns-spin{width:18px;height:18px;border:2.5px solid #e2e8f0;border-top-color:#667eea;border-radius:50%;display:inline-block;animation:dspin .8s linear infinite;flex:none}
     @keyframes dspin{to{transform:rotate(360deg)}}
+    .dns-sync{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--muted);margin:.3rem 0 .5rem;min-height:1.2em}
+    .dns-sync:empty{display:none}
+    .dns-ok{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#10b981;color:#fff;font-size:.72rem;flex:none}
+    .dns-warn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#f59e0b;color:#fff;font-weight:800;flex:none}
+    #dns-table.locked-sync{opacity:.55;pointer-events:none}
   </style>
 </head>
 <body>
@@ -212,8 +219,9 @@ export async function handleDomainsStorePage(ctx) {
         </div>
       </div>
       <p class="dns-dkim">${tr('domstore.email_dkim_note')}</p>
-      <div id="dns-table"><p class="bm-sub">${tr('domstore.dns_loading')}</p></div>
-      <button class="ghost dns-add" onclick="addDnsRow()">${tr('domstore.dns_add')}</button>
+      <div id="dns-sync" class="dns-sync"></div>
+      <div id="dns-table"></div>
+      <button class="ghost dns-add" id="dns-add-btn" onclick="addDnsRow()">${tr('domstore.dns_add')}</button>
       <p class="bm-err" id="dns-err"></p>
       <div class="bm-acts">
         <button class="ghost" onclick="closeDns()">${tr('domstore.cancel')}</button>
@@ -349,11 +357,27 @@ export async function handleDomainsStorePage(ctx) {
       } catch (e) { /* quiet */ }
     }
     // ---- DNS records manager ----
+    // Two-phase: render the D1-cached records INSTANTLY (read-only), then sync
+    // with the registrar in the background. Editing unlocks only once synced
+    // (so no one edits stale data); a manual Refresh appears if sync is slow.
     const DNS_TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'TXT'];
     let dnsId = 0;
-    function closeDns() { dnsSeq++; document.getElementById('dns-modal').classList.remove('open'); }
-    var dnsCache = {};   // id -> records (instant render on reopen, then resync)
-    var dnsSeq = 0;      // guards against a slow fetch rendering after a newer open
+    var dnsSeq = 0;        // guards against a stale fetch rendering after a newer open
+    var dnsSynced = false; // editing disabled until true
+    var dnsSyncTimer = null;
+    function closeDns() { dnsSeq++; if (dnsSyncTimer) clearTimeout(dnsSyncTimer); document.getElementById('dns-modal').classList.remove('open'); }
+    function setDnsEditable(on) {
+      dnsSynced = on;
+      var box = document.getElementById('dns-table');
+      if (box) box.classList.toggle('locked-sync', !on);
+      ['dns-add-btn','dns-save'].forEach(function(i){ var el=document.getElementById(i); if(el) el.disabled = !on; });
+    }
+    function dnsSyncBanner(state, extra) {
+      var b = document.getElementById('dns-sync'); if (!b) return;
+      if (state === 'syncing') b.innerHTML = '<span class="dns-spin"></span><span>' + T.dns_syncing + '</span>';
+      else if (state === 'synced') b.innerHTML = '<span class="dns-ok">✓</span><span>' + T.dns_synced + '</span>';
+      else b.innerHTML = '<span class="dns-warn">!</span><span>' + (extra || T.dns_sync_fail) + '</span> <button class="reconnect-btn" onclick="syncDns()">' + T.dns_refresh + '</button>';
+    }
     async function openDns(id, domain) {
       dnsId = id;
       document.getElementById('dns-domain').textContent = domain;
@@ -362,21 +386,40 @@ export async function handleDomainsStorePage(ctx) {
       document.getElementById('email-custom').hidden = true;
       document.getElementById('email-mx').innerHTML = '';
       ['ec-spf','ec-dmarc','ec-dkim-name','ec-dkim-val'].forEach(function(i){ var el=document.getElementById(i); if(el) el.value=''; });
+      document.getElementById('dns-table').innerHTML = '<div class="dns-loading"><span class="dns-spin"></span>' + T.dns_loading + '</div>';
       document.getElementById('dns-modal').classList.add('open');
+      setDnsEditable(false);
       var seq = ++dnsSeq;
-      // Show cached records instantly (then refresh); else a spinner.
-      if (dnsCache[id]) renderDns(dnsCache[id]);
-      else document.getElementById('dns-table').innerHTML = '<div class="dns-loading"><span class="dns-spin"></span>' + T.dns_loading + '</div>';
+      // Phase 1: instant cached records (read-only).
       try {
         const r = await fetch('/api/domains/' + id + '/dns');
         const d = await r.json();
-        if (seq !== dnsSeq) return; // a newer open (or close) superseded this
+        if (seq !== dnsSeq) return;
+        if (r.ok && d.success && d.cached) renderDns(d.records);
+        else document.getElementById('dns-table').innerHTML = '<div class="dns-loading"><span class="dns-spin"></span>' + T.dns_loading + '</div>';
+      } catch (e) { /* fall through to sync */ }
+      // Phase 2: live sync.
+      syncDns(seq);
+    }
+    async function syncDns(seq) {
+      if (seq == null) seq = dnsSeq; // manual refresh uses current open
+      setDnsEditable(false);
+      dnsSyncBanner('syncing');
+      if (dnsSyncTimer) clearTimeout(dnsSyncTimer);
+      dnsSyncTimer = setTimeout(function () { if (seq === dnsSeq && !dnsSynced) dnsSyncBanner('error', T.dns_slow); }, 60000);
+      try {
+        const r = await fetch('/api/domains/' + dnsId + '/dns/sync');
+        const d = await r.json();
+        if (seq !== dnsSeq) return;
+        if (dnsSyncTimer) clearTimeout(dnsSyncTimer);
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
-        dnsCache[id] = d.records;
         renderDns(d.records);
+        setDnsEditable(true);
+        dnsSyncBanner('synced');
       } catch (e) {
-        if (seq !== dnsSeq || dnsCache[id]) return; // keep cached view on a refresh error
-        document.getElementById('dns-table').innerHTML = '<p class="bm-err">' + (e.message || T.err) + '</p>';
+        if (seq !== dnsSeq) return;
+        if (dnsSyncTimer) clearTimeout(dnsSyncTimer);
+        dnsSyncBanner('error', e.message || T.dns_sync_fail);
       }
     }
     function renderDns(records) {
@@ -429,8 +472,7 @@ export async function handleDomainsStorePage(ctx) {
         });
         const d = await r.json();
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
-        delete dnsCache[dnsId]; // server may re-inject locked records — refetch next open
-        btn.textContent = T.dns_saved;
+        btn.textContent = T.dns_saved; // server refreshed the D1 cache with the saved set
         setTimeout(function () { btn.disabled = false; btn.textContent = T.dns_save; }, 1500);
       } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.dns_save; }
     }
@@ -472,7 +514,7 @@ export async function handleDomainsStorePage(ctx) {
         if (!r.ok || !d.success) throw new Error((d && d.error) || T.err);
         btn.textContent = T.email_done;
         const lr = await fetch('/api/domains/' + dnsId + '/dns'); const ld = await lr.json();
-        if (ld.success) { dnsCache[dnsId] = ld.records; renderDns(ld.records); }
+        if (ld.success) renderDns(ld.records); // server updated the D1 cache
         setTimeout(function () { btn.disabled = false; btn.textContent = T.email_setup; }, 1500);
       } catch (e) { document.getElementById('dns-err').textContent = e.message || T.err; btn.disabled = false; btn.textContent = T.email_setup; }
     }
