@@ -338,6 +338,10 @@ export async function handleAIBuilderCustomize(ctx) {
 
     .ai-edit-btn:hover { filter: brightness(1.08); }
 
+    .builder-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; border-bottom: 2px solid #edf0f5; }
+    .builder-tab { flex: 1; padding: 0.6rem 0.4rem; border: none; background: none; font-size: 0.92rem; font-weight: 700; color: #718096; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .builder-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+    .builder-tab:hover { color: #2d3748; }
     .design-group {
       margin-top: 1.75rem;
       border-top: 1px solid #e2e8f0;
@@ -673,6 +677,11 @@ export async function handleAIBuilderCustomize(ctx) {
   <div class="container">
     <div class="split-view">
       <div class="sections-panel">
+        <div class="builder-tabs">
+          <button type="button" class="builder-tab active" data-pane="content" onclick="switchPanel('content')">${tr('cust.tab_content')}</button>
+          <button type="button" class="builder-tab" data-pane="design" onclick="switchPanel('design')">${tr('cust.tab_design')}</button>
+        </div>
+        <div id="pane-content" class="builder-pane">
         <h2 style="margin-bottom: 0.5rem;">${tr('cust.pages')}</h2>
         <div class="page-tabs">
           ${pages
@@ -707,35 +716,6 @@ export async function handleAIBuilderCustomize(ctx) {
           </div>
           <div class="add-variant-menu" id="add-variant-menu" hidden></div>
         </div>
-
-        <details class="design-group">
-          <summary>${tr('cust.design_summary')}</summary>
-          <div class="design-group-body">
-            ${generateTemplatePicker(config.style_theme, lang)}
-            ${generateColorPicker(config, project.project_id, lang)}
-            ${generateFontPicker(config, project.project_id, lang)}
-          </div>
-        </details>
-
-        <details class="design-group" id="logo-group">
-          <summary>${tr('logo.summary')}</summary>
-          <div class="design-group-body">
-            <div id="logo-current">
-              ${config.logo_url
-                ? `<img src="${esc(config.logo_url)}" alt="logo"><button class="link-btn danger" onclick="removeLogo()">${tr('logo.remove')}</button>`
-                : `<p class="seo-hint">${tr('logo.none')}</p>`}
-            </div>
-            <p class="seo-hint">${tr('logo.hint')}</p>
-            ${creditState.tier === 'free_trial' && env.ENVIRONMENT === 'production'
-              ? `<p class="seo-hint">🔒 ${tr('logo.locked')} <a href="/billing" style="font-weight:700">${tr('logo.upgrade')}</a></p>`
-              : `<input type="text" id="logo-brief" class="seo-input" maxlength="200" placeholder="${tr('logo.brief_ph')}">
-            <button class="add-section-btn" id="logo-gen-btn" onclick="generateLogos(this)">${tr('logo.generate')}</button>
-            <p class="seo-hint">${tr('logo.cost', { n: CREDIT_COSTS.logo })}</p>
-            <div id="logo-options"></div>`}
-            <label class="logo-upload">${tr('logo.upload')} <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadLogo(this)"></label>
-            <p class="logo-disclaimer">${tr('logo.disclaimer')}</p>
-          </div>
-        </details>
 
         <details class="design-group" id="seo-group">
           <summary>${tr('cust.seo_summary')}</summary>
@@ -774,6 +754,33 @@ export async function handleAIBuilderCustomize(ctx) {
           </div>
         </details>
         ${showDomains ? domainsPanelBlock : ''}
+        </div>
+
+        <div id="pane-design" class="builder-pane" hidden>
+          ${generateTemplatePicker(config.style_theme, lang)}
+          ${generateColorPicker(config, project.project_id, lang)}
+          ${generateFontPicker(config, project.project_id, lang)}
+
+          <details class="design-group" id="logo-group">
+            <summary>${tr('logo.summary')}</summary>
+            <div class="design-group-body">
+              <div id="logo-current">
+                ${config.logo_url
+                  ? `<img src="${esc(config.logo_url)}" alt="logo"><button class="link-btn danger" onclick="removeLogo()">${tr('logo.remove')}</button>`
+                  : `<p class="seo-hint">${tr('logo.none')}</p>`}
+              </div>
+              <p class="seo-hint">${tr('logo.hint')}</p>
+              ${creditState.tier === 'free_trial' && env.ENVIRONMENT === 'production'
+                ? `<p class="seo-hint">🔒 ${tr('logo.locked')} <a href="/billing" style="font-weight:700">${tr('logo.upgrade')}</a></p>`
+                : `<input type="text" id="logo-brief" class="seo-input" maxlength="200" placeholder="${tr('logo.brief_ph')}">
+              <button class="add-section-btn" id="logo-gen-btn" onclick="generateLogos(this)">${tr('logo.generate')}</button>
+              <p class="seo-hint">${tr('logo.cost', { n: CREDIT_COSTS.logo })}</p>
+              <div id="logo-options"></div>`}
+              <label class="logo-upload">${tr('logo.upload')} <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadLogo(this)"></label>
+              <p class="logo-disclaimer">${tr('logo.disclaimer')}</p>
+            </div>
+          </details>
+        </div>
       </div>
 
       <div class="preview-frame">
@@ -986,6 +993,10 @@ export async function handleAIBuilderCustomize(ctx) {
       location.href = u.toString();
     }
     function switchPage(slug) { gotoPage(slug); }
+    function switchPanel(name) {
+      document.querySelectorAll('.builder-pane').forEach(function (p) { p.hidden = p.id !== 'pane-' + name; });
+      document.querySelectorAll('.builder-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.pane === name); });
+    }
 
     async function addPage() {
       const label = prompt('New page name?', 'New Page');
@@ -1514,7 +1525,7 @@ export async function handleAIBuilderCustomize(ctx) {
       const d = e.data;
       if (!d || d.source !== 'caddisfly-preview' || d.type !== 'edit-section') return;
       const id = parseInt(d.sectionId, 10);
-      if (!isNaN(id)) editSection(id);
+      if (!isNaN(id)) { switchPanel('content'); editSection(id); }
     });
   </script>
 </body>
