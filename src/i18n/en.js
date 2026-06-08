@@ -608,6 +608,9 @@ export const en = {
     g_pages: 'Pages', g_sections: 'Sections', g_actions: 'Actions', g_web: 'Web address',
     use_web: 'Link to', top: 'Top of page', call: 'Call', email: 'Email', none: 'No link',
     missing: 'This points to {a}, which no longer exists on your site.',
+    sec_contact: 'Contact', sec_services: 'Services', sec_about: 'About', sec_pricing: 'Pricing',
+    sec_gallery: 'Gallery', sec_testimonials: 'Testimonials', sec_features: 'Features',
+    sec_cta: 'Call to action', sec_blog: 'Blog', sec_shop: 'Shop', sec_products: 'Products', sec_stats: 'Stats',
   },
   sed: {
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',

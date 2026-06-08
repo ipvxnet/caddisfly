@@ -602,6 +602,9 @@ export const pt = {
     g_pages: 'Páginas', g_sections: 'Seções', g_actions: 'Ações', g_web: 'Endereço web',
     use_web: 'Vincular a', top: 'Topo da página', call: 'Ligar', email: 'E-mail', none: 'Sem link',
     missing: 'Aponta para {a}, que não existe mais no seu site.',
+    sec_contact: 'Contato', sec_services: 'Serviços', sec_about: 'Sobre', sec_pricing: 'Preços',
+    sec_gallery: 'Galeria', sec_testimonials: 'Avaliações', sec_features: 'Recursos',
+    sec_cta: 'Chamada para ação', sec_blog: 'Blog', sec_shop: 'Loja', sec_products: 'Produtos', sec_stats: 'Estatísticas',
   },
   sed: {
     edit_section: 'Editar seção', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Salvar alterações',
