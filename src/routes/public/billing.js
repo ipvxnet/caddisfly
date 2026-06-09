@@ -79,6 +79,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .credits-hero .ch-bal small{font-size:1rem;font-weight:700;opacity:.85;margin-left:.35rem}
     .credits-hero .ch-sub{font-size:.85rem;opacity:.9;margin-top:.25rem}
     .credits-hero .btn{background:#fff;color:var(--p2)}
+    .credits-disclaimer{font-size:.82rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.55rem .8rem;margin-bottom:1rem}
     @media (max-width:620px){.grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -230,7 +231,8 @@ function dashboardView(email, account, creditState, query, env, tr) {
     creditsBlock = `
       <div class="panel" id="buy-credits">
         <h2>${tr('bill.buy_credits')}</h2>
-        <p class="sub" style="margin-bottom:1rem">${tr('bill.buy_credits_sub')}</p>
+        <p class="sub" style="margin-bottom:.5rem">${tr('bill.buy_credits_sub')}</p>
+        <p class="credits-disclaimer">${tr('bill.credits_disclaimer')}</p>
         <div class="grid">${CREDIT_PACKS.map(packCard).join('')}</div>
       </div>`;
   }

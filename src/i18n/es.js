@@ -338,6 +338,7 @@ export const es = {
     buy_more: 'Comprar más →', credits_unit: '{n} créditos', buy: 'Comprar',
     buy_credits: 'Comprar créditos Caddi',
     buy_credits_sub: 'Una recarga única para cuando necesitas más IA a mitad de construcción — los créditos comprados nunca caducan (50 créditos / $1).',
+    credits_disclaimer: '⚠ Aviso: la generación de vídeo de fondo y logos con IA requiere un plan de pago — los créditos por sí solos no los desbloquean.',
     current_plan: 'Plan actual', k_plan: 'Plan', k_status: 'Estado', k_billing: 'Facturación',
     renews_on: 'Se renueva el', cancels_on: 'Se cancela el',
   },
