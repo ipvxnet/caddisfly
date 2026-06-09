@@ -36,11 +36,11 @@ export async function uniquePostSlug(db, projectKey, title, excludeId = null) {
   return `${base}-${Date.now() % 10000}`;
 }
 
-export async function createPost(db, projectKey, { slug, title, excerpt, content, cover_image, status }) {
+export async function createPost(db, projectKey, { slug, title, excerpt, content, cover_image, status, source, source_message_id }) {
   return db
     .prepare(
-      `INSERT INTO blog_posts (ai_project_id, project_id, slug, title, excerpt, content, cover_image, status, published_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO blog_posts (ai_project_id, project_id, slug, title, excerpt, content, cover_image, status, published_at, source, source_message_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
@@ -51,9 +51,31 @@ export async function createPost(db, projectKey, { slug, title, excerpt, content
       content || '',
       cover_image || '',
       status === 'published' ? 'published' : 'draft',
-      status === 'published' ? nowSec() : null
+      status === 'published' ? nowSec() : null,
+      source === 'email' ? 'email' : 'manual',
+      source_message_id || null
     )
     .first();
+}
+
+/**
+ * Find a post by its source Message-ID within a project — used to dedupe inbound
+ * email so a delivery retry of the same message can't create a second post.
+ */
+export async function getPostBySourceMessageId(db, projectKey, messageId) {
+  if (!messageId) return null;
+  const k = keyWhere(projectKey);
+  return db.prepare(`SELECT * FROM blog_posts WHERE ${k.sql} AND source_message_id = ?`).bind(k.val, messageId).first();
+}
+
+/** Count email-sourced posts created since a timestamp (inbound rate-limit). */
+export async function countEmailPostsSince(db, projectKey, sinceTs) {
+  const k = keyWhere(projectKey);
+  const r = await db
+    .prepare(`SELECT COUNT(*) AS n FROM blog_posts WHERE ${k.sql} AND source = 'email' AND created_at >= ?`)
+    .bind(k.val, sinceTs)
+    .first();
+  return (r && r.n) || 0;
 }
 
 export async function getPostsByProject(db, projectKey, publishedOnly = false) {

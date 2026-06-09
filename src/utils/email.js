@@ -385,6 +385,96 @@ export async function sendFormSubmissionEmail(env, { to, siteName, fromName, fro
 }
 
 /**
+ * Email-to-blog: tells the owner a draft generated from their inbound email is
+ * ready to review in the blog manager. Best-effort, like the other notices.
+ * @param {Object} env
+ * @param {Object} opts - { to, siteName, postTitle, reviewUrl }
+ * @returns {Promise<boolean>}
+ */
+export async function sendBlogDraftReadyEmail(env, { to, siteName, postTitle, reviewUrl }) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">Your blog post is ready to review ✍️</h1>
+        <p style="color:#444;line-height:1.6;">We turned your email into a draft post for <strong>${esc(siteName)}</strong>:</p>
+        <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${esc(postTitle)}</p>
+        <p style="color:#444;line-height:1.6;">It's saved as a <strong>draft</strong> — nothing is live yet. Review and edit it, then hit Publish when you're happy.</p>
+        ${reviewUrl ? `<p style="margin:24px 0;"><a href="${reviewUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Review the draft</a></p>` : ''}
+      </div>
+    </body></html>`;
+  try {
+    const sent = await deliverEmail(env, { to, subject: `Your post draft is ready — ${siteName}`, html, fromName: `${siteName} via Caddisfly` });
+    if (sent) return true;
+    if (isProduction) { console.error('No email transport in production; cannot send blog-draft-ready email'); return false; }
+  } catch (error) {
+    console.error('Failed to send blog-draft-ready email:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Blog draft ready email to ${to} for ${siteName}: ${reviewUrl || ''}`);
+  return true;
+}
+
+/**
+ * Email-to-blog: tells the owner WHY their inbound email did not become a post.
+ * @param {Object} env
+ * @param {Object} opts - { to, siteName, kind, billingUrl }
+ *   kind: 'paid_only' | 'no_credits' | 'failed' | 'rate_limited' | 'policy'
+ * @returns {Promise<boolean>}
+ */
+export async function sendBlogNoticeEmail(env, { to, siteName, kind, billingUrl }) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  const COPY = {
+    paid_only: {
+      h: 'Post-by-email is a paid feature',
+      p: `Turning emails into blog posts for <strong>${siteName}</strong> is available on Starter and higher. Upgrade your plan to switch it on.`,
+      cta: 'See plans',
+    },
+    no_credits: {
+      h: "You're out of Caddi credits",
+      p: `We couldn't turn your email into a post for <strong>${siteName}</strong> because your credit balance is too low. Top up or upgrade, then resend your email.`,
+      cta: 'Get more credits',
+    },
+    rate_limited: {
+      h: 'Daily email-to-post limit reached',
+      p: `You've hit today's limit of email-to-blog drafts for <strong>${siteName}</strong>. Try again tomorrow, or create posts directly in the blog manager.`,
+      cta: 'Open blog manager',
+    },
+    policy: {
+      h: "We couldn't publish that one",
+      p: `Your email couldn't be turned into a post for <strong>${siteName}</strong> because the content didn't pass our content guidelines.`,
+      cta: '',
+    },
+    failed: {
+      h: "We couldn't create your post",
+      p: `Something went wrong turning your email into a draft for <strong>${siteName}</strong>. Please try resending it in a few minutes.`,
+      cta: '',
+    },
+  };
+  const c = COPY[kind] || COPY.failed;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">${esc(c.h)}</h1>
+        <p style="color:#444;line-height:1.6;">${c.p}</p>
+        ${c.cta && billingUrl ? `<p style="margin:24px 0;"><a href="${billingUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">${esc(c.cta)}</a></p>` : ''}
+      </div>
+    </body></html>`;
+  try {
+    const sent = await deliverEmail(env, { to, subject: `${c.h} — ${siteName}`, html, fromName: `${siteName} via Caddisfly` });
+    if (sent) return true;
+    if (isProduction) { console.error('No email transport in production; cannot send blog notice email'); return false; }
+  } catch (error) {
+    console.error('Failed to send blog notice email:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Blog notice (${kind}) email to ${to} for ${siteName}`);
+  return true;
+}
+
+/**
  * Sends error notification email (for internal use)
  * @param {Object} env - Environment bindings
  * @param {string} subject - Email subject

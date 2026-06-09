@@ -68,6 +68,17 @@ export async function getAIProjectByProjectId(db, projectId) {
 }
 
 /**
+ * Get AI project by its inbound-email token (email-to-blog routing).
+ * @param {object} db - D1 database instance
+ * @param {string} token - The secret token from the inbound address local-part
+ * @returns {object|null} Project object or null
+ */
+export async function getAIProjectByInboundToken(db, token) {
+  if (!token) return null;
+  return db.prepare('SELECT * FROM ai_projects WHERE inbound_email_token = ?').bind(token).first();
+}
+
+/**
  * Get AI projects by customer email
  * @param {object} db - D1 database instance
  * @param {string} email - Customer email
@@ -105,6 +116,7 @@ export async function updateAIProject(db, id, data) {
     'deployed_url',
     'terms_accepted_at',
     'subdomain',
+    'inbound_email_token',
   ];
 
   const updates = [];
