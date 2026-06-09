@@ -74,8 +74,13 @@ export async function getAIProjectByProjectId(db, projectId) {
  * @returns {array} Array of projects
  */
 export async function getAIProjectsByEmail(db, email) {
+  // sections_updated_at lets callers sort by "last worked on" — section edits
+  // bump ai_sections.updated_at but not the parent project's updated_at.
   const projects = await db
-    .prepare('SELECT * FROM ai_projects WHERE customer_email = ? ORDER BY created_at DESC')
+    .prepare(
+      `SELECT *, (SELECT MAX(updated_at) FROM ai_sections WHERE ai_sections.ai_project_id = ai_projects.id) AS sections_updated_at
+       FROM ai_projects WHERE customer_email = ? ORDER BY created_at DESC`
+    )
     .bind(email)
     .all();
 
