@@ -202,8 +202,8 @@ function dashboardView(email, account, creditState, query, env, tr) {
       </div>`;
   }
 
-  // One-time AI credit top-ups (purchased credits never expire). The balance
-  // leads the page (hero) so it's impossible to miss; packs sit right under it.
+  // One-time AI credit top-ups (purchased credits never expire). Rendered at the
+  // BOTTOM of the page — plans lead, since most visits are to upgrade.
   let creditsHero = '';
   let creditsBlock = '';
   if (configured) {
@@ -235,14 +235,14 @@ function dashboardView(email, account, creditState, query, env, tr) {
       </div>`;
   }
 
+  // Order: plan (current + upgrade/manage) leads — most users arrive here to
+  // upgrade — and the credit balance + top-ups sit at the bottom.
   return `
     <h1>${tr('bill.your_billing')}</h1>
     <p class="sub">${tr('dash.signed_in_as')} <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/dashboard">${tr('bill.your_sites_team')}</a> · <a class="muted-link" href="/billing/logout">${tr('bill.sign_out')}</a></p>
     ${noticeFor(query, tr)}
     ${notConfigured}
     ${continueBlock}
-    ${creditsHero}
-    ${creditsBlock}
     <div class="panel">
       <h2>${tr('bill.current_plan')}</h2>
       <div class="row"><span class="k">${tr('bill.k_plan')}</span><span class="v"><span class="pill">${tier.name}</span></span></div>
@@ -250,7 +250,9 @@ function dashboardView(email, account, creditState, query, env, tr) {
       ${account && account.plan_interval ? `<div class="row"><span class="k">${tr('bill.k_billing')}</span><span class="v">${account.plan_interval === 'year' ? tr('bill.annual') : tr('bill.monthly')}</span></div>` : ''}
       ${periodRow}
     </div>
-    ${actions}`;
+    ${actions}
+    ${creditsHero}
+    ${creditsBlock}`;
 }
 
 /** GET /billing */
