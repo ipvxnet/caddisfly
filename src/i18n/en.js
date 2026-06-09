@@ -273,6 +273,8 @@ export const en = {
     republish_note: 'New this week: mobile-friendly menus, working contact forms, blog and online store. Open Customize and hit Publish to apply the latest improvements to your live site.',
     dismiss: 'Dismiss',
     export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
+    qr: 'QR code', qr_title: 'QR code', qr_sub: 'Point a phone camera here, or download it for flyers, menus and business cards.',
+    qr_png: '⬇ Download PNG', qr_svg: '⬇ Download SVG', qr_close: 'Close', qr_err: 'Could not generate the QR code.',
     delete_site: 'Delete',
     custom_domain: 'Custom domain',
     shared_by: 'Websites shared by {owner}', no_sites_yet: 'No websites yet.',

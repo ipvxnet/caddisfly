@@ -273,6 +273,8 @@ export const pt = {
     republish_note: 'Novidades desta semana: menus adaptados ao celular, formulários de contato funcionais, blog e loja online. Abra Personalizar e clique em Publicar para aplicar as melhorias mais recentes ao seu site.',
     dismiss: 'Fechar',
     export: '⬇ Exportar', export_title: 'Baixe o seu site publicado como HTML (seu para hospedar onde quiser)',
+    qr: 'Código QR', qr_title: 'Código QR', qr_sub: 'Aponte a câmera do celular aqui, ou baixe para panfletos, cardápios e cartões de visita.',
+    qr_png: '⬇ Baixar PNG', qr_svg: '⬇ Baixar SVG', qr_close: 'Fechar', qr_err: 'Não foi possível gerar o código QR.',
     delete_site: 'Excluir',
     custom_domain: 'Domínio próprio',
     shared_by: 'Sites compartilhados por {owner}', no_sites_yet: 'Ainda não há sites.',
