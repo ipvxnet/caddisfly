@@ -2,7 +2,7 @@
 // Call-to-action banner section
 
 export function ctaBannerTemplate(data, config) {
-  const { heading, description = '', cta_text, cta_url, cta_url_new_tab = false } = data;
+  const { heading = 'Ready to get started?', description = '', cta_text = 'Get Started', cta_url, cta_url_new_tab = false } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `

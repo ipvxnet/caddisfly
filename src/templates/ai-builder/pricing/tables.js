@@ -9,7 +9,7 @@ import { t } from '../../../i18n/index.js';
 const escA = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export function pricingTablesTemplate(data, config) {
-  const { heading, description = '', plans } = data;
+  const { heading = 'Pricing', description = '', plans } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Live-checkout wiring (published pages only — previews show a notice,

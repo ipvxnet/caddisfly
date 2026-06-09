@@ -2,7 +2,7 @@
 // Full viewport hero with scroll indicator
 
 export function heroFullscreenTemplate(data, config) {
-  const { heading, subheading, cta_text, cta_url, background_image } = data;
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, background_image } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   const backgroundUrl = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920';

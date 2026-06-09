@@ -2,7 +2,7 @@
 // Team member showcase with photos and bios
 
 export function aboutTeamTemplate(data, config) {
-  const { heading, description = '', team_members } = data;
+  const { heading = 'Meet the Team', description = '', team_members } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default team members if not provided
