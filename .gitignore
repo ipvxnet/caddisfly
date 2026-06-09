@@ -9,3 +9,4 @@ dist/
 .whsec
 .whsec-live
 .cf-token
+temp/
