@@ -338,6 +338,7 @@ export const en = {
     buy_more: 'Buy more →', credits_unit: '{n} credits', buy: 'Buy',
     buy_credits: 'Buy Caddi Credits',
     buy_credits_sub: 'A one-time top-up for when you need more AI mid-build — purchased credits never expire (flat 50 credits / $1).',
+    credits_disclaimer: '⚠ Heads up: AI background video and logo generation require a paid plan — credits alone can’t unlock them.',
     current_plan: 'Current plan', k_plan: 'Plan', k_status: 'Status', k_billing: 'Billing',
     renews_on: 'Renews on', cancels_on: 'Cancels on',
   },
