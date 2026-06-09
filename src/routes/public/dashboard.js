@@ -88,6 +88,7 @@ function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
           <a class="btn ghost" href="/ai-builder/store/${esc(site.id)}">${tr('dash.store')}</a>
           ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
           ${live ? `<a class="btn ghost" href="/api/ai-builder/${esc(site.id)}/export" title="${tr('dash.export_title')}">${tr('dash.export')}</a>` : ''}
+          ${live ? `<button class="btn ghost" data-id="${esc(site.id)}" data-name="${esc(site.subdomain || site.name)}" onclick="openQr(this)">${tr('dash.qr')}</button>` : ''}
           <button class="btn ghost danger" data-id="${esc(site.id)}" data-name="${esc(site.name)}" onclick="openOffboard(this)">${tr('dash.delete_site')}</button>
         </div>
         ${domainsBlock}
@@ -330,8 +331,14 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     @media (max-width:560px){.member{align-items:flex-start}}
     .btn.ghost.danger{color:#b91c1c;border-color:#fed7d7}
     .btn.ghost.danger:hover{background:#fef2f2}
-    #offb-modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:1rem;z-index:60}
-    #offb-modal.open{display:flex}
+    #offb-modal,#qr-modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:1rem;z-index:60}
+    #offb-modal.open,#qr-modal.open{display:flex}
+    .qr-card{max-width:420px;text-align:center}
+    .qr-card h2{font-size:1.25rem;color:var(--ink);margin:0 0 .3rem}
+    .qr-card p{color:var(--body);line-height:1.5;margin:.4rem 0 1rem}
+    .qr-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem;display:inline-block;line-height:0}
+    .qr-box img{width:240px;height:240px;display:block}
+    .qr-acts{display:flex;justify-content:center;gap:.6rem;margin-top:1.2rem;flex-wrap:wrap}
     .offb-card{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1.8rem}
     .offb-card h2{font-size:1.25rem;color:var(--ink);margin:0 0 .3rem}
     .offb-step{color:var(--muted);font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
@@ -357,6 +364,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
   ${siteHeader('/dashboard', headerOpts)}
   <main><div class="bwrap">${inner}</div></main>
   <div id="offb-modal" onclick="if(event.target===this)offbClose()"><div class="offb-card" id="offb-card"></div></div>
+  <div id="qr-modal" onclick="if(event.target===this)qrClose()"><div class="offb-card qr-card" id="qr-card"></div></div>
   ${siteFooter({ lang })}
   <script>
     async function postTeam(path, body) {
@@ -505,6 +513,40 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
         if(!r.ok||!d.success) throw new Error((d&&d.error)||OFFB_T.err);
         document.getElementById('offb-card').innerHTML = '<h2>'+OFFB_T.done_h+'</h2><p>'+OFFB_T.done_p+'</p><div class="offb-acts"><button class="go" onclick="location.reload()">'+OFFB_T.close+'</button></div>';
       } catch(e){ offbErr(e.message); btn.disabled=false; btn.textContent=OFFB_T.del_btn; }
+    }
+
+    // ---- QR code ----
+    const QR_T = ${JSON.stringify({
+      title: tr('dash.qr_title'), sub: tr('dash.qr_sub'),
+      png: tr('dash.qr_png'), svg: tr('dash.qr_svg'), close: tr('dash.qr_close'), err: tr('dash.qr_err'),
+    })};
+    let QR = { id: '', name: '' };
+    function qrClose(){ document.getElementById('qr-modal').classList.remove('open'); }
+    function openQr(btn){
+      QR = { id: btn.dataset.id, name: (btn.dataset.name || 'site').replace(/[^a-z0-9.-]/gi,'-') };
+      const src = '/api/ai-builder/'+encodeURIComponent(QR.id)+'/qr';
+      document.getElementById('qr-card').innerHTML =
+        '<h2>'+QR_T.title+'</h2><p>'+QR_T.sub+'</p>'
+        + '<div class="qr-box"><img id="qr-img" alt="QR code" src="'+src+'" onerror="qrErr()"></div>'
+        + '<div class="qr-acts">'
+        + '<button class="btn" onclick="qrDownloadPng()">'+QR_T.png+'</button>'
+        + '<a class="btn ghost" href="'+src+'?download=svg" download>'+QR_T.svg+'</a>'
+        + '<button class="btn ghost" onclick="qrClose()">'+QR_T.close+'</button>'
+        + '</div>';
+      document.getElementById('qr-modal').classList.add('open');
+    }
+    function qrErr(){ document.getElementById('qr-card').innerHTML = '<h2>'+QR_T.title+'</h2><p class="offb-err">'+QR_T.err+'</p><div class="qr-acts"><button class="btn ghost" onclick="qrClose()">'+QR_T.close+'</button></div>'; }
+    function qrDownloadPng(){
+      const img = document.getElementById('qr-img');
+      if (!img || !img.complete || !img.naturalWidth) return;
+      const S = 1024, c = document.createElement('canvas'); c.width = S; c.height = S;
+      const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0,0,S,S); x.drawImage(img,0,0,S,S);
+      c.toBlob(function(b){
+        if(!b) return;
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = QR.name+'-qr.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+      }, 'image/png');
     }
   </script>
 </body>
