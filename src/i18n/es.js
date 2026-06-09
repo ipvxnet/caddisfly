@@ -349,6 +349,7 @@ export const es = {
     blog: '📝 Blog', blog_title: 'Escribe y publica entradas de blog con IA',
     store: '🛍 Tienda', store_title: 'Vende en tu sitio — productos, pedidos, pagos con Stripe',
     full_preview: 'Ver vista previa completa', deploy: 'Publicar sitio', deploying: 'Publicando…',
+    upgrade_title: 'Mejora tu plan para desbloquear', view_plans: 'Ver planes →', maybe_later: 'Quizás más tarde',
     tab_content: 'Contenido', tab_design: 'Diseño',
     status_published: 'Publicado', status_draft: 'Borrador',
     status_published_title: 'El sitio está en vivo. Vuelve a publicar para aplicar tus últimos cambios.',

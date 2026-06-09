@@ -934,7 +934,11 @@ export async function handleAIBuilderCustomize(ctx) {
           body: JSON.stringify({ brief: document.getElementById('logo-brief').value.trim() }),
         });
         const d = await r.json();
-        if (!r.ok || !d.success) throw new Error((d && d.error) || LOGO_T.err);
+        if (!r.ok || !d.success) {
+          // Paid-plan / out-of-credits → upgrade popup instead of a dead-end alert.
+          if (d && d.billing_url) { showUpgradePrompt(d.upgrade_message || d.error, d.billing_url); return; }
+          throw new Error((d && d.error) || LOGO_T.err);
+        }
         const box = document.getElementById('logo-options');
         box.innerHTML = '<p class="seo-hint">' + LOGO_T.pick + '</p>';
         d.options.forEach(function (u) {
@@ -1508,6 +1512,26 @@ export async function handleAIBuilderCustomize(ctx) {
     function closeDeploySuccess() {
       const el = document.getElementById('deploy-success');
       if (el) el.remove();
+    }
+    // Paid-plan / out-of-credits prompt with a real upgrade CTA (used by gated
+    // AI features so a 402 isn't a dead-end). Reuses the deploy modal styling.
+    function showUpgradePrompt(message, url) {
+      closeDeploySuccess();
+      const safe = String(url || '/billing');
+      const msg = String(message || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const wrap = document.createElement('div');
+      wrap.id = 'deploy-success';
+      wrap.innerHTML =
+        '<div class="ds-backdrop" onclick="closeDeploySuccess()"></div>'
+        + '<div class="ds-card" role="dialog" aria-modal="true">'
+        + '<div class="ds-emoji">✨</div>'
+        + '<h2>' + ${JSON.stringify(tr('cust.upgrade_title'))} + '</h2>'
+        + '<p class="ds-sub">' + msg + '</p>'
+        + '<div class="ds-actions">'
+        + '<a class="btn btn-primary" href="' + safe + '">' + ${JSON.stringify(tr('cust.view_plans'))} + '</a>'
+        + '<button type="button" class="btn btn-secondary" onclick="closeDeploySuccess()">' + ${JSON.stringify(tr('cust.maybe_later'))} + '</button>'
+        + '</div></div>';
+      document.body.appendChild(wrap);
     }
     function copyDeployUrl(u) {
       if (navigator.clipboard) {
