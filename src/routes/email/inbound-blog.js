@@ -30,11 +30,21 @@ import { audit } from '../../utils/audit.js';
 // runaway forwarding rule burning credits.
 const INBOUND_DAILY_CAP = { starter: 10, pro: 30, agency: 100 };
 
-/** Extract the secret token from a recipient address local-part. */
+/**
+ * Extract the secret token from a recipient address local-part. Primary scheme
+ * is subaddressing — the token is the +tag (post+<token>@…). Falls back to the
+ * post-<token> prefix scheme used with a catch-all route.
+ */
 function tokenFromAddress(addr) {
-  const local = String(addr || '').split('@')[0].split('+')[0].trim().toLowerCase();
+  const local = String(addr || '').split('@')[0].trim().toLowerCase();
   if (!local) return '';
-  return local.startsWith('post-') ? local.slice(5) : local;
+  const plus = local.indexOf('+');
+  if (plus !== -1) {
+    const tag = local.slice(plus + 1).trim();
+    if (tag) return tag;
+  }
+  if (local.startsWith('post-')) return local.slice(5);
+  return '';
 }
 
 /** Resolve a project (ai-first, then refactor) from an inbound token. */

@@ -48,7 +48,7 @@ SCRAPE_TIMEOUT_SECONDS = "30"
 # Preview environment (dev branch)
 [env.preview]
 name = "caddisfly-preview"
-vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app", SITES_PREVIEW_SUFFIX = "-preview", SAAS_WORKER_SCRIPT = "caddisfly-sites-preview", CF_ACCOUNT_ID = "0f44fdd55010b60dfb8179de8022a0db", INBOUND_EMAIL_DOMAIN = "post-preview.caddisfly.ai" }
+vars = { ENVIRONMENT = "preview", APP_URL = "https://caddisfly-preview.fabianodevtools.workers.dev", GOOGLE_REDIRECT_URI = "https://caddisfly-preview.fabianodevtools.workers.dev/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app", SITES_PREVIEW_SUFFIX = "-preview", SAAS_WORKER_SCRIPT = "caddisfly-sites-preview", CF_ACCOUNT_ID = "0f44fdd55010b60dfb8179de8022a0db", INBOUND_EMAIL_DOMAIN = "caddisfly.ai", INBOUND_EMAIL_MAILBOX = "post-preview" }
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -71,7 +71,7 @@ binding = "BROWSER"
 # Production environment (main branch)
 [env.production]
 name = "caddisfly"
-vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app", SAAS_WORKER_SCRIPT = "caddisfly-sites", CF_ACCOUNT_ID = "0f44fdd55010b60dfb8179de8022a0db", INBOUND_EMAIL_DOMAIN = "post.caddisfly.ai" }
+vars = { ENVIRONMENT = "production", APP_URL = "https://caddisfly.ai", GOOGLE_REDIRECT_URI = "https://caddisfly.ai/auth/google/callback", SESSION_DURATION_HOURS = "168", PREVIEW_PAGE_LIMIT = "2", EMAIL_FROM = "noreply@caddisfly.ai", MAX_HTML_SIZE_MB = "5", SCRAPE_TIMEOUT_SECONDS = "30", SITES_BASE = "caddisfly.app", SAAS_WORKER_SCRIPT = "caddisfly-sites", CF_ACCOUNT_ID = "0f44fdd55010b60dfb8179de8022a0db", INBOUND_EMAIL_DOMAIN = "caddisfly.ai", INBOUND_EMAIL_MAILBOX = "post" }
 
 [[env.production.d1_databases]]
 binding = "DB"

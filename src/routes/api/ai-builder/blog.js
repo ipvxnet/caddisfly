@@ -207,14 +207,21 @@ export async function handleBlogDelete(ctx) {
   return ok ? json({ success: true }) : json({ success: false, error: 'Post not found' }, 404);
 }
 
-/** The inbound-email domain (env override; one source of truth). */
+// Post-by-email address = <mailbox>+<token>@<domain>. We use Cloudflare Email
+// Routing SUBADDRESSING: one fixed mailbox rule (e.g. post@caddisfly.ai) routes
+// post+<anything>@... to the worker, and the +token is the per-site secret — so
+// no catch-all that would swallow all mail to the apex. Mailbox differs per env
+// (post-preview vs post) so preview and prod route to their own workers.
 export function inboundEmailDomain(env) {
-  return (env && env.INBOUND_EMAIL_DOMAIN) || 'post.caddisfly.ai';
+  return (env && env.INBOUND_EMAIL_DOMAIN) || 'caddisfly.ai';
+}
+export function inboundEmailMailbox(env) {
+  return (env && env.INBOUND_EMAIL_MAILBOX) || 'post';
 }
 
 /** Build the per-site post-by-email address from a token. */
 export function buildInboundAddress(env, token) {
-  return token ? `post-${token}@${inboundEmailDomain(env)}` : '';
+  return token ? `${inboundEmailMailbox(env)}+${token}@${inboundEmailDomain(env)}` : '';
 }
 
 /**
