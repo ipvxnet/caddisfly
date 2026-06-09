@@ -304,7 +304,8 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .site-name{font-weight:800;color:var(--ink)}
     .site-url{font-size:.85rem;color:var(--p2);text-decoration:none}
     .site-url:hover{text-decoration:underline}
-    .site-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.15rem}
+    .site-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.15rem}
+    .site-actions .btn{width:100%;justify-content:center;padding:.48rem .35rem;font-size:.8rem;white-space:nowrap}
     .site-domains{margin-top:.7rem;background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem}
     .site-domains > summary{cursor:pointer;font-size:.85rem;font-weight:700;color:var(--p2);list-style:none}
     .site-domains > summary::-webkit-details-marker{display:none}
