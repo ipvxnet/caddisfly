@@ -240,8 +240,17 @@ async function aiEditGenVideo() {
     });
     const data = await res.json().catch(function(){ return {}; });
     if (!res.ok || !data.success) {
-      var msg = data.upgrade_message || data.error || ${JSON.stringify(tr('aip.gen_video_fail'))};
-      if (status) status.textContent = msg;
+      var msg = data.error || data.upgrade_message || ${JSON.stringify(tr('aip.gen_video_fail'))};
+      if (status) {
+        status.textContent = msg + ' ';
+        if (data.billing_url) { // not enough credits / paid feature → offer to buy
+          var a = document.createElement('a');
+          a.href = data.billing_url; a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = ${JSON.stringify(tr('aip.buy_credits'))};
+          a.style.cssText = 'font-weight:700;color:#7c3aed;text-decoration:underline';
+          status.appendChild(a);
+        }
+      }
       if (typeof showNotification === 'function') showNotification(msg, 'error');
       return;
     }

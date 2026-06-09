@@ -679,6 +679,7 @@ export const en = {
     gen_video_confirm: 'Generate an AI background video? This uses 100 credits and takes about 30–60 seconds.',
     gen_video_busy: 'Generating…', gen_video_wait: '🎬 Creating your video — this takes ~30–60s, hang tight…',
     gen_video_done: 'Background video added ✓', gen_video_fail: 'Video generation failed — please try again.',
+    buy_credits: 'Buy credits →',
     thinking: 'Thinking…', failed: 'Failed', my_proposal: 'Here is my proposal.',
     nothing: 'I couldn’t find anything to change for that. Try rephrasing?',
     proposed: 'Proposed changes', will_generate: '🖼️ Will generate {n} image(s).',

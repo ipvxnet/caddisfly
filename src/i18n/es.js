@@ -673,6 +673,7 @@ export const es = {
     gen_video_confirm: '¿Generar un vídeo de fondo con IA? Usa 100 créditos y tarda unos 30–60 segundos.',
     gen_video_busy: 'Generando…', gen_video_wait: '🎬 Creando tu vídeo — tarda ~30–60s, un momento…',
     gen_video_done: 'Vídeo de fondo añadido ✓', gen_video_fail: 'Falló la generación del vídeo — inténtalo de nuevo.',
+    buy_credits: 'Comprar créditos →',
     thinking: 'Pensando…', failed: 'Error', my_proposal: 'Aquí está mi propuesta.',
     nothing: 'No encontré nada que cambiar con eso. ¿Pruebas a reformularlo?',
     proposed: 'Cambios propuestos', will_generate: '🖼️ Generará {n} imagen(es).',
