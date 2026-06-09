@@ -268,7 +268,7 @@ export const es = {
     signed_in_as: 'Sesión iniciada como',
     support: 'Soporte', activity: 'Actividad', help: 'Ayuda', sign_out: 'Cerrar sesión',
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
-    live: 'En línea', not_published: 'Aún no publicado',
+    live: 'En línea', not_published: 'Aún no publicado', thumb_building: 'Construyendo…',
     customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', store: 'Tienda', open: 'Abrir ↗',
     republish_note: 'Novedades de esta semana: menús adaptados a móvil, formularios de contacto funcionales, blog y tienda online. Abre Personalizar y pulsa Publicar para aplicar las últimas mejoras a tu sitio.',
     dismiss: 'Cerrar',

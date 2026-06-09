@@ -41,6 +41,7 @@ function normalizeAI(p) {
     status: p.status || 'draft',
     subdomain: p.subdomain || '',
     deployed: p.status === 'deployed',
+    lastModified: Math.max(p.updated_at || 0, p.sections_updated_at || 0, p.created_at || 0),
   };
 }
 function normalizeRefactor(p) {
@@ -52,6 +53,7 @@ function normalizeRefactor(p) {
     status: p.status || 'preview_ready',
     subdomain: p.subdomain || '',
     deployed: p.status === 'deployed',
+    lastModified: Math.max(p.sections_updated_at || 0, p.activated_at || 0, p.created_at || 0),
   };
 }
 const projectKeyFor = (site) => (site.kind === 'ai' ? { aiProjectId: site.dbId } : { projectId: site.dbId });
@@ -63,13 +65,21 @@ function statusPill(s, tr) {
 
 function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
   const live = site.subdomain ? `https://${site.subdomain}${hostSuffix}.${SITES_BASE}` : '';
+  // Live home-page thumbnail via the same embed preview the editor uses. Projects
+  // still generating have no page to show yet, so render a placeholder instead.
+  const previewable = site.status !== 'conversation' && site.status !== 'content_generation';
+  const thumb = previewable
+    ? `<iframe class="thumb-frame" src="/ai-preview/${esc(site.id)}?embed=1" loading="lazy" scrolling="no" tabindex="-1" title="${esc(site.name)}"></iframe>`
+    : `<div class="thumb-ph">${tr('dash.thumb_building')}</div>`;
   return `
-    <div class="site">
-      <div class="site-top">
-        <div class="site-main">
-          <div class="site-name">${esc(site.name)} ${statusPill(site.status, tr)}</div>
-          ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}${hostSuffix}.${SITES_BASE}</a>` : `<span class="site-url muted">${tr('dash.not_published')}</span>`}
-        </div>
+    <div class="site-card">
+      <div class="site-thumb">
+        ${thumb}
+        <a class="thumb-link" href="/ai-builder/customize/${esc(site.id)}" aria-label="${esc(site.name)}"></a>
+      </div>
+      <div class="site-card-body">
+        <div class="site-name">${esc(site.name)} ${statusPill(site.status, tr)}</div>
+        ${live ? `<a class="site-url" href="${live}" target="_blank" rel="noopener">${esc(site.subdomain)}${hostSuffix}.${SITES_BASE}</a>` : `<span class="site-url muted">${tr('dash.not_published')}</span>`}
         <div class="site-actions">
           <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">${tr('dash.customize')}</a>
           <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">${tr('dash.analytics')}</a>
@@ -80,8 +90,8 @@ function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
           ${live ? `<a class="btn ghost" href="/api/ai-builder/${esc(site.id)}/export" title="${tr('dash.export_title')}">${tr('dash.export')}</a>` : ''}
           <button class="btn ghost danger" data-id="${esc(site.id)}" data-name="${esc(site.name)}" onclick="openOffboard(this)">${tr('dash.delete_site')}</button>
         </div>
+        ${domainsBlock}
       </div>
-      ${domainsBlock}
     </div>`;
 }
 
@@ -179,7 +189,7 @@ export async function handleDashboard(ctx) {
   const ownSites = [
     ...(aiRows || []).map(normalizeAI),
     ...((refactorRes && refactorRes.projects) || []).map(normalizeRefactor),
-  ];
+  ].sort((a, b) => b.lastModified - a.lastModified); // most-recently-worked-on first
 
   // Each own site gets a collapsible custom-domain manager (published sites
   // only — a domain needs a subdomain to point at).
@@ -217,9 +227,10 @@ export async function handleDashboard(ctx) {
         getAIProjectsByEmail(env.DB, ref.owner),
         getAllProjects(env.DB, { customerEmail: ref.owner, limit: 200 }),
       ]);
-      const sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)];
+      const sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)]
+        .sort((a, b) => b.lastModified - a.lastModified);
       sharedHtml += `<div class="panel"><h2>${tr('dash.shared_by', { owner: esc(ref.owner) })}</h2>
-        ${sites.length ? sites.map((s) => siteCard(s, '', tr, 0, env.SITES_PREVIEW_SUFFIX || '')).join('') : `<p class="muted">${tr('dash.no_sites_yet')}</p>`}</div>`;
+        ${sites.length ? `<div class="site-grid">${sites.map((s) => siteCard(s, '', tr, 0, env.SITES_PREVIEW_SUFFIX || '')).join('')}</div>` : `<p class="muted">${tr('dash.no_sites_yet')}</p>`}</div>`;
     }
   }
 
@@ -243,7 +254,7 @@ export async function handleDashboard(ctx) {
 
     <div class="panel">
       ${ownSites.length
-        ? ownCardsHtml
+        ? `<div class="site-grid">${ownCardsHtml}</div>`
         : `<p class="muted">${tr('dash.no_sites')} <a href="/ai-builder">${tr('dash.build_one')}</a></p>`}
     </div>
 
@@ -266,7 +277,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
   <style>
     ${baseCss()}
     main{min-height:60vh}
-    .bwrap{max-width:860px;margin:0 auto;padding:3rem 1.5rem}
+    .bwrap{max-width:1120px;margin:0 auto;padding:3rem 1.5rem}
     .dhead{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
     .dhead h1{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:900;color:var(--ink);letter-spacing:-.02em}
     .sub{color:var(--body);margin:.3rem 0 2rem}
@@ -281,13 +292,19 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .pill{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.1rem .6rem;font-size:.74rem;font-weight:700;color:var(--p2);vertical-align:middle}
     .pill.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
     .pill.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
-    .site{padding:.85rem 0;border-bottom:1px solid var(--line)}
-    .site:last-child{border-bottom:none}
-    .site-top{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
-    .site-name{font-weight:800;color:var(--ink);margin-bottom:.15rem}
+    .site-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.1rem}
+    .site-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:box-shadow .15s,border-color .15s}
+    .site-card:hover{box-shadow:0 8px 24px rgba(118,75,162,.12);border-color:var(--p1)}
+    .site-thumb{position:relative;height:172px;overflow:hidden;background:var(--soft,#f8f9fc);border-bottom:1px solid var(--line)}
+    /* iframe rendered at ~3.33x then scaled down → a crisp desktop thumbnail that scales with the card */
+    .site-thumb .thumb-frame{position:absolute;top:0;left:0;width:333.33%;height:333.33%;border:0;transform:scale(.3);transform-origin:0 0;pointer-events:none;background:#fff}
+    .site-thumb .thumb-link{position:absolute;inset:0;z-index:2;display:block}
+    .site-thumb .thumb-ph{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:.85rem}
+    .site-card-body{padding:.95rem 1.05rem;display:flex;flex-direction:column;gap:.5rem}
+    .site-name{font-weight:800;color:var(--ink)}
     .site-url{font-size:.85rem;color:var(--p2);text-decoration:none}
     .site-url:hover{text-decoration:underline}
-    .site-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+    .site-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.15rem}
     .site-domains{margin-top:.7rem;background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem}
     .site-domains > summary{cursor:pointer;font-size:.85rem;font-weight:700;color:var(--p2);list-style:none}
     .site-domains > summary::-webkit-details-marker{display:none}
@@ -309,7 +326,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .invite input:focus{outline:none;border-color:var(--p1)}
     .invite-role,.role-select{padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.85rem;background:#fff;text-transform:capitalize;cursor:pointer}
     .role-legend{font-size:.78rem;margin-top:.7rem}
-    @media (max-width:560px){.site-top,.member{align-items:flex-start}}
+    @media (max-width:560px){.member{align-items:flex-start}}
     .btn.ghost.danger{color:#b91c1c;border-color:#fed7d7}
     .btn.ghost.danger:hover{background:#fef2f2}
     #offb-modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:1rem;z-index:60}

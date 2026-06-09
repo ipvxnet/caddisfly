@@ -268,7 +268,7 @@ export const pt = {
     signed_in_as: 'Sessão iniciada como',
     support: 'Suporte', activity: 'Atividade', help: 'Ajuda', sign_out: 'Sair',
     no_sites: 'Você ainda não tem sites.', build_one: 'Crie um →',
-    live: 'No ar', not_published: 'Ainda não publicado',
+    live: 'No ar', not_published: 'Ainda não publicado', thumb_building: 'Construindo…',
     customize: 'Personalizar', analytics: 'Estatísticas', inbox: 'Mensagens', blog: 'Blog', store: 'Loja', open: 'Abrir ↗',
     republish_note: 'Novidades desta semana: menus adaptados ao celular, formulários de contato funcionais, blog e loja online. Abra Personalizar e clique em Publicar para aplicar as melhorias mais recentes ao seu site.',
     dismiss: 'Fechar',

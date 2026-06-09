@@ -201,7 +201,8 @@ export async function getAllProjects(db, options = {}) {
     orderDir = 'DESC',
   } = options;
 
-  let query = 'SELECT * FROM projects WHERE 1=1';
+  // sections_updated_at = latest section edit, so callers can sort by "last worked on".
+  let query = 'SELECT *, (SELECT MAX(updated_at) FROM ai_sections WHERE ai_sections.project_id = projects.id) AS sections_updated_at FROM projects WHERE 1=1';
   const bindings = [];
 
   if (status) {

@@ -75,9 +75,21 @@ export async function handleGenerateHeroVideo(ctx) {
     const motion = `subtle cinematic motion, gentle camera movement, seamless looping background${r.industry ? ` for a ${r.industry} website` : ''}${brief ? `, ${brief}` : ''}, no text, no people talking`;
     const tempUrl = await generateImageToVideo(env, { imageUrl, prompt: motion, duration: DURATION });
 
-    const vidRes = await fetch(tempUrl);
-    if (!vidRes.ok) throw new Error('Could not download the generated video.');
-    const bytes = new Uint8Array(await vidRes.arrayBuffer());
+    // The x.ai temp URL isn't always ready the instant generation completes, and
+    // the download can blip — retry before giving up (xAI already billed, so we
+    // must not waste the generation).
+    let bytes = null;
+    for (let attempt = 1; attempt <= 4 && !bytes; attempt++) {
+      try {
+        const vidRes = await fetch(tempUrl);
+        if (vidRes.ok) {
+          const buf = await vidRes.arrayBuffer();
+          if (buf.byteLength > 0) bytes = new Uint8Array(buf);
+        }
+      } catch { /* transient — retry */ }
+      if (!bytes && attempt < 4) await new Promise((r) => setTimeout(r, attempt * 1500));
+    }
+    if (!bytes) throw new Error('Could not download the generated video.');
     const file = `hero-vid-${generateToken(10)}.mp4`;
     await uploadToR2(env.STORAGE, `assets/${params.project_id}/${file}`, bytes, 'video/mp4');
     const videoPath = `/preview-asset/${params.project_id}/${file}`;
