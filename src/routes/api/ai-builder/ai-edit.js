@@ -7,7 +7,7 @@ import { audit } from '../../../utils/audit.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
 import { callWorkersAI, extractJSON } from '../../../utils/ai-content-generator.js';
-import { buildEditPrompt, sanitizeProposal, mergePatch, ensureItemIcons } from '../../../utils/ai-edit.js';
+import { buildEditPrompt, sanitizeProposal, mergePatch, ensureItemIcons, detectImageStyle, enhanceGalleryPrompt } from '../../../utils/ai-edit.js';
 import { generateToken } from '../../../utils/crypto.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier, checkAIGenerationLimit, limitsDisabled, formatRateLimitError } from '../../../utils/rate-limiter.js';
@@ -75,21 +75,28 @@ export async function handleAIEditPropose(ctx) {
       return json({ success: false, error: 'AI could not process that request. Try rephrasing.' }, 502);
     }
 
-    // Reliability net: a gallery + an explicit photo request MUST yield image
-    // actions even if the small model forgot to emit them (it tends to just chat).
-    if (section.section_type === 'gallery' && /\b(photo|photos|picture|pictures|pic|pics|image|images)\b/i.test(message)) {
-      const hasImg = proposal.actions.some((a) => a.type === 'generate_image' && a.target === 'images');
-      if (!hasImg) {
+    // Gallery image quality: engineer the Flux prompts (composition + style) so
+    // results look natural, and guarantee image actions even if the small model
+    // forgot to emit them (it tends to just chat).
+    if (section.section_type === 'gallery') {
+      const style = detectImageStyle(message);
+      const imgActions = proposal.actions.filter((a) => a.type === 'generate_image' && a.target === 'images');
+      if (imgActions.length) {
+        let i = 0;
+        proposal.actions = proposal.actions.map((a) =>
+          a.type === 'generate_image' && a.target === 'images'
+            ? { ...a, prompt: enhanceGalleryPrompt(a.prompt, i++, style) }
+            : a);
+      } else if (/\b(photo|photos|picture|pictures|pic|pics|image|images)\b/i.test(message)) {
         const count = Array.isArray(content.images) && content.images.length ? content.images.length : 4;
         const base = message
           .replace(/^\s*(please\s+)?(replace|change|update|swap|set|use|make)\s+(the\s+)?(gallery\s+)?(pictures?|photos?|images?|pics?)\s*(with|to|of|for)?\s*/i, '')
           .trim() || message;
-        const variety = ['', ', candid portrait', ', close-up smiling', ', natural daylight', ', wide composition', ', soft background'];
         proposal.actions = Array.from({ length: Math.min(count, 6) }, (_, i) => ({
-          type: 'generate_image', target: 'images', prompt: `${base}${variety[i % variety.length] || ''}, professional photo, no text`.slice(0, 400),
+          type: 'generate_image', target: 'images', prompt: enhanceGalleryPrompt(base, i, style),
         }));
-        if (!proposal.summary) proposal.summary = `Replace the gallery with ${proposal.actions.length} new photos.`;
-        proposal.assistant_message = proposal.assistant_message || 'I’ll generate new gallery photos from your description — confirm to apply.';
+        if (!proposal.summary) proposal.summary = `Replace the gallery with ${proposal.actions.length} new ${style === 'photo' ? 'photos' : style + ' images'}.`;
+        proposal.assistant_message = proposal.assistant_message || 'I’ll generate new gallery images from your description — confirm to apply.';
       }
     }
 
