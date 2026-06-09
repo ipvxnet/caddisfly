@@ -609,6 +609,7 @@ export const es = {
     ig_note: 'Pégalo como tu descripción — Instagram no tiene enlace de compartir prellenado.',
     no_posts: 'Aún no hay publicaciones. Describe tu primera publicación arriba y deja que la IA la redacte.',
     from_email: '📧 Desde email — revisar',
+    review_flag: '📧 Borrador por email — revisa y publica',
     inbound_title: '📧 Publicar por email',
     inbound_intro: 'Envía un correo a tu dirección secreta y la IA lo convierte en un borrador (con imagen de portada) para que lo revises aquí. Nada se publica hasta que lo apruebes.',
     inbound_enable: 'Generar mi dirección de email',

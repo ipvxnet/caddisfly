@@ -615,6 +615,7 @@ export const en = {
     ig_note: 'Paste as your caption — Instagram has no pre-filled share link.',
     no_posts: 'No posts yet. Describe your first post above and let the AI draft it.',
     from_email: '📧 From email — review',
+    review_flag: '📧 Emailed draft — review & publish',
     inbound_title: '📧 Post by email',
     inbound_intro: 'Email your secret address and AI turns it into a draft post (with a cover image) for you to review here. Nothing goes live until you approve it.',
     inbound_enable: 'Generate my email address',

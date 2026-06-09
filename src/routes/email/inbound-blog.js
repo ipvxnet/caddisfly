@@ -183,7 +183,7 @@ export async function handleInboundEmail(message, env, ctx) {
     });
 
     // Notify the owner + ops.
-    const reviewUrl = `${env.APP_URL || ''}/ai-builder/blog/${site.publicId}`;
+    const reviewUrl = `${env.APP_URL || ''}/ai-builder/blog/${site.publicId}?post=${post.id}`;
     await sendBlogDraftReadyEmail(env, { to: site.email, siteName: site.businessName, postTitle: draft.title, reviewUrl });
     const opsMsg = `📧 *Email→blog draft* for *${site.businessName}* from ${senderAddr}\n*${draft.title}*\n<${reviewUrl}|Review draft>`;
     if (ctx && ctx.waitUntil) ctx.waitUntil(notifyOps(env, opsMsg)); else await notifyOps(env, opsMsg);

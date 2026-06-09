@@ -59,11 +59,18 @@ export async function handleBlogManager(ctx) {
   const sitesBase = env.SITES_BASE || 'caddisfly.app';
   const liveBase = subdomain ? `https://${subdomain}.${sitesBase}` : '';
 
-  const postCard = (p) => {
+  // Deep-link from the "draft ready" email: ?post=<id> focuses a single post —
+  // pulled to the top, highlighted, edit panel open — so review lands ON it.
+  const focusId = parseInt(url.searchParams.get('post') || '', 10);
+  const focusPost = Number.isFinite(focusId) ? posts.find((p) => p.id === focusId) : null;
+  const orderedPosts = focusPost ? [focusPost, ...posts.filter((p) => p.id !== focusPost.id)] : posts;
+
+  const postCard = (p, isFocus = false) => {
     const isPub = p.status === 'published';
     const fromEmail = p.source === 'email' && !isPub;
     return `
-    <div class="post${fromEmail ? ' from-email' : ''}" data-id="${p.id}" data-slug="${esc(p.slug)}">
+    <div class="post${fromEmail ? ' from-email' : ''}${isFocus ? ' focus' : ''}" id="post-${p.id}" data-id="${p.id}" data-slug="${esc(p.slug)}">
+      ${isFocus ? `<div class="focus-flag">${tr('blogm.review_flag')}</div>` : ''}
       <div class="post-top">
         ${p.cover_image ? `<img class="post-thumb" src="${esc(p.cover_image)}" alt="" loading="lazy">` : ''}
         <div class="post-main">
@@ -79,7 +86,7 @@ export async function handleBlogManager(ctx) {
           <button class="link-btn danger" onclick="delPost(${p.id})">${tr('blogm.delete')}</button>
         </div>
       </div>
-      <div class="post-edit" id="edit-${p.id}" style="display:none">
+      <div class="post-edit" id="edit-${p.id}" style="display:${isFocus ? 'block' : 'none'}">
         <label>${tr('blogm.title_label')}</label>
         <input class="f-title" value="${esc(p.title)}" maxlength="200">
         <label>${tr('blogm.excerpt_label')}</label>
@@ -100,6 +107,48 @@ export async function handleBlogManager(ctx) {
       <div class="post-social" id="social-${p.id}" style="display:none"></div>
     </div>`;
   };
+
+  const newPostPanel = `
+    <div class="panel">
+      <h2>${tr('blogm.new_post')}</h2>
+      <p class="muted">${tr('blogm.brief_intro')}</p>
+      <label>${tr('blogm.brief_label')}</label>
+      <textarea id="brief" rows="3" placeholder="${tr('blogm.brief_ph')}"></textarea>
+      <div class="brief-actions">
+        <button class="btn" id="draft-btn" onclick="draftAI(this)">${tr('blogm.draft_ai')}</button>
+        <span class="muted">${tr('blogm.credits_note')}</span>
+      </div>
+    </div>`;
+
+  const inboundPanel = `
+    <div class="panel">
+      <h2>${tr('blogm.inbound_title')}</h2>
+      <p class="muted">${tr('blogm.inbound_intro')}</p>
+      <div id="inbound-wrap">
+        ${inboundAddress ? `
+          <div class="inbound-addr">
+            <code id="inbound-addr">${esc(inboundAddress)}</code>
+            <div class="inbound-acts">
+              <button class="btn ghost" onclick="copyInbound(this)">${tr('blogm.inbound_copy')}</button>
+              <button class="btn ghost" onclick="genInbound(this, true)">${tr('blogm.inbound_regen')}</button>
+            </div>
+          </div>
+          <p class="muted">${tr('blogm.inbound_from_note', { email: esc(ownerEmail || '') })}</p>` : `
+          <div class="brief-actions">
+            <button class="btn" id="inbound-btn" onclick="genInbound(this, false)">${tr('blogm.inbound_enable')}</button>
+          </div>`}
+      </div>
+    </div>`;
+
+  const postsPanel = `
+    <div class="panel">
+      <h2>${tr('blogm.posts_heading')} (${posts.length})</h2>
+      ${posts.length ? orderedPosts.map((p) => postCard(p, !!(focusPost && p.id === focusPost.id))).join('') : `<p class="muted">${tr('blogm.no_posts')}</p>`}
+    </div>`;
+
+  // When deep-linked to a post (?post=), lead with the Posts panel so review
+  // lands on the post itself, not the "New post" box.
+  const panelsHtml = focusPost ? (postsPanel + newPostPanel + inboundPanel) : (newPostPanel + inboundPanel + postsPanel);
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -136,6 +185,8 @@ export async function handleBlogManager(ctx) {
     .inbound-acts{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
     .post{padding:1rem 0;border-bottom:1px solid var(--line)}
     .post.from-email{border-left:3px solid #3b82f6;padding-left:.9rem;background:#f8fbff;border-radius:0 10px 10px 0}
+    .post.focus{border:1px solid var(--p1);box-shadow:0 6px 20px rgba(118,75,162,.14);border-radius:12px;padding:1rem 1.1rem;background:#fbfaff;margin-bottom:.6rem}
+    .focus-flag{font-size:.78rem;font-weight:800;color:var(--p2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem}
     .post:last-child{border-bottom:none}
     .post-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
     .post-thumb{width:84px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
@@ -171,40 +222,7 @@ export async function handleBlogManager(ctx) {
 
     <div class="republish" id="republish">${tr('blogm.republish_note')} <a href="/ai-builder/customize/${esc(publicId)}">${tr('blogm.republish_link')}</a></div>
 
-    <div class="panel">
-      <h2>${tr('blogm.new_post')}</h2>
-      <p class="muted">${tr('blogm.brief_intro')}</p>
-      <label>${tr('blogm.brief_label')}</label>
-      <textarea id="brief" rows="3" placeholder="${tr('blogm.brief_ph')}"></textarea>
-      <div class="brief-actions">
-        <button class="btn" id="draft-btn" onclick="draftAI(this)">${tr('blogm.draft_ai')}</button>
-        <span class="muted">${tr('blogm.credits_note')}</span>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>${tr('blogm.inbound_title')}</h2>
-      <p class="muted">${tr('blogm.inbound_intro')}</p>
-      <div id="inbound-wrap">
-        ${inboundAddress ? `
-          <div class="inbound-addr">
-            <code id="inbound-addr">${esc(inboundAddress)}</code>
-            <div class="inbound-acts">
-              <button class="btn ghost" onclick="copyInbound(this)">${tr('blogm.inbound_copy')}</button>
-              <button class="btn ghost" onclick="genInbound(this, true)">${tr('blogm.inbound_regen')}</button>
-            </div>
-          </div>
-          <p class="muted">${tr('blogm.inbound_from_note', { email: esc(ownerEmail || '') })}</p>` : `
-          <div class="brief-actions">
-            <button class="btn" id="inbound-btn" onclick="genInbound(this, false)">${tr('blogm.inbound_enable')}</button>
-          </div>`}
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>${tr('blogm.posts_heading')} (${posts.length})</h2>
-      ${posts.length ? posts.map(postCard).join('') : `<p class="muted">${tr('blogm.no_posts')}</p>`}
-    </div>
+    ${panelsHtml}
   </div></main>
   ${siteFooter({ lang })}
   <script>
@@ -329,6 +347,11 @@ export async function handleBlogManager(ctx) {
     }
     if (sessionStorage.getItem('cf_republish') === '1') {
       document.getElementById('republish').style.display = 'block';
+    }
+    var FOCUS_POST = ${focusPost ? focusPost.id : 'null'};
+    if (FOCUS_POST) {
+      var fp = document.getElementById('post-' + FOCUS_POST);
+      if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   </script>
 </body>
