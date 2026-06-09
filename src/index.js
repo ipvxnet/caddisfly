@@ -81,6 +81,7 @@ import { handleBlogManager } from './routes/public/blog-manager.js';
 import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
   handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
+  handleBlogInboundAddress,
 } from './routes/api/ai-builder/blog.js';
 import {
   handleSnapshotList, handleSnapshotCreate, handleSnapshotRestore, handleSnapshotDelete,
@@ -103,6 +104,7 @@ import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDo
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
+import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
 /** GET /api/admin/domains/renew?dry=1&now=<unix> — manual renewal run
  *  (admin-only test). `now` simulates a date so dry-runs can preview the
@@ -286,6 +288,7 @@ router.get('/ai-builder/blog/:project_id', handleBlogManager, PROJ);
 router.get('/api/ai-builder/:project_id/blog', handleBlogList, PROJ);
 router.post('/api/ai-builder/:project_id/blog', handleBlogCreate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/ai-draft', handleBlogAIDraft, PROJ);
+router.post('/api/ai-builder/:project_id/blog/inbound-address', handleBlogInboundAddress, PROJ);
 router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
@@ -386,6 +389,16 @@ export default {
       console.log('renewals:', JSON.stringify(summary));
     } catch (e) {
       console.error('scheduled renewals failed:', e.message);
+    }
+  },
+
+  // Inbound email (Cloudflare Email Routing → this worker). Turns an email sent
+  // to a site's secret address into a DRAFT blog post for review.
+  async email(message, env, ctx) {
+    try {
+      await handleInboundEmail(message, env, ctx);
+    } catch (e) {
+      console.error('email handler failed:', e && e.message);
     }
   },
 };

@@ -614,6 +614,16 @@ export const en = {
     copy: 'Copy', copied: 'Copied ✓', share: 'Share ↗',
     ig_note: 'Paste as your caption — Instagram has no pre-filled share link.',
     no_posts: 'No posts yet. Describe your first post above and let the AI draft it.',
+    from_email: '📧 From email — review',
+    inbound_title: '📧 Post by email',
+    inbound_intro: 'Email your secret address and AI turns it into a draft post (with a cover image) for you to review here. Nothing goes live until you approve it.',
+    inbound_enable: 'Generate my email address',
+    inbound_enabling: 'Setting up…',
+    inbound_regen: 'Regenerate',
+    inbound_regen_confirm: 'Regenerate your address? The old one will stop working immediately.',
+    inbound_from_note: 'Only emails sent from {email} are accepted.',
+    inbound_copy: 'Copy', inbound_copied: 'Copied ✓',
+    inbound_paid: 'Post-by-email is available on paid plans.',
   },
 
   lp: {

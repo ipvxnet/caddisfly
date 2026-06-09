@@ -8,6 +8,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
+import { buildInboundAddress } from '../api/ai-builder/blog.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -31,12 +32,14 @@ export async function handleBlogManager(ctx) {
 
   // Resolve the project (ai-first) for name + live subdomain (social links).
   const aiProject = await getAIProjectByProjectId(env.DB, publicId);
-  let name, projectKey, subdomain, deployed;
+  let name, projectKey, subdomain, deployed, ownerEmail, inboundToken;
   if (aiProject) {
     name = aiProject.project_name || 'Your Website';
     projectKey = { aiProjectId: aiProject.id };
     subdomain = aiProject.subdomain || '';
     deployed = aiProject.status === 'deployed';
+    ownerEmail = aiProject.customer_email;
+    inboundToken = aiProject.inbound_email_token || '';
   } else {
     const rp = await getProjectByPreviewId(env.DB, publicId);
     if (!rp) return new Response('Project not found', { status: 404 });
@@ -47,7 +50,10 @@ export async function handleBlogManager(ctx) {
     projectKey = { projectId: rp.id };
     subdomain = rp.subdomain || '';
     deployed = rp.status === 'deployed';
+    ownerEmail = rp.customer_email;
+    inboundToken = rp.inbound_email_token || '';
   }
+  const inboundAddress = buildInboundAddress(env, inboundToken);
 
   const posts = await getPostsByProject(env.DB, projectKey);
   const sitesBase = env.SITES_BASE || 'caddisfly.app';
@@ -55,12 +61,13 @@ export async function handleBlogManager(ctx) {
 
   const postCard = (p) => {
     const isPub = p.status === 'published';
+    const fromEmail = p.source === 'email' && !isPub;
     return `
-    <div class="post" data-id="${p.id}" data-slug="${esc(p.slug)}">
+    <div class="post${fromEmail ? ' from-email' : ''}" data-id="${p.id}" data-slug="${esc(p.slug)}">
       <div class="post-top">
         ${p.cover_image ? `<img class="post-thumb" src="${esc(p.cover_image)}" alt="" loading="lazy">` : ''}
         <div class="post-main">
-          <div class="post-title">${esc(p.title)} <span class="pill ${isPub ? 'ok' : ''}">${isPub ? tr('blogm.st_published') : tr('blogm.st_draft')}</span></div>
+          <div class="post-title">${esc(p.title)} <span class="pill ${isPub ? 'ok' : ''}">${isPub ? tr('blogm.st_published') : tr('blogm.st_draft')}</span>${fromEmail ? ` <span class="pill review">${tr('blogm.from_email')}</span>` : ''}</div>
           <div class="post-meta">${isPub && p.published_at ? `${tr('blogm.published_on')} ${fmtDate(p.published_at, lang)}` : `${tr('blogm.updated_on')} ${fmtDate(p.updated_at || p.created_at, lang)}`}</div>
         </div>
         <div class="post-actions">
@@ -123,7 +130,12 @@ export async function handleBlogManager(ctx) {
     .link-btn.danger{color:#b91c1c}
     .pill{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.1rem .6rem;font-size:.72rem;font-weight:700;color:var(--p2);vertical-align:middle}
     .pill.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+    .pill.review{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+    .inbound-addr{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:11px;padding:.6rem .8rem;margin:.6rem 0 .3rem}
+    .inbound-addr code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem;color:var(--ink);word-break:break-all;flex:1;min-width:200px}
+    .inbound-acts{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
     .post{padding:1rem 0;border-bottom:1px solid var(--line)}
+    .post.from-email{border-left:3px solid #3b82f6;padding-left:.9rem;background:#f8fbff;border-radius:0 10px 10px 0}
     .post:last-child{border-bottom:none}
     .post-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
     .post-thumb{width:84px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
@@ -167,6 +179,25 @@ export async function handleBlogManager(ctx) {
       <div class="brief-actions">
         <button class="btn" id="draft-btn" onclick="draftAI(this)">${tr('blogm.draft_ai')}</button>
         <span class="muted">${tr('blogm.credits_note')}</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>${tr('blogm.inbound_title')}</h2>
+      <p class="muted">${tr('blogm.inbound_intro')}</p>
+      <div id="inbound-wrap">
+        ${inboundAddress ? `
+          <div class="inbound-addr">
+            <code id="inbound-addr">${esc(inboundAddress)}</code>
+            <div class="inbound-acts">
+              <button class="btn ghost" onclick="copyInbound(this)">${tr('blogm.inbound_copy')}</button>
+              <button class="btn ghost" onclick="genInbound(this, true)">${tr('blogm.inbound_regen')}</button>
+            </div>
+          </div>
+          <p class="muted">${tr('blogm.inbound_from_note', { email: esc(ownerEmail || '') })}</p>` : `
+          <div class="brief-actions">
+            <button class="btn" id="inbound-btn" onclick="genInbound(this, false)">${tr('blogm.inbound_enable')}</button>
+          </div>`}
       </div>
     </div>
 
@@ -272,6 +303,29 @@ export async function handleBlogManager(ctx) {
         box.style.display = 'block';
       } catch (e) { alert(e.message); }
       btn.disabled = false;
+    }
+    var T_INB_ENABLING = ${JSON.stringify(tr('blogm.inbound_enabling'))};
+    var T_INB_REGEN_CONFIRM = ${JSON.stringify(tr('blogm.inbound_regen_confirm'))};
+    var T_INB_COPY = ${JSON.stringify(tr('blogm.inbound_copy'))}, T_INB_COPIED = ${JSON.stringify(tr('blogm.inbound_copied'))};
+    async function genInbound(btn, regen) {
+      if (regen && !confirm(T_INB_REGEN_CONFIRM)) return;
+      var was = btn.textContent; btn.disabled = true; btn.textContent = T_INB_ENABLING;
+      try {
+        const r = await fetch('/api/ai-builder/' + PID + '/blog/inbound-address', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const d = await r.json().catch(function () { return {}; });
+        if (r.status === 402) {
+          if (confirm((d && d.upgrade_message) || (d && d.error) || 'Upgrade required.')) { location.href = (d && d.billing_url) || '/billing'; }
+          btn.disabled = false; btn.textContent = was; return;
+        }
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Request failed');
+        location.reload();
+      } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = was; }
+    }
+    function copyInbound(btn) {
+      var el = document.getElementById('inbound-addr'); if (!el) return;
+      navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+        btn.textContent = T_INB_COPIED; setTimeout(function () { btn.textContent = T_INB_COPY; }, 1500);
+      });
     }
     if (sessionStorage.getItem('cf_republish') === '1') {
       document.getElementById('republish').style.display = 'block';

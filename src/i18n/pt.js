@@ -608,6 +608,16 @@ export const pt = {
     copy: 'Copiar', copied: 'Copiado ✓', share: 'Compartilhar ↗',
     ig_note: 'Cole como a sua legenda — o Instagram não tem link de compartilhamento pré-preenchido.',
     no_posts: 'Ainda não há publicações. Descreva a primeira publicação acima e deixe a IA redigir.',
+    from_email: '📧 Do email — revisar',
+    inbound_title: '📧 Publicar por email',
+    inbound_intro: 'Envie um email para o seu endereço secreto e a IA o transforma num rascunho (com imagem de capa) para você revisar aqui. Nada vai ao ar até você aprovar.',
+    inbound_enable: 'Gerar meu endereço de email',
+    inbound_enabling: 'Configurando…',
+    inbound_regen: 'Gerar novamente',
+    inbound_regen_confirm: 'Gerar um novo endereço? O anterior deixará de funcionar imediatamente.',
+    inbound_from_note: 'Apenas emails enviados de {email} são aceitos.',
+    inbound_copy: 'Copiar', inbound_copied: 'Copiado ✓',
+    inbound_paid: 'Publicar por email está disponível nos planos pagos.',
   },
 
   lp: {

@@ -76,6 +76,12 @@ export async function getProjectByPreviewId(db, previewId) {
  * @param {string} token - Verification token
  * @returns {object|null} Project object or null
  */
+/** Get a refactor project by its inbound-email token (email-to-blog routing). */
+export async function getProjectByInboundToken(db, token) {
+  if (!token) return null;
+  return db.prepare('SELECT * FROM projects WHERE inbound_email_token = ?').bind(token).first();
+}
+
 export async function getProjectByVerificationToken(db, token) {
   if (!token) return null;
 
@@ -128,7 +134,9 @@ export async function updateProject(db, projectId, updates) {
     // Terms acceptance (migration 010)
     'terms_accepted_at',
     // Subdomain hosting (migration 012)
-    'subdomain'
+    'subdomain',
+    // Email-to-blog inbound token (migration 033)
+    'inbound_email_token'
   ];
 
   const fields = [];

@@ -13,9 +13,11 @@
 // NOTE: publishing a post does NOT redeploy the site — the manager UI prompts
 // to republish so the static R2 copies pick the post up.
 
-import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
+import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
 import { audit } from '../../../utils/audit.js';
-import { getProjectByPreviewId } from '../../../db/projects.js';
+import { getProjectByPreviewId, updateProject } from '../../../db/projects.js';
+import { generateToken } from '../../../utils/crypto.js';
+import { getUserTier } from '../../../utils/rate-limiter.js';
 import {
   createPost, getPostsByProject, getPostById, updatePost, deletePost, uniquePostSlug,
 } from '../../../db/blog-posts.js';
@@ -24,34 +26,16 @@ import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/c
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { mdLiteExcerpt } from '../../../utils/md-lite.js';
 import { generateImageToR2 } from './ai-edit.js';
+import { generateBlogDraftContent, blogCoverPrompt, parseLabeled } from '../../../utils/blog-draft.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
+// parseLabeled lives in utils/blog-draft.js (shared with the email-to-blog
+// handler); the social pack below reuses it for its XPOST/INSTAGRAM/LINKEDIN
+// response. LANG_NAMES is still needed locally for the social prompt.
 const LANG_NAMES = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
-
-/**
- * Parse a LABEL-delimited AI response into { label: text }. We deliberately do
- * NOT ask the model for JSON here — multi-paragraph content with raw newlines
- * inside JSON string literals is invalid JSON and small models emit exactly
- * that. Labels must be UPPERCASE and appear at line start, in order.
- */
-function parseLabeled(raw, labels) {
-  const text = String(raw || '').replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '');
-  const out = {};
-  for (let i = 0; i < labels.length; i++) {
-    const start = text.search(new RegExp(`^${labels[i]}:`, 'm'));
-    if (start === -1) return null;
-    let end = text.length;
-    for (let j = i + 1; j < labels.length; j++) {
-      const next = text.slice(start + labels[i].length).search(new RegExp(`^${labels[j]}:`, 'm'));
-      if (next !== -1) { end = start + labels[i].length + next; break; }
-    }
-    out[labels[i].toLowerCase()] = text.slice(start + labels[i].length + 1, end).trim();
-  }
-  return out;
-}
 
 /** Resolve :project_id to { projectKey, project } (ai-first, like pages.js). */
 async function resolveProject(env, project_id) {
@@ -135,42 +119,23 @@ export async function handleBlogAIDraft(ctx) {
     const afford = await canAfford(env, env.DB, r.email, CREDIT_COSTS.blog_post);
     if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI blog drafting').error }, 402);
 
-    const langName = LANG_NAMES[r.language] || 'English';
-    const prompt = `You are writing a blog post for the website of "${r.businessName}"${r.industry ? ` (${r.industry})` : ''}.
-
-The owner's brief for the post:
-"""
-${brief}
-"""
-
-Write an engaging, SEO-friendly blog post of 400-700 words based on the brief. Write ALL text in ${langName}.
-Format the post body in simple markdown: "## " for section headings, "- " for bullet list items, "**bold**" for emphasis, blank lines between paragraphs. Do NOT use any other markdown syntax. Do not invent specific facts, prices, dates or statistics the brief doesn't mention.
-
-Respond in EXACTLY this format (plain text, no JSON, no commentary, keep the uppercase labels):
-TITLE: the post title, max 70 characters
-EXCERPT: a 1-2 sentence summary, max 160 characters
-CONTENT:
-the full post body in the markdown described above
-${POLICY_INSTRUCTION}`;
-
-    const raw = await callWorkersAI(env, prompt, { max_tokens: 2048, temperature: 0.6, system_message: 'You are a professional content writer for small-business websites.' });
-    const draft = parseLabeled(raw, ['TITLE', 'EXCERPT', 'CONTENT']);
-    if (!draft || !draft.title || !draft.content) {
-      return json({ success: false, error: 'The AI draft came back malformed — please try again.' }, 502);
+    let draft;
+    try {
+      draft = await generateBlogDraftContent(env, r, brief);
+    } catch (e) {
+      if (e.code === 'policy') return json(policyError(e.screen), 422);
+      return json({ success: false, error: e.message || 'AI drafting failed — please try again.' }, 502);
     }
-    const outScreen = screenContent(`${draft.title}\n${draft.content}`);
-    if (!outScreen.allowed) return json(policyError(outScreen), 422);
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.blog_post);
     audit(ctx, 'credit.blog_draft', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.blog_post } });
 
-    const title = String(draft.title).slice(0, 200);
-    const slug = await uniquePostSlug(env.DB, r.projectKey, title);
+    const slug = await uniquePostSlug(env.DB, r.projectKey, draft.title);
     const post = await createPost(env.DB, r.projectKey, {
       slug,
-      title,
-      excerpt: String(draft.excerpt || mdLiteExcerpt(draft.content)).slice(0, 300),
-      content: String(draft.content).slice(0, 30000),
+      title: draft.title,
+      excerpt: draft.excerpt,
+      content: draft.content,
       cover_image: '',
       status: 'draft',
     });
@@ -242,6 +207,53 @@ export async function handleBlogDelete(ctx) {
   return ok ? json({ success: true }) : json({ success: false, error: 'Post not found' }, 404);
 }
 
+/** The inbound-email domain (env override; one source of truth). */
+export function inboundEmailDomain(env) {
+  return (env && env.INBOUND_EMAIL_DOMAIN) || 'post.caddisfly.ai';
+}
+
+/** Build the per-site post-by-email address from a token. */
+export function buildInboundAddress(env, token) {
+  return token ? `post-${token}@${inboundEmailDomain(env)}` : '';
+}
+
+/**
+ * POST /api/ai-builder/:project_id/blog/inbound-address — provision (or rotate)
+ * the site's secret post-by-email address. Paid-only in production (like the
+ * other AI features). Rotating invalidates the old address.
+ */
+export async function handleBlogInboundAddress(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (r.error) return r.error;
+
+    if (env.ENVIRONMENT === 'production') {
+      const tier = await getUserTier(env.DB, r.email);
+      if (tier === 'free_trial') {
+        return json({
+          success: false,
+          error: 'Post-by-email is available on paid plans.',
+          upgrade_message: 'Upgrade to Starter or higher to post your blog by email.',
+          billing_url: '/billing',
+        }, 402);
+      }
+    }
+
+    const token = generateToken(9); // 18 hex chars — unguessable
+    if (r.projectKey.aiProjectId != null) {
+      await updateAIProject(env.DB, r.projectKey.aiProjectId, { inbound_email_token: token });
+    } else {
+      await updateProject(env.DB, r.projectKey.projectId, { inbound_email_token: token });
+    }
+    audit(ctx, 'blog.inbound_address', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id });
+    return json({ success: true, address: buildInboundAddress(env, token) });
+  } catch (e) {
+    console.error('blog inbound-address error:', e);
+    return json({ success: false, error: 'Could not set up your post-by-email address.' }, 500);
+  }
+}
+
 /**
  * AI cover image: Flux-generated tile from the post's title/excerpt/industry.
  * Same model + R2 path as AI-edit image gen; charged as a normal image (5).
@@ -260,12 +272,7 @@ export async function handleBlogCover(ctx) {
     if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI image generation').error }, 402);
 
     const excerpt = post.excerpt || mdLiteExcerpt(post.content, 200);
-    const prompt =
-      `Professional editorial cover photograph for a business blog article titled "${post.title}". ` +
-      `${excerpt} ` +
-      `${r.industry ? `Industry: ${r.industry}. ` : ''}` +
-      `Photorealistic, high quality, wide 16:9 composition, soft natural lighting, modern and clean. ` +
-      `Strictly NO text, NO words, NO letters, NO typography, NO logos, NO watermarks.`;
+    const prompt = blogCoverPrompt({ title: post.title, excerpt, industry: r.industry });
 
     const url = await generateImageToR2(env, params.project_id, prompt);
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.image);
