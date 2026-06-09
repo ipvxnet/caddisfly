@@ -46,6 +46,46 @@ const IMAGE_URL_FIELDS = ['background_image', 'image_url', 'video_url', 'logo', 
 
 const DEFAULT_ITEM_ICON = '✓';
 
+// Image-quality engineering for gallery generation. Thin prompts make Flux
+// produce uncanny extreme close-ups + over-processed skin; these add a style
+// and a varied composition (never extreme close-up) so results look natural.
+const STYLE_SUFFIX = {
+  photo: 'professional photograph, photorealistic, natural soft lighting, candid, realistic skin texture and proportions, sharp focus, high quality, DSLR',
+  cartoon: 'flat 2D cartoon illustration, clean bold outlines, vibrant flat colors, friendly modern style',
+  anime: 'anime and manga style illustration, cel shading, clean linework, expressive, studio-quality',
+  illustration: 'modern digital illustration, painterly, soft shading, editorial style',
+  '3d': '3D rendered character, soft studio lighting, smooth shading, polished Pixar-like style',
+  watercolor: 'soft watercolor painting, gentle washes, hand-painted, artistic',
+};
+const COMPOSITION = [
+  'medium shot, upper body', 'three-quarter portrait', 'candid moment, waist up',
+  'natural medium close-up', 'environmental portrait', 'relaxed half-body portrait',
+];
+
+/** Detect a desired image style from the user's request (default: realistic photo). */
+export function detectImageStyle(text) {
+  const t = (text || '').toLowerCase();
+  if (/\b(manga|anime)\b/.test(t)) return 'anime';
+  if (/\bcartoons?\b/.test(t)) return 'cartoon';
+  if (/\b(3d|pixar|rendered?)\b/.test(t)) return '3d';
+  if (/\b(watercolou?r|painting|painted)\b/.test(t)) return 'watercolor';
+  if (/\b(illustrat\w+|artistic|drawing|drawn|art style)\b/.test(t)) return 'illustration';
+  return 'photo';
+}
+
+/**
+ * Turn a base subject into a high-quality, on-style gallery image prompt with a
+ * varied composition (so the set isn't N identical uncanny close-ups).
+ */
+export function enhanceGalleryPrompt(base, index = 0, style = 'photo') {
+  const subject = String(base || '')
+    .replace(/,?\s*(no text|no watermark|professional photo(graph)?|high quality)\.?\s*$/i, '')
+    .trim() || 'photo';
+  const comp = COMPOSITION[index % COMPOSITION.length];
+  const suffix = STYLE_SUFFIX[style] || STYLE_SUFFIX.photo;
+  return `${subject}, ${comp}, ${suffix}, no text, no watermark, no distortion`.slice(0, 480);
+}
+
 /**
  * Ensure list items (services/features) always have a non-empty icon — the LLM
  * sometimes omits one, which renders as a blank icon. Mutates + returns obj.
