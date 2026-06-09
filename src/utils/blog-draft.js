@@ -91,16 +91,39 @@ ${POLICY_INSTRUCTION}`;
   };
 }
 
+// Strong no-text negatives appended to every cover prompt.
+const COVER_NEGATIVES =
+  'Absolutely NO text, NO words, NO letters, NO numbers, NO captions, NO headlines, ' +
+  'NO labels, NO signage, NO logos, NO watermarks, NO posters in frame.';
+
 /**
- * Flux prompt for a post cover image. Diffusion renders text poorly, so the
- * prompt forbids any words/typography — a clean editorial photo, not a headline.
+ * Build a Flux prompt for a post cover image. Diffusion models render text
+ * badly AND will happily bake a garbled headline into the image if the prompt
+ * quotes the title or frames it as an "editorial cover" — so we DON'T pass the
+ * title/excerpt verbatim. Instead a quick LLM step turns the topic into a
+ * concrete photographic SCENE (objects/setting/lighting, no words), which we
+ * render as a plain photo. Falls back to an industry scene if the LLM call
+ * fails. Async (one cheap text call); callers await it.
  */
-export function blogCoverPrompt({ title, excerpt, industry }) {
+export async function buildBlogCoverPrompt(env, { title, excerpt, industry }) {
+  let scene = '';
+  try {
+    const ask = `Describe, in ONE vivid sentence, a real-world PHOTOGRAPHIC SCENE to illustrate this blog post for ${industry ? `a ${industry} business` : 'a small business'}.
+Post title: ${title}
+Summary: ${excerpt || ''}
+
+Rules: describe only concrete visual elements — objects, people, setting, lighting, composition. The scene must contain NO text, NO signs, NO screens with words, NO headlines. Do NOT repeat the title. Output ONLY the one-sentence scene description.`;
+    const raw = await callWorkersAI(env, ask, {
+      max_tokens: 120, temperature: 0.7,
+      system_message: 'You write short, concrete visual scene descriptions for an image generator.',
+    });
+    scene = String(raw || '').replace(/^["'\s]+|["'\s]+$/g, '').replace(/\s+/g, ' ').slice(0, 320);
+  } catch { /* fall back to an industry scene */ }
+
+  const subject = scene || `a clean, professional ${industry || 'small business'} setting relevant to the article topic`;
   return (
-    `Professional editorial cover photograph for a business blog article titled "${title}". ` +
-    `${excerpt || ''} ` +
-    `${industry ? `Industry: ${industry}. ` : ''}` +
-    `Photorealistic, high quality, wide 16:9 composition, soft natural lighting, modern and clean. ` +
-    `Strictly NO text, NO words, NO letters, NO typography, NO logos, NO watermarks.`
+    `A high-quality, photorealistic photograph. ${subject} ` +
+    `Natural lighting, modern and clean, wide 16:9 composition, shallow depth of field, professional photography. ` +
+    COVER_NEGATIVES
   );
 }

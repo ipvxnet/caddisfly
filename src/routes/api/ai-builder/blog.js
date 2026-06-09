@@ -26,7 +26,7 @@ import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/c
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { mdLiteExcerpt } from '../../../utils/md-lite.js';
 import { generateImageToR2 } from './ai-edit.js';
-import { generateBlogDraftContent, blogCoverPrompt, parseLabeled } from '../../../utils/blog-draft.js';
+import { generateBlogDraftContent, buildBlogCoverPrompt, parseLabeled } from '../../../utils/blog-draft.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -279,7 +279,7 @@ export async function handleBlogCover(ctx) {
     if (!afford.ok) return json({ success: false, error: formatCreditError(afford.state, 'AI image generation').error }, 402);
 
     const excerpt = post.excerpt || mdLiteExcerpt(post.content, 200);
-    const prompt = blogCoverPrompt({ title: post.title, excerpt, industry: r.industry });
+    const prompt = await buildBlogCoverPrompt(env, { title: post.title, excerpt, industry: r.industry });
 
     const url = await generateImageToR2(env, params.project_id, prompt);
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.image);
