@@ -609,6 +609,7 @@ export const pt = {
     ig_note: 'Cole como a sua legenda — o Instagram não tem link de compartilhamento pré-preenchido.',
     no_posts: 'Ainda não há publicações. Descreva a primeira publicação acima e deixe a IA redigir.',
     from_email: '📧 Do email — revisar',
+    review_flag: '📧 Rascunho por email — revise e publique',
     inbound_title: '📧 Publicar por email',
     inbound_intro: 'Envie um email para o seu endereço secreto e a IA o transforma num rascunho (com imagem de capa) para você revisar aqui. Nada vai ao ar até você aprovar.',
     inbound_enable: 'Gerar meu endereço de email',

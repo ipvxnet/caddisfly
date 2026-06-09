@@ -16,7 +16,7 @@ import { getProjectByInboundToken } from '../../db/projects.js';
 import {
   createPost, updatePost, uniquePostSlug, getPostBySourceMessageId, countEmailPostsSince,
 } from '../../db/blog-posts.js';
-import { generateBlogDraftContent, blogCoverPrompt } from '../../utils/blog-draft.js';
+import { generateBlogDraftContent, buildBlogCoverPrompt } from '../../utils/blog-draft.js';
 import { generateImageToR2 } from '../api/ai-builder/ai-edit.js';
 import { screenContent } from '../../utils/content-policy.js';
 import { canAfford, chargeCredits, CREDIT_COSTS } from '../../utils/credits.js';
@@ -169,7 +169,8 @@ export async function handleInboundEmail(message, env, ctx) {
     // the post). Charged as a normal image, only when it succeeds.
     let coverCredits = 0;
     try {
-      const url = await generateImageToR2(env, site.publicId, blogCoverPrompt({ title: draft.title, excerpt: draft.excerpt, industry: site.industry }));
+      const coverPrompt = await buildBlogCoverPrompt(env, { title: draft.title, excerpt: draft.excerpt, industry: site.industry });
+      const url = await generateImageToR2(env, site.publicId, coverPrompt);
       await chargeCredits(env, env.DB, site.email, CREDIT_COSTS.image);
       coverCredits = CREDIT_COSTS.image;
       post = await updatePost(env.DB, site.projectKey, post.id, { cover_image: url });
@@ -183,7 +184,7 @@ export async function handleInboundEmail(message, env, ctx) {
     });
 
     // Notify the owner + ops.
-    const reviewUrl = `${env.APP_URL || ''}/ai-builder/blog/${site.publicId}`;
+    const reviewUrl = `${env.APP_URL || ''}/ai-builder/blog/${site.publicId}?post=${post.id}`;
     await sendBlogDraftReadyEmail(env, { to: site.email, siteName: site.businessName, postTitle: draft.title, reviewUrl });
     const opsMsg = `📧 *Email→blog draft* for *${site.businessName}* from ${senderAddr}\n*${draft.title}*\n<${reviewUrl}|Review draft>`;
     if (ctx && ctx.waitUntil) ctx.waitUntil(notifyOps(env, opsMsg)); else await notifyOps(env, opsMsg);
