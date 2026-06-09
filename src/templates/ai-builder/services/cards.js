@@ -2,7 +2,7 @@
 // Services displayed as hoverable cards with icons
 
 export function servicesCardsTemplate(data, config) {
-  const { heading, description = '', services } = data;
+  const { heading = 'Our Services', description = '', services } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default services if not provided

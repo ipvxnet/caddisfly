@@ -2,7 +2,7 @@
 // Company history with visual timeline
 
 export function aboutTimelineTemplate(data, config) {
-  const { heading, description = '', milestones } = data;
+  const { heading = 'Our Journey', description = '', milestones } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default milestones if not provided

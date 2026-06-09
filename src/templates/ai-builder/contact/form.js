@@ -14,14 +14,24 @@ export function contactFormTemplate(data, config) {
   // localized status messages at render time. Previews (no trackId) show a
   // "form activates on publish" note instead of posting.
   const lang = config.lang || 'en';
-  const {
-    heading = t(lang, 'formw.heading'),
-    subheading = t(lang, 'formw.sub'),
-    button_text = t(lang, 'formw.send'),
-    phone = '',
-    address = '',
-    email = '',
-  } = data;
+  // The contact heading/sub/button are auto-placeholders at creation (stored in
+  // English). On a non-English site, swap those known English defaults for the
+  // localized version so existing sites localize at render too — but keep any
+  // genuinely custom value the user wrote.
+  const EN_DEFAULTS = {
+    heading: ['Get In Touch', 'Get in touch', 'Contact Us', 'Contact us'],
+    sub: ["We'd love to hear from you", 'We would love to hear from you'],
+    send: ['Send Message', 'Send message', 'Submit'],
+  };
+  const loc = (val, key, list) => {
+    if (!val) return t(lang, `formw.${key}`);
+    if (lang !== 'en' && list.includes(val)) return t(lang, `formw.${key}`);
+    return val;
+  };
+  const heading = loc(data.heading, 'heading', EN_DEFAULTS.heading);
+  const subheading = loc(data.subheading, 'sub', EN_DEFAULTS.sub);
+  const button_text = loc(data.button_text, 'send', EN_DEFAULTS.send);
+  const { phone = '', address = '', email = '' } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
   const siteId = config.trackId || '';
   const endpoint = `${config.appOrigin || ''}/api/forms/submit`;

@@ -2,7 +2,7 @@
 // Image carousel/slider with navigation
 
 export function galleryCarouselTemplate(data, config) {
-  const { heading, description = '', images } = data;
+  const { heading = 'Gallery', description = '', images } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default images if not provided

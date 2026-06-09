@@ -44,6 +44,11 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
   <details class="ai-edit-own">
     <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
+      ${isHero ? `<div class="ai-edit-genvid">
+        <input type="text" id="ai-edit-genvid-prompt" class="ai-edit-input" maxlength="200" placeholder="${tr('aip.gen_video_ph')}">
+        <button type="button" class="ai-edit-genvid-btn" id="ai-edit-genvid-btn" onclick="aiEditGenVideo()">${tr('aip.gen_video')}</button>
+        <p class="ai-edit-genvid-note">${tr('aip.gen_video_note')}</p>
+      </div>` : ''}
       <label class="ai-edit-own-label">${tr('aip.upload_file')}</label>
       <input type="file" id="ai-edit-file" accept="image/*${isHero ? ',video/mp4,video/webm' : ''}" onchange="aiEditUpload(this)">
       <label class="ai-edit-own-label">${tr('aip.or_paste_url')}</label>
@@ -88,6 +93,14 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
 .ai-edit-remove { margin-top:0.6rem; background:#fff; color:#b91c1c; border:1px solid #fecaca; padding:0.5rem 0.8rem; border-radius:8px; cursor:pointer; font-size:0.82rem; font-weight:600; }
 .ai-edit-remove:hover { background:#fef2f2; }
 .ai-edit-own-status { font-size:0.78rem; color:#7c3aed; min-height:1em; }
+.ai-edit-genvid { margin:0 0 0.7rem; padding-bottom:0.7rem; border-bottom:1px solid #ede9fe; }
+.ai-edit-genvid #ai-edit-genvid-prompt { margin-bottom:0.45rem; }
+.ai-edit-genvid-btn { width:100%; padding:0.6rem; border:none; border-radius:8px; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; }
+.ai-edit-genvid-btn:disabled { opacity:0.9; cursor:default; }
+.ai-edit-genvid-btn.busy { animation:aiGvPulse 1.1s ease-in-out infinite; }
+@keyframes aiGvPulse { 0%,100%{ opacity:0.95 } 50%{ opacity:0.6 } }
+.ai-edit-own-status.working { color:#7c3aed; font-weight:700; }
+.ai-edit-genvid-note { font-size:0.72rem; color:#9ca3af; margin:0.35rem 0 0; }
 .ai-edit-typing { font-size:0.8rem; color:#7c3aed; }
 </style>
 
@@ -209,6 +222,49 @@ async function aiEditPostApply(payload) {
   }
   if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.section_updated'))}, 'success');
   return data;
+}
+
+// ---- AI background video (hero) ----
+async function aiEditGenVideo() {
+  var btn = document.getElementById('ai-edit-genvid-btn');
+  var status = document.getElementById('ai-edit-own-status');
+  if (btn && btn.disabled) return; // already generating — ignore double-click
+  // Immediate, unmistakable feedback (no blocking confirm — it can be suppressed).
+  if (btn) { btn.disabled = true; btn.classList.add('busy'); btn.textContent = ${JSON.stringify(tr('aip.gen_video_busy'))}; }
+  if (status) { status.classList.add('working'); status.textContent = ${JSON.stringify(tr('aip.gen_video_wait'))}; }
+  if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.gen_video_wait'))}, 'info');
+  var brief = ((document.getElementById('ai-edit-genvid-prompt') || {}).value || '').trim();
+  try {
+    const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/hero-video/generate\`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief, section_id: window.currentSectionId })
+    });
+    const data = await res.json().catch(function(){ return {}; });
+    if (!res.ok || !data.success) {
+      var msg = data.error || data.upgrade_message || ${JSON.stringify(tr('aip.gen_video_fail'))};
+      if (status) {
+        status.textContent = msg + ' ';
+        if (data.billing_url) { // not enough credits / paid feature → offer to buy
+          var a = document.createElement('a');
+          a.href = data.billing_url; a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = ${JSON.stringify(tr('aip.buy_credits'))};
+          a.style.cssText = 'font-weight:700;color:#7c3aed;text-decoration:underline';
+          status.appendChild(a);
+        }
+      }
+      if (typeof showNotification === 'function') showNotification(msg, 'error');
+      return;
+    }
+    const iframe = document.getElementById('preview-iframe');
+    if (iframe) iframe.contentWindow.location.reload();
+    if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.gen_video_done'))}, 'success');
+    if (status) status.textContent = '';
+  } catch (e) {
+    if (status) status.textContent = ${JSON.stringify(tr('aip.gen_video_fail'))};
+    if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('aip.gen_video_fail'))}, 'error');
+  } finally {
+    if (status) status.classList.remove('working');
+    if (btn) { btn.disabled = false; btn.classList.remove('busy'); btn.textContent = ${JSON.stringify(tr('aip.gen_video'))}; }
+  }
 }
 
 // ---- "Use my own" media ----

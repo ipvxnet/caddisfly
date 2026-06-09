@@ -2,7 +2,7 @@
 // Clean, text-focused hero with subtle animations
 
 export function heroMinimalTemplate(data, config) {
-  const { heading, subheading, cta_text, cta_url } = data;
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_url = '#contact' } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `

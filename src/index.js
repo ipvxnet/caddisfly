@@ -67,7 +67,6 @@ import { handleCreateTicket, handleReplyTicket } from './routes/api/support.js';
 import { handleAdminTickets, handleAdminTicketReply, handleAdminTicketStatus } from './routes/admin/tickets.js';
 import { handleAdminAudit } from './routes/admin/audit.js';
 import { handleAdminRevenue } from './routes/admin/revenue.js';
-import { handleSpikeI2V } from './routes/admin/spike.js';
 import { handleAdminLegal, handleAdminLegalSave } from './routes/admin/legal.js';
 import { handleStripeWebhook } from './routes/api/stripe-webhook.js';
 import { billingAuth } from './middleware/billing-auth.js';
@@ -98,6 +97,7 @@ import {
   handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
+import { handleGenerateHeroVideo } from './routes/api/ai-builder/hero-video.js';
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSync, handleDnsSave, handleDnsEmailSetup, handleRenewCheckout, handleRenewReceipt } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
@@ -264,6 +264,7 @@ router.put('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleUpdatePa
 router.delete('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleDeletePage), PROJ);
 router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
 router.post('/api/ai-builder/:project_id/logo/generate', handleLogoGenerate, PROJ);
+router.post('/api/ai-builder/:project_id/hero-video/generate', handleGenerateHeroVideo, PROJ);
 router.post('/api/ai-builder/:project_id/logo', autoSnap(handleLogoSet), PROJ);
 router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.get('/api/ai-builder/:project_id/offboard', handleOffboardStatus, PROJ);
@@ -336,7 +337,6 @@ router.get('/admin', handleAdminDashboard, [authMiddleware, adminMiddleware]);
 router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddleware]);
 router.get('/admin/audit', handleAdminAudit, [authMiddleware, adminMiddleware]);
 router.get('/admin/revenue', handleAdminRevenue, [authMiddleware, adminMiddleware]);
-router.get('/api/admin/spike/i2v', handleSpikeI2V, [authMiddleware, adminMiddleware]);
 router.get('/api/admin/domains/renew', handleAdminRenewRun, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
