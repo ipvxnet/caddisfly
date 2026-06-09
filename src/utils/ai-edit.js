@@ -106,9 +106,14 @@ export function buildEditPrompt(sectionType, content, message, history = [], lan
     .map((h) => `${h.role === 'assistant' ? 'You' : 'User'}: ${h.content}`)
     .join('\n');
 
+  const galleryCount = sectionType === 'gallery' && Array.isArray(content && content.images) ? content.images.length : 0;
+  const galleryN = galleryCount || 4;
   const imageRule = targets.length
-    ? `If the user asks for a new/changed image, do NOT put a URL in "patch". Instead add an action ` +
-      `{"type":"generate_image","target":"<one of: ${targets.join(', ')}>","prompt":"<vivid image prompt>"}.`
+    ? `IMAGE CHANGES: never put an image URL in "patch". To add or replace ANY image you MUST add a ` +
+      `generate_image action: {"type":"generate_image","target":"<one of: ${targets.join(', ')}>","prompt":"<vivid, specific image prompt>"}. ` +
+      (sectionType === 'gallery'
+        ? `This is a GALLERY (currently ${galleryCount || 'a few'} photos). To replace/refresh the photos you MUST output about ${galleryN} generate_image actions — ONE per photo — each with "target":"images" and a DISTINCT prompt based on the user's request. Outputting these actions is required; do NOT claim you changed the images in "assistant_message" without them.`
+        : `Output one generate_image action per image you want to change.`)
     : `This section has no image. Ignore any image requests (note it in "summary").`;
 
   const prompt = `SECTION TYPE: ${sectionType}
@@ -125,7 +130,7 @@ Respond with ONLY this JSON shape:
 {
   "summary": "<one short sentence describing what you will change>",
   "patch": { <ONLY the fields that change, matching the content shape above; for a list field include the full updated list> },
-  "actions": [ ${targets.length ? '<optional generate_image actions>' : ''} ],
+  "actions": [ ${targets.length ? '<generate_image actions per the IMAGE CHANGES rule>' : ''} ],
   "assistant_message": "<a friendly one-line reply to the user>"
 }
 Rules: include in "patch" only fields you actually change. ${imageRule} If nothing can change, return an empty "patch" and explain in "summary".`;

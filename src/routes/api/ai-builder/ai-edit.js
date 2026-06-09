@@ -75,6 +75,24 @@ export async function handleAIEditPropose(ctx) {
       return json({ success: false, error: 'AI could not process that request. Try rephrasing.' }, 502);
     }
 
+    // Reliability net: a gallery + an explicit photo request MUST yield image
+    // actions even if the small model forgot to emit them (it tends to just chat).
+    if (section.section_type === 'gallery' && /\b(photo|photos|picture|pictures|pic|pics|image|images)\b/i.test(message)) {
+      const hasImg = proposal.actions.some((a) => a.type === 'generate_image' && a.target === 'images');
+      if (!hasImg) {
+        const count = Array.isArray(content.images) && content.images.length ? content.images.length : 4;
+        const base = message
+          .replace(/^\s*(please\s+)?(replace|change|update|swap|set|use|make)\s+(the\s+)?(gallery\s+)?(pictures?|photos?|images?|pics?)\s*(with|to|of|for)?\s*/i, '')
+          .trim() || message;
+        const variety = ['', ', candid portrait', ', close-up smiling', ', natural daylight', ', wide composition', ', soft background'];
+        proposal.actions = Array.from({ length: Math.min(count, 6) }, (_, i) => ({
+          type: 'generate_image', target: 'images', prompt: `${base}${variety[i % variety.length] || ''}, professional photo, no text`.slice(0, 400),
+        }));
+        if (!proposal.summary) proposal.summary = `Replace the gallery with ${proposal.actions.length} new photos.`;
+        proposal.assistant_message = proposal.assistant_message || 'I’ll generate new gallery photos from your description — confirm to apply.';
+      }
+    }
+
     const hasChange = Object.keys(proposal.patch).length > 0 || proposal.actions.length > 0;
     return json({ success: true, ...proposal, has_change: hasChange });
   } catch (error) {
