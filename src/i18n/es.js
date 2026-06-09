@@ -348,7 +348,7 @@ export const es = {
     analytics: '📊 Estadísticas', analytics_title: 'Estadísticas de tráfico de tu sitio publicado',
     blog: '📝 Blog', blog_title: 'Escribe y publica entradas de blog con IA',
     store: '🛍 Tienda', store_title: 'Vende en tu sitio — productos, pedidos, pagos con Stripe',
-    full_preview: 'Ver vista previa completa', deploy: 'Publicar sitio',
+    full_preview: 'Ver vista previa completa', deploy: 'Publicar sitio', deploying: 'Publicando…',
     tab_content: 'Contenido', tab_design: 'Diseño',
     status_published: 'Publicado', status_draft: 'Borrador',
     status_published_title: 'El sitio está en vivo. Vuelve a publicar para aplicar tus últimos cambios.',

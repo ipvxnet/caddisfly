@@ -348,7 +348,7 @@ export const en = {
     analytics: '📊 Analytics', analytics_title: 'Traffic analytics for your published site',
     blog: '📝 Blog', blog_title: 'Write and publish blog posts with AI',
     store: '🛍 Store', store_title: 'Sell on your site — products, orders, Stripe payments',
-    full_preview: 'View Full Preview', deploy: 'Deploy Website',
+    full_preview: 'View Full Preview', deploy: 'Deploy Website', deploying: 'Deploying…',
     tab_content: 'Content', tab_design: 'Design',
     status_published: 'Published', status_draft: 'Draft',
     status_published_title: 'This site is live. Re-deploy to publish your latest changes.',

@@ -672,7 +672,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <a href="/ai-builder/store/${project.project_id}" class="btn btn-secondary" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
       <span class="pub-badge ${currentSubdomain ? 'pub' : 'draft'}" id="pub-badge" title="${currentSubdomain ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${currentSubdomain ? tr('cust.status_published') : tr('cust.status_draft')}</span>
-      ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite()">${tr('cust.deploy')}</button>` : ''}
+      ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite(this)">${tr('cust.deploy')}</button>` : ''}
     </div>
   </div>
 
@@ -1458,11 +1458,11 @@ export async function handleAIBuilderCustomize(ctx) {
       }
     }
 
-    async function deployWebsite() {
-      if (!confirm('Deploy your website now? This will make it publicly accessible.')) {
-        return;
-      }
-
+    async function deployWebsite(btn) {
+      // No confirm() — it silently no-ops when the browser suppresses dialogs.
+      if (btn && btn.disabled) return;
+      if (btn) { btn.disabled = true; btn.textContent = ${JSON.stringify(tr('cust.deploying'))}; }
+      if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('cust.deploying'))}, 'info');
       try {
         const response = await fetch(\`/api/ai-builder/\${projectId}/deploy\`, {
           method: 'POST',
@@ -1479,7 +1479,9 @@ export async function handleAIBuilderCustomize(ctx) {
           throw new Error(data.error || 'Deployment failed');
         }
       } catch (error) {
-        alert(${JSON.stringify(tr('cust.err_deploy'))} + error.message);
+        if (typeof showNotification === 'function') showNotification(${JSON.stringify(tr('cust.err_deploy'))} + error.message, 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = ${JSON.stringify(tr('cust.deploy'))}; }
       }
     }
 
