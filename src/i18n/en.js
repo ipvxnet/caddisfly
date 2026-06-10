@@ -7,6 +7,7 @@ export const en = {
   nav: {
     how_it_works: 'How it works',
     pricing: 'Pricing',
+    showcase: 'Showcase',
     features: 'Features',
     help: 'Help',
     dashboard: 'Dashboard',
@@ -16,6 +17,7 @@ export const en = {
 
   footer: {
     tagline: 'Build a beautiful website with AI.',
+    showcase: 'Showcase',
     pricing: 'Pricing',
     help: 'Help',
     support: 'Support',
@@ -23,6 +25,17 @@ export const en = {
     privacy: 'Privacy',
     billing: 'Billing',
     rights: '© {year} Caddisfly. All rights reserved.',
+  },
+
+  showcase: {
+    meta_title: 'Showcase — real sites built with Caddisfly',
+    meta_desc: 'Browse beautiful websites built with Caddisfly’s AI website builder — restaurants, shops, services and more.',
+    title: 'Built with Caddisfly',
+    subtitle: 'Real websites our customers launched with AI — in minutes, not weeks. See what you could build.',
+    build_cta: '✨ Build yours with AI',
+    visit: 'Visit site ↗',
+    featured_eyebrow: 'Featured',
+    empty: 'Our showcase is coming together — check back soon.',
   },
 
   landing: {

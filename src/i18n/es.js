@@ -7,6 +7,7 @@ export const es = {
   nav: {
     how_it_works: 'Cómo funciona',
     pricing: 'Precios',
+    showcase: 'Ejemplos',
     features: 'Funciones',
     help: 'Ayuda',
     dashboard: 'Panel',
@@ -16,6 +17,7 @@ export const es = {
 
   footer: {
     tagline: 'Crea un sitio web increíble con IA.',
+    showcase: 'Ejemplos',
     pricing: 'Precios',
     help: 'Ayuda',
     support: 'Soporte',
@@ -23,6 +25,17 @@ export const es = {
     privacy: 'Privacidad',
     billing: 'Facturación',
     rights: '© {year} Caddisfly. Todos los derechos reservados.',
+  },
+
+  showcase: {
+    meta_title: 'Ejemplos — sitios reales creados con Caddisfly',
+    meta_desc: 'Explora sitios web increíbles creados con el constructor de sitios con IA de Caddisfly: restaurantes, tiendas, servicios y más.',
+    title: 'Creados con Caddisfly',
+    subtitle: 'Sitios web reales que nuestros clientes lanzaron con IA — en minutos, no semanas. Mira lo que podrías crear.',
+    build_cta: '✨ Crea el tuyo con IA',
+    visit: 'Visitar sitio ↗',
+    featured_eyebrow: 'Destacado',
+    empty: 'Nuestra galería se está armando — vuelve pronto.',
   },
 
   landing: {

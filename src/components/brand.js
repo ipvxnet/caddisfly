@@ -140,6 +140,7 @@ export function siteHeader(activePath = '', opts = {}) {
     <nav class="nav-links">
       <a href="/#paths"${a('/#paths')}>${tr('nav.how_it_works')}</a>
       <a href="/pricing"${a('/pricing')}>${tr('nav.pricing')}</a>
+      <a href="/showcase"${a('/showcase')}>${tr('nav.showcase')}</a>
       <a href="/#features">${tr('nav.features')}</a>
       <a href="/dashboard"${a('/dashboard')}>${tr('nav.dashboard')}</a>
       ${langSwitcher(lang)}
@@ -166,7 +167,7 @@ export function siteFooter(opts = {}) {
   const tr = (k, v) => t(lang, k, v);
   return `<footer class="site"><div class="wrap foot">
     <a class="brand" href="/">${brandMark('m-ft')}<span>caddisfly<span class="ai">.ai</span></span></a>
-    <span class="foot-links"><a href="/pricing">${tr('footer.pricing')}</a> · <a href="/help">${tr('footer.help')}</a> · <a href="/support">${tr('footer.support')}</a> · <a href="/terms">${tr('footer.terms')}</a> · <a href="/privacy">${tr('footer.privacy')}</a> · <a href="/billing">${tr('footer.billing')}</a></span>
+    <span class="foot-links"><a href="/showcase">${tr('footer.showcase')}</a> · <a href="/pricing">${tr('footer.pricing')}</a> · <a href="/help">${tr('footer.help')}</a> · <a href="/support">${tr('footer.support')}</a> · <a href="/terms">${tr('footer.terms')}</a> · <a href="/privacy">${tr('footer.privacy')}</a> · <a href="/billing">${tr('footer.billing')}</a></span>
     <span>${tr('footer.rights', { year: 2026 })}</span>
   </div></footer>`;
 }
