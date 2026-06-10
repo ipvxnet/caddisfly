@@ -98,7 +98,7 @@ export async function getPostBySlug(db, projectKey, slug) {
   return db.prepare(`SELECT * FROM blog_posts WHERE ${k.sql} AND slug = ?`).bind(k.val, slug).first();
 }
 
-const POST_FIELDS = ['slug', 'title', 'excerpt', 'content', 'cover_image', 'status', 'published_at', 'seo_title', 'seo_description'];
+const POST_FIELDS = ['slug', 'title', 'excerpt', 'content', 'cover_image', 'status', 'published_at', 'seo_title', 'seo_description', 'social_shared_at'];
 
 export async function updatePost(db, projectKey, id, updates) {
   const k = keyWhere(projectKey);
@@ -123,6 +123,26 @@ export async function deletePost(db, projectKey, id) {
   const k = keyWhere(projectKey);
   const r = await db.prepare(`DELETE FROM blog_posts WHERE ${k.sql} AND id = ?`).bind(k.val, id).run();
   return !!(r && r.meta && r.meta.changes);
+}
+
+/** Published posts not yet syndicated to socials (auto-share-on-deploy queue). */
+export async function getUnsharedPublishedPosts(db, projectKey, limit = 20) {
+  const k = keyWhere(projectKey);
+  const { results } = await db
+    .prepare(`SELECT * FROM blog_posts WHERE ${k.sql} AND status = 'published' AND social_shared_at IS NULL ORDER BY COALESCE(published_at, created_at) ASC LIMIT ?`)
+    .bind(k.val, limit)
+    .all();
+  return results || [];
+}
+
+/** Baseline the back-catalog: mark all currently-published, never-shared posts as
+ *  shared (called when an account is first connected so old posts don't blast). */
+export async function markPublishedPostsShared(db, projectKey, ts) {
+  const k = keyWhere(projectKey);
+  await db
+    .prepare(`UPDATE blog_posts SET social_shared_at = ? WHERE ${k.sql} AND status = 'published' AND social_shared_at IS NULL`)
+    .bind(ts, k.val)
+    .run();
 }
 
 export async function countPublishedPosts(db, projectKey) {

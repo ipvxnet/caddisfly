@@ -9,6 +9,8 @@ import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { buildInboundAddress } from '../api/ai-builder/blog.js';
+import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
+import { parseConnections } from '../../utils/social-share.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -55,6 +57,13 @@ export async function handleBlogManager(ctx) {
   }
   const inboundAddress = buildInboundAddress(env, inboundToken);
 
+  // Connected social accounts (for the auto-share panel + per-post Share button).
+  const socialConfig = aiProject
+    ? await getWebsiteConfigByAIProjectId(env.DB, aiProject.id)
+    : await getWebsiteConfigByRegularProjectId(env.DB, projectKey.projectId);
+  const socialConns = parseConnections(socialConfig);
+  const socialOn = !!(socialConns.discord && socialConns.discord.webhook) || !!(socialConns.slack && socialConns.slack.webhook);
+
   const posts = await getPostsByProject(env.DB, projectKey);
   const sitesBase = env.SITES_BASE || 'caddisfly.app';
   const liveBase = subdomain ? `https://${subdomain}.${sitesBase}` : '';
@@ -74,7 +83,7 @@ export async function handleBlogManager(ctx) {
       <div class="post-top">
         ${p.cover_image ? `<img class="post-thumb" src="${esc(p.cover_image)}" alt="" loading="lazy">` : ''}
         <div class="post-main">
-          <div class="post-title">${esc(p.title)} <span class="pill ${isPub ? 'ok' : ''}">${isPub ? tr('blogm.st_published') : tr('blogm.st_draft')}</span>${fromEmail ? ` <span class="pill review">${tr('blogm.from_email')}</span>` : ''}</div>
+          <div class="post-title">${esc(p.title)} <span class="pill ${isPub ? 'ok' : ''}">${isPub ? tr('blogm.st_published') : tr('blogm.st_draft')}</span>${fromEmail ? ` <span class="pill review">${tr('blogm.from_email')}</span>` : ''}${p.social_shared_at ? ` <span class="pill ok" title="${fmtDate(p.social_shared_at, lang)}">${tr('blogm.social_shared')}</span>` : ''}</div>
           <div class="post-meta">${isPub && p.published_at ? `${tr('blogm.published_on')} ${fmtDate(p.published_at, lang)}` : `${tr('blogm.updated_on')} ${fmtDate(p.updated_at || p.created_at, lang)}`}</div>
         </div>
         <div class="post-actions">
@@ -83,6 +92,7 @@ export async function handleBlogManager(ctx) {
           <button class="btn ghost" onclick="togglePublish(${p.id}, ${isPub ? 'false' : 'true'})">${isPub ? tr('blogm.unpublish') : tr('blogm.publish')}</button>
           <button class="btn ghost" onclick="loadSocial(${p.id}, this)">${tr('blogm.social')}</button>
           <button class="btn ghost" onclick="genCover(${p.id}, this)" title="${tr('blogm.gen_cover_title')}">${tr('blogm.gen_cover')}</button>
+          ${isPub && socialOn ? `<button class="btn ghost" onclick="sharePost(${p.id}, this, ${p.social_shared_at ? 'true' : 'false'})">${p.social_shared_at ? tr('blogm.reshare') : tr('blogm.share_now')}</button>` : ''}
           <button class="link-btn danger" onclick="delPost(${p.id})">${tr('blogm.delete')}</button>
         </div>
       </div>
@@ -140,6 +150,30 @@ export async function handleBlogManager(ctx) {
       </div>
     </div>`;
 
+  const socialPanel = `
+    <div class="panel">
+      <h2>${tr('blogm.social_title')}</h2>
+      <p class="muted">${tr('blogm.social_intro')}</p>
+      <div class="social-row">
+        <label>${tr('blogm.social_discord')}</label>
+        <div class="social-input">
+          <input id="sc-discord" value="${esc((socialConns.discord && socialConns.discord.webhook) || '')}" placeholder="https://discord.com/api/webhooks/…" maxlength="400">
+          <button class="btn ghost" onclick="testSocial('discord', this)">${tr('blogm.social_test')}</button>
+        </div>
+      </div>
+      <div class="social-row">
+        <label>${tr('blogm.social_slack')}</label>
+        <div class="social-input">
+          <input id="sc-slack" value="${esc((socialConns.slack && socialConns.slack.webhook) || '')}" placeholder="https://hooks.slack.com/services/…" maxlength="400">
+          <button class="btn ghost" onclick="testSocial('slack', this)">${tr('blogm.social_test')}</button>
+        </div>
+      </div>
+      <div class="brief-actions">
+        <button class="btn" onclick="saveSocial(this)">${tr('blogm.social_save')}</button>
+        <span class="muted" id="social-status">${tr('blogm.social_hint')}</span>
+      </div>
+    </div>`;
+
   const postsPanel = `
     <div class="panel">
       <h2>${tr('blogm.posts_heading')} (${posts.length})</h2>
@@ -148,7 +182,9 @@ export async function handleBlogManager(ctx) {
 
   // When deep-linked to a post (?post=), lead with the Posts panel so review
   // lands on the post itself, not the "New post" box.
-  const panelsHtml = focusPost ? (postsPanel + newPostPanel + inboundPanel) : (newPostPanel + inboundPanel + postsPanel);
+  const panelsHtml = focusPost
+    ? (postsPanel + newPostPanel + inboundPanel + socialPanel)
+    : (newPostPanel + inboundPanel + socialPanel + postsPanel);
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -183,6 +219,9 @@ export async function handleBlogManager(ctx) {
     .inbound-addr{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:11px;padding:.6rem .8rem;margin:.6rem 0 .3rem}
     .inbound-addr code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem;color:var(--ink);word-break:break-all;flex:1;min-width:200px}
     .inbound-acts{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+    .social-row{margin:.7rem 0}
+    .social-input{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+    .social-input input{flex:1;min-width:240px}
     .post{padding:1rem 0;border-bottom:1px solid var(--line)}
     .post.from-email{border-left:3px solid #3b82f6;padding-left:.9rem;background:#f8fbff;border-radius:0 10px 10px 0}
     .post.focus{border:1px solid var(--p1);box-shadow:0 6px 20px rgba(118,75,162,.14);border-radius:12px;padding:1rem 1.1rem;background:#fbfaff;margin-bottom:.6rem}
@@ -345,6 +384,55 @@ export async function handleBlogManager(ctx) {
         btn.textContent = T_INB_COPIED; setTimeout(function () { btn.textContent = T_INB_COPY; }, 1500);
       });
     }
+    // ---- Social syndication ----
+    var T_SOC = ${JSON.stringify({
+      saving: tr('blogm.social_saving'), saved: tr('blogm.social_saved'), hint: tr('blogm.social_hint'),
+      testing: tr('blogm.social_testing'), test: tr('blogm.social_test'), test_ok: tr('blogm.social_test_ok'),
+      sharing: tr('blogm.social_sharing'), shared_ok: tr('blogm.social_shared_ok'), reshare_confirm: tr('blogm.social_reshare_confirm'),
+      err: tr('blogm.social_err'),
+    })};
+    function socStatus(msg, cls) { var el = document.getElementById('social-status'); if (el) { el.textContent = msg; el.style.color = cls === 'bad' ? '#b91c1c' : (cls === 'ok' ? '#065f46' : ''); } }
+    async function saveSocial(btn) {
+      btn.disabled = true; var was = btn.textContent; btn.textContent = T_SOC.saving;
+      try {
+        const r = await fetch('/api/ai-builder/' + PID + '/social/settings', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ discord_webhook: document.getElementById('sc-discord').value.trim(), slack_webhook: document.getElementById('sc-slack').value.trim() }),
+        });
+        const d = await r.json().catch(function () { return {}; });
+        if (r.status === 402) { if (confirm((d && d.upgrade_message) || (d && d.error) || 'Upgrade required.')) location.href = (d && d.billing_url) || '/billing'; return; }
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T_SOC.err);
+        location.reload();
+      } catch (e) { socStatus(e.message, 'bad'); }
+      finally { btn.disabled = false; btn.textContent = was; }
+    }
+    async function testSocial(platform, btn) {
+      var input = document.getElementById('sc-' + platform);
+      btn.disabled = true; var was = btn.textContent; btn.textContent = T_SOC.testing;
+      try {
+        const r = await fetch('/api/ai-builder/' + PID + '/social/test', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: platform, webhook: input ? input.value.trim() : '' }),
+        });
+        const d = await r.json().catch(function () { return {}; });
+        if (r.status === 402) { if (confirm((d && d.upgrade_message) || (d && d.error) || 'Upgrade required.')) location.href = (d && d.billing_url) || '/billing'; return; }
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T_SOC.err);
+        socStatus(T_SOC.test_ok, 'ok');
+      } catch (e) { socStatus(e.message, 'bad'); }
+      finally { btn.disabled = false; btn.textContent = was; }
+    }
+    async function sharePost(id, btn, shared) {
+      if (shared && !confirm(T_SOC.reshare_confirm)) return;
+      btn.disabled = true; var was = btn.textContent; btn.textContent = T_SOC.sharing;
+      try {
+        const r = await fetch('/api/ai-builder/' + PID + '/blog/' + id + '/share', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const d = await r.json().catch(function () { return {}; });
+        if (r.status === 402) { if (confirm((d && d.upgrade_message) || (d && d.error) || 'Upgrade required.')) location.href = (d && d.billing_url) || '/billing'; btn.disabled = false; btn.textContent = was; return; }
+        if (!r.ok || !d.success) throw new Error((d && d.error) || T_SOC.err);
+        location.reload();
+      } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = was; }
+    }
+
     if (sessionStorage.getItem('cf_republish') === '1') {
       document.getElementById('republish').style.display = 'block';
     }
