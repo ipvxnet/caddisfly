@@ -9,6 +9,7 @@ import { getProjectByPreviewId } from '../../db/projects.js';
 import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { getProductsByProject } from '../../db/products.js';
+import { getServices } from '../../db/bookings.js';
 import { blogNavPage } from '../../utils/blog-render.js';
 import { shopNavPage } from '../../utils/shop-render.js';
 
@@ -161,6 +162,7 @@ export async function handleAIPreview(ctx) {
     if (publishedPosts.length) navPages.push(blogNavPage(siteLang));
     const activeProducts = await getProductsByProject(env.DB, projectKey, true);
     if (activeProducts.length) navPages.push(shopNavPage(siteLang));
+    const bookingServices = await getServices(env.DB, projectKey, { activeOnly: true });
     const slug = params.page_slug;
     let page = slug ? await getPageBySlug(env.DB, projectKey, slug) : null;
     if (!page) page = await getHomePage(env.DB, projectKey);
@@ -194,6 +196,7 @@ export async function handleAIPreview(ctx) {
       preordered: true,
       lang: siteLang,
       products: activeProducts, // 🛍 featured-products section (live data)
+      bookingServices, // 📅 booking section (live data; widget inert until published)
       // Badge "Built with Caddisfly" links back to THIS app origin (the new
       // landing), not the hardcoded prod domain that still runs old code.
       appOrigin: env.APP_URL || '',

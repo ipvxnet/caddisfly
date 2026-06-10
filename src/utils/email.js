@@ -698,3 +698,51 @@ export async function sendDomainExpiringEmail(env, { to, domain, daysLeft, manag
   try { return await deliverEmail(env, { to, subject: `${domain} expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`, html }); }
   catch (e) { console.error('domain expiring email failed:', e.message); return false; }
 }
+
+// ---- booking engine ----
+
+const bkEsc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+/**
+ * Visitor confirmation / cancellation for a booking. English v1 (transactional
+ * email i18n is a deferred follow-up, same as the rest of email.js).
+ */
+export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false }) {
+  const title = cancelled ? 'Your booking was cancelled' : 'Your booking is confirmed ✅';
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">${title}</h1>
+        <p style="color:#444;line-height:1.6;"><strong>${bkEsc(serviceName)}</strong> at <strong>${bkEsc(siteName)}</strong></p>
+        <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${bkEsc(dateLabel)} · ${bkEsc(timeLabel)}${tz ? ` <span style="color:#888;font-weight:400;">(${bkEsc(tz)})</span>` : ''}</p>
+        ${cancelled
+          ? '<p style="color:#444;line-height:1.6;">This time is no longer reserved. You can book a new time on the website.</p>'
+          : `${cancelUrl ? `<p style="color:#444;line-height:1.6;">Need to change plans? You can cancel with one click:</p>
+        <p style="margin:24px 0;"><a href="${cancelUrl}" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:600;display:inline-block;">Cancel this booking</a></p>` : ''}`}
+      </div>
+    </body></html>`;
+  const subject = cancelled
+    ? `Booking cancelled — ${serviceName} on ${dateLabel}`
+    : `Booking confirmed — ${serviceName} on ${dateLabel} at ${timeLabel}`;
+  try { return await deliverEmail(env, { to, subject, html, fromName: `${siteName} via Caddisfly` }); }
+  catch (e) { console.error('booking visitor email failed:', e.message); return false; }
+}
+
+/** Owner notification: new booking or a visitor cancellation. */
+export async function sendBookingOwnerEmail(env, { to, siteName, serviceName, customerName, customerEmail, dateLabel, timeLabel, note, manageUrl, cancelled = false }) {
+  const title = cancelled ? 'A booking was cancelled' : 'New booking 📅';
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">${title}</h1>
+        <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${bkEsc(serviceName)} — ${bkEsc(dateLabel)} · ${bkEsc(timeLabel)}</p>
+        <p style="color:#444;line-height:1.6;">${bkEsc(customerName)} &lt;${bkEsc(customerEmail)}&gt;${note ? `<br><em>“${bkEsc(note)}”</em>` : ''}</p>
+        ${manageUrl ? `<p style="margin:24px 0;"><a href="${manageUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Open bookings</a></p>` : ''}
+      </div>
+    </body></html>`;
+  const subject = cancelled
+    ? `Cancelled: ${serviceName} on ${dateLabel} (${siteName})`
+    : `New booking: ${serviceName} on ${dateLabel} at ${timeLabel} (${siteName})`;
+  try { return await deliverEmail(env, { to, subject, html, replyTo: customerEmail, fromName: `${siteName} via Caddisfly` }); }
+  catch (e) { console.error('booking owner email failed:', e.message); return false; }
+}

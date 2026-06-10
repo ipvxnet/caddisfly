@@ -780,6 +780,8 @@ function generateFormFields(sectionType, content, tr, projectId = '') {
       return generatePricingFields(content, tr);
     case 'products':
       return generateProductsFields(content, tr, projectId);
+    case 'booking':
+      return generateBookingFields(content, tr, projectId);
     default:
       return `<p>${tr('sed.not_supported')}</p>`;
   }
@@ -816,6 +818,28 @@ function generateProductsFields(content, tr, projectId) {
 
     <p style="color: #718096; font-size: .85rem;">${tr('sed.feat_hint')}
       <a href="/ai-builder/store/${escapeHtml(projectId)}" target="_blank" rel="noopener">${tr('sed.feat_store_link')}</a>
+    </p>
+  `;
+}
+
+/**
+ * 📅 Bookings: text only; the services, hours, and slots come from the Booking
+ * manager (live injection at render — nothing to manage here).
+ */
+function generateBookingFields(content, tr, projectId) {
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${tr('sed.bkg_heading_ph')}">
+    </div>
+
+    <div class="form-group">
+      <label for="description">${tr('sed.description')}</label>
+      <input type="text" id="description" name="description" value="${escapeHtml(content.description || '')}">
+    </div>
+
+    <p style="color: #718096; font-size: .85rem;">${tr('sed.bkg_hint')}
+      <a href="/ai-builder/bookings/${escapeHtml(projectId)}" target="_blank" rel="noopener">${tr('sed.bkg_manager_link')}</a>
     </p>
   `;
 }
