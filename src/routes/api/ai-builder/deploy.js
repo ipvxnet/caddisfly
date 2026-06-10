@@ -15,6 +15,7 @@ import { PUBLISH_LIMITS } from '../../../utils/credits.js';
 import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
 import { canDeploy } from '../../../middleware/project-access.js';
 import { getPostsByProject } from '../../../db/blog-posts.js';
+import { autoSyndicateOnDeploy } from './social.js';
 import { blogNavPage, blogListSection, blogPostSection } from '../../../utils/blog-render.js';
 import { getProductsByProject } from '../../../db/products.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
@@ -312,6 +313,12 @@ export async function handleAIBuilderDeploy(ctx) {
     }
 
     audit(ctx, 'site.publish', { teamOwner: email, resourceType: 'site', resourceId: publicId, resourceName: projectView.project_name, metadata: { subdomain } });
+
+    // Auto-share newly-live blog posts to connected socials (best-effort, off
+    // the response path). No-op unless the site has Discord/Slack connected.
+    if (ctx.ctx && ctx.ctx.waitUntil) {
+      ctx.ctx.waitUntil(autoSyndicateOnDeploy(env, { projectKey, subdomain }).catch((e) => console.error('social syndicate:', e.message)));
+    }
 
     return json({
       success: true,

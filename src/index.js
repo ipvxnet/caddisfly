@@ -83,6 +83,7 @@ import {
   handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
   handleBlogInboundAddress,
 } from './routes/api/ai-builder/blog.js';
+import { handleSocialSettings, handleSocialTest, handleSocialShare } from './routes/api/ai-builder/social.js';
 import {
   handleSnapshotList, handleSnapshotCreate, handleSnapshotRestore, handleSnapshotDelete,
   handleSnapshotAutoToggle,
@@ -293,6 +294,10 @@ router.put('/api/ai-builder/:project_id/blog/:post_id', handleBlogUpdate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/publish', handleBlogPublish, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/social', handleBlogSocial, PROJ);
 router.post('/api/ai-builder/:project_id/blog/:post_id/cover', handleBlogCover, PROJ);
+// Social syndication (Discord/Slack auto-share) — owner-facing, same access model
+router.put('/api/ai-builder/:project_id/social/settings', handleSocialSettings, PROJ);
+router.post('/api/ai-builder/:project_id/social/test', handleSocialTest, PROJ);
+router.post('/api/ai-builder/:project_id/blog/:post_id/share', handleSocialShare, PROJ);
 
 // Store manager + Stripe Connect (owner-facing; same access model as customize).
 // The OAuth callback is public — Stripe redirects the browser there; the
