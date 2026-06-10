@@ -176,6 +176,7 @@ export async function handleBlogManager(ctx) {
           <input id="sc-telegram-chat" value="${scv('telegram', 'chat')}" placeholder="${tr('blogm.social_telegram_chat_ph')}" maxlength="120" style="max-width:200px">
           <button class="btn ghost" onclick="testSocial('telegram', this)">${tr('blogm.social_test')}</button>
         </div>
+        <small class="muted">${tr('blogm.social_telegram_help')}</small>
       </div>
       <div class="social-row">
         <label>${tr('blogm.social_mastodon')}</label>
