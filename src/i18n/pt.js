@@ -607,7 +607,7 @@ export const pt = {
     st_draft: 'rascunho', st_published: 'publicada',
     published_on: 'Publicada', updated_on: 'Atualizada',
     preview: 'Pré-visualizar ↗', edit: 'Editar', publish: 'Publicar', unpublish: 'Despublicar',
-    social: '📣 Redes', delete: 'Excluir', delete_confirm: 'Excluir esta publicação? Não é possível desfazer.',
+    social: '📝 Pacote social', delete: 'Excluir', delete_confirm: 'Excluir esta publicação? Não é possível desfazer.',
     save: 'Salvar', saving: 'Salvando…', cancel: 'Cancelar',
     title_label: 'Título', excerpt_label: 'Resumo', cover_label: 'URL da imagem de capa',
     cover_ph: 'https://… (ou cole uma URL enviada)',
@@ -625,8 +625,11 @@ export const pt = {
     from_email: '📧 Do email — revisar',
     review_flag: '📧 Rascunho por email — revise e publique',
     social_title: '📣 Compartilhar nas redes',
-    social_intro: 'Cole a URL de um webhook de entrada do Discord ou Slack. Novas publicações são anunciadas lá automaticamente quando você republica — ou use “Compartilhar” em qualquer post publicado.',
+    social_intro: 'Conecte Discord, Slack, Telegram ou Mastodon. Novas publicações são anunciadas lá automaticamente quando você republica — ou use “Compartilhar” em qualquer post publicado.',
     social_discord: 'URL do webhook do Discord', social_slack: 'URL do webhook do Slack',
+    social_telegram: 'Telegram', social_mastodon: 'Mastodon',
+    social_telegram_token_ph: 'Token do bot (123456789:AA…)', social_telegram_chat_ph: '@canal ou id do chat',
+    social_mastodon_token_ph: 'Token de acesso',
     social_test: 'Testar', social_testing: 'Testando…', social_test_ok: 'Mensagem de teste enviada ✓',
     social_save: 'Salvar conexões', social_saving: 'Salvando…', social_saved: 'Salvo ✓',
     social_hint: 'Nunca publicamos sem você publicar primeiro.',
@@ -918,7 +921,7 @@ export const pt = {
         <ul>
           <li><strong>🖼 Capa com IA</strong> — gere uma imagem de capa alinhada ao tema de cada publicação.</li>
           <li><strong>📧 Publicar por email</strong> (planos pagos) — gere o seu <strong>endereço privado de “publicar por email”</strong> no gerenciador do Blog. Envie um assunto e algumas frases e a IA transforma num rascunho (com imagem de capa) à espera de revisão — nada vai ao ar até você aprovar e publicar. Por segurança, só são aceitos emails enviados do endereço da sua conta.</li>
-          <li><strong>📣 Compartilhar nas redes</strong> (planos pagos) — cole uma URL de webhook de entrada do <strong>Discord</strong> ou <strong>Slack</strong> no gerenciador do Blog. Novas publicações são anunciadas nesses canais automaticamente ao republicar, ou clique em <strong>Compartilhar</strong> em qualquer publicação; uma marca “Compartilhado ✓” mostra o que já saiu.</li>
+          <li><strong>📣 Compartilhar nas redes</strong> (planos pagos) — conecte <strong>Discord</strong>, <strong>Slack</strong>, <strong>Telegram</strong> ou <strong>Mastodon</strong> no gerenciador do Blog (uma URL de webhook para Discord/Slack; um token de bot + chat para Telegram; sua instância + um token de acesso para Mastodon). Novas publicações são anunciadas nesses canais automaticamente ao republicar, ou clique em <strong>Compartilhar</strong> em qualquer publicação; uma marca “Compartilhado ✓” mostra o que já saiu.</li>
           <li><strong>Pacote social</strong> — um clique redige variantes prontas para compartilhar no X, Instagram e LinkedIn com botões de compartilhamento. Aqui nada é publicado automaticamente — você mantém o controle.</li>
         </ul>`],
       ['messages', 'Formulário de contato e caixa de entrada', `
@@ -986,9 +989,9 @@ export const pt = {
       ['Vocês ficam com uma parte das minhas vendas?', 'Não. O pagamento é processado na sua própria conta Stripe, então o dinheiro vai direto para você. Você paga apenas as tarifas padrão do Stripe — a Caddisfly não adiciona nada em cima.'],
       ['Posso vender assinaturas ou planos recorrentes?', 'Sim — adicione uma seção de <strong>Preços</strong>, edite-a e anexe um preço recorrente do Stripe a um cartão de plano (ou crie um ali mesmo). O botão do cartão vira um <strong>Assinar</strong> com pagamento real; seu Stripe cuida das renovações e faturas. Ver <a href="#store">Loja online</a>.'],
       ['Posso comprar um domínio pela Caddisfly?', 'Sim — abra <strong>🌐 Compre um domínio</strong> no seu Painel, pesquise um nome e compre. Nós o registramos em seu nome e o conectamos ao seu site automaticamente com SSL — sem configurar DNS. <strong>Importante:</strong> após a primeira compra você precisa clicar em 15 dias no link de verificação da ICANN enviado por e-mail, ou o domínio é suspenso. Os domínios renovam a cada ano (você pode desativar). Ver <a href="#buy-domain">Comprar um domínio</a>.'],
-      ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Você ainda pode <strong>publicar por email</strong> e <strong>compartilhar automaticamente</strong> no Discord ou Slack. Ver <a href="#blog">Blog, email e redes</a>.'],
+      ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Você ainda pode <strong>publicar por email</strong> e <strong>compartilhar automaticamente</strong> no Discord, Slack, Telegram ou Mastodon. Ver <a href="#blog">Blog, email e redes</a>.'],
       ['Posso publicar no meu blog por email?', 'Sim, em planos pagos. No gerenciador do <strong>📝 Blog</strong>, gere o seu endereço privado de “publicar por email” e depois envie um assunto e algumas frases. A IA transforma num <strong>rascunho</strong> com imagem de capa para você revisar — nada é publicado até você aprovar, e só são aceitos emails do endereço da sua conta. Ver <a href="#blog">Blog, email e redes</a>.'],
-      ['Posso compartilhar automaticamente no Discord ou Slack?', 'Sim, em planos pagos. No gerenciador do Blog, cole uma <strong>URL de webhook de entrada</strong> do Discord ou Slack. Novas publicações são anunciadas nesse canal automaticamente ao republicar o site, ou clique em <strong>Compartilhar</strong> em qualquer publicação. Ver <a href="#blog">Blog, email e redes</a>.'],
+      ['Posso compartilhar automaticamente no Discord, Slack, Telegram ou Mastodon?', 'Sim, em planos pagos. No gerenciador do Blog, conecte qualquer um deles — uma <strong>URL de webhook</strong> para Discord/Slack, um <strong>token de bot + chat</strong> para Telegram, ou sua <strong>instância + token de acesso</strong> para Mastodon. Novas publicações são anunciadas automaticamente ao republicar o site, ou clique em <strong>Compartilhar</strong> em qualquer publicação. Ver <a href="#blog">Blog, email e redes</a>.'],
       ['Como obtenho um código QR do meu site?', 'No seu <strong>Painel</strong>, clique em <strong>Código QR</strong> no cartão de qualquer site no ar e baixe em PNG ou SVG. Ele leva ao seu endereço no ar (o seu domínio personalizado, se você conectou um), é gratuito em todos os planos e é ótimo para panfletos, cardápios e cartões de visita. Ver <a href="#qr">Código QR do seu site</a>.'],
       ['Para onde vão as mensagens do formulário de contato?', 'Para a sua <strong>caixa de entrada</strong> (Painel → Mensagens) e para o seu e-mail. Responda ao e-mail de aviso para falar diretamente com o visitante. O spam é filtrado automaticamente.'],
       ['Posso desfazer mudanças ou voltar a uma versão anterior?', 'Sim — abra <strong>🕘 Versões</strong> no Personalizar. Salve versões manualmente antes de grandes mudanças, e a Caddisfly também salva automaticamente a cada hora enquanto você edita. Ao restaurar, seu estado atual é salvo primeiro, e o site no ar só muda quando você publica. Ver <a href="#versions">Versões, backups e exportação</a>.'],
