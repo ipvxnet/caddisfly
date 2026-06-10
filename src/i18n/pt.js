@@ -863,8 +863,8 @@ export const pt = {
     toc: [
       ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
       ['logo', 'Logo e marca'],
-      ['publishing', 'Publicar'], ['store', 'Loja online'],
-      ['blog', 'Blog e redes sociais'], ['messages', 'Formulário de contato e caixa de entrada'],
+      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'],
+      ['blog', 'Blog, email e redes'], ['messages', 'Formulário de contato e caixa de entrada'],
       ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
       ['buy-domain', 'Comprar um domínio'],
       ['custom-domains', 'Domínios próprios e DNS'], ['plans', 'Planos, créditos e faturação'],
@@ -896,6 +896,13 @@ export const pt = {
         <p><em>Nota:</em> logos gerados por IA não são verificados contra marcas registradas existentes — revise antes de uso comercial.</p>`],
       ['publishing', 'Publicar', `
         <p>Clique em <strong>Publicar site</strong> no Personalizar. O seu site fica no ar num endereço gratuito como <code>seunegocio.caddisfly.app</code> e mostramos um link. Republique quando quiser após mudanças — republicar num plano pago também remove o selo “Built with Caddisfly”.</p>`],
+      ['qr', 'Código QR do seu site', `
+        <p>Todo site publicado tem um <strong>código QR</strong> gratuito que leva direto ao seu endereço no ar — perfeito para panfletos, cardápios, cartões de visita e vitrines. No seu <a href="/dashboard">Painel</a>, clique em <strong>Código QR</strong> no cartão de um site no ar.</p>
+        <ul>
+          <li><strong>Baixe em PNG</strong> para o dia a dia, ou <strong>SVG</strong> para impressão — escala em qualquer tamanho sem perder nitidez.</li>
+          <li>Codifica o seu <strong>domínio personalizado</strong> se você conectou um; caso contrário, o endereço <code>caddisfly.app</code>.</li>
+        </ul>
+        <p>Disponível em todos os planos — sem créditos.</p>`],
       ['store', 'Loja online', `
         <p>Venda no seu site com a sua <strong>própria conta Stripe</strong> — os pagamentos vão diretamente para você; a Caddisfly nunca retém seu dinheiro nem adiciona taxa por transação (aplicam-se as tarifas padrão do Stripe). Disponível a partir do plano Starter.</p>
         <ol>
@@ -906,11 +913,13 @@ export const pt = {
         <p>Após cada venda, o comprador chega a uma página de recibo (salvável em PDF) e recebe um e-mail de confirmação; você recebe um e-mail de “novo pedido” e o pedido aparece em <strong>🧾 Pedidos</strong> na página Loja. Os compradores podem rever o histórico quando quiserem em <strong>Meus pedidos</strong> (link seguro por e-mail). Limites de produtos: Starter 10 · Pro 50 · Agency ilimitados.</p>
         <p><strong>Destaque produtos onde quiser:</strong> no Personalizar, <strong>+ Adicionar seção → 🛍 Produtos da loja</strong> coloca seus itens mais recentes (com adicionar ao carrinho) em qualquer página — a página inicial é um ótimo lugar. Atualiza automaticamente conforme você adiciona produtos.</p>
         <p><strong>Assinaturas:</strong> venda planos recorrentes a partir de uma seção de <strong>Preços</strong> — edite a seção, anexe um dos seus preços recorrentes do Stripe a um cartão de plano (ou crie um ali mesmo) e o botão dele vira um <strong>Assinar</strong> com pagamento real. Renovações, faturas e recibos ficam por conta da sua conta Stripe.</p>`],
-      ['blog', 'Blog e redes sociais', `
+      ['blog', 'Blog, email e redes', `
         <p>Abra <strong>📝 Blog</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar). Dê à IA algumas frases sobre o que a publicação deve dizer — ela redige o texto completo no idioma do seu site; você edita e publica. Ao publicar, seu site ganha uma página <strong>Blog</strong> e um link no menu (republique pelo Personalizar para colocar novas publicações no ar).</p>
         <ul>
           <li><strong>🖼 Capa com IA</strong> — gere uma imagem de capa alinhada ao tema de cada publicação.</li>
-          <li><strong>Pacote social</strong> — um clique redige variantes prontas para compartilhar no X, Instagram e LinkedIn com botões de compartilhamento. Nada é publicado automaticamente — você mantém o controle.</li>
+          <li><strong>📧 Publicar por email</strong> (planos pagos) — gere o seu <strong>endereço privado de “publicar por email”</strong> no gerenciador do Blog. Envie um assunto e algumas frases e a IA transforma num rascunho (com imagem de capa) à espera de revisão — nada vai ao ar até você aprovar e publicar. Por segurança, só são aceitos emails enviados do endereço da sua conta.</li>
+          <li><strong>📣 Compartilhar nas redes</strong> (planos pagos) — cole uma URL de webhook de entrada do <strong>Discord</strong> ou <strong>Slack</strong> no gerenciador do Blog. Novas publicações são anunciadas nesses canais automaticamente ao republicar, ou clique em <strong>Compartilhar</strong> em qualquer publicação; uma marca “Compartilhado ✓” mostra o que já saiu.</li>
+          <li><strong>Pacote social</strong> — um clique redige variantes prontas para compartilhar no X, Instagram e LinkedIn com botões de compartilhamento. Aqui nada é publicado automaticamente — você mantém o controle.</li>
         </ul>`],
       ['messages', 'Formulário de contato e caixa de entrada', `
         <p>O formulário de contato do seu site publicado funciona sem configurar nada. Cada mensagem fica na sua <strong>caixa de entrada</strong> (Painel → <strong>Mensagens</strong>, com contador de não lidas) e chega por e-mail; respondendo a esse e-mail você fala diretamente com o visitante. O spam é filtrado automaticamente.</p>`],
@@ -977,7 +986,10 @@ export const pt = {
       ['Vocês ficam com uma parte das minhas vendas?', 'Não. O pagamento é processado na sua própria conta Stripe, então o dinheiro vai direto para você. Você paga apenas as tarifas padrão do Stripe — a Caddisfly não adiciona nada em cima.'],
       ['Posso vender assinaturas ou planos recorrentes?', 'Sim — adicione uma seção de <strong>Preços</strong>, edite-a e anexe um preço recorrente do Stripe a um cartão de plano (ou crie um ali mesmo). O botão do cartão vira um <strong>Assinar</strong> com pagamento real; seu Stripe cuida das renovações e faturas. Ver <a href="#store">Loja online</a>.'],
       ['Posso comprar um domínio pela Caddisfly?', 'Sim — abra <strong>🌐 Compre um domínio</strong> no seu Painel, pesquise um nome e compre. Nós o registramos em seu nome e o conectamos ao seu site automaticamente com SSL — sem configurar DNS. <strong>Importante:</strong> após a primeira compra você precisa clicar em 15 dias no link de verificação da ICANN enviado por e-mail, ou o domínio é suspenso. Os domínios renovam a cada ano (você pode desativar). Ver <a href="#buy-domain">Comprar um domínio</a>.'],
-      ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Ver <a href="#blog">Blog e redes sociais</a>.'],
+      ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Você ainda pode <strong>publicar por email</strong> e <strong>compartilhar automaticamente</strong> no Discord ou Slack. Ver <a href="#blog">Blog, email e redes</a>.'],
+      ['Posso publicar no meu blog por email?', 'Sim, em planos pagos. No gerenciador do <strong>📝 Blog</strong>, gere o seu endereço privado de “publicar por email” e depois envie um assunto e algumas frases. A IA transforma num <strong>rascunho</strong> com imagem de capa para você revisar — nada é publicado até você aprovar, e só são aceitos emails do endereço da sua conta. Ver <a href="#blog">Blog, email e redes</a>.'],
+      ['Posso compartilhar automaticamente no Discord ou Slack?', 'Sim, em planos pagos. No gerenciador do Blog, cole uma <strong>URL de webhook de entrada</strong> do Discord ou Slack. Novas publicações são anunciadas nesse canal automaticamente ao republicar o site, ou clique em <strong>Compartilhar</strong> em qualquer publicação. Ver <a href="#blog">Blog, email e redes</a>.'],
+      ['Como obtenho um código QR do meu site?', 'No seu <strong>Painel</strong>, clique em <strong>Código QR</strong> no cartão de qualquer site no ar e baixe em PNG ou SVG. Ele leva ao seu endereço no ar (o seu domínio personalizado, se você conectou um), é gratuito em todos os planos e é ótimo para panfletos, cardápios e cartões de visita. Ver <a href="#qr">Código QR do seu site</a>.'],
       ['Para onde vão as mensagens do formulário de contato?', 'Para a sua <strong>caixa de entrada</strong> (Painel → Mensagens) e para o seu e-mail. Responda ao e-mail de aviso para falar diretamente com o visitante. O spam é filtrado automaticamente.'],
       ['Posso desfazer mudanças ou voltar a uma versão anterior?', 'Sim — abra <strong>🕘 Versões</strong> no Personalizar. Salve versões manualmente antes de grandes mudanças, e a Caddisfly também salva automaticamente a cada hora enquanto você edita. Ao restaurar, seu estado atual é salvo primeiro, e o site no ar só muda quando você publica. Ver <a href="#versions">Versões, backups e exportação</a>.'],
       ['Posso exportar o meu site?', 'Sim, em todos os planos — clique em <strong>⬇ Exportar</strong> no seu Painel para baixar o site publicado como um ZIP de HTML que você pode hospedar onde quiser. Sem amarras: o formulário de contato e as estatísticas continuam funcionando na cópia exportada.'],

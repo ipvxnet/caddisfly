@@ -870,8 +870,8 @@ export const en = {
     toc: [
       ['getting-started', 'Getting started'], ['customizing', 'Customizing your site'],
       ['logo', 'Logo & branding'],
-      ['publishing', 'Publishing'], ['store', 'Online store'],
-      ['blog', 'Blog & social posts'], ['messages', 'Contact form & inbox'],
+      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'],
+      ['blog', 'Blog, email & social'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
       ['buy-domain', 'Buying a domain'],
       ['custom-domains', 'Custom domains & DNS'], ['plans', 'Plans, credits & billing'],
@@ -903,6 +903,13 @@ export const en = {
         <p><em>Note:</em> AI-generated marks aren’t checked against existing trademarks — review before commercial use.</p>`],
       ['publishing', 'Publishing', `
         <p>Click <strong>Deploy Website</strong> in Customize. Your site goes live on a free address like <code>yourbusiness.caddisfly.app</code>, and we show you a clickable link. Re-deploy any time after making changes — re-publishing on a paid plan also removes the “Built with Caddisfly” badge.</p>`],
+      ['qr', 'QR code for your site', `
+        <p>Every published site has a free <strong>QR code</strong> that links straight to your live address — perfect for flyers, menus, business cards, and shop windows. On your <a href="/dashboard">Dashboard</a>, click <strong>QR code</strong> on a live site’s tile.</p>
+        <ul>
+          <li><strong>Download PNG</strong> for everyday use, or <strong>SVG</strong> for print — it scales to any size with no blur.</li>
+          <li>It encodes your <strong>custom domain</strong> if you’ve connected one, otherwise your <code>caddisfly.app</code> address.</li>
+        </ul>
+        <p>Available on every plan — no credits needed.</p>`],
       ['store', 'Online store', `
         <p>Sell on your site with your <strong>own Stripe account</strong> — payments go directly to you; Caddisfly never holds your money and adds no transaction fee (Stripe’s standard processing fees apply). Available from the Starter plan.</p>
         <ol>
@@ -913,11 +920,13 @@ export const en = {
         <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>
         <p><strong>Feature products anywhere:</strong> in Customize, <strong>+ Add section → 🛍 Shop products</strong> drops your newest items (with add-to-cart) onto any page — the home page is a great spot. It updates automatically as you add products.</p>
         <p><strong>Subscriptions:</strong> sell recurring plans from a <strong>Pricing</strong> section — edit the section, attach one of your Stripe recurring prices to a plan card (or create one right there), and its button becomes a live <strong>Subscribe</strong> checkout. Renewals, invoices, and receipt emails are handled by your Stripe account.</p>`],
-      ['blog', 'Blog & social posts', `
+      ['blog', 'Blog, email & social', `
         <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>
         <ul>
           <li><strong>🖼 AI cover</strong> — generate an on-topic cover image for any post.</li>
-          <li><strong>Social pack</strong> — one click writes ready-to-share variants for X, Instagram and LinkedIn with share buttons. Nothing posts automatically — you stay in control.</li>
+          <li><strong>📧 Post by email</strong> (paid plans) — generate your private <strong>“post by email” address</strong> in the Blog manager. Email it a subject and a few sentences and AI turns it into a draft post (with a cover image) waiting for review — nothing goes live until you approve and publish. For your security, only emails from your account address are accepted.</li>
+          <li><strong>📣 Auto-share to socials</strong> (paid plans) — paste a <strong>Discord</strong> or <strong>Slack</strong> incoming-webhook URL in the Blog manager. New posts are announced to those channels automatically when you re-publish, or hit <strong>Share</strong> on any published post; a “Shared ✓” mark shows what’s already gone out.</li>
+          <li><strong>Social pack</strong> — one click writes ready-to-share variants for X, Instagram and LinkedIn with share buttons. Nothing posts automatically here — you stay in control.</li>
         </ul>`],
       ['messages', 'Contact form & inbox', `
         <p>The contact form on your published site just works — no setup. Every message is stored in your <strong>Inbox</strong> (Dashboard → <strong>Inbox</strong>, with an unread badge) and emailed to you; replying to that email answers the visitor directly. Spam is filtered automatically.</p>`],
@@ -984,7 +993,10 @@ export const en = {
       ['Do you take a cut of my sales?', 'No. Checkout runs on your own Stripe account, so the money goes straight to you. You pay only Stripe’s standard processing fees — Caddisfly adds nothing on top.'],
       ['Can I sell subscriptions or memberships?', 'Yes — add a <strong>Pricing</strong> section, edit it, and attach a recurring Stripe price to a plan card (or create one in place). The card’s button becomes a live <strong>Subscribe</strong> checkout; your Stripe handles renewals and invoices. See <a href="#store">Online store</a>.'],
       ['Can I buy a domain through Caddisfly?', 'Yes — open <strong>🌐 Buy a domain</strong> on your Dashboard, search a name, and buy it. We register it to you and connect it to your site automatically with SSL — no DNS setup. <strong>Important:</strong> after your first purchase you must click the ICANN verification link emailed to you within 15 days, or the domain is suspended. Domains auto-renew yearly (you can turn that off). See <a href="#buy-domain">Buying a domain</a>.'],
-      ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. See <a href="#blog">Blog &amp; social posts</a>.'],
+      ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. You can even <strong>post by email</strong> and <strong>auto-share</strong> to Discord or Slack. See <a href="#blog">Blog, email &amp; social</a>.'],
+      ['Can I post to my blog by email?', 'Yes, on paid plans. In the <strong>📝 Blog</strong> manager, generate your private “post by email” address, then email it a subject and a few sentences. AI turns it into a <strong>draft</strong> post with a cover image for you to review — nothing publishes until you approve it, and only emails from your account address are accepted. See <a href="#blog">Blog, email &amp; social</a>.'],
+      ['Can I auto-share new posts to Discord or Slack?', 'Yes, on paid plans. In the Blog manager, paste a Discord or Slack <strong>incoming-webhook URL</strong>. New posts are announced to that channel automatically when you re-publish your site, or hit <strong>Share</strong> on any published post. See <a href="#blog">Blog, email &amp; social</a>.'],
+      ['How do I get a QR code for my site?', 'On your <strong>Dashboard</strong>, click <strong>QR code</strong> on any live site’s tile and download it as a PNG or SVG. It links to your live address (your custom domain if you’ve connected one), it’s free on every plan, and it’s great for flyers, menus, and business cards. See <a href="#qr">QR code for your site</a>.'],
       ['Where do contact-form messages go?', 'To your <strong>Inbox</strong> (Dashboard → Inbox) and to your email. Reply to the notification email to answer the visitor directly. Spam is filtered automatically.'],
       ['Can I undo changes or go back to an earlier version?', 'Yes — open <strong>🕘 Versions</strong> in Customize. Save versions manually before big changes, and Caddisfly also auto-saves hourly while you edit. Restoring backs up your current state first, and your live site only changes when you publish. See <a href="#versions">Versions, backups &amp; export</a>.'],
       ['Can I export my website?', 'Yes, on every plan — click <strong>⬇ Export</strong> on your Dashboard to download your published site as a ZIP of plain HTML you can host anywhere. No lock-in: your contact form and analytics keep working from the exported copy.'],
