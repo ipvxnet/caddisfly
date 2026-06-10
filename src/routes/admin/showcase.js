@@ -6,6 +6,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { getAIProjectsByStatus, getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getAllProjects, getProjectByPreviewId } from '../../db/projects.js';
 import { listShowcase, getShowcaseByPublicId, createShowcase, updateShowcase, deleteShowcase } from '../../db/showcase.js';
+import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -52,8 +53,9 @@ export async function handleAdminShowcase(ctx) {
     ? candidates.map((c) => `<option value="${esc(c.pid)}" data-name="${esc(c.name)}">${esc(c.name)} — ${esc(c.subdomain)}</option>`).join('')
     : '<option value="">(no deployed sites available)</option>';
 
+  const nav = await renderAdminNav(ctx, '/admin/showcase');
   const inner = `
-    <div class="thead"><h2>📣 Showcase</h2><a class="back" href="/admin">← Admin</a></div>
+    <div class="thead"><h2>📣 Showcase</h2></div>
     <p class="muted">Curate the public <a href="/showcase" target="_blank">/showcase</a> page. Featured entries rotate in the top carousel; order sorts the grid (lowest first).</p>
 
     <table>
@@ -108,7 +110,7 @@ export async function handleAdminShowcase(ctx) {
         try{ await api('DELETE','/api/admin/showcase/'+tr.dataset.id); tr.remove(); }catch(e){ alert(e.message); }
       }
     </script>`;
-  return htmlResponse(page(inner));
+  return htmlResponse(page(inner, nav));
 }
 
 /** POST /api/admin/showcase — add a deployed site. */
@@ -174,13 +176,14 @@ export async function handleAdminShowcaseDelete(ctx) {
   return ok ? json({ success: true }) : json({ success: false, error: 'Not found' }, 404);
 }
 
-function page(inner) {
+function page(inner, nav = '') {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex"><title>Showcase · Caddisfly Admin</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#1a202c}
+  ${ADMIN_NAV_CSS}
   .wrap{max-width:1040px;margin:0 auto;padding:2rem 1.5rem}
   .thead{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem;flex-wrap:wrap}
   h2{font-size:1.3rem}h3{font-size:1.05rem}
@@ -203,5 +206,5 @@ function page(inner) {
   .err{color:#b91c1c;font-size:.85rem;margin-top:.5rem;min-height:1em}
   @media (max-width:640px){.grid2{grid-template-columns:1fr}}
 </style></head>
-<body><div class="wrap">${inner}</div></body></html>`;
+<body>${nav}<div class="wrap">${inner}</div></body></html>`;
 }

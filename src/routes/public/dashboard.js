@@ -12,6 +12,7 @@ import { getDomainsByProject } from '../../db/custom-domains.js';
 import { countUnread } from '../../db/form-submissions.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
 import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
+import { isAllowedAdmin } from '../../middleware/auth.js';
 import { translator } from '../../i18n/index.js';
 
 const SITES_BASE = 'caddisfly.app';
@@ -181,6 +182,7 @@ export async function handleDashboard(ctx) {
   const tr = translator(lang);
   const email = ctx.billingEmail;
   if (!email) return redirect('/billing?next=/dashboard');
+  const isAdmin = isAllowedAdmin(env, email);
 
   // Own sites.
   const [aiRows, refactorRes] = await Promise.all([
@@ -239,6 +241,7 @@ export async function handleDashboard(ctx) {
     <div class="dhead">
       <h1>${tr('dash.title')}</h1>
       <div>
+        ${isAdmin ? `<a class="btn admin" href="/admin">⚙ ${tr('dash.admin')}</a>` : ''}
         <a class="btn ghost" href="/domains">${tr('dash.buy_domain')}</a>
         <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
       </div>
@@ -317,6 +320,8 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .btn{display:inline-flex;align-items:center;gap:.3rem;background:var(--grad);color:#fff;border:none;border-radius:10px;padding:.5rem .9rem;font-size:.85rem;font-weight:700;cursor:pointer;text-decoration:none}
     .btn.ghost{background:#fff;color:var(--p2);border:1px solid var(--line)}
     .btn.ghost:hover{border-color:var(--p1)}
+    .btn.admin{background:#111827;color:#fff;border:1px solid #111827}
+    .btn.admin:hover{background:#0b0f1a}
     .seats{font-size:.85rem;font-weight:700;color:var(--muted)}
     .member{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .member:last-child{border-bottom:none}

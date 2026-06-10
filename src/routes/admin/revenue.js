@@ -4,6 +4,7 @@
 
 import { htmlResponse } from '../../utils/response.js';
 import { getRevenueOverview, getRecentPayments, PLAN_USD } from '../../db/admin-revenue.js';
+import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -18,8 +19,9 @@ function fmtDate(ts) {
 const KIND = { domain: '🌐 Domain', store: '🛍 Store', credit: '✨ Credits' };
 
 export async function handleAdminRevenue(ctx) {
-  const { env, user } = ctx;
+  const { env } = ctx;
   const [o, payments] = await Promise.all([getRevenueOverview(env.DB), getRecentPayments(env.DB, 40)]);
+  const nav = await renderAdminNav(ctx, '/admin/revenue', '<a class="anav-extra" href="https://dashboard.stripe.com" target="_blank" rel="noopener">Stripe ↗</a>');
 
   const card = (label, value, sub = '') =>
     `<div class="stat"><div class="stat-v">${value}</div><div class="stat-l">${esc(label)}</div>${sub ? `<div class="stat-s">${esc(sub)}</div>` : ''}</div>`;
@@ -50,11 +52,9 @@ export async function handleAdminRevenue(ctx) {
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#1a202c}
-    .header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:1.4rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-    .header h1{font-size:1.4rem}
-    .header .who{font-size:.85rem;opacity:.9}
-    .header a{color:#fff;font-size:.85rem;text-decoration:underline}
+    ${ADMIN_NAV_CSS}
     .wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+    .page-h{font-size:1.3rem;margin-bottom:1.1rem;color:#1a202c}
     h2.sec{font-size:1.05rem;margin:1.6rem 0 .7rem}
     .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:.5rem}
     .stat{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem}
@@ -73,11 +73,9 @@ export async function handleAdminRevenue(ctx) {
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>💳 Revenue</h1>
-    <div><a href="/admin" style="color:#fff;font-weight:700">← Admin</a> · <a href="https://dashboard.stripe.com" target="_blank" rel="noopener" style="color:#fff;font-weight:700">Stripe ↗</a> · <span class="who">${esc(user.email)}</span> · <a href="/logout">Sign out</a></div>
-  </div>
+  ${nav}
   <div class="wrap">
+    <h1 class="page-h">💳 Revenue</h1>
     <div class="stats">
       ${card('Est. MRR', usd(o.subscriptions.mrrCents), `${o.subscriptions.activePaying} active subs`)}
       ${card('Domain margin (30d)', usd(o.domains.d30.margin), `${usd(o.domains.d30.gross)} gross`)}

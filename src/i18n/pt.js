@@ -278,6 +278,7 @@ export const pt = {
     title: 'Os seus sites',
     plan_billing: 'Plano e faturação →',
     buy_domain: '🌐 Domínios',
+    admin: 'Admin',
     signed_in_as: 'Sessão iniciada como',
     support: 'Suporte', activity: 'Atividade', help: 'Ajuda', sign_out: 'Sair',
     no_sites: 'Você ainda não tem sites.', build_one: 'Crie um →',

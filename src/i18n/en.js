@@ -278,6 +278,7 @@ export const en = {
     title: 'Your websites',
     plan_billing: 'Plan & billing →',
     buy_domain: '🌐 Domains',
+    admin: 'Admin',
     signed_in_as: 'Signed in as',
     support: 'Support', activity: 'Activity', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
