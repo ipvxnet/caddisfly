@@ -15,7 +15,7 @@ import {
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { audit } from '../../../utils/audit.js';
 import {
-  SOCIAL_PLATFORMS, validateWebhook, parseConnections, enabledPlatforms,
+  SOCIAL_PLATFORMS, validateConnection, fieldsFromBody, parseConnections, enabledPlatforms,
   sharePost, postToPlatform, buildLiveUrl,
 } from '../../../utils/social-share.js';
 
@@ -65,7 +65,6 @@ export async function handleSocialSettings(ctx) {
     if (gate) return gate;
 
     const body = await request.json().catch(() => ({}));
-    const inputs = { discord: body.discord_webhook, slack: body.slack_webhook };
 
     const config = await getOrCreateConfig(env.DB, r.projectKey);
     const existing = parseConnections(config);
@@ -73,9 +72,9 @@ export async function handleSocialSettings(ctx) {
 
     const next = {};
     for (const p of SOCIAL_PLATFORMS) {
-      const v = validateWebhook(p, inputs[p]);
+      const v = validateConnection(p, fieldsFromBody(p, body));
       if (!v.ok) return json({ success: false, error: `${p}: ${v.error}` }, 400);
-      if (v.value) next[p] = { webhook: v.value };
+      if (v.value) next[p] = v.value;
     }
 
     await updateWebsiteConfigById(env.DB, config.id, { social_connections_json: JSON.stringify(next) });
@@ -86,7 +85,7 @@ export async function handleSocialSettings(ctx) {
       await markPublishedPostsShared(env.DB, r.projectKey, nowSec());
     }
     audit(ctx, 'social.settings', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { platforms: enabledPlatforms(next) } });
-    return json({ success: true, connected: { discord: !!next.discord, slack: !!next.slack } });
+    return json({ success: true, connected: Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p, !!next[p]])) });
   } catch (e) {
     console.error('social settings error:', e);
     return json({ success: false, error: 'Could not save your social connections.' }, 500);
@@ -105,8 +104,8 @@ export async function handleSocialTest(ctx) {
     const body = await request.json().catch(() => ({}));
     const platform = String(body.platform || '').toLowerCase();
     if (!SOCIAL_PLATFORMS.includes(platform)) return json({ success: false, error: 'Unknown platform' }, 400);
-    const v = validateWebhook(platform, body.webhook);
-    if (!v.ok || !v.value) return json({ success: false, error: v.error || 'Enter a webhook URL first.' }, 400);
+    const v = validateConnection(platform, fieldsFromBody(platform, body));
+    if (!v.ok || !v.value) return json({ success: false, error: v.error || 'Fill in the connection details first.' }, 400);
 
     const ann = {
       title: `✅ ${r.name} is connected to Caddisfly`,
@@ -139,7 +138,7 @@ export async function handleSocialShare(ctx) {
 
     const config = await getOrCreateConfig(env.DB, r.projectKey);
     if (enabledPlatforms(parseConnections(config)).length === 0) {
-      return json({ success: false, error: 'Connect a Discord or Slack webhook first.' }, 400);
+      return json({ success: false, error: 'Connect a social account first.' }, 400);
     }
 
     const liveUrl = buildLiveUrl(env, r.subdomain, post.slug);

@@ -10,7 +10,7 @@ import { getProjectByPreviewId } from '../../db/projects.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { buildInboundAddress } from '../api/ai-builder/blog.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
-import { parseConnections } from '../../utils/social-share.js';
+import { parseConnections, enabledPlatforms } from '../../utils/social-share.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -62,7 +62,8 @@ export async function handleBlogManager(ctx) {
     ? await getWebsiteConfigByAIProjectId(env.DB, aiProject.id)
     : await getWebsiteConfigByRegularProjectId(env.DB, projectKey.projectId);
   const socialConns = parseConnections(socialConfig);
-  const socialOn = !!(socialConns.discord && socialConns.discord.webhook) || !!(socialConns.slack && socialConns.slack.webhook);
+  const socialOn = enabledPlatforms(socialConns).length > 0;
+  const scv = (p, f) => esc((socialConns[p] && socialConns[p][f]) || '');
 
   const posts = await getPostsByProject(env.DB, projectKey);
   const sitesBase = env.SITES_BASE || 'caddisfly.app';
@@ -164,8 +165,24 @@ export async function handleBlogManager(ctx) {
       <div class="social-row">
         <label>${tr('blogm.social_slack')}</label>
         <div class="social-input">
-          <input id="sc-slack" value="${esc((socialConns.slack && socialConns.slack.webhook) || '')}" placeholder="https://hooks.slack.com/services/…" maxlength="400">
+          <input id="sc-slack" value="${scv('slack', 'webhook')}" placeholder="https://hooks.slack.com/services/…" maxlength="400">
           <button class="btn ghost" onclick="testSocial('slack', this)">${tr('blogm.social_test')}</button>
+        </div>
+      </div>
+      <div class="social-row">
+        <label>${tr('blogm.social_telegram')}</label>
+        <div class="social-input">
+          <input id="sc-telegram-token" value="${scv('telegram', 'token')}" placeholder="${tr('blogm.social_telegram_token_ph')}" maxlength="120">
+          <input id="sc-telegram-chat" value="${scv('telegram', 'chat')}" placeholder="${tr('blogm.social_telegram_chat_ph')}" maxlength="120" style="max-width:200px">
+          <button class="btn ghost" onclick="testSocial('telegram', this)">${tr('blogm.social_test')}</button>
+        </div>
+      </div>
+      <div class="social-row">
+        <label>${tr('blogm.social_mastodon')}</label>
+        <div class="social-input">
+          <input id="sc-mastodon-instance" value="${scv('mastodon', 'instance')}" placeholder="https://mastodon.social" maxlength="200" style="max-width:240px">
+          <input id="sc-mastodon-token" value="${scv('mastodon', 'token')}" placeholder="${tr('blogm.social_mastodon_token_ph')}" maxlength="200">
+          <button class="btn ghost" onclick="testSocial('mastodon', this)">${tr('blogm.social_test')}</button>
         </div>
       </div>
       <div class="brief-actions">
@@ -392,12 +409,21 @@ export async function handleBlogManager(ctx) {
       err: tr('blogm.social_err'),
     })};
     function socStatus(msg, cls) { var el = document.getElementById('social-status'); if (el) { el.textContent = msg; el.style.color = cls === 'bad' ? '#b91c1c' : (cls === 'ok' ? '#065f46' : ''); } }
+    function socVal(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+    // All connection fields, flat (discord_webhook, telegram_token, …).
+    function socAllFields() {
+      return {
+        discord_webhook: socVal('sc-discord'), slack_webhook: socVal('sc-slack'),
+        telegram_token: socVal('sc-telegram-token'), telegram_chat: socVal('sc-telegram-chat'),
+        mastodon_instance: socVal('sc-mastodon-instance'), mastodon_token: socVal('sc-mastodon-token'),
+      };
+    }
     async function saveSocial(btn) {
       btn.disabled = true; var was = btn.textContent; btn.textContent = T_SOC.saving;
       try {
         const r = await fetch('/api/ai-builder/' + PID + '/social/settings', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ discord_webhook: document.getElementById('sc-discord').value.trim(), slack_webhook: document.getElementById('sc-slack').value.trim() }),
+          body: JSON.stringify(socAllFields()),
         });
         const d = await r.json().catch(function () { return {}; });
         if (r.status === 402) { if (confirm((d && d.upgrade_message) || (d && d.error) || 'Upgrade required.')) location.href = (d && d.billing_url) || '/billing'; return; }
@@ -407,12 +433,11 @@ export async function handleBlogManager(ctx) {
       finally { btn.disabled = false; btn.textContent = was; }
     }
     async function testSocial(platform, btn) {
-      var input = document.getElementById('sc-' + platform);
       btn.disabled = true; var was = btn.textContent; btn.textContent = T_SOC.testing;
       try {
         const r = await fetch('/api/ai-builder/' + PID + '/social/test', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: platform, webhook: input ? input.value.trim() : '' }),
+          body: JSON.stringify(Object.assign({ platform: platform }, socAllFields())),
         });
         const d = await r.json().catch(function () { return {}; });
         if (r.status === 402) { if (confirm((d && d.upgrade_message) || (d && d.error) || 'Upgrade required.')) location.href = (d && d.billing_url) || '/billing'; return; }
