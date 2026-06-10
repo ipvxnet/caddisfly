@@ -607,7 +607,7 @@ export const pt = {
     st_draft: 'rascunho', st_published: 'publicada',
     published_on: 'Publicada', updated_on: 'Atualizada',
     preview: 'Pré-visualizar ↗', edit: 'Editar', publish: 'Publicar', unpublish: 'Despublicar',
-    social: '📣 Redes', delete: 'Excluir', delete_confirm: 'Excluir esta publicação? Não é possível desfazer.',
+    social: '📝 Pacote social', delete: 'Excluir', delete_confirm: 'Excluir esta publicação? Não é possível desfazer.',
     save: 'Salvar', saving: 'Salvando…', cancel: 'Cancelar',
     title_label: 'Título', excerpt_label: 'Resumo', cover_label: 'URL da imagem de capa',
     cover_ph: 'https://… (ou cole uma URL enviada)',

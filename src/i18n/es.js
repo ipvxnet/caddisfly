@@ -607,7 +607,7 @@ export const es = {
     st_draft: 'borrador', st_published: 'publicada',
     published_on: 'Publicada', updated_on: 'Actualizada',
     preview: 'Vista previa ↗', edit: 'Editar', publish: 'Publicar', unpublish: 'Despublicar',
-    social: '📣 Redes', delete: 'Eliminar', delete_confirm: '¿Eliminar esta publicación? No se puede deshacer.',
+    social: '📝 Pack social', delete: 'Eliminar', delete_confirm: '¿Eliminar esta publicación? No se puede deshacer.',
     save: 'Guardar', saving: 'Guardando…', cancel: 'Cancelar',
     title_label: 'Título', excerpt_label: 'Resumen', cover_label: 'URL de imagen de portada',
     cover_ph: 'https://… (o pega una URL subida)',

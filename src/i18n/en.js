@@ -613,7 +613,7 @@ export const en = {
     st_draft: 'draft', st_published: 'published',
     published_on: 'Published', updated_on: 'Updated',
     preview: 'Preview ↗', edit: 'Edit', publish: 'Publish', unpublish: 'Unpublish',
-    social: '📣 Social', delete: 'Delete', delete_confirm: 'Delete this post? This cannot be undone.',
+    social: '📝 Social pack', delete: 'Delete', delete_confirm: 'Delete this post? This cannot be undone.',
     save: 'Save', saving: 'Saving…', cancel: 'Cancel',
     title_label: 'Title', excerpt_label: 'Excerpt', cover_label: 'Cover image URL',
     cover_ph: 'https://… (or paste an upload URL)',
