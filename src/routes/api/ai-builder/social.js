@@ -14,9 +14,10 @@ import {
 } from '../../../db/blog-posts.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { audit } from '../../../utils/audit.js';
+import { canAfford, chargeCredits, CREDIT_COSTS } from '../../../utils/credits.js';
 import {
   SOCIAL_PLATFORMS, validateConnection, fieldsFromBody, parseConnections, enabledPlatforms,
-  sharePost, postToPlatform, buildLiveUrl,
+  sharePost, postToPlatform, buildLiveUrl, aiCaptionsEnabled, generateAnnouncementVariants,
 } from '../../../utils/social-share.js';
 
 function json(body, status = 200) {
@@ -25,19 +26,58 @@ function json(body, status = 200) {
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 
-/** Resolve :project_id (ai-first) to { projectKey, email, subdomain, name }. */
+/** Resolve :project_id (ai-first) to { projectKey, email, subdomain, name, industry, language }. */
 async function resolveProject(env, project_id) {
   const ai = await getAIProjectByProjectId(env.DB, project_id);
   if (ai) {
-    return { projectKey: { aiProjectId: ai.id }, email: ai.customer_email, subdomain: ai.subdomain || '', name: ai.project_name || 'My Website' };
+    return {
+      projectKey: { aiProjectId: ai.id }, email: ai.customer_email, subdomain: ai.subdomain || '',
+      name: ai.project_name || 'My Website', industry: ai.industry || '', language: ai.language || 'en',
+    };
   }
   const rp = await getProjectByPreviewId(env.DB, project_id);
   if (rp) {
     let name = rp.website_url || 'My Website';
-    try { const p = JSON.parse(rp.company_profile_json || '{}'); if (p && p.name) name = p.name; } catch { /* ignore */ }
-    return { projectKey: { projectId: rp.id }, email: rp.customer_email, subdomain: rp.subdomain || '', name };
+    let industry = '';
+    try {
+      const p = JSON.parse(rp.company_profile_json || '{}');
+      if (p && p.name) name = p.name;
+      if (p && p.category) industry = p.category;
+    } catch { /* ignore */ }
+    return {
+      projectKey: { projectId: rp.id }, email: rp.customer_email, subdomain: rp.subdomain || '',
+      name, industry, language: rp.language || 'en',
+    };
   }
   return null;
+}
+
+/**
+ * AI-written per-platform announcement copy for one post share. Charges
+ * CREDIT_COSTS.social_pack ONLY when generation succeeds; any blocker (toggle
+ * off, can't afford, AI failure) returns null and the share falls back to the
+ * plain title+excerpt+link template. Never throws — the share must go out.
+ */
+async function aiVariantsForPost(env, ctx, { conns, site, post }) {
+  try {
+    if (!aiCaptionsEnabled(conns)) return null;
+    const afford = await canAfford(env, env.DB, site.email, CREDIT_COSTS.social_pack);
+    if (!afford.ok) return null;
+    const variants = await generateAnnouncementVariants(env, {
+      post, businessName: site.name, industry: site.industry, language: site.language,
+      platforms: enabledPlatforms(conns),
+    });
+    if (!variants) return null;
+    await chargeCredits(env, env.DB, site.email, CREDIT_COSTS.social_pack);
+    audit(ctx, 'credit.social_announce', {
+      teamOwner: site.email, resourceType: 'site', resourceId: site.projectId,
+      metadata: { credits: CREDIT_COSTS.social_pack, post_id: post.id },
+    });
+    return variants;
+  } catch (e) {
+    console.error('social ai variants:', e.message);
+    return null;
+  }
 }
 
 /** Paid-plan gate (prod only) — returns a 402 Response if blocked, else null. */
@@ -76,6 +116,9 @@ export async function handleSocialSettings(ctx) {
       if (!v.ok) return json({ success: false, error: `${p}: ${v.error}` }, 400);
       if (v.value) next[p] = v.value;
     }
+    // AI-written announcements toggle — default ON, so only an explicit opt-out
+    // is stored (absent key = enabled, which also covers pre-toggle configs).
+    if (body.ai_captions === false || body.ai_captions === 'false') next.ai_captions = false;
 
     await updateWebsiteConfigById(env.DB, config.id, { social_connections_json: JSON.stringify(next) });
 
@@ -137,12 +180,16 @@ export async function handleSocialShare(ctx) {
     if (!r.subdomain) return json({ success: false, error: 'Publish your site first so the post has a live link.' }, 400);
 
     const config = await getOrCreateConfig(env.DB, r.projectKey);
-    if (enabledPlatforms(parseConnections(config)).length === 0) {
+    const conns = parseConnections(config);
+    if (enabledPlatforms(conns).length === 0) {
       return json({ success: false, error: 'Connect a social account first.' }, 400);
     }
 
     const liveUrl = buildLiveUrl(env, r.subdomain, post.slug);
-    const results = await sharePost(env, { config, post, liveUrl });
+    const variants = await aiVariantsForPost(env, ctx, {
+      conns, post, site: { email: r.email, name: r.name, industry: r.industry, language: r.language, projectId: params.project_id },
+    });
+    const results = await sharePost(env, { config, post, liveUrl, variants });
     await updatePost(env.DB, r.projectKey, post.id, { social_shared_at: nowSec() });
     audit(ctx, 'social.share', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { post_id: post.id, results } });
 
@@ -158,11 +205,15 @@ export async function handleSocialShare(ctx) {
  * Auto-share newly-live posts after a successful deploy. Best-effort, off the
  * response path (called via ctx.waitUntil from deploy.js). Only posts that are
  * published and not yet shared go out; no-op when no platforms are connected.
+ * `site` carries { email, name, industry, language, projectId } so each post
+ * can get AI-written copy (2 credits/post, silent template fallback); `ctx` is
+ * the deploy request context, used only for audit.
  */
-export async function autoSyndicateOnDeploy(env, { projectKey, subdomain }) {
+export async function autoSyndicateOnDeploy(env, { projectKey, subdomain, site, ctx }) {
   if (!subdomain) return;
   const config = await getOrCreateConfig(env.DB, projectKey);
-  if (enabledPlatforms(parseConnections(config)).length === 0) return;
+  const conns = parseConnections(config);
+  if (enabledPlatforms(conns).length === 0) return;
 
   const posts = await getUnsharedPublishedPosts(env.DB, projectKey);
   if (!posts.length) return;
@@ -170,9 +221,10 @@ export async function autoSyndicateOnDeploy(env, { projectKey, subdomain }) {
   for (const post of posts) {
     try {
       const liveUrl = buildLiveUrl(env, subdomain, post.slug);
-      const results = await sharePost(env, { config, post, liveUrl });
+      const variants = site ? await aiVariantsForPost(env, ctx || { env }, { conns, site, post }) : null;
+      const results = await sharePost(env, { config, post, liveUrl, variants });
       await updatePost(env.DB, projectKey, post.id, { social_shared_at: nowSec() });
-      console.log('auto-syndicate:', { post_id: post.id, shared: results.filter((x) => x.ok).length, of: results.length });
+      console.log('auto-syndicate:', { post_id: post.id, ai: !!variants, shared: results.filter((x) => x.ok).length, of: results.length });
     } catch (e) {
       console.error('auto-syndicate post failed:', post.id, e.message);
     }
