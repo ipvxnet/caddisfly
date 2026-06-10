@@ -7,6 +7,7 @@ import { htmlResponse, redirect } from '../../utils/response.js';
 import { baseCss } from '../../components/brand.js';
 import { LEGAL_CSS, LEGAL_META, effectiveDoc } from '../public/legal-content.js';
 import { upsertLegalDoc, deleteLegalDoc } from '../../db/legal.js';
+import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 
 const SLUGS = ['terms', 'privacy'];
 
@@ -27,6 +28,7 @@ export async function handleAdminLegal(ctx) {
   const slug = SLUGS.includes(query && query.doc) ? query.doc : 'terms';
   const meta = LEGAL_META[slug];
   const doc = await effectiveDoc(env.DB, slug);
+  const nav = await renderAdminNav(ctx, '/admin/legal');
 
   const notice = (query && query.saved)
     ? `<div class="note ok">Saved. The live <a href="${meta.nav}" target="_blank">${meta.label}</a> page now shows your changes.</div>`
@@ -50,7 +52,6 @@ export async function handleAdminLegal(ctx) {
   const inner = `
     <div class="thead">
       <h2>Legal pages</h2>
-      <a class="back" href="/admin">← Dashboard</a>
     </div>
     <p class="muted">Edit the Terms of Service and Privacy Policy shown on the public site. Changes save instantly — no code deploy. Edits are stored separately from the built-in template; use <strong>Revert</strong> to restore the default.</p>
     <div class="tabs">${tabs}</div>
@@ -92,7 +93,7 @@ export async function handleAdminLegal(ctx) {
       render();
     </script>`;
 
-  return htmlResponse(page(inner, meta.label));
+  return htmlResponse(page(inner, meta.label, nav));
 }
 
 /** POST /api/admin/legal/:slug  (body | action=reset) */
@@ -114,13 +115,14 @@ export async function handleAdminLegalSave(ctx) {
   return redirect(`/admin/legal?doc=${slug}&saved=1`, 303);
 }
 
-function page(inner, label) {
+function page(inner, label, nav = '') {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex"><title>${esc(label)} · Caddisfly Admin</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#1a202c}
+  ${ADMIN_NAV_CSS}
   .wrap{max-width:1200px;margin:0 auto;padding:2rem 1.5rem}
   .thead{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.5rem;flex-wrap:wrap}
   h2{font-size:1.3rem}
@@ -150,5 +152,5 @@ function page(inner, label) {
   .preview-head{font-size:.78rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.04em;padding:.5rem .8rem;border-bottom:1px solid #edf2f7;background:#fafbfc}
   iframe{width:100%;height:560px;border:0;display:block;background:#fff}
 </style></head>
-<body><div class="wrap">${inner}</div></body></html>`;
+<body>${nav}<div class="wrap">${inner}</div></body></html>`;
 }

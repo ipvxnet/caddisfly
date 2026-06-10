@@ -5,6 +5,7 @@
 import { htmlResponse } from '../../utils/response.js';
 import { getPlatformMetrics, getCustomerRows } from '../../db/admin-stats.js';
 import { countOpenTickets } from '../../db/tickets.js';
+import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -24,12 +25,13 @@ function statusBadge(s) {
 }
 
 export async function handleAdminDashboard(ctx) {
-  const { env, user } = ctx;
+  const { env } = ctx;
   const [m, rows, openTickets] = await Promise.all([
     getPlatformMetrics(env.DB),
     getCustomerRows(env.DB),
     countOpenTickets(env.DB),
   ]);
+  const nav = await renderAdminNav(ctx, '/admin');
 
   const card = (label, value, sub = '') =>
     `<div class="stat"><div class="stat-v">${value}</div><div class="stat-l">${esc(label)}</div>${sub ? `<div class="stat-s">${esc(sub)}</div>` : ''}</div>`;
@@ -65,11 +67,9 @@ export async function handleAdminDashboard(ctx) {
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#1a202c}
-    .header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:1.4rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-    .header h1{font-size:1.4rem}
-    .header .who{font-size:.85rem;opacity:.9}
-    .header a{color:#fff;font-size:.85rem;text-decoration:underline}
+    ${ADMIN_NAV_CSS}
     .wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+    .page-h{font-size:1.3rem;margin-bottom:1.1rem;color:#1a202c}
     .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1rem}
     .stat{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem}
     .stat-v{font-size:1.9rem;font-weight:800;color:#5a3da8}
@@ -93,11 +93,9 @@ export async function handleAdminDashboard(ctx) {
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Caddisfly Admin</h1>
-    <div><a href="/admin/tickets" style="color:#fff;font-weight:700">🎫 Tickets${openTickets ? ` (${openTickets})` : ''}</a> · <a href="/admin/legal" style="color:#fff;font-weight:700">📄 Legal</a> · <a href="/admin/revenue" style="color:#fff;font-weight:700">💳 Revenue</a> · <a href="/admin/audit" style="color:#fff;font-weight:700">🧾 Audit</a> · <span class="who">${esc(user.email)}</span> · <a href="/logout">Sign out</a></div>
-  </div>
+  ${nav}
   <div class="wrap">
+    <h1 class="page-h">Overview</h1>
     <div class="stats">
       ${card('Customers', m.customers)}
       ${card('Active subscriptions', m.activeSubs)}

@@ -12,6 +12,8 @@ import { handleLanding } from './routes/public/landing.js';
 import { handlePricing } from './routes/public/pricing.js';
 import { handleSpeed } from './routes/public/speed.js';
 import { handleCompare } from './routes/public/compare.js';
+import { handleShowcase } from './routes/public/showcase.js';
+import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
@@ -143,6 +145,7 @@ router.get('/', handleLanding);
 router.get('/pricing', handlePricing);
 router.get('/speed', handleSpeed);
 router.get('/compare', handleCompare);
+router.get('/showcase', handleShowcase);
 router.get('/terms', handleTerms);
 router.get('/privacy', handlePrivacy);
 
@@ -353,6 +356,10 @@ router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [auth
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
 router.get('/admin/legal', handleAdminLegal, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/legal/:slug', handleAdminLegalSave, [authMiddleware, adminMiddleware]);
+router.get('/admin/showcase', handleAdminShowcase, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/showcase', handleAdminShowcaseAdd, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/showcase/:id', handleAdminShowcaseUpdate, [authMiddleware, adminMiddleware]);
+router.delete('/api/admin/showcase/:id', handleAdminShowcaseDelete, [authMiddleware, adminMiddleware]);
 
 /**
  * Main fetch handler

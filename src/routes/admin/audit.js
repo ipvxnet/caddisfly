@@ -4,6 +4,7 @@
 
 import { htmlResponse } from '../../utils/response.js';
 import { queryAuditLogs, distinctAuditActions } from '../../db/audit-logs.js';
+import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -27,6 +28,7 @@ export async function handleAdminAudit(ctx) {
   ]);
   const hasNext = logs.length > PAGE;
   const rows = logs.slice(0, PAGE);
+  const nav = await renderAdminNav(ctx, '/admin/audit');
   const qs = (over) => {
     const p = new URLSearchParams({ ...(action ? { action } : {}), ...(status ? { status } : {}), ...(q ? { q } : {}), ...over });
     const s = p.toString(); return s ? `?${s}` : '';
@@ -50,9 +52,10 @@ export async function handleAdminAudit(ctx) {
   <title>Audit log — Admin</title><meta name="robots" content="noindex">
   <style>
     body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;margin:0;color:#1a202c}
+    ${ADMIN_NAV_CSS}
     .wrap{max-width:1200px;margin:0 auto;padding:2rem 1.4rem 4rem}
     .head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.2rem}
-    h1{font-size:1.5rem;margin:0}.back{color:#667eea;text-decoration:none;font-weight:700}
+    h1{font-size:1.4rem;margin:0}
     .filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
     .filters input,.filters select{padding:.5rem .7rem;border:1.5px solid #e2e8f0;border-radius:9px;font:inherit;font-size:.88rem}
     .filters input[type=search]{flex:1;min-width:220px}
@@ -69,8 +72,8 @@ export async function handleAdminAudit(ctx) {
     .empty{color:#718096;text-align:center;padding:2rem}
     .pager{display:flex;justify-content:space-between;margin-top:1.2rem}
     .pager a{border:1.5px solid #e2e8f0;border-radius:9px;padding:.45rem 1rem;font-weight:700;color:#4a5568;text-decoration:none;background:#fff}
-  </style></head><body><div class="wrap">
-    <div class="head"><h1>🧾 Audit log</h1><a class="back" href="/admin">← Admin</a></div>
+  </style></head><body>${nav}<div class="wrap">
+    <div class="head"><h1>🧾 Audit log</h1></div>
     <form class="filters" method="GET" action="/admin/audit">
       <input type="search" name="q" value="${esc(q)}" placeholder="Search user, resource, action…">
       <select name="action"><option value="">All actions</option>

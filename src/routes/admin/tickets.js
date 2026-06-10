@@ -4,6 +4,7 @@
 import { htmlResponse, redirect } from '../../utils/response.js';
 import { getAllTickets, getTicketByPublicId, getMessages, addMessage, setStatus } from '../../db/tickets.js';
 import { sendTicketEmail } from '../../utils/email.js';
+import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -23,11 +24,12 @@ async function formData(request) {
 
 export async function handleAdminTickets(ctx) {
   const { env, url, query } = ctx;
+  const nav = await renderAdminNav(ctx, '/admin/tickets');
 
   // Thread view.
   if (query && query.t) {
     const ticket = await getTicketByPublicId(env.DB, query.t);
-    if (!ticket) return htmlResponse(page(`<p><a href="/admin/tickets">← Tickets</a></p><p>Not found.</p>`), 404);
+    if (!ticket) return htmlResponse(page(`<p><a href="/admin/tickets">← Tickets</a></p><p>Not found.</p>`, nav), 404);
     const messages = await getMessages(env.DB, ticket.id);
     const thread = messages
       .map(
@@ -52,7 +54,7 @@ export async function handleAdminTickets(ctx) {
         <label>Reply (emails the customer)</label>
         <textarea name="body" rows="4" required placeholder="Type your reply…"></textarea>
         <button type="submit" class="primary">Send reply</button>
-      </form>`));
+      </form>`, nav));
   }
 
   // Queue.
@@ -76,10 +78,10 @@ export async function handleAdminTickets(ctx) {
     .map((s) => `<a class="tab ${filter === s ? 'active' : ''}" href="/admin/tickets${s ? '?status=' + s : ''}">${s ? s.replace('_', ' ') : 'all'}</a>`)
     .join('');
   return htmlResponse(page(`
-    <div class="thead"><h2>Support tickets</h2><a class="back" href="/admin">← Dashboard</a></div>
+    <div class="thead"><h2>Support tickets</h2></div>
     <div class="tabs">${tabs}</div>
     <table><thead><tr><th>#</th><th>Status</th><th>Type</th><th>Subject</th><th>Customer</th><th>Updated</th></tr></thead>
-      <tbody>${rows}</tbody></table>`));
+      <tbody>${rows}</tbody></table>`, nav));
 }
 
 /** POST /api/admin/tickets/:public_id/reply */
@@ -114,11 +116,12 @@ export async function handleAdminTicketStatus(ctx) {
   return redirect(`/admin/tickets?t=${ticket.public_id}`, 303);
 }
 
-function page(inner) {
+function page(inner, nav = '') {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex"><title>Tickets · Caddisfly Admin</title>
 <style>
+  ${ADMIN_NAV_CSS}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#1a202c}
   .wrap{max-width:1000px;margin:0 auto;padding:2rem 1.5rem}
@@ -151,5 +154,5 @@ function page(inner) {
   .msg-head{font-size:.82rem;margin-bottom:.35rem}
   .msg-body{line-height:1.6;white-space:pre-wrap;color:#2d3748}
 </style></head>
-<body><div class="wrap">${inner}</div></body></html>`;
+<body>${nav}<div class="wrap">${inner}</div></body></html>`;
 }
