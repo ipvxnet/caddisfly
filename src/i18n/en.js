@@ -640,6 +640,7 @@ export const en = {
     social_test: 'Test', social_testing: 'Testing…', social_test_ok: 'Test message sent ✓',
     social_save: 'Save connections', social_saving: 'Saving…', social_saved: 'Saved ✓',
     social_hint: 'We never post without you publishing first.',
+    social_ai_label: '✨ AI-write the announcements (2 credits per post; falls back to a plain title + link if you run out)',
     social_err: 'Something went wrong. Check the URL and try again.',
     share_now: '📣 Share', reshare: '📣 Re-share', social_sharing: 'Sharing…', social_shared_ok: 'Shared ✓',
     social_shared: 'Shared ✓', social_reshare_confirm: 'This post was already shared. Post it again?',
@@ -929,7 +930,7 @@ export const en = {
         <ul>
           <li><strong>🖼 AI cover</strong> — generate an on-topic cover image for any post.</li>
           <li><strong>📧 Post by email</strong> (paid plans) — generate your private <strong>“post by email” address</strong> in the Blog manager. Email it a subject and a few sentences and AI turns it into a draft post (with a cover image) waiting for review — nothing goes live until you approve and publish. For your security, only emails from your account address are accepted.</li>
-          <li><strong>📣 Auto-share to socials</strong> (paid plans) — connect <strong>Discord</strong>, <strong>Slack</strong>, <strong>Telegram</strong> or <strong>Mastodon</strong> in the Blog manager (a webhook URL for Discord/Slack; a bot token + chat for Telegram; your instance + an access token for Mastodon). New posts are announced to those channels automatically when you re-publish, or hit <strong>Share</strong> on any published post; a “Shared ✓” mark shows what’s already gone out.</li>
+          <li><strong>📣 Auto-share to socials</strong> (paid plans) — connect <strong>Discord</strong>, <strong>Slack</strong>, <strong>Telegram</strong> or <strong>Mastodon</strong> in the Blog manager (a webhook URL for Discord/Slack; a bot token + chat for Telegram; your instance + an access token for Mastodon). New posts are announced to those channels automatically when you re-publish, or hit <strong>Share</strong> on any published post; a “Shared ✓” mark shows what’s already gone out. By default the AI writes the announcement copy tuned to each platform (2 credits per post; if you run out of credits it falls back to a plain title + link) — untick “✨ AI-write the announcements” in the panel to always use the plain version.</li>
           <li><strong>Social pack</strong> — one click writes ready-to-share variants for X, Instagram and LinkedIn with share buttons. Nothing posts automatically here — you stay in control.</li>
         </ul>`],
       ['messages', 'Contact form & inbox', `

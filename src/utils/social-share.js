@@ -9,6 +9,11 @@
 //   telegram: { token, chat }      // bot token + chat/channel id (@name or -100…)
 //   mastodon: { instance, token }  // https://instance + access token
 
+import { callWorkersAI } from './ai-content-generator.js';
+import { POLICY_INSTRUCTION } from './content-policy.js';
+import { parseLabeled } from './blog-draft.js';
+import { mdLiteExcerpt } from './md-lite.js';
+
 export const SOCIAL_PLATFORMS = ['discord', 'slack', 'telegram', 'mastodon'];
 
 // Fields each platform stores / collects from the settings form. The settings
@@ -96,6 +101,67 @@ export function enabledPlatforms(conns) {
   });
 }
 
+/** AI-written announcements toggle (stored alongside the connections; default ON). */
+export function aiCaptionsEnabled(conns) {
+  return !conns || conns.ai_captions !== false;
+}
+
+// Per-platform prompt instructions + a hard cap on the returned text. The AI
+// never writes the link — postToPlatform attaches it, so a hallucinated or
+// truncated URL can't ship. Mastodon's cap leaves room for the URL within 500.
+const VARIANT_SPECS = {
+  discord: { cap: 1000, instruction: '1-2 energetic sentences for a community feed (the post title and link render separately, do not repeat them).' },
+  slack: { cap: 600, instruction: '1-2 friendly, conversational sentences for a team channel.' },
+  telegram: { cap: 900, instruction: 'a 1-3 sentence channel announcement; one emoji is fine.' },
+  mastodon: { cap: 400, instruction: 'under 300 characters, conversational, ending with 1-3 relevant hashtags.' },
+};
+
+const VARIANT_LANG_NAMES = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
+
+/**
+ * One LLM call → platform-tuned announcement copy for the given platforms.
+ * Returns { discord?, slack?, telegram?, mastodon? } (a platform may be missing
+ * if its text came back empty), or null when the call fails or parses empty —
+ * callers fall back to the plain template. Never throws.
+ */
+export async function generateAnnouncementVariants(env, { post, businessName, industry, language, platforms }) {
+  try {
+    const targets = (platforms || []).filter((p) => VARIANT_SPECS[p]);
+    if (!targets.length) return null;
+    const langName = VARIANT_LANG_NAMES[language] || 'English';
+    const summary = (post.excerpt || mdLiteExcerpt(post.content || '') || '').slice(0, 500);
+
+    const list = targets.map((p, i) => `${i + 1}. ${p.toUpperCase()}: ${VARIANT_SPECS[p].instruction}`).join('\n');
+    const format = targets.map((p) => `${p.toUpperCase()}: the ${p} announcement`).join('\n');
+    const prompt = `A small business ("${businessName}"${industry ? `, ${industry}` : ''}) just published this blog post:
+
+Title: ${post.title}
+Summary: ${summary}
+
+Write a short announcement of the post for each channel below, ALL in ${langName}. Do NOT include any URL or link — the link is attached automatically. No quotation marks around the text.
+${list}
+
+Respond in EXACTLY this format (plain text, no JSON, no commentary, keep the uppercase labels):
+${format}
+${POLICY_INSTRUCTION}`;
+
+    const raw = await callWorkersAI(env, prompt, { max_tokens: 700, temperature: 0.7, system_message: 'You are a social media copywriter for small businesses.' });
+    const pack = parseLabeled(raw, targets.map((p) => p.toUpperCase()));
+    if (!pack) return null;
+
+    const out = {};
+    for (const p of targets) {
+      // Strip stray URL placeholders/quotes the model may add despite instructions.
+      const text = String(pack[p] || '').replace(/\{URL\}/g, '').replace(/^["'“”]+|["'“”]+$/g, '').replace(/[ \t]{2,}/g, ' ').trim();
+      if (text) out[p] = text.slice(0, VARIANT_SPECS[p].cap);
+    }
+    return Object.keys(out).length ? out : null;
+  } catch (e) {
+    console.error('announcement variants failed:', e.message);
+    return null;
+  }
+}
+
 async function postJson(url, payload, headers = {}) {
   try {
     const res = await fetch(url, {
@@ -112,11 +178,11 @@ async function postJson(url, payload, headers = {}) {
 }
 
 // Discord renders a rich embed card (title links out, cover image inline).
-function discordPayload({ title, excerpt, url, image }) {
+function discordPayload({ title, excerpt, url, image }, variant) {
   return {
     embeds: [{
       title: String(title).slice(0, 256),
-      description: String(excerpt || '').slice(0, 2000),
+      description: String(variant || excerpt || '').slice(0, 2000),
       url,
       ...(image ? { image: { url: image } } : {}),
       color: 0x764ba2,
@@ -125,18 +191,25 @@ function discordPayload({ title, excerpt, url, image }) {
 }
 // Slack / Telegram unfurl the link into a preview from the post's OG tags.
 const lines = ({ title, excerpt, url }, sep = '\n') => `${title}${sep}${excerpt ? excerpt + sep : ''}${url}`;
+// AI variant text never contains the link — attach it here, always.
+const variantLines = (variant, url, sep = '\n') => `${variant}${sep}${url}`;
 
-/** Post one announcement to a platform. config is the stored connection object. */
+/**
+ * Post one announcement to a platform. config is the stored connection object;
+ * ann.variants may carry AI-written per-platform copy (each platform falls back
+ * to the plain title+excerpt template when its variant is missing).
+ */
 export async function postToPlatform(platform, config, ann) {
-  if (platform === 'discord') return postJson(config.webhook, discordPayload(ann));
-  if (platform === 'slack') return postJson(config.webhook, { text: lines(ann) });
+  const v = (ann.variants && ann.variants[platform]) || '';
+  if (platform === 'discord') return postJson(config.webhook, discordPayload(ann, v));
+  if (platform === 'slack') return postJson(config.webhook, { text: v ? variantLines(v, ann.url) : lines(ann) });
   if (platform === 'telegram') {
     return postJson(`https://api.telegram.org/bot${config.token}/sendMessage`, {
-      chat_id: config.chat, text: lines(ann), disable_web_page_preview: false,
+      chat_id: config.chat, text: v ? variantLines(v, ann.url) : lines(ann), disable_web_page_preview: false,
     });
   }
   if (platform === 'mastodon') {
-    return postJson(`${config.instance}/api/v1/statuses`, { status: lines(ann, '\n\n') }, { Authorization: `Bearer ${config.token}` });
+    return postJson(`${config.instance}/api/v1/statuses`, { status: v ? variantLines(v, ann.url, '\n\n') : lines(ann, '\n\n') }, { Authorization: `Bearer ${config.token}` });
   }
   return { ok: false, error: 'Unknown platform' };
 }
@@ -152,9 +225,9 @@ export function buildAnnouncement(env, post, liveUrl) {
  * Share one post to every enabled platform. Fire-and-forget per platform — one
  * platform failing never blocks the others. Returns [{platform, ok, error?}].
  */
-export async function sharePost(env, { config, post, liveUrl }) {
+export async function sharePost(env, { config, post, liveUrl, variants }) {
   const conns = parseConnections(config);
-  const ann = buildAnnouncement(env, post, liveUrl);
+  const ann = { ...buildAnnouncement(env, post, liveUrl), variants: variants || null };
   const out = [];
   for (const p of enabledPlatforms(conns)) {
     const r = await postToPlatform(p, conns[p], ann);

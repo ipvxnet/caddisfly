@@ -315,9 +315,21 @@ export async function handleAIBuilderDeploy(ctx) {
     audit(ctx, 'site.publish', { teamOwner: email, resourceType: 'site', resourceId: publicId, resourceName: projectView.project_name, metadata: { subdomain } });
 
     // Auto-share newly-live blog posts to connected socials (best-effort, off
-    // the response path). No-op unless the site has Discord/Slack connected.
+    // the response path). No-op unless the site has a platform connected. `site`
+    // lets the announcement copy be AI-written (credits, silent fallback).
     if (ctx.ctx && ctx.ctx.waitUntil) {
-      ctx.ctx.waitUntil(autoSyndicateOnDeploy(env, { projectKey, subdomain }).catch((e) => console.error('social syndicate:', e.message)));
+      let industry = (aiProject && aiProject.industry) || '';
+      if (!industry && regularProjectRow) {
+        try { industry = JSON.parse(regularProjectRow.company_profile_json || '{}').category || ''; } catch { /* ignore */ }
+      }
+      const site = {
+        email,
+        name: projectView.project_name || 'My Website',
+        industry,
+        language: (aiProject && aiProject.language) || (regularProjectRow && regularProjectRow.language) || 'en',
+        projectId: publicId,
+      };
+      ctx.ctx.waitUntil(autoSyndicateOnDeploy(env, { projectKey, subdomain, site, ctx }).catch((e) => console.error('social syndicate:', e.message)));
     }
 
     return json({

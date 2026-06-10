@@ -634,6 +634,7 @@ export const pt = {
     social_test: 'Testar', social_testing: 'Testando…', social_test_ok: 'Mensagem de teste enviada ✓',
     social_save: 'Salvar conexões', social_saving: 'Salvando…', social_saved: 'Salvo ✓',
     social_hint: 'Nunca publicamos sem você publicar primeiro.',
+    social_ai_label: '✨ Redigir os anúncios com IA (2 créditos por publicação; sem créditos usa o título + link simples)',
     social_err: 'Algo deu errado. Verifique a URL e tente novamente.',
     share_now: '📣 Compartilhar', reshare: '📣 Compartilhar de novo', social_sharing: 'Compartilhando…', social_shared_ok: 'Compartilhado ✓',
     social_shared: 'Compartilhado ✓', social_reshare_confirm: 'Este post já foi compartilhado. Publicar de novo?',
@@ -922,7 +923,7 @@ export const pt = {
         <ul>
           <li><strong>🖼 Capa com IA</strong> — gere uma imagem de capa alinhada ao tema de cada publicação.</li>
           <li><strong>📧 Publicar por email</strong> (planos pagos) — gere o seu <strong>endereço privado de “publicar por email”</strong> no gerenciador do Blog. Envie um assunto e algumas frases e a IA transforma num rascunho (com imagem de capa) à espera de revisão — nada vai ao ar até você aprovar e publicar. Por segurança, só são aceitos emails enviados do endereço da sua conta.</li>
-          <li><strong>📣 Compartilhar nas redes</strong> (planos pagos) — conecte <strong>Discord</strong>, <strong>Slack</strong>, <strong>Telegram</strong> ou <strong>Mastodon</strong> no gerenciador do Blog (uma URL de webhook para Discord/Slack; um token de bot + chat para Telegram; sua instância + um token de acesso para Mastodon). Novas publicações são anunciadas nesses canais automaticamente ao republicar, ou clique em <strong>Compartilhar</strong> em qualquer publicação; uma marca “Compartilhado ✓” mostra o que já saiu.</li>
+          <li><strong>📣 Compartilhar nas redes</strong> (planos pagos) — conecte <strong>Discord</strong>, <strong>Slack</strong>, <strong>Telegram</strong> ou <strong>Mastodon</strong> no gerenciador do Blog (uma URL de webhook para Discord/Slack; um token de bot + chat para Telegram; sua instância + um token de acesso para Mastodon). Novas publicações são anunciadas nesses canais automaticamente ao republicar, ou clique em <strong>Compartilhar</strong> em qualquer publicação; uma marca “Compartilhado ✓” mostra o que já saiu. Por padrão a IA redige o anúncio adaptado a cada plataforma (2 créditos por publicação; sem créditos usa o título + link simples) — desmarque “✨ Redigir os anúncios com IA” no painel para usar sempre a versão simples.</li>
           <li><strong>Pacote social</strong> — um clique redige variantes prontas para compartilhar no X, Instagram e LinkedIn com botões de compartilhamento. Aqui nada é publicado automaticamente — você mantém o controle.</li>
         </ul>`],
       ['messages', 'Formulário de contato e caixa de entrada', `

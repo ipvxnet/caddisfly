@@ -186,6 +186,10 @@ export async function handleBlogManager(ctx) {
           <button class="btn ghost" onclick="testSocial('mastodon', this)">${tr('blogm.social_test')}</button>
         </div>
       </div>
+      <label class="muted" style="display:flex;gap:8px;align-items:center;cursor:pointer;margin:4px 0 10px">
+        <input type="checkbox" id="sc-ai-captions" ${socialConns.ai_captions !== false ? 'checked' : ''}>
+        ${tr('blogm.social_ai_label')}
+      </label>
       <div class="brief-actions">
         <button class="btn" onclick="saveSocial(this)">${tr('blogm.social_save')}</button>
         <span class="muted" id="social-status">${tr('blogm.social_hint')}</span>
@@ -413,10 +417,12 @@ export async function handleBlogManager(ctx) {
     function socVal(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
     // All connection fields, flat (discord_webhook, telegram_token, …).
     function socAllFields() {
+      var ai = document.getElementById('sc-ai-captions');
       return {
         discord_webhook: socVal('sc-discord'), slack_webhook: socVal('sc-slack'),
         telegram_token: socVal('sc-telegram-token'), telegram_chat: socVal('sc-telegram-chat'),
         mastodon_instance: socVal('sc-mastodon-instance'), mastodon_token: socVal('sc-mastodon-token'),
+        ai_captions: ai ? ai.checked : true,
       };
     }
     async function saveSocial(btn) {
