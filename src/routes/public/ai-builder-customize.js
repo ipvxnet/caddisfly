@@ -1130,10 +1130,14 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     function handleDragStart(e) {
-      draggedElement = e.target;
-      e.target.classList.add('dragging');
+      // Resolve to the TILE — drag/drop events fire on the innermost child
+      // (type label, header row, buttons), and matching e.target directly made
+      // most of the tile's surface a dead drop zone ("can't drag to the top").
+      draggedElement = e.target.closest ? e.target.closest('.section-item') : e.target;
+      if (!draggedElement) draggedElement = e.target;
+      draggedElement.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/html', e.target.innerHTML);
+      e.dataTransfer.setData('text/plain', draggedElement.dataset.sectionId || '');
     }
 
     function handleDragOver(e) {
@@ -1145,34 +1149,33 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     function handleDragEnter(e) {
-      if (e.target.classList.contains('section-item') && e.target !== draggedElement) {
-        e.target.classList.add('drag-over');
-      }
+      var item = e.target.closest ? e.target.closest('.section-item') : null;
+      if (item && item !== draggedElement) item.classList.add('drag-over');
     }
 
     function handleDragLeave(e) {
-      if (e.target.classList.contains('section-item')) {
-        e.target.classList.remove('drag-over');
-      }
+      var item = e.target.closest ? e.target.closest('.section-item') : null;
+      // Only clear when truly leaving the tile, not when crossing its children.
+      if (item && !item.contains(e.relatedTarget)) item.classList.remove('drag-over');
     }
 
     function handleDrop(e) {
-      if (e.stopPropagation) {
-        e.stopPropagation();
-      }
+      if (e.stopPropagation) e.stopPropagation();
+      if (e.preventDefault) e.preventDefault();
 
-      e.target.classList.remove('drag-over');
+      var target = e.target.closest ? e.target.closest('.section-item') : null;
+      if (target) target.classList.remove('drag-over');
 
-      if (draggedElement !== e.target && e.target.classList.contains('section-item')) {
+      if (draggedElement && target && target !== draggedElement) {
         const container = document.getElementById('sections-list');
         const allItems = Array.from(container.children);
         const draggedIndex = allItems.indexOf(draggedElement);
-        const targetIndex = allItems.indexOf(e.target);
+        const targetIndex = allItems.indexOf(target);
 
         if (draggedIndex < targetIndex) {
-          container.insertBefore(draggedElement, e.target.nextSibling);
+          container.insertBefore(draggedElement, target.nextSibling);
         } else {
-          container.insertBefore(draggedElement, e.target);
+          container.insertBefore(draggedElement, target);
         }
 
         // Update section order in database
@@ -1183,7 +1186,8 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     function handleDragEnd(e) {
-      e.target.classList.remove('dragging');
+      if (draggedElement) draggedElement.classList.remove('dragging');
+      else if (e.target.classList) e.target.classList.remove('dragging');
 
       // Remove drag-over class from all items
       document.querySelectorAll('.section-item').forEach(item => {
