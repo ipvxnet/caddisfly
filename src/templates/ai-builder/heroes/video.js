@@ -2,7 +2,7 @@
 // Hero with video background and overlay
 
 export function heroVideoTemplate(data, config) {
-  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, video_url, background_image } = data;
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, video_url, background_image } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Use background image as fallback if no video
@@ -33,7 +33,7 @@ export function heroVideoTemplate(data, config) {
       ${
         cta_text
           ? `
-      <a href="${cta_url || '#contact'}" class="cta-button" style="background: ${primaryColor};">
+      <a href="${cta_link || cta_url || '#contact'}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''} class="cta-button" style="background: ${primaryColor};">
         ${cta_text}
       </a>
       `
