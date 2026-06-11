@@ -271,8 +271,11 @@ router.post('/api/ai-builder/:project_id/upload', handleAIBuilderUpload, PROJ);
 router.get('/api/ai-builder/:project_id/sections/:section_id/editor', handleGetSectionEditor, PROJ);
 router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit', handleAIEditPropose, PROJ);
 router.post('/api/ai-builder/:project_id/sections/:section_id/ai-edit/apply', autoSnap(handleAIEditApply), PROJ);
-router.put('/api/ai-builder/:project_id/sections/:section_id', autoSnap(handleAIBuilderSectionUpdate), PROJ);
+// NOTE: literal routes must precede same-method param routes — the router is
+// first-match-wins, and /sections/:section_id swallowed /sections/reorder for
+// ages ("Failed to update section order: Section not found").
 router.put('/api/ai-builder/:project_id/sections/reorder', autoSnap(handleSectionsReorder), PROJ);
+router.put('/api/ai-builder/:project_id/sections/:section_id', autoSnap(handleAIBuilderSectionUpdate), PROJ);
 router.post('/api/ai-builder/:project_id/sections', autoSnap(handleAddSection), PROJ);
 router.delete('/api/ai-builder/:project_id/sections/:section_id', autoSnap(handleDeleteSection), PROJ);
 router.put('/api/ai-builder/:project_id/config/colors', autoSnap(handleUpdateColors), PROJ);
