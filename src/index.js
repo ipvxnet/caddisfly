@@ -118,6 +118,7 @@ import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDo
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
 import { processBookingReminders } from './routes/api/bookings-remind.js';
+import { handleHolidayThemesSave, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
@@ -141,6 +142,16 @@ async function handleAdminRemindRun(ctx) {
   const nowOverride = parseInt(ctx.query && ctx.query.now, 10);
   if (dryRun && Number.isFinite(nowOverride)) opts.now = nowOverride;
   const summary = await processBookingReminders(ctx.env, opts);
+  return new Response(JSON.stringify({ success: true, summary }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+/** GET /api/admin/holiday-themes/run?dry=1&now=YYYY-MM-DD — manual tick
+ *  (admin-only test; `now` simulates the date, honored only with dry=1). */
+async function handleAdminHolidayRun(ctx) {
+  const dryRun = ctx.query && (ctx.query.dry === '1' || ctx.query.dry === 'true');
+  const opts = { dryRun };
+  if (dryRun && ctx.query && ctx.query.now) opts.now = String(ctx.query.now);
+  const summary = await processHolidayThemes(ctx.env, ctx.ctx, opts);
   return new Response(JSON.stringify({ success: true, summary }), { headers: { 'Content-Type': 'application/json' } });
 }
 import { handleStoreManager } from './routes/public/store-manager.js';
@@ -338,6 +349,7 @@ router.post('/api/ai-builder/:project_id/booking/overrides', handleBookingOverri
 router.post('/api/ai-builder/:project_id/booking/holidays', handleBookingHolidaysAdd, PROJ);
 router.delete('/api/ai-builder/:project_id/booking/overrides/:override_id', handleBookingOverrideDelete, PROJ);
 router.put('/api/ai-builder/:project_id/booking/settings', handleBookingSettingsSave, PROJ);
+router.put('/api/ai-builder/:project_id/holiday-themes', handleHolidayThemesSave, PROJ);
 router.post('/api/ai-builder/:project_id/booking/ical-token', handleBookingIcalToken, PROJ);
 router.post('/api/ai-builder/:project_id/booking/:booking_id/cancel', handleBookingOwnerCancel, PROJ);
 router.get('/api/ai-builder/:project_id/blog', handleBlogList, PROJ);
@@ -404,6 +416,7 @@ router.get('/admin/audit', handleAdminAudit, [authMiddleware, adminMiddleware]);
 router.get('/admin/revenue', handleAdminRevenue, [authMiddleware, adminMiddleware]);
 router.get('/api/admin/domains/renew', handleAdminRenewRun, [authMiddleware, adminMiddleware]);
 router.get('/api/admin/bookings/remind', handleAdminRemindRun, [authMiddleware, adminMiddleware]);
+router.get('/api/admin/holiday-themes/run', handleAdminHolidayRun, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
 router.get('/admin/legal', handleAdminLegal, [authMiddleware, adminMiddleware]);
@@ -463,6 +476,12 @@ export default {
       console.log('renewals:', JSON.stringify(summary));
     } catch (e) {
       console.error('scheduled renewals failed:', e.message);
+    }
+    try {
+      const summary = await processHolidayThemes(env, ctx);
+      console.log('holiday themes:', JSON.stringify(summary));
+    } catch (e) {
+      console.error('scheduled holiday themes failed:', e.message);
     }
   },
 

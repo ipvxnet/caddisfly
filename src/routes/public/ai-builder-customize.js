@@ -17,6 +17,7 @@ import { getCreditState, CREDIT_COSTS } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
 import { translator } from '../../i18n/index.js';
+import { parseHolidaySettings, HOLIDAY_SKINS, HOLIDAY_KEYS } from '../../utils/holiday-themes.js';
 
 /**
  * Handle customization interface
@@ -27,6 +28,7 @@ export async function handleAIBuilderCustomize(ctx) {
   const { env, params, query } = ctx;
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
+
   // Role-aware UI: hide actions this viewer can't perform (publish/domains).
   // projectAccess sets ctx.projectRole ('link' = signed-out, full access).
   const role = ctx.projectRole || 'link';
@@ -96,7 +98,8 @@ export async function handleAIBuilderCustomize(ctx) {
     // Custom-domain panel data.
     const domains = await getDomainsByProject(env.DB, projectKey);
     const saasOn = isSaaSConfigured(env);
-    const sitesBase = env.SITES_BASE || 'caddisfly.app';
+    const holidaySettings = parseHolidaySettings(config);
+  const sitesBase = env.SITES_BASE || 'caddisfly.app';
     const domainsPanelBlock = `
       <details class="design-group" id="domains-group"${domains.length ? ' open' : ''}>
         <summary>🌐 Custom domain</summary>
@@ -744,6 +747,29 @@ export async function handleAIBuilderCustomize(ctx) {
           </div>
         </details>
 
+        <details class="design-group" id="holiday-group">
+          <summary>${tr('hol.summary')}</summary>
+          <div class="design-group-body">
+            <p class="seo-hint">${tr('hol.hint')}</p>
+            <label class="bk-check" style="display:flex;gap:.5rem;align-items:center;cursor:pointer;margin-bottom:.6rem">
+              <input type="checkbox" id="hol-enabled"${holidaySettings.enabled ? ' checked' : ''}> <strong>${tr('hol.enable')}</strong>
+            </label>
+            <div id="hol-list" style="display:flex;flex-direction:column;gap:.35rem;margin:.3rem 0 .7rem">
+              ${HOLIDAY_KEYS.map((k) => `<label style="display:flex;gap:.5rem;align-items:center;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" class="hol-day" value="${k}"${holidaySettings.holidays.includes(k) ? ' checked' : ''}>
+                ${HOLIDAY_SKINS[k].emoji} ${tr(`hol.h_${k}`)}
+                <span style="display:inline-flex;gap:3px;margin-left:auto">
+                  <span style="width:14px;height:14px;border-radius:4px;background:${HOLIDAY_SKINS[k].colors.primary}"></span>
+                  <span style="width:14px;height:14px;border-radius:4px;background:${HOLIDAY_SKINS[k].colors.secondary}"></span>
+                </span>
+              </label>`).join('')}
+            </div>
+            ${holidaySettings.applied ? `<p class="seo-hint" style="color:#92400e">${tr('hol.active_now')} ${HOLIDAY_SKINS[holidaySettings.applied.holiday] ? HOLIDAY_SKINS[holidaySettings.applied.holiday].emoji : ''} ${tr(`hol.h_${holidaySettings.applied.holiday}`)}</p>` : ''}
+            <button class="link-btn" style="font-weight:700" onclick="saveHolidays(this)">${tr('hol.save')}</button>
+            <span class="seo-saved" id="hol-saved" hidden>${tr('cust.saved')}</span>
+          </div>
+        </details>
+
         <details class="design-group" id="versions-group" ontoggle="if(this.open) loadSnapshots()">
           <summary>${tr('snap.summary')}</summary>
           <div class="design-group-body">
@@ -913,6 +939,24 @@ export async function handleAIBuilderCustomize(ctx) {
         const d = await r.json();
         if (d.success) showNotification(${JSON.stringify(tr('cust.toast_seo_saved'))}, 'success');
         else alert(d.error || ${JSON.stringify(tr('cust.could_not_save_seo'))});
+      } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
+      finally { btn.disabled = false; }
+    }
+    async function saveHolidays(btn) {
+      btn.disabled = true;
+      try {
+        var hols = [];
+        document.querySelectorAll('.hol-day:checked').forEach(function (el) { hols.push(el.value); });
+        const r = await fetch(\`/api/ai-builder/\${projectId}/holiday-themes\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: document.getElementById('hol-enabled').checked, holidays: hols }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (d.success) {
+          var ok = document.getElementById('hol-saved');
+          if (ok) { ok.hidden = false; setTimeout(function () { ok.hidden = true; }, 1800); }
+          showNotification(${JSON.stringify(tr('hol.saved_note'))}, 'success');
+        } else alert(d.error || ${JSON.stringify(tr('cust.err_network'))});
       } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; }
     }

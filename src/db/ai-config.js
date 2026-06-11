@@ -78,6 +78,14 @@ export async function getWebsiteConfigByProjectId(db, aiProjectId) {
   return getWebsiteConfigByAIProjectId(db, aiProjectId);
 }
 
+/** Configs that opted into holiday themes (daily cron sweep). */
+export async function getHolidayEnabledConfigs(db, limit = 500) {
+  const res = await db.prepare(
+    `SELECT * FROM ai_website_configs WHERE holiday_themes_json LIKE '%"enabled":true%' LIMIT ?`
+  ).bind(limit).all();
+  return res.results || [];
+}
+
 /** Config row by its booking iCal feed token (public feed route). */
 export async function getConfigByIcalToken(db, token) {
   if (!token) return null;
@@ -92,7 +100,7 @@ export async function getConfigByIcalToken(db, token) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfigById(db, configId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token', 'holiday_themes_json'];
 
   const updates = [];
   const values = [];
@@ -127,7 +135,7 @@ export async function updateWebsiteConfigById(db, configId, data) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfig(db, aiProjectId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token', 'holiday_themes_json'];
 
   const updates = [];
   const values = [];
