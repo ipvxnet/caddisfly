@@ -58,6 +58,8 @@ export async function handleBookingManager(ctx) {
   }
 
   const settings = parseBookingSettings(config);
+  const icalToken = (config && config.booking_ical_token) || '';
+  const icalUrl = icalToken ? `${url.origin}/booking/feed/${icalToken}` : '';
   const conns = parseConnections(config);
   const selectedNotify = notifyPlatforms(settings);
   const today = nowInTimezone(settings.timezone).date;
@@ -112,6 +114,17 @@ export async function handleBookingManager(ctx) {
       <div class="brief-actions">
         <button class="btn" onclick="bkSaveSettings(this)">${tr('bkm.save')}</button>
         <span class="muted" id="bk-settings-status"></span>
+      </div>
+      <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:.9rem">
+        <label>${tr('bkm.ical_title')} <span class="hint">${tr('bkm.ical_hint')}</span></label>
+        ${icalToken ? `
+        <div class="inbound-addr" style="background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:11px;padding:.6rem .8rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+          <code id="bk-ical-url" style="font-family:ui-monospace,Menlo,monospace;font-size:.85rem;word-break:break-all;flex:1;min-width:200px">${esc(icalUrl)}</code>
+          <button class="btn ghost" onclick="bkCopyIcal(this)">${tr('bkm.ical_copy')}</button>
+          <button class="link-btn" onclick="bkIcalToken(this)">${tr('bkm.ical_rotate')}</button>
+        </div>` : `
+        <button class="btn ghost" onclick="bkIcalToken(this)">${tr('bkm.ical_create')}</button>`}
+        <div class="muted" style="margin-top:.3rem">${tr('bkm.ical_note')}</div>
       </div>
     </div>`;
 
@@ -322,7 +335,7 @@ export async function handleBookingManager(ctx) {
     var T = ${JSON.stringify({
       saved: tr('bkm.saved'), err: tr('bkm.err'), confirm_del: tr('bkm.confirm_del'),
       confirm_cancel: tr('bkm.confirm_cancel'), need_name: tr('bkm.svc_need_name'),
-      holidays_none: tr('bkm.holidays_none'),
+      holidays_none: tr('bkm.holidays_none'), ical_rotate_confirm: tr('bkm.ical_rotate_confirm'),
     })};
     async function api(method, path, body) {
       const r = await fetch('/api/ai-builder/' + PID + '/booking' + path, {
@@ -438,6 +451,18 @@ export async function handleBookingManager(ctx) {
         });
         location.reload();
       } catch (e) { status('bk-ovr-status', e.message, 1); busy(btn, 0); }
+    }
+    async function bkIcalToken(btn) {
+      if (btn.textContent.trim() !== '' && document.getElementById('bk-ical-url') && !confirm(T.ical_rotate_confirm)) return;
+      busy(btn, 1);
+      try { await api('POST', '/ical-token'); location.reload(); }
+      catch (e) { alert(e.message); busy(btn, 0); }
+    }
+    function bkCopyIcal(btn) {
+      var el = document.getElementById('bk-ical-url'); if (!el) return;
+      navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+        var was = btn.textContent; btn.textContent = '✓'; setTimeout(function () { btn.textContent = was; }, 1200);
+      });
     }
     async function bkAddHolidays(btn) {
       busy(btn, 1);

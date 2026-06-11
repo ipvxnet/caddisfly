@@ -661,6 +661,10 @@ export const es = {
     lead: 'Antelación', lead_hint: '(aviso mínimo antes de una reserva)', lead_none: 'Ninguna',
     max_day: 'Máx. por día', max_day_hint: '(0 = sin límite)',
     step: 'Intervalo', step_auto: 'Duración del servicio',
+    ical_title: '📆 Feed de calendario', ical_hint: '(suscríbete en Google/Apple/Outlook Calendar)',
+    ical_create: '＋ Crear enlace de calendario', ical_copy: 'Copiar', ical_rotate: 'Rotar enlace',
+    ical_rotate_confirm: '¿Rotar el enlace del calendario? La URL antigua dejará de funcionar y tendrás que volver a suscribirte.',
+    ical_note: 'Feed de solo lectura con tus reservas confirmadas — añádelo a tu calendario con "suscribirse por URL". Cualquiera con el enlace puede ver tus reservas; rótalo si se filtra.',
     cutoff: 'Límite de cancelación', cutoff_hint: '(los visitantes pueden cancelar/cambiar hasta este margen antes — nunca después del inicio)', cutoff_none: 'Hasta la hora de inicio',
     save: 'Guardar', saved: 'Guardado ✓', err: 'Algo salió mal. Inténtalo de nuevo.',
     tab_upcoming: '📥 Próximas reservas', tab_settings: '⚙️ Ajustes',
@@ -1027,7 +1031,7 @@ export const es = {
         <ul>
           <li><strong>Configura</strong> — abre <strong>Reservas</strong> desde tu panel: añade tus servicios (duración, precio opcional, descripción con ✨ IA), define el horario semanal y tu zona horaria, y cierra los festivos con un clic (<strong>＋ Añadir festivos</strong>).</li>
           <li><strong>Añádelo a tu sitio</strong> — en el editor, <strong>Añadir sección → 📅 Reservas</strong> en cualquier página y publica. Los visitantes eligen servicio y hora; ambos reciben email de confirmación y el visitante un enlace de cancelación de un clic.</li>
-          <li><strong>Mantente al tanto</strong> — la bandeja de próximas reservas está en la página de Reservas, y puedes duplicar los avisos de nueva reserva en <strong>Discord, Slack o Telegram</strong> (Ajustes de reservas → Avisos de nueva reserva; usa las mismas conexiones que compartir-en-redes).</li>
+          <li><strong>Mantente al tanto</strong> — la bandeja de próximas reservas está en la página de Reservas, puedes duplicar los avisos de nueva reserva en <strong>Discord, Slack o Telegram</strong> (Ajustes de reservas → Avisos de nueva reserva; usa las mismas conexiones que compartir-en-redes), y el <strong>📆 feed de calendario</strong> (Ajustes de reservas) lleva cada reserva confirmada a tu propio calendario de Google/Apple/Outlook por suscripción de URL.</li>
           <li><strong>Sin dobles reservas</strong> — los horarios se reservan de forma atómica; la antelación, los márgenes entre citas y el máximo por día son configurables.</li>
           <li><strong>Cobra al reservar</strong> (planes de pago) — pon precio a un servicio y marca <strong>💳 Requerir pago</strong>: los visitantes pagan en Stripe Checkout (tu cuenta de Stripe conectada, como la tienda) antes de confirmar la cita, y las cancelaciones se reembolsan automáticamente.</li>
           <li><strong>Configura tu cuenta de Stripe para recibos e impuestos</strong> — los pagos llegan a <em>tu</em> cuenta de Stripe, así que su configuración es tuya:

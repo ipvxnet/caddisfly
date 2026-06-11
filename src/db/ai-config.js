@@ -78,6 +78,12 @@ export async function getWebsiteConfigByProjectId(db, aiProjectId) {
   return getWebsiteConfigByAIProjectId(db, aiProjectId);
 }
 
+/** Config row by its booking iCal feed token (public feed route). */
+export async function getConfigByIcalToken(db, token) {
+  if (!token) return null;
+  return db.prepare('SELECT * FROM ai_website_configs WHERE booking_ical_token = ?').bind(token).first();
+}
+
 /**
  * Update website configuration by ID
  * @param {object} db - D1 database instance
@@ -86,7 +92,7 @@ export async function getWebsiteConfigByProjectId(db, aiProjectId) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfigById(db, configId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token'];
 
   const updates = [];
   const values = [];
@@ -121,7 +127,7 @@ export async function updateWebsiteConfigById(db, configId, data) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfig(db, aiProjectId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token'];
 
   const updates = [];
   const values = [];

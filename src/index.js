@@ -84,11 +84,12 @@ import { handleBookingManager } from './routes/public/booking-manager.js';
 import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
 import { handleBookingReceipt } from './routes/public/booking-receipt.js';
 import { handleBookingReschedulePage, handleBookingRescheduleAction } from './routes/public/booking-reschedule.js';
+import { handleBookingFeed } from './routes/public/booking-feed.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
   handleBookingHoursSave, handleBookingOverrideSave, handleBookingOverrideDelete, handleBookingHolidaysAdd,
-  handleBookingSettingsSave, handleBookingOwnerCancel,
+  handleBookingSettingsSave, handleBookingOwnerCancel, handleBookingIcalToken,
 } from './routes/api/ai-builder/booking.js';
 import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
@@ -222,6 +223,7 @@ router.get('/team/accept/:token', handleTeamAccept);
 router.get('/booking/receipt', handleBookingReceipt);
 router.get('/booking/cancel/:token', handleBookingCancelPage);
 router.post('/booking/cancel/:token', handleBookingCancelAction);
+router.get('/booking/feed/:token', handleBookingFeed);
 router.get('/booking/reschedule/:token', handleBookingReschedulePage);
 router.post('/booking/reschedule/:token', handleBookingRescheduleAction);
 
@@ -336,6 +338,7 @@ router.post('/api/ai-builder/:project_id/booking/overrides', handleBookingOverri
 router.post('/api/ai-builder/:project_id/booking/holidays', handleBookingHolidaysAdd, PROJ);
 router.delete('/api/ai-builder/:project_id/booking/overrides/:override_id', handleBookingOverrideDelete, PROJ);
 router.put('/api/ai-builder/:project_id/booking/settings', handleBookingSettingsSave, PROJ);
+router.post('/api/ai-builder/:project_id/booking/ical-token', handleBookingIcalToken, PROJ);
 router.post('/api/ai-builder/:project_id/booking/:booking_id/cancel', handleBookingOwnerCancel, PROJ);
 router.get('/api/ai-builder/:project_id/blog', handleBlogList, PROJ);
 router.post('/api/ai-builder/:project_id/blog', handleBlogCreate, PROJ);
