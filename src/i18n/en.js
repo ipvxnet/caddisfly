@@ -724,6 +724,7 @@ export const en = {
     cancelled: 'No charge was made and nothing was booked. You can pick a new time on the website any time.',
     conflict_title: 'That slot just got away',
     conflict: 'Your payment arrived after the hold expired and someone else took the time. <strong>Your payment has been refunded in full.</strong> Please pick another time — sorry about that!',
+    back: 'Back to', back_site: 'the website',
     missing_title: 'Receipt not found',
     missing: 'We couldn\'t match this payment to a booking. If you were charged, reply to your Stripe receipt email.',
   },

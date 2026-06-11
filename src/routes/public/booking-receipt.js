@@ -34,6 +34,7 @@ ${headTags({ title: `${title} — Caddisfly`, description: title, path: '/bookin
 .bkr-meta { font-size: 1.05rem; color: #1a202c; font-weight: 700; margin: .8rem 0; }
 .bkr-muted { color: #667085; line-height: 1.6; }
 .bkr-ok { color: #065f46; }
+.bkr-back { display: inline-block; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; text-decoration: none; padding: .65rem 1.3rem; border-radius: 9px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -57,13 +58,20 @@ export async function handleBookingReceipt(ctx) {
     return page(ctx, tr('bkr.title'), `<h1>${tr('bkr.missing_title')}</h1><p class="bkr-muted">${tr('bkr.missing')}</p>`);
   }
 
-  // Resolve the merchant's connected account for this site.
+  // Resolve the merchant's connected account + display name for this site.
   const ai = await getAIProjectByProjectId(env.DB, publicId);
   let config = null;
-  if (ai) config = await getWebsiteConfigByAIProjectId(env.DB, ai.id);
-  else {
+  let siteName = '';
+  if (ai) {
+    config = await getWebsiteConfigByAIProjectId(env.DB, ai.id);
+    siteName = ai.project_name || '';
+  } else {
     const rp = await getProjectByPreviewId(env.DB, publicId);
-    if (rp) config = await getWebsiteConfigByRegularProjectId(env.DB, rp.id);
+    if (rp) {
+      config = await getWebsiteConfigByRegularProjectId(env.DB, rp.id);
+      siteName = rp.website_url || '';
+      try { const p = JSON.parse(rp.company_profile_json || '{}'); if (p && p.name) siteName = p.name; } catch { /* ignore */ }
+    }
   }
   if (!config || !config.stripe_account_id) {
     return page(ctx, tr('bkr.title'), `<h1>${tr('bkr.missing_title')}</h1><p class="bkr-muted">${tr('bkr.missing')}</p>`);
@@ -85,18 +93,26 @@ export async function handleBookingReceipt(ctx) {
   const b = result.booking;
   const when = b ? `${esc(b.date)} · ${minutesLabel(b.start_min)}` : '';
 
+  // Send the visitor HOME: back to the page they booked from (session
+  // metadata, store-receipt pattern). Without it they were stranded on a
+  // Caddisfly-branded page with no path back to the business's site.
+  const backUrl = session.metadata && /^https?:\/\//.test(session.metadata.back || '') ? session.metadata.back : '';
+  const backBtn = backUrl
+    ? `<p style="margin-top:1.4rem"><a class="bkr-back" href="${esc(backUrl)}">← ${tr('bkr.back')} ${esc(siteName || tr('bkr.back_site'))}</a></p>`
+    : '';
+
   if (result.state === 'confirmed' || result.state === 'already') {
     return page(ctx, tr('bkr.title'), `<h1 class="bkr-ok">${tr('bkr.ok_title')}</h1>
       <p class="bkr-meta">${esc((b && b.service_name) || '')} — ${when}</p>
-      <p class="bkr-muted">${tr('bkr.ok')}</p>`);
+      <p class="bkr-muted">${tr('bkr.ok')}</p>${backBtn}`);
   }
   if (result.state === 'unpaid') {
-    return page(ctx, tr('bkr.title'), `<h1>${tr('bkr.unpaid_title')}</h1><p class="bkr-muted">${tr('bkr.unpaid')}</p>`);
+    return page(ctx, tr('bkr.title'), `<h1>${tr('bkr.unpaid_title')}</h1><p class="bkr-muted">${tr('bkr.unpaid')}</p>${backBtn}`);
   }
   if (result.state === 'conflict') {
     return page(ctx, tr('bkr.title'), `<h1>${tr('bkr.conflict_title')}</h1>
       <p class="bkr-meta">${esc((b && b.service_name) || '')} — ${when}</p>
-      <p class="bkr-muted">${tr('bkr.conflict')}</p>`);
+      <p class="bkr-muted">${tr('bkr.conflict')}</p>${backBtn}`);
   }
   return page(ctx, tr('bkr.title'), `<h1>${tr('bkr.missing_title')}</h1><p class="bkr-muted">${tr('bkr.missing')}</p>`);
 }
