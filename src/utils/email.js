@@ -712,7 +712,7 @@ const bkEsc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&':
  * Visitor confirmation / cancellation for a booking. English v1 (transactional
  * email i18n is a deferred follow-up, same as the rest of email.js).
  */
-export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false, refund = null, paidLabel = null, receiptUrl = null, ics = null, rescheduled = false, oldWhen = null, rescheduleUrl = null }) {
+export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false, refund = null, paidLabel = null, remainingLabel = null, receiptUrl = null, ics = null, rescheduled = false, oldWhen = null, rescheduleUrl = null }) {
   // refund: null (free booking) | 'refunded' | 'failed' (manual refund coming)
   const title = cancelled ? 'Your booking was cancelled' : rescheduled ? 'Your booking was rescheduled 🔁' : 'Your booking is confirmed ✅';
   const refundLine = refund === 'refunded'
@@ -727,7 +727,8 @@ export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, 
         <p style="color:#444;line-height:1.6;"><strong>${bkEsc(serviceName)}</strong> at <strong>${bkEsc(siteName)}</strong></p>
         <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${bkEsc(dateLabel)} · ${bkEsc(timeLabel)}${tz ? ` <span style="color:#888;font-weight:400;">(${bkEsc(tz)})</span>` : ''}</p>
         ${rescheduled && oldWhen ? `<p style="color:#888;margin:0 0 8px;">Previously: <s>${bkEsc(oldWhen)}</s></p>` : ''}
-        ${!cancelled && paidLabel ? `<p style="color:#065f46;font-weight:700;margin:6px 0 14px;">Paid: ${bkEsc(paidLabel)}${receiptUrl ? ` &nbsp;·&nbsp; <a href="${receiptUrl}" style="color:#2563eb;font-weight:600;">View receipt</a>` : ''}</p>` : ''}
+        ${!cancelled && paidLabel ? `<p style="color:#065f46;font-weight:700;margin:6px 0 4px;">${remainingLabel ? 'Deposit paid' : 'Paid'}: ${bkEsc(paidLabel)}${receiptUrl ? ` &nbsp;·&nbsp; <a href="${receiptUrl}" style="color:#2563eb;font-weight:600;">View receipt</a>` : ''}</p>` : ''}
+        ${!cancelled && remainingLabel ? `<p style="color:#92400e;font-weight:600;margin:0 0 14px;">Remaining due at your appointment: ${bkEsc(remainingLabel)}</p>` : ''}
         ${cancelled
           ? `${refundLine}<p style="color:#444;line-height:1.6;">This time is no longer reserved. You can book a new time on the website.</p>`
           : `${cancelUrl || rescheduleUrl ? `<p style="color:#444;line-height:1.6;">Need to change plans?</p>
@@ -753,7 +754,7 @@ export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, 
 }
 
 /** Owner notification: new booking or a visitor cancellation. */
-export async function sendBookingOwnerEmail(env, { to, siteName, serviceName, customerName, customerEmail, dateLabel, timeLabel, note, manageUrl, cancelled = false, rescheduled = false, oldWhen = null }) {
+export async function sendBookingOwnerEmail(env, { to, siteName, serviceName, customerName, customerEmail, dateLabel, timeLabel, note, manageUrl, cancelled = false, rescheduled = false, oldWhen = null, paidLabel = null, remainingLabel = null }) {
   const title = cancelled ? 'A booking was cancelled' : rescheduled ? 'A booking was rescheduled 🔁' : 'New booking 📅';
   const html = `
     <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
@@ -762,6 +763,7 @@ export async function sendBookingOwnerEmail(env, { to, siteName, serviceName, cu
         <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${bkEsc(serviceName)} — ${bkEsc(dateLabel)} · ${bkEsc(timeLabel)}</p>
         ${rescheduled && oldWhen ? `<p style="color:#888;margin:0 0 8px;">Previously: <s>${bkEsc(oldWhen)}</s></p>` : ''}
         <p style="color:#444;line-height:1.6;">${bkEsc(customerName)} &lt;${bkEsc(customerEmail)}&gt;${note ? `<br><em>“${bkEsc(note)}”</em>` : ''}</p>
+        ${paidLabel ? `<p style="color:#065f46;font-weight:600;margin:6px 0;">💳 ${remainingLabel ? `Deposit ${bkEsc(paidLabel)} paid — collect ${bkEsc(remainingLabel)} at the appointment` : `Paid ${bkEsc(paidLabel)}`}</p>` : ''}
         ${manageUrl ? `<p style="margin:24px 0;"><a href="${manageUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Open bookings</a></p>` : ''}
       </div>
     </body></html>`;

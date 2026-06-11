@@ -113,6 +113,15 @@ function serviceFields(body) {
   // Paid bookings: visitors pay this price in Stripe Checkout before the slot
   // confirms (gated in paidToggleGate — price + Stripe connected + Starter+).
   out.require_payment = body.require_payment ? 1 : 0;
+  // Optional fixed DEPOSIT: charge this instead of the full price (remainder
+  // is settled in person). Must be smaller than the price to mean anything.
+  const dep = body.deposit_cents != null && body.deposit_cents !== '' ? clampInt(body.deposit_cents, 0, 100000000, null) : null;
+  if (dep != null && dep > 0) {
+    if (!price || dep >= price) return { error: 'The deposit must be smaller than the price.' };
+    out.deposit_cents = dep;
+  } else {
+    out.deposit_cents = null;
+  }
   return { fields: out };
 }
 

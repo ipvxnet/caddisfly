@@ -87,6 +87,7 @@ function publicService(s) {
     price_cents: s.price_cents != null ? s.price_cents : null,
     currency: s.currency || null,
     require_payment: s.require_payment ? 1 : 0,
+    deposit_cents: s.deposit_cents != null ? s.deposit_cents : null,
   };
 }
 
@@ -216,13 +217,17 @@ export async function handleBookingCreate(ctx) {
 
     // ---- PAID path: pending hold + Stripe Checkout (direct charge) ----
     const paid = !!service.require_payment && service.price_cents > 0 && !!(site.config && site.config.stripe_account_id);
+    // Deposit model: charge the fixed deposit instead of the full price when
+    // one is set (validated < price at save time); remainder settles in person.
+    const isDeposit = paid && service.deposit_cents > 0 && service.deposit_cents < service.price_cents;
+    const chargeCents = isDeposit ? service.deposit_cents : service.price_cents;
     if (paid) {
       const hold = await claimBooking(env.DB, site.projectKey, {
         service_id: service.id, customer_name: name, customer_email: email, note,
         date, start_min: slot.start_min, end_min: slot.end_min,
         cancel_token: cancelToken, visitor_tz: visitorTz,
         pendingHold: true, holdSeconds: 1860,
-        amount_cents: service.price_cents, currency: service.currency || 'usd',
+        amount_cents: chargeCents, currency: service.currency || 'usd',
       });
       if (!hold) return jsonResponse({ success: false, error: t(ctx.lang, 'bkw.err_taken') }, 409);
 
@@ -233,8 +238,8 @@ export async function handleBookingCreate(ctx) {
           lineItems: [{
             price_data: {
               currency: service.currency || 'usd',
-              unit_amount: service.price_cents,
-              product_data: { name: `${service.name} — ${date} ${minutesLabel(slot.start_min)}` },
+              unit_amount: chargeCents,
+              product_data: { name: `${isDeposit ? 'Deposit — ' : ''}${service.name} — ${date} ${minutesLabel(slot.start_min)}` },
             },
             quantity: 1,
           }],
@@ -249,7 +254,7 @@ export async function handleBookingCreate(ctx) {
         await setBookingSession(env.DB, hold.id, session.id);
         audit(ctx, 'booking.payment_started', {
           actor: email, teamOwner: site.ownerEmail, resourceType: 'site', resourceId: params.project_id,
-          metadata: { booking_id: hold.id, amount_cents: service.price_cents },
+          metadata: { booking_id: hold.id, amount_cents: chargeCents, deposit: isDeposit ? 1 : 0 },
         });
         // NO emails yet — confirmation happens when the payment lands.
         return jsonResponse({ success: true, checkout_url: session.url });
@@ -333,15 +338,25 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
   const booking = await getBookingBySession(env.DB, session.id);
 
   if (outcome === 'confirmed' && booking) {
+    let remainingCents = 0;
     const site = await siteForBooking(env.DB, booking);
     if (site) {
       const appOrigin = env.APP_URL || 'https://caddisfly.ai';
       const dateLabel = booking.date;
       const timeLabel = minutesLabel(booking.start_min);
-      let paidLabel = null;
-      if (booking.amount_cents != null) {
-        try { paidLabel = new Intl.NumberFormat('en', { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(booking.amount_cents / 100); }
-        catch { paidLabel = `${(booking.amount_cents / 100).toFixed(2)} ${(booking.currency || 'usd').toUpperCase()}`; }
+      const fmt = (cents) => {
+        try { return new Intl.NumberFormat('en', { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(cents / 100); }
+        catch { return `${(cents / 100).toFixed(2)} ${(booking.currency || 'usd').toUpperCase()}`; }
+      };
+      const paidLabel = booking.amount_cents != null ? fmt(booking.amount_cents) : null;
+      // Deposit: the charge was less than the service price — surface the
+      // remainder everywhere so nobody is surprised at the appointment.
+      let remainingLabel = null;
+      const svcKey = booking.ai_project_id != null ? { aiProjectId: booking.ai_project_id } : { projectId: booking.project_id };
+      const svcRow = await getServiceById(env.DB, svcKey, booking.service_id);
+      if (svcRow && svcRow.price_cents && booking.amount_cents != null && booking.amount_cents < svcRow.price_cents) {
+        remainingCents = svcRow.price_cents - booking.amount_cents;
+        remainingLabel = fmt(remainingCents);
       }
       const cancelUrl = `${appOrigin}/booking/cancel/${booking.cancel_token}`;
       const rescheduleUrl = `${appOrigin}/booking/reschedule/${booking.cancel_token}`;
@@ -354,7 +369,7 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
           to: booking.customer_email, siteName: site.siteName, serviceName: booking.service_name || '',
           dateLabel, timeLabel, tz: site.settings.timezone,
           cancelUrl, rescheduleUrl, ics,
-          paidLabel,
+          paidLabel, remainingLabel,
           receiptUrl: `${appOrigin}/booking/receipt?s=${publicId || site.publicId}&sid=${session.id}`,
         }),
         sendBookingOwnerEmail(env, {
@@ -362,6 +377,7 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
           customerName: booking.customer_name, customerEmail: booking.customer_email,
           dateLabel, timeLabel, note: booking.note || '',
           manageUrl: `${appOrigin}/ai-builder/bookings/${publicId || site.publicId}`,
+          paidLabel, remainingLabel,
         }),
         notifyBookingEvent(env, {
           config: site.config, settings: site.settings, siteName: site.siteName, publicId: publicId || site.publicId,
@@ -369,7 +385,7 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
         }),
       ]);
     }
-    return { state: 'confirmed', booking };
+    return { state: 'confirmed', booking, remaining_cents: remainingCents };
   }
   if (outcome === 'already') return { state: 'already', booking };
 

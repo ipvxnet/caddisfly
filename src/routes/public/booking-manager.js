@@ -148,6 +148,9 @@ export async function handleBookingManager(ctx) {
       <div class="brief-actions">
         <label class="bk-check"><input type="checkbox" class="sv-active"${s.active ? ' checked' : ''}> ${tr('bkm.svc_active')}</label>
         <label class="bk-check" title="${esc(tr('bkm.svc_paid_title'))}"><input type="checkbox" class="sv-paid"${s.require_payment ? ' checked' : ''}> ${tr('bkm.svc_paid')}</label>
+        <label class="bk-check" title="${esc(tr('bkm.svc_deposit_title'))}">${tr('bkm.svc_deposit')}
+          <input class="sv-deposit" type="number" min="0" step="0.01" style="width:100px" placeholder="—"
+            value="${s.deposit_cents != null ? (s.deposit_cents / 100).toFixed(2) : ''}"></label>
         <button class="btn ghost" onclick="bkSaveService(this)">${tr('bkm.save')}</button>
         <button class="link-btn danger" onclick="bkDeleteService(this)">${tr('bkm.delete')}</button>
       </div>
@@ -381,6 +384,10 @@ export async function handleBookingManager(ctx) {
         price_cents: price === '' ? null : Math.round(parseFloat(price) * 100),
         active: root.querySelector('.sv-active') ? root.querySelector('.sv-active').checked : true,
         require_payment: root.querySelector('.sv-paid') ? root.querySelector('.sv-paid').checked : false,
+        deposit_cents: (function () {
+          var el = root.querySelector('.sv-deposit');
+          return el && el.value !== '' ? Math.round(parseFloat(el.value) * 100) : null;
+        })(),
       };
     }
     async function bkAddService(btn) {

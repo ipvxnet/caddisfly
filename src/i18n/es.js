@@ -684,6 +684,7 @@ export const es = {
     inbox_title: '📥 Próximas reservas',
     inbox_empty: 'Aún no hay reservas. Añade la sección 📅 Reservas a tu sitio para que los visitantes puedan reservar.',
     b_cancel: 'Cancelar', b_cancelled: 'Cancelada', b_paid: 'Pagada', b_refunded: 'Reembolsada',
+    svc_deposit: 'Depósito', svc_deposit_title: 'Cobra solo este importe fijo al reservar (debe ser menor que el precio); el resto se paga en la cita. Las cancelaciones antes del límite devuelven el depósito.',
     svc_paid: '💳 Requerir pago', svc_paid_title: 'Los visitantes pagan el precio en Stripe Checkout antes de confirmar la cita (requiere precio + Stripe conectado; planes de pago)',
     confirm_cancel: '¿Cancelar esta reserva? Se avisará al visitante por email.',
     tz_other: 'Otra…',
@@ -708,7 +709,7 @@ export const es = {
     success: '✅ ¡Reservado! Revisa tu email para la confirmación.',
     err_generic: 'Algo salió mal. Inténtalo de nuevo.',
     next_days: 'Después', prev_days: 'Antes', close: 'Cerrar',
-    pay_btn: 'Reservar y pagar', f_pay_submit: 'Continuar al pago', your_time: 'tu hora:',
+    pay_btn: 'Reservar y pagar', deposit_btn: 'Reservar — depósito de {amt}', f_pay_submit: 'Continuar al pago', your_time: 'tu hora:',
     redirecting: 'Llevándote al pago seguro…',
     err_fields: 'Completa tu nombre y un email válido.',
     err_rate: 'Demasiadas reservas — inténtalo más tarde.',
@@ -719,6 +720,7 @@ export const es = {
     title: 'Pago de la reserva',
     ok_title: '✅ ¡Reservado y pagado!',
     ok: 'Tu cita está confirmada — el email de confirmación (con un enlace de cancelación de un clic) está en camino.',
+    remaining: 'Pendiente de pago en tu cita: {amt}',
     unpaid_title: 'Pago no completado',
     unpaid: 'El pago no se completó, así que no se reservó nada. Tu horario se retuvo unos minutos — vuelve e inténtalo de nuevo.',
     cancelled_title: 'Pago cancelado',
@@ -1033,7 +1035,7 @@ export const es = {
           <li><strong>Añádelo a tu sitio</strong> — en el editor, <strong>Añadir sección → 📅 Reservas</strong> en cualquier página y publica. Los visitantes eligen servicio y hora; ambos reciben email de confirmación y el visitante un enlace de cancelación de un clic.</li>
           <li><strong>Mantente al tanto</strong> — la bandeja de próximas reservas está en la página de Reservas, puedes duplicar los avisos de nueva reserva en <strong>Discord, Slack o Telegram</strong> (Ajustes de reservas → Avisos de nueva reserva; usa las mismas conexiones que compartir-en-redes), y el <strong>📆 feed de calendario</strong> (Ajustes de reservas) lleva cada reserva confirmada a tu propio calendario de Google/Apple/Outlook por suscripción de URL.</li>
           <li><strong>Sin dobles reservas</strong> — los horarios se reservan de forma atómica; la antelación, los márgenes entre citas y el máximo por día son configurables.</li>
-          <li><strong>Cobra al reservar</strong> (planes de pago) — pon precio a un servicio y marca <strong>💳 Requerir pago</strong>: los visitantes pagan en Stripe Checkout (tu cuenta de Stripe conectada, como la tienda) antes de confirmar la cita, y las cancelaciones se reembolsan automáticamente.</li>
+          <li><strong>Cobra al reservar</strong> (planes de pago) — pon precio a un servicio y marca <strong>💳 Requerir pago</strong>: los visitantes pagan en Stripe Checkout (tu cuenta de Stripe conectada, como la tienda) antes de confirmar la cita, y las cancelaciones se reembolsan automáticamente. Define un <strong>depósito</strong> opcional para cobrar solo una parte por adelantado — el resto se paga en la cita, y los emails detallan el saldo pendiente para ambas partes.</li>
           <li><strong>Configura tu cuenta de Stripe para recibos e impuestos</strong> — los pagos llegan a <em>tu</em> cuenta de Stripe, así que su configuración es tuya:
             <ul>
               <li><strong>Recibos por email</strong> — en tu panel de Stripe ve a <strong>Settings → Emails</strong> y activa <em>"Successful payments"</em> para que los clientes reciban el recibo oficial de Stripe (el email de confirmación de Caddisfly también muestra el importe pagado + un enlace al recibo). Stripe nunca envía recibos en modo de prueba.</li>
