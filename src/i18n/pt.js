@@ -678,6 +678,14 @@ export const pt = {
     inbox_empty: 'Ainda não há reservas. Adicione a seção 📅 Reservas ao seu site para os visitantes reservarem.',
     b_cancel: 'Cancelar', b_cancelled: 'Cancelada',
     confirm_cancel: 'Cancelar esta reserva? O visitante será avisado por email.',
+    tz_other: 'Outro…',
+    svc_ai_desc: '✨ IA', svc_ai_desc_title: 'A IA redige uma descrição curta a partir do nome do serviço (2 créditos)',
+    svc_desc_ph: 'Descrição curta (ou deixe a IA escrever)', svc_need_name: 'Dê um nome ao serviço primeiro.',
+    holidays_intro: 'Feche os feriados principais automaticamente:', holidays_add: '＋ Adicionar feriados', holidays_none: 'Todos esses feriados já estão na sua lista.',
+    country_us: 'Estados Unidos', country_br: 'Brasil', country_mx: 'México', country_es: 'Espanha', country_pt: 'Portugal',
+    notify_title: 'Avisos de nova reserva', notify_hint: '(além do email)',
+    notify_not_connected: 'não conectado', notify_connect_note: 'Os webhooks são compartilhados com o compartilhar-nas-redes — conecte-os no',
+    notify_connect_link: 'gerenciador do Blog →',
   },
   bkw: {
     heading: 'Agende um horário',
@@ -930,7 +938,7 @@ export const pt = {
     toc: [
       ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
       ['logo', 'Logo e marca'],
-      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'],
+      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'], ['bookings', 'Reservas'],
       ['blog', 'Blog, email e redes'], ['messages', 'Formulário de contato e caixa de entrada'],
       ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
       ['buy-domain', 'Comprar um domínio'],
@@ -980,6 +988,14 @@ export const pt = {
         <p>Após cada venda, o comprador chega a uma página de recibo (salvável em PDF) e recebe um e-mail de confirmação; você recebe um e-mail de “novo pedido” e o pedido aparece em <strong>🧾 Pedidos</strong> na página Loja. Os compradores podem rever o histórico quando quiserem em <strong>Meus pedidos</strong> (link seguro por e-mail). Limites de produtos: Starter 10 · Pro 50 · Agency ilimitados.</p>
         <p><strong>Destaque produtos onde quiser:</strong> no Personalizar, <strong>+ Adicionar seção → 🛍 Produtos da loja</strong> coloca seus itens mais recentes (com adicionar ao carrinho) em qualquer página — a página inicial é um ótimo lugar. Atualiza automaticamente conforme você adiciona produtos.</p>
         <p><strong>Assinaturas:</strong> venda planos recorrentes a partir de uma seção de <strong>Preços</strong> — edite a seção, anexe um dos seus preços recorrentes do Stripe a um cartão de plano (ou crie um ali mesmo) e o botão dele vira um <strong>Assinar</strong> com pagamento real. Renovações, faturas e recibos ficam por conta da sua conta Stripe.</p>`],
+      ['bookings', 'Reservas', `
+        <p>Deixe os visitantes agendarem direto no seu site — serviços, horários, confirmações e cancelamentos inclusos (grátis em todos os planos, com limites por plano).</p>
+        <ul>
+          <li><strong>Configure</strong> — abra <strong>Reservas</strong> no seu painel: adicione seus serviços (duração, preço opcional, descrição com ✨ IA), defina o horário semanal e seu fuso, e feche os feriados com um clique (<strong>＋ Adicionar feriados</strong>).</li>
+          <li><strong>Adicione ao site</strong> — no editor, <strong>Adicionar seção → 📅 Reservas</strong> em qualquer página e publique. Os visitantes escolhem serviço e horário; os dois lados recebem email de confirmação e o visitante um link de cancelamento de um clique.</li>
+          <li><strong>Fique por dentro</strong> — a caixa de próximas reservas fica na página de Reservas, e você pode espelhar os avisos de nova reserva no <strong>Discord, Slack ou Telegram</strong> (Configurações de reservas → Avisos de nova reserva; usa as mesmas conexões do compartilhar-nas-redes).</li>
+          <li><strong>Sem reservas duplicadas</strong> — os horários são reservados de forma atômica; antecedência, intervalos entre atendimentos e máximo por dia são configuráveis.</li>
+        </ul>`],
       ['blog', 'Blog, email e redes', `
         <p>Abra <strong>📝 Blog</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar). Dê à IA algumas frases sobre o que a publicação deve dizer — ela redige o texto completo no idioma do seu site; você edita e publica. Ao publicar, seu site ganha uma página <strong>Blog</strong> e um link no menu (republique pelo Personalizar para colocar novas publicações no ar).</p>
         <ul>
@@ -1055,6 +1071,7 @@ export const pt = {
       ['Posso comprar um domínio pela Caddisfly?', 'Sim — abra <strong>🌐 Compre um domínio</strong> no seu Painel, pesquise um nome e compre. Nós o registramos em seu nome e o conectamos ao seu site automaticamente com SSL — sem configurar DNS. <strong>Importante:</strong> após a primeira compra você precisa clicar em 15 dias no link de verificação da ICANN enviado por e-mail, ou o domínio é suspenso. Os domínios renovam a cada ano (você pode desativar). Ver <a href="#buy-domain">Comprar um domínio</a>.'],
       ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Você ainda pode <strong>publicar por email</strong> e <strong>compartilhar automaticamente</strong> no Discord, Slack, Telegram ou Mastodon. Ver <a href="#blog">Blog, email e redes</a>.'],
       ['Posso publicar no meu blog por email?', 'Sim, em planos pagos. No gerenciador do <strong>📝 Blog</strong>, gere o seu endereço privado de “publicar por email” e depois envie um assunto e algumas frases. A IA transforma num <strong>rascunho</strong> com imagem de capa para você revisar — nada é publicado até você aprovar, e só são aceitos emails do endereço da sua conta. Ver <a href="#blog">Blog, email e redes</a>.'],
+      ['Os visitantes podem agendar no meu site?', 'Sim — em todos os planos. Configure serviços e horários na página de <strong>Reservas</strong>, adicione a seção <strong>📅 Reservas</strong> no editor e publique. Confirmações e links de cancelamento são enviados por email automaticamente, e nunca há reservas duplicadas. Ver <a href="#bookings">Reservas</a>.'],
       ['Posso compartilhar automaticamente no Discord, Slack, Telegram ou Mastodon?', 'Sim, em planos pagos. No gerenciador do Blog, conecte qualquer um deles — uma <strong>URL de webhook</strong> para Discord/Slack, um <strong>token de bot + chat</strong> para Telegram, ou sua <strong>instância + token de acesso</strong> para Mastodon. Novas publicações são anunciadas automaticamente ao republicar o site, ou clique em <strong>Compartilhar</strong> em qualquer publicação. No Telegram, crie um canal e adicione seu bot como administrador — use o <strong>@nome</strong> do canal se for público, ou encaminhe qualquer mensagem de um canal privado para <strong>@getidsbot</strong> para obter o id numérico do chat. Ver <a href="#blog">Blog, email e redes</a>.'],
       ['Como obtenho um código QR do meu site?', 'No seu <strong>Painel</strong>, clique em <strong>Código QR</strong> no cartão de qualquer site no ar e baixe em PNG ou SVG. Ele leva ao seu endereço no ar (o seu domínio personalizado, se você conectou um), é gratuito em todos os planos e é ótimo para panfletos, cardápios e cartões de visita. Ver <a href="#qr">Código QR do seu site</a>.'],
       ['Para onde vão as mensagens do formulário de contato?', 'Para a sua <strong>caixa de entrada</strong> (Painel → Mensagens) e para o seu e-mail. Responda ao e-mail de aviso para falar diretamente com o visitante. O spam é filtrado automaticamente.'],

@@ -684,6 +684,14 @@ export const en = {
     inbox_empty: 'No upcoming bookings yet. Add the 📅 Bookings section to your site so visitors can book.',
     b_cancel: 'Cancel', b_cancelled: 'Cancelled',
     confirm_cancel: 'Cancel this booking? The visitor will be emailed.',
+    tz_other: 'Other…',
+    svc_ai_desc: '✨ AI', svc_ai_desc_title: 'AI writes a short description from the service name (2 credits)',
+    svc_desc_ph: 'Short description (or let the AI write it)', svc_need_name: 'Give the service a name first.',
+    holidays_intro: 'Close major holidays automatically:', holidays_add: '＋ Add holidays', holidays_none: 'All those holidays are already in your list.',
+    country_us: 'United States', country_br: 'Brazil', country_mx: 'Mexico', country_es: 'Spain', country_pt: 'Portugal',
+    notify_title: 'New-booking alerts', notify_hint: '(besides email)',
+    notify_not_connected: 'not connected', notify_connect_note: 'Webhooks are shared with auto-share — connect them in the',
+    notify_connect_link: 'Blog manager →',
   },
   bkw: {
     heading: 'Book an appointment',
@@ -937,7 +945,7 @@ export const en = {
     toc: [
       ['getting-started', 'Getting started'], ['customizing', 'Customizing your site'],
       ['logo', 'Logo & branding'],
-      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'],
+      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'], ['bookings', 'Bookings'],
       ['blog', 'Blog, email & social'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
       ['buy-domain', 'Buying a domain'],
@@ -987,6 +995,14 @@ export const en = {
         <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>
         <p><strong>Feature products anywhere:</strong> in Customize, <strong>+ Add section → 🛍 Shop products</strong> drops your newest items (with add-to-cart) onto any page — the home page is a great spot. It updates automatically as you add products.</p>
         <p><strong>Subscriptions:</strong> sell recurring plans from a <strong>Pricing</strong> section — edit the section, attach one of your Stripe recurring prices to a plan card (or create one right there), and its button becomes a live <strong>Subscribe</strong> checkout. Renewals, invoices, and receipt emails are handled by your Stripe account.</p>`],
+      ['bookings', 'Bookings', `
+        <p>Let visitors book appointments right on your site — services, time slots, confirmations, and cancellations are built in (free on every plan, with per-plan limits).</p>
+        <ul>
+          <li><strong>Set up</strong> — open <strong>Bookings</strong> from your dashboard: add your services (duration, optional price, ✨ AI description), set weekly hours and your timezone, and close holidays with one click (<strong>＋ Add holidays</strong>).</li>
+          <li><strong>Add to your site</strong> — in the editor, <strong>Add section → 📅 Bookings</strong> on any page, then publish. Visitors pick a service and a time; both sides get a confirmation email and the visitor gets a one-click cancel link.</li>
+          <li><strong>Stay in the loop</strong> — the upcoming-bookings inbox lives in the Bookings page, and you can mirror new-booking alerts to <strong>Discord, Slack, or Telegram</strong> (Booking settings → New-booking alerts; uses the same connections as auto-share).</li>
+          <li><strong>No double-booking</strong> — slots are claimed atomically; lead time, buffers between appointments, and max-per-day are all configurable.</li>
+        </ul>`],
       ['blog', 'Blog, email & social', `
         <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>
         <ul>
@@ -1062,6 +1078,7 @@ export const en = {
       ['Can I buy a domain through Caddisfly?', 'Yes — open <strong>🌐 Buy a domain</strong> on your Dashboard, search a name, and buy it. We register it to you and connect it to your site automatically with SSL — no DNS setup. <strong>Important:</strong> after your first purchase you must click the ICANN verification link emailed to you within 15 days, or the domain is suspended. Domains auto-renew yearly (you can turn that off). See <a href="#buy-domain">Buying a domain</a>.'],
       ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. You can even <strong>post by email</strong> and <strong>auto-share</strong> to Discord, Slack, Telegram or Mastodon. See <a href="#blog">Blog, email &amp; social</a>.'],
       ['Can I post to my blog by email?', 'Yes, on paid plans. In the <strong>📝 Blog</strong> manager, generate your private “post by email” address, then email it a subject and a few sentences. AI turns it into a <strong>draft</strong> post with a cover image for you to review — nothing publishes until you approve it, and only emails from your account address are accepted. See <a href="#blog">Blog, email &amp; social</a>.'],
+      ['Can visitors book appointments on my site?', 'Yes — on every plan. Set up services and hours on the <strong>Bookings</strong> page, add the <strong>📅 Bookings</strong> section in the editor, and publish. Confirmations and one-click cancel links are emailed automatically, and slots can never double-book. See <a href="#bookings">Bookings</a>.'],
       ['Can I auto-share new posts to Discord, Slack, Telegram or Mastodon?', 'Yes, on paid plans. In the Blog manager, connect any of them — a <strong>webhook URL</strong> for Discord/Slack, a <strong>bot token + chat</strong> for Telegram, or your <strong>instance + access token</strong> for Mastodon. New posts are announced automatically when you re-publish your site, or hit <strong>Share</strong> on any published post. For Telegram, create a channel and add your bot to it as an admin — use the channel’s <strong>@handle</strong> if it’s public, or forward any message from a private channel to <strong>@getidsbot</strong> to get its numeric chat id. See <a href="#blog">Blog, email &amp; social</a>.'],
       ['How do I get a QR code for my site?', 'On your <strong>Dashboard</strong>, click <strong>QR code</strong> on any live site’s tile and download it as a PNG or SVG. It links to your live address (your custom domain if you’ve connected one), it’s free on every plan, and it’s great for flyers, menus, and business cards. See <a href="#qr">QR code for your site</a>.'],
       ['Where do contact-form messages go?', 'To your <strong>Inbox</strong> (Dashboard → Inbox) and to your email. Reply to the notification email to answer the visitor directly. Spam is filtered automatically.'],

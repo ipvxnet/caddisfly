@@ -678,6 +678,14 @@ export const es = {
     inbox_empty: 'Aún no hay reservas. Añade la sección 📅 Reservas a tu sitio para que los visitantes puedan reservar.',
     b_cancel: 'Cancelar', b_cancelled: 'Cancelada',
     confirm_cancel: '¿Cancelar esta reserva? Se avisará al visitante por email.',
+    tz_other: 'Otra…',
+    svc_ai_desc: '✨ IA', svc_ai_desc_title: 'La IA redacta una descripción corta a partir del nombre del servicio (2 créditos)',
+    svc_desc_ph: 'Descripción corta (o deja que la IA la escriba)', svc_need_name: 'Primero dale un nombre al servicio.',
+    holidays_intro: 'Cierra los festivos principales automáticamente:', holidays_add: '＋ Añadir festivos', holidays_none: 'Todos esos festivos ya están en tu lista.',
+    country_us: 'Estados Unidos', country_br: 'Brasil', country_mx: 'México', country_es: 'España', country_pt: 'Portugal',
+    notify_title: 'Avisos de nueva reserva', notify_hint: '(además del email)',
+    notify_not_connected: 'no conectado', notify_connect_note: 'Los webhooks se comparten con compartir-en-redes — conéctalos en el',
+    notify_connect_link: 'gestor del Blog →',
   },
   bkw: {
     heading: 'Reserva una cita',
@@ -930,7 +938,7 @@ export const es = {
     toc: [
       ['getting-started', 'Primeros pasos'], ['customizing', 'Personalizar tu sitio'],
       ['logo', 'Logo y marca'],
-      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Tienda online'],
+      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Tienda online'], ['bookings', 'Reservas'],
       ['blog', 'Blog, email y redes'], ['messages', 'Formulario de contacto y bandeja'],
       ['versions', 'Versiones, copias y exportación'], ['seo', 'SEO y aparecer en Google'],
       ['buy-domain', 'Comprar un dominio'],
@@ -980,6 +988,14 @@ export const es = {
         <p>Tras cada venta, el comprador llega a una página de recibo (descargable en PDF) y recibe un correo de confirmación; tú recibes un correo de “nuevo pedido” y el pedido aparece en <strong>🧾 Pedidos</strong> en la página Tienda. Los compradores pueden ver su historial cuando quieran con <strong>Mis pedidos</strong> (enlace seguro por correo). Límites de productos: Starter 10 · Pro 50 · Agency ilimitados.</p>
         <p><strong>Destaca productos donde quieras:</strong> en Personalizar, <strong>+ Añadir sección → 🛍 Productos de la tienda</strong> coloca tus artículos más recientes (con añadir al carrito) en cualquier página — la página de inicio es un gran lugar. Se actualiza automáticamente al añadir productos.</p>
         <p><strong>Suscripciones:</strong> vende planes recurrentes desde una sección de <strong>Precios</strong> — edita la sección, adjunta uno de tus precios recurrentes de Stripe a una tarjeta de plan (o créalo ahí mismo) y su botón se convierte en un <strong>Suscribirse</strong> con pago real. Las renovaciones, facturas y recibos los gestiona tu cuenta de Stripe.</p>`],
+      ['bookings', 'Reservas', `
+        <p>Permite que los visitantes reserven citas directamente en tu sitio — servicios, horarios, confirmaciones y cancelaciones incluidos (gratis en todos los planes, con límites por plan).</p>
+        <ul>
+          <li><strong>Configura</strong> — abre <strong>Reservas</strong> desde tu panel: añade tus servicios (duración, precio opcional, descripción con ✨ IA), define el horario semanal y tu zona horaria, y cierra los festivos con un clic (<strong>＋ Añadir festivos</strong>).</li>
+          <li><strong>Añádelo a tu sitio</strong> — en el editor, <strong>Añadir sección → 📅 Reservas</strong> en cualquier página y publica. Los visitantes eligen servicio y hora; ambos reciben email de confirmación y el visitante un enlace de cancelación de un clic.</li>
+          <li><strong>Mantente al tanto</strong> — la bandeja de próximas reservas está en la página de Reservas, y puedes duplicar los avisos de nueva reserva en <strong>Discord, Slack o Telegram</strong> (Ajustes de reservas → Avisos de nueva reserva; usa las mismas conexiones que compartir-en-redes).</li>
+          <li><strong>Sin dobles reservas</strong> — los horarios se reservan de forma atómica; la antelación, los márgenes entre citas y el máximo por día son configurables.</li>
+        </ul>`],
       ['blog', 'Blog, email y redes', `
         <p>Abre <strong>📝 Blog</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar). Dale a la IA unas frases sobre lo que debe decir la publicación — redacta el texto completo en el idioma de tu sitio; tú lo editas y publicas. Al publicar, tu sitio gana una página <strong>Blog</strong> y un enlace en el menú (republica desde Personalizar para poner en línea las publicaciones nuevas).</p>
         <ul>
@@ -1055,6 +1071,7 @@ export const es = {
       ['¿Puedo comprar un dominio en Caddisfly?', 'Sí — abre <strong>🌐 Compra un dominio</strong> en tu Panel, busca un nombre y cómpralo. Lo registramos a tu nombre y lo conectamos a tu sitio automáticamente con SSL — sin configurar DNS. <strong>Importante:</strong> tras tu primera compra debes hacer clic en 15 días en el enlace de verificación de la ICANN que te enviamos por correo, o el dominio se suspende. Los dominios se renuevan cada año (puedes desactivarlo). Ver <a href="#buy-domain">Comprar un dominio</a>.'],
       ['¿Cómo funciona el blog con IA?', 'Abre <strong>📝 Blog</strong>, dale a la IA unas frases y redactará una publicación completa en el idioma de tu sitio — tú la editas, la publicas y republicas tu sitio para ponerla en línea. Con un clic también genera una imagen de portada y publicaciones listas para X, Instagram y LinkedIn. Incluso puedes <strong>publicar por email</strong> y <strong>compartir automáticamente</strong> en Discord, Slack, Telegram o Mastodon. Ver <a href="#blog">Blog, email y redes</a>.'],
       ['¿Puedo publicar en mi blog por email?', 'Sí, en planes de pago. En el gestor del <strong>📝 Blog</strong>, genera tu dirección privada de “publicar por email” y luego envíale un asunto y unas frases. La IA lo convierte en un <strong>borrador</strong> con imagen de portada para que lo revises — nada se publica hasta que lo apruebes, y solo se aceptan correos desde la dirección de tu cuenta. Ver <a href="#blog">Blog, email y redes</a>.'],
+      ['¿Pueden los visitantes reservar citas en mi sitio?', 'Sí — en todos los planes. Configura servicios y horarios en la página de <strong>Reservas</strong>, añade la sección <strong>📅 Reservas</strong> en el editor y publica. Las confirmaciones y los enlaces de cancelación se envían por email automáticamente, y nunca habrá dobles reservas. Ver <a href="#bookings">Reservas</a>.'],
       ['¿Puedo compartir automáticamente en Discord, Slack, Telegram o Mastodon?', 'Sí, en planes de pago. En el gestor del Blog, conecta cualquiera de ellos — una <strong>URL de webhook</strong> para Discord/Slack, un <strong>token de bot + chat</strong> para Telegram, o tu <strong>instancia + token de acceso</strong> para Mastodon. Las publicaciones nuevas se anuncian automáticamente al republicar tu sitio, o pulsa <strong>Compartir</strong> en cualquier publicación. Para Telegram, crea un canal y añade tu bot como administrador — usa el <strong>@nombre</strong> del canal si es público, o reenvía cualquier mensaje de un canal privado a <strong>@getidsbot</strong> para obtener su id numérico del chat. Ver <a href="#blog">Blog, email y redes</a>.'],
       ['¿Cómo obtengo un código QR de mi sitio?', 'En tu <strong>Panel</strong>, pulsa <strong>Código QR</strong> en la tarjeta de cualquier sitio en línea y descárgalo como PNG o SVG. Enlaza a tu dirección en línea (tu dominio personalizado si has conectado uno), es gratis en todos los planes y es ideal para folletos, menús y tarjetas de visita. Ver <a href="#qr">Código QR para tu sitio</a>.'],
       ['¿A dónde van los mensajes del formulario de contacto?', 'A tu <strong>bandeja</strong> (Panel → Mensajes) y a tu correo. Responde al correo de aviso para contestar directamente al visitante. El spam se filtra automáticamente.'],

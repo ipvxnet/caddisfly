@@ -29,6 +29,9 @@ export function parseBookingSettings(config) {
   s.slot_step = [0, 15, 30, 60].includes(Number(s.slot_step)) ? Number(s.slot_step) : 0;
   s.horizon_days = clampInt(s.horizon_days, 1, 365, DEFAULT_SETTINGS.horizon_days);
   if (!isValidTimezone(s.timezone)) s.timezone = DEFAULT_SETTINGS.timezone;
+  // Booking-notification platforms (validated against the allowed list in
+  // booking-notify.js at send/save time; kept verbatim here).
+  s.notify_platforms = Array.isArray(s.notify_platforms) ? s.notify_platforms : [];
   return s;
 }
 

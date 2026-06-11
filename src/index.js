@@ -84,8 +84,8 @@ import { handleBookingManager } from './routes/public/booking-manager.js';
 import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import {
-  handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete,
-  handleBookingHoursSave, handleBookingOverrideSave, handleBookingOverrideDelete,
+  handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
+  handleBookingHoursSave, handleBookingOverrideSave, handleBookingOverrideDelete, handleBookingHolidaysAdd,
   handleBookingSettingsSave, handleBookingOwnerCancel,
 } from './routes/api/ai-builder/booking.js';
 import {
@@ -311,10 +311,12 @@ router.get('/ai-builder/bookings/:project_id', handleBookingManager, PROJ);
 // Booking engine — owner management
 router.get('/api/ai-builder/:project_id/booking/services', handleBookingServiceList, PROJ);
 router.post('/api/ai-builder/:project_id/booking/services', handleBookingServiceCreate, PROJ);
+router.post('/api/ai-builder/:project_id/booking/services/describe', handleBookingServiceDescribe, PROJ);
 router.put('/api/ai-builder/:project_id/booking/services/:service_id', handleBookingServiceUpdate, PROJ);
 router.delete('/api/ai-builder/:project_id/booking/services/:service_id', handleBookingServiceDelete, PROJ);
 router.put('/api/ai-builder/:project_id/booking/hours', handleBookingHoursSave, PROJ);
 router.post('/api/ai-builder/:project_id/booking/overrides', handleBookingOverrideSave, PROJ);
+router.post('/api/ai-builder/:project_id/booking/holidays', handleBookingHolidaysAdd, PROJ);
 router.delete('/api/ai-builder/:project_id/booking/overrides/:override_id', handleBookingOverrideDelete, PROJ);
 router.put('/api/ai-builder/:project_id/booking/settings', handleBookingSettingsSave, PROJ);
 router.post('/api/ai-builder/:project_id/booking/:booking_id/cancel', handleBookingOwnerCancel, PROJ);

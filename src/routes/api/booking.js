@@ -31,6 +31,7 @@ import { sendBookingVisitorEmail, sendBookingOwnerEmail, isValidEmail } from '..
 import { getUserTier, limitsDisabled } from '../../utils/rate-limiter.js';
 import { BOOKING_MONTHLY_LIMITS } from '../../utils/credits.js';
 import { generateToken } from '../../utils/crypto.js';
+import { notifyBookingEvent } from '../../utils/booking-notify.js';
 import { audit } from '../../utils/audit.js';
 import { t } from '../../i18n/index.js';
 
@@ -221,6 +222,11 @@ export async function handleBookingCreate(ctx) {
         to: site.notifyEmail, siteName: site.siteName, serviceName: service.name,
         customerName: name, customerEmail: email, dateLabel, timeLabel, note,
         manageUrl: `${appOrigin}/ai-builder/bookings/${params.project_id}`,
+      }),
+      notifyBookingEvent(env, {
+        config: site.config, settings, siteName: site.siteName, publicId: params.project_id,
+        booking: { date, start_min: slot.start_min, customer_name: name, customer_email: email, note },
+        serviceName: service.name,
       }),
     ]);
     if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(emailWork);

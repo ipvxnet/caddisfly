@@ -105,13 +105,29 @@ export async function getOverrides(db, projectKey, { fromDate = null } = {}) {
   return res.results || [];
 }
 
-export async function upsertOverride(db, projectKey, { date, closed, start_min = null, end_min = null }) {
+export async function upsertOverride(db, projectKey, { date, closed, start_min = null, end_min = null, label = null }) {
   const k = keyWhere(projectKey);
   const c = keyCols(projectKey);
   await db.prepare(`DELETE FROM booking_overrides WHERE ${k.sql} AND date = ?`).bind(k.val, date).run();
   await db.prepare(
-    'INSERT INTO booking_overrides (ai_project_id, project_id, date, closed, start_min, end_min) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(c.ai, c.p, date, closed ? 1 : 0, start_min, end_min).run();
+    'INSERT INTO booking_overrides (ai_project_id, project_id, date, closed, start_min, end_min, label) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(c.ai, c.p, date, closed ? 1 : 0, start_min, end_min, label).run();
+}
+
+/** Insert CLOSED overrides for the given holidays, skipping dates that already
+ *  have ANY override (don't clobber the owner's custom days). Returns added count. */
+export async function addHolidayOverrides(db, projectKey, holidays) {
+  const k = keyWhere(projectKey);
+  const c = keyCols(projectKey);
+  const res = await db.prepare(`SELECT date FROM booking_overrides WHERE ${k.sql}`).bind(k.val).all();
+  const taken = new Set((res.results || []).map((r) => r.date));
+  const fresh = (holidays || []).filter((h) => !taken.has(h.date));
+  if (fresh.length) {
+    await db.batch(fresh.map((h) => db.prepare(
+      'INSERT INTO booking_overrides (ai_project_id, project_id, date, closed, start_min, end_min, label) VALUES (?, ?, ?, 1, NULL, NULL, ?)'
+    ).bind(c.ai, c.p, h.date, h.label)));
+  }
+  return fresh.length;
 }
 
 export async function deleteOverride(db, projectKey, id) {

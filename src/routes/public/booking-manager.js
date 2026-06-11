@@ -10,6 +10,8 @@ import { getProjectByPreviewId } from '../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { getServices, getHours, getOverrides, getUpcomingBookings } from '../../db/bookings.js';
 import { parseBookingSettings, nowInTimezone, minutesLabel } from '../../utils/booking-slots.js';
+import { parseConnections, PLATFORM_FIELDS } from '../../utils/social-share.js';
+import { BOOKING_NOTIFY_PLATFORMS, notifyPlatforms } from '../../utils/booking-notify.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -56,6 +58,8 @@ export async function handleBookingManager(ctx) {
   }
 
   const settings = parseBookingSettings(config);
+  const conns = parseConnections(config);
+  const selectedNotify = notifyPlatforms(settings);
   const today = nowInTimezone(settings.timezone).date;
   const [services, hours, overrides, upcoming] = await Promise.all([
     getServices(env.DB, projectKey),
@@ -74,14 +78,31 @@ export async function handleBookingManager(ctx) {
       <h2>${tr('bkm.settings_title')}</h2>
       <div class="grid-4">
         <div><label>${tr('bkm.timezone')}</label>
-          <input id="bk-tz" list="bk-tz-list" value="${esc(settings.timezone)}" placeholder="America/New_York">
-          <datalist id="bk-tz-list">${COMMON_TZS.map((z) => `<option value="${z}">`).join('')}</datalist></div>
+          <select id="bk-tz-sel" onchange="bkTzToggle()">
+            ${COMMON_TZS.map((z) => `<option value="${z}"${z === settings.timezone ? ' selected' : ''}>${z}</option>`).join('')}
+            <option value="__other__"${COMMON_TZS.includes(settings.timezone) ? '' : ' selected'}>${tr('bkm.tz_other')}</option>
+          </select>
+          <input id="bk-tz" value="${esc(settings.timezone)}" placeholder="America/New_York"
+            style="margin-top:.4rem;${COMMON_TZS.includes(settings.timezone) ? 'display:none' : ''}"></div>
         <div><label>${tr('bkm.lead')} <span class="hint">${tr('bkm.lead_hint')}</span></label>
           <select id="bk-lead">${leadOpts}</select></div>
         <div><label>${tr('bkm.max_day')} <span class="hint">${tr('bkm.max_day_hint')}</span></label>
           <input id="bk-max" type="number" min="0" max="200" value="${settings.max_per_day}"></div>
         <div><label>${tr('bkm.step')}</label>
           <select id="bk-step">${stepOpts}</select></div>
+      </div>
+      <div style="margin-top:.9rem">
+        <label>${tr('bkm.notify_title')} <span class="hint">${tr('bkm.notify_hint')}</span></label>
+        ${BOOKING_NOTIFY_PLATFORMS.map((p) => {
+          const c = conns[p];
+          const connected = !!(c && (PLATFORM_FIELDS[p] || []).every((f) => c[f]));
+          const on = selectedNotify.includes(p);
+          return `<label class="bk-check" style="margin-right:1.1rem${connected ? '' : ';opacity:.5'}">
+            <input type="checkbox" class="bk-notify" value="${p}"${on && connected ? ' checked' : ''}${connected ? '' : ' disabled'}>
+            ${p.charAt(0).toUpperCase() + p.slice(1)}${connected ? '' : ` <span class="hint">(${tr('bkm.notify_not_connected')})</span>`}
+          </label>`;
+        }).join('')}
+        <div class="muted" style="margin-top:.3rem">${tr('bkm.notify_connect_note')} <a href="/ai-builder/blog/${esc(publicId)}">${tr('bkm.notify_connect_link')}</a></div>
       </div>
       <div class="brief-actions">
         <button class="btn" onclick="bkSaveSettings(this)">${tr('bkm.save')}</button>
@@ -103,7 +124,9 @@ export async function handleBookingManager(ctx) {
         <div><label>${tr('bkm.svc_price')} <span class="hint">${tr('bkm.svc_price_hint')}</span></label>
           <input class="sv-price" type="number" min="0" step="0.01" value="${s.price_cents != null ? (s.price_cents / 100).toFixed(2) : ''}" placeholder="—"></div>
       </div>
-      <div><label>${tr('bkm.svc_desc')}</label><input class="sv-desc" value="${esc(s.description || '')}" maxlength="500"></div>
+      <div><label>${tr('bkm.svc_desc')}</label>
+        <div class="bk-desc-row"><input class="sv-desc" value="${esc(s.description || '')}" maxlength="500">
+        <button class="btn ghost" onclick="bkAiDesc(this)" title="${esc(tr('bkm.svc_ai_desc_title'))}">${tr('bkm.svc_ai_desc')}</button></div></div>
       <div class="brief-actions">
         <label class="bk-check"><input type="checkbox" class="sv-active"${s.active ? ' checked' : ''}> ${tr('bkm.svc_active')}</label>
         <button class="btn ghost" onclick="bkSaveService(this)">${tr('bkm.save')}</button>
@@ -122,6 +145,9 @@ export async function handleBookingManager(ctx) {
           <div><label>${tr('bkm.svc_buffer')}</label><select id="nsv-buf">${bufOpts(0)}</select></div>
           <div><label>${tr('bkm.svc_price')}</label><input id="nsv-price" type="number" min="0" step="0.01" placeholder="—"></div>
         </div>
+        <div><label>${tr('bkm.svc_desc')}</label>
+          <div class="bk-desc-row"><input id="nsv-desc" class="sv-desc" maxlength="500" placeholder="${esc(tr('bkm.svc_desc_ph'))}">
+          <button class="btn ghost" onclick="bkAiDesc(this)" title="${esc(tr('bkm.svc_ai_desc_title'))}">${tr('bkm.svc_ai_desc')}</button></div></div>
         <div class="brief-actions">
           <button class="btn" onclick="bkAddService(this)">${tr('bkm.svc_add')}</button>
           <span class="muted" id="bk-svc-status"></span>
@@ -156,7 +182,7 @@ export async function handleBookingManager(ctx) {
   // ---- date overrides panel ----
   const overrideRow = (o) => `
     <div class="bk-ovr">
-      <span><strong>${esc(o.date)}</strong> — ${o.closed ? tr('bkm.ovr_closed') : `${minutesLabel(o.start_min)}–${minutesLabel(o.end_min)}`}</span>
+      <span><strong>${esc(o.date)}</strong>${o.label ? ` · ${esc(o.label)}` : ''} — ${o.closed ? tr('bkm.ovr_closed') : `${minutesLabel(o.start_min)}–${minutesLabel(o.end_min)}`}</span>
       <button class="link-btn danger" onclick="bkDeleteOverride(${o.id}, this)">${tr('bkm.delete')}</button>
     </div>`;
   const overridesPanel = `
@@ -174,6 +200,13 @@ export async function handleBookingManager(ctx) {
         </span>
         <button class="btn ghost" onclick="bkAddOverride(this)">${tr('bkm.ovr_add')}</button>
         <span class="muted" id="bk-ovr-status"></span>
+      </div>
+      <div class="bk-ovr-form" style="border-top:1px solid var(--line);padding-top:.8rem;margin-top:.9rem">
+        <span class="muted">${tr('bkm.holidays_intro')}</span>
+        <select id="bk-holiday-country">
+          ${['US', 'BR', 'MX', 'ES', 'PT'].map((c) => `<option value="${c}">${tr(`bkm.country_${c.toLowerCase()}`)}</option>`).join('')}
+        </select>
+        <button class="btn ghost" onclick="bkAddHolidays(this)">${tr('bkm.holidays_add')}</button>
       </div>
     </div>`;
 
@@ -224,6 +257,8 @@ export async function handleBookingManager(ctx) {
     .grid-4{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:.8rem}
     .bk-svc{border:1px solid var(--line);border-radius:12px;padding:.9rem 1.1rem 1rem;margin:.8rem 0;background:var(--soft,#f8f9fc)}
     .bk-svc.bk-new{background:#fff;border-style:dashed}
+    .bk-desc-row{display:flex;gap:.5rem;align-items:center}
+    .bk-desc-row input{flex:1}
     .bk-check{display:inline-flex;align-items:center;gap:.45rem;text-transform:none;letter-spacing:0;font-size:.88rem;margin:0;cursor:pointer}
     .bk-check input{width:auto}
     .brief-actions{display:flex;gap:.6rem;align-items:center;margin-top:.8rem;flex-wrap:wrap}
@@ -263,7 +298,8 @@ export async function handleBookingManager(ctx) {
     var PID = ${JSON.stringify(publicId)};
     var T = ${JSON.stringify({
       saved: tr('bkm.saved'), err: tr('bkm.err'), confirm_del: tr('bkm.confirm_del'),
-      confirm_cancel: tr('bkm.confirm_cancel'),
+      confirm_cancel: tr('bkm.confirm_cancel'), need_name: tr('bkm.svc_need_name'),
+      holidays_none: tr('bkm.holidays_none'),
     })};
     async function api(method, path, body) {
       const r = await fetch('/api/ai-builder/' + PID + '/booking' + path, {
@@ -284,11 +320,15 @@ export async function handleBookingManager(ctx) {
     async function bkSaveSettings(btn) {
       busy(btn, 1);
       try {
+        var tzSel = document.getElementById('bk-tz-sel').value;
+        var notify = [];
+        document.querySelectorAll('.bk-notify:checked').forEach(function (el) { notify.push(el.value); });
         await api('PUT', '/settings', {
-          timezone: document.getElementById('bk-tz').value.trim(),
+          timezone: (tzSel === '__other__' ? document.getElementById('bk-tz').value : tzSel).trim(),
           lead_time_min: parseInt(document.getElementById('bk-lead').value, 10),
           max_per_day: parseInt(document.getElementById('bk-max').value, 10) || 0,
           slot_step: parseInt(document.getElementById('bk-step').value, 10),
+          notify_platforms: notify,
         });
         status('bk-settings-status', T.saved);
       } catch (e) { status('bk-settings-status', e.message, 1); }
@@ -298,7 +338,7 @@ export async function handleBookingManager(ctx) {
       var price = root.querySelector('.sv-price, #nsv-price').value;
       return {
         name: root.querySelector('.sv-name, #nsv-name').value.trim(),
-        description: root.querySelector('.sv-desc') ? root.querySelector('.sv-desc').value.trim() : '',
+        description: root.querySelector('.sv-desc, #nsv-desc') ? root.querySelector('.sv-desc, #nsv-desc').value.trim() : '',
         duration_min: parseInt(root.querySelector('.sv-dur, #nsv-dur').value, 10),
         buffer_min: parseInt(root.querySelector('.sv-buf, #nsv-buf').value, 10),
         price_cents: price === '' ? null : Math.round(parseFloat(price) * 100),
@@ -342,6 +382,22 @@ export async function handleBookingManager(ctx) {
       var row = e.target.closest('.bk-day');
       row.querySelector('.hr-start').disabled = row.querySelector('.hr-end').disabled = !e.target.checked;
     });
+    async function bkAiDesc(btn) {
+      var root = btn.closest('.bk-svc');
+      var name = root.querySelector('.sv-name, #nsv-name').value.trim();
+      var descEl = root.querySelector('.sv-desc, #nsv-desc');
+      if (!name) { alert(T.need_name); return; }
+      busy(btn, 1); var was = btn.textContent; btn.textContent = '…';
+      try {
+        var d = await api('POST', '/services/describe', { name: name });
+        descEl.value = d.description || '';
+      } catch (e) { alert(e.message); }
+      busy(btn, 0); btn.textContent = was;
+    }
+    function bkTzToggle() {
+      var other = document.getElementById('bk-tz-sel').value === '__other__';
+      document.getElementById('bk-tz').style.display = other ? '' : 'none';
+    }
     function bkOvrToggle() {
       document.getElementById('ovr-times').style.display = document.getElementById('ovr-closed').checked ? 'none' : 'inline';
     }
@@ -357,6 +413,15 @@ export async function handleBookingManager(ctx) {
         });
         location.reload();
       } catch (e) { status('bk-ovr-status', e.message, 1); busy(btn, 0); }
+    }
+    async function bkAddHolidays(btn) {
+      busy(btn, 1);
+      try {
+        var d = await api('POST', '/holidays', { country: document.getElementById('bk-holiday-country').value });
+        if (d.added > 0) { location.reload(); return; }
+        status('bk-ovr-status', T.holidays_none);
+      } catch (e) { status('bk-ovr-status', e.message, 1); }
+      busy(btn, 0);
     }
     async function bkDeleteOverride(id, btn) {
       try { await api('DELETE', '/overrides/' + id); location.reload(); }
