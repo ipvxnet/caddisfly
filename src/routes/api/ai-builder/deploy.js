@@ -153,6 +153,7 @@ export async function handleAIBuilderDeploy(ctx) {
     // /site/<id>) and once for the subdomain (nav rooted at /). Analytics beacon
     // always posts to the app origin (the sites worker is DB-free).
     let pageCount = 0;
+    let heroImage = null; // og:image last-resort fallback (first hero photo found)
     for (const page of pages) {
       if (page.is_visible === 0) continue;
       const body = page.is_home
@@ -160,6 +161,14 @@ export async function handleAIBuilderDeploy(ctx) {
         : await getBodySectionsForPage(env.DB, page.id, true);
       const combined = [...header, ...body, ...footer];
       if (combined.length === 0) continue;
+
+      if (!heroImage) {
+        const hero = body.find((s) => s.section_type === 'hero');
+        try {
+          const hc = hero ? JSON.parse(hero.content_json || '{}') : {};
+          heroImage = hc.background_image || hc.image_url || null;
+        } catch { /* ignore */ }
+      }
 
       // Canonical points at the subdomain for every copy (consolidates ranking;
       // the sites worker swaps the host for custom domains at serve time).
@@ -179,6 +188,7 @@ export async function handleAIBuilderDeploy(ctx) {
         seoTitle: page.seo_title || null,
         seoDescription: page.seo_description || null,
         socialImage: config.social_image || null,
+        heroImage, // og:image fallback when no social image / logo is set
         canonicalUrl,
         pageTitle: page.title || null,
         business,

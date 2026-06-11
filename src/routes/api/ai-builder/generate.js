@@ -5,7 +5,7 @@ import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-project
 import { audit } from '../../../utils/audit.js';
 import { getAnsweredConversations } from '../../../db/ai-conversations.js';
 import { createSection } from '../../../db/ai-sections.js';
-import { createPage } from '../../../db/ai-pages.js';
+import { createPage, updatePage } from '../../../db/ai-pages.js';
 import { planPages } from '../../../utils/pages-blueprint.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
@@ -14,6 +14,7 @@ import { checkAIGenerationLimit, getUserTier, formatRateLimitError, limitsDisabl
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { inferIndustry, paletteFor, imageKeywordsFor } from '../../../utils/industry-style.js';
 import { getRecipe, recipeVariant } from '../../../utils/industry-recipe.js';
+import { generateSiteSeo, extractContentText } from '../../../utils/seo-generate.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 
@@ -161,6 +162,7 @@ export async function handleAIBuilderGenerate(ctx) {
     }
 
     const orderByPage = {}; // per-page section_order counters
+    const pageTextById = {}; // per-page prose for the auto-SEO pass
     let siteOrder = 0; // header/footer order (page_id NULL)
     const generationResults = [];
 
@@ -205,6 +207,8 @@ export async function handleAIBuilderGenerate(ctx) {
         pageId = pageIdBySlug[assign(sectionType)] ?? pageIdBySlug.home ?? null;
         order = orderByPage[pageId] || 0;
         orderByPage[pageId] = order + 1;
+        // Collect prose for the auto-SEO pass below.
+        if (pageId != null) pageTextById[pageId] = `${pageTextById[pageId] || ''} ${extractContentText(content)}`.trim().slice(0, 600);
       }
 
       try {
@@ -222,6 +226,27 @@ export async function handleAIBuilderGenerate(ctx) {
         console.error(`Failed to save ${sectionType} section:`, error);
         generationResults.push({ section: sectionType, success: false, error: error.message });
       }
+    }
+
+    // Auto-SEO: per-page title + meta description in the site language. Part
+    // of generation (no extra charge); best-effort — a failure leaves the
+    // fields NULL and the render-time fallbacks still emit valid tags.
+    try {
+      const seoPages = pagePlan.map((p) => ({
+        pageId: pageIdBySlug[p.slug], slug: p.slug, title: p.title,
+        contentText: pageTextById[pageIdBySlug[p.slug]] || '',
+      }));
+      const seoMap = await generateSiteSeo(env, {
+        businessName: context.business_name, industry: context.industry, language: project.language || 'en',
+      }, seoPages);
+      if (seoMap) {
+        for (const [pageId, seo] of seoMap) await updatePage(env.DB, pageId, seo);
+        console.log(`auto-seo: ${seoMap.size}/${seoPages.length} pages filled`);
+      } else {
+        console.error('auto-seo: skipped (generation returned null) — SEO fields left empty');
+      }
+    } catch (e) {
+      console.error('auto-seo pass failed:', e.message);
     }
 
     // Update project status
