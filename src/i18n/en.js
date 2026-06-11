@@ -1019,6 +1019,12 @@ export const en = {
           <li><strong>Stay in the loop</strong> — the upcoming-bookings inbox lives in the Bookings page, and you can mirror new-booking alerts to <strong>Discord, Slack, or Telegram</strong> (Booking settings → New-booking alerts; uses the same connections as auto-share).</li>
           <li><strong>No double-booking</strong> — slots are claimed atomically; lead time, buffers between appointments, and max-per-day are all configurable.</li>
           <li><strong>Get paid at booking</strong> (paid plans) — give a service a price and tick <strong>💳 Require payment</strong>: visitors pay in Stripe Checkout (your connected Stripe account, like the store) before the slot confirms, and cancellations are refunded automatically.</li>
+          <li><strong>Set up your Stripe account for receipts & taxes</strong> — payments land in <em>your</em> Stripe account, so its configuration is yours to manage:
+            <ul>
+              <li><strong>Email receipts</strong> — in your Stripe Dashboard go to <strong>Settings → Emails</strong> and enable <em>"Successful payments"</em> so customers get Stripe's official card receipt (Caddisfly's confirmation email also shows the amount paid + a receipt link). Stripe never sends receipts in test mode.</li>
+              <li><strong>Tax collection</strong> — enable <strong>Stripe Tax</strong> (or configure tax rates) in your Stripe Dashboard if you must collect sales tax/VAT on bookings.</li>
+            </ul>
+            <em>You are responsible for configuring your own Stripe account correctly — including receipts, tax collection, and remittance — in line with the laws that apply to your business.</em></li>
         </ul>`],
       ['blog', 'Blog, email & social', `
         <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>

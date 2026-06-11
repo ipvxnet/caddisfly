@@ -1012,6 +1012,12 @@ export const es = {
           <li><strong>Mantente al tanto</strong> — la bandeja de próximas reservas está en la página de Reservas, y puedes duplicar los avisos de nueva reserva en <strong>Discord, Slack o Telegram</strong> (Ajustes de reservas → Avisos de nueva reserva; usa las mismas conexiones que compartir-en-redes).</li>
           <li><strong>Sin dobles reservas</strong> — los horarios se reservan de forma atómica; la antelación, los márgenes entre citas y el máximo por día son configurables.</li>
           <li><strong>Cobra al reservar</strong> (planes de pago) — pon precio a un servicio y marca <strong>💳 Requerir pago</strong>: los visitantes pagan en Stripe Checkout (tu cuenta de Stripe conectada, como la tienda) antes de confirmar la cita, y las cancelaciones se reembolsan automáticamente.</li>
+          <li><strong>Configura tu cuenta de Stripe para recibos e impuestos</strong> — los pagos llegan a <em>tu</em> cuenta de Stripe, así que su configuración es tuya:
+            <ul>
+              <li><strong>Recibos por email</strong> — en tu panel de Stripe ve a <strong>Settings → Emails</strong> y activa <em>"Successful payments"</em> para que los clientes reciban el recibo oficial de Stripe (el email de confirmación de Caddisfly también muestra el importe pagado + un enlace al recibo). Stripe nunca envía recibos en modo de prueba.</li>
+              <li><strong>Cobro de impuestos</strong> — activa <strong>Stripe Tax</strong> (o configura tipos impositivos) en tu panel de Stripe si debes cobrar IVA/impuestos sobre las reservas.</li>
+            </ul>
+            <em>Eres responsable de configurar correctamente tu propia cuenta de Stripe — incluidos recibos, cobro de impuestos y su liquidación — conforme a las leyes que apliquen a tu negocio.</em></li>
         </ul>`],
       ['blog', 'Blog, email y redes', `
         <p>Abre <strong>📝 Blog</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar). Dale a la IA unas frases sobre lo que debe decir la publicación — redacta el texto completo en el idioma de tu sitio; tú lo editas y publicas. Al publicar, tu sitio gana una página <strong>Blog</strong> y un enlace en el menú (republica desde Personalizar para poner en línea las publicaciones nuevas).</p>

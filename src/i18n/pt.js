@@ -1012,6 +1012,12 @@ export const pt = {
           <li><strong>Fique por dentro</strong> — a caixa de próximas reservas fica na página de Reservas, e você pode espelhar os avisos de nova reserva no <strong>Discord, Slack ou Telegram</strong> (Configurações de reservas → Avisos de nova reserva; usa as mesmas conexões do compartilhar-nas-redes).</li>
           <li><strong>Sem reservas duplicadas</strong> — os horários são reservados de forma atômica; antecedência, intervalos entre atendimentos e máximo por dia são configuráveis.</li>
           <li><strong>Receba ao agendar</strong> (planos pagos) — dê um preço a um serviço e marque <strong>💳 Exigir pagamento</strong>: os visitantes pagam no Stripe Checkout (sua conta Stripe conectada, como a loja) antes de o horário confirmar, e cancelamentos são reembolsados automaticamente.</li>
+          <li><strong>Configure sua conta Stripe para recibos e impostos</strong> — os pagamentos caem na <em>sua</em> conta Stripe, então a configuração dela é sua:
+            <ul>
+              <li><strong>Recibos por email</strong> — no painel do Stripe vá em <strong>Settings → Emails</strong> e ative <em>"Successful payments"</em> para os clientes receberem o recibo oficial do Stripe (o email de confirmação do Caddisfly também mostra o valor pago + um link do recibo). O Stripe nunca envia recibos em modo de teste.</li>
+              <li><strong>Cobrança de impostos</strong> — ative o <strong>Stripe Tax</strong> (ou configure alíquotas) no painel do Stripe se você precisa cobrar impostos sobre as reservas.</li>
+            </ul>
+            <em>Você é responsável por configurar corretamente a sua própria conta Stripe — incluindo recibos, cobrança e recolhimento de impostos — conforme as leis aplicáveis ao seu negócio.</em></li>
         </ul>`],
       ['blog', 'Blog, email e redes', `
         <p>Abra <strong>📝 Blog</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar). Dê à IA algumas frases sobre o que a publicação deve dizer — ela redige o texto completo no idioma do seu site; você edita e publica. Ao publicar, seu site ganha uma página <strong>Blog</strong> e um link no menu (republique pelo Personalizar para colocar novas publicações no ar).</p>
