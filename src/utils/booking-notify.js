@@ -8,6 +8,29 @@
 
 import { parseConnections, postToPlatform, PLATFORM_FIELDS } from './social-share.js';
 import { minutesLabel } from './booking-slots.js';
+import { refundConnectPayment } from './stripe.js';
+import { notifyOps } from './ops-notify.js';
+import { setPaymentStatus } from '../db/bookings.js';
+
+/**
+ * Auto-refund a cancelled PAID booking on the merchant's connected account.
+ * Returns 'refunded' | 'failed' | null (nothing to refund). Failures alert
+ * ops and leave payment_status='refund_failed' for manual follow-up.
+ */
+export async function refundCancelledBooking(env, { booking, config }) {
+  if (!booking || booking.payment_status !== 'paid' || !booking.payment_intent) return null;
+  const account = config && config.stripe_account_id;
+  if (!account) return null;
+  try {
+    await refundConnectPayment(env, account, booking.payment_intent);
+    await setPaymentStatus(env.DB, booking.id, 'refunded');
+    return 'refunded';
+  } catch (e) {
+    await setPaymentStatus(env.DB, booking.id, 'refund_failed');
+    await notifyOps(env, `🚨 *Booking refund FAILED* (cancellation): booking ${booking.id}, intent ${booking.payment_intent} — refund manually in Stripe. ${e.message}`);
+    return 'failed';
+  }
+}
 
 export const BOOKING_NOTIFY_PLATFORMS = ['discord', 'slack', 'telegram'];
 

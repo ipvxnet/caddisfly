@@ -707,16 +707,23 @@ const bkEsc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&':
  * Visitor confirmation / cancellation for a booking. English v1 (transactional
  * email i18n is a deferred follow-up, same as the rest of email.js).
  */
-export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false }) {
+export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false, refund = null, paidLabel = null, receiptUrl = null }) {
+  // refund: null (free booking) | 'refunded' | 'failed' (manual refund coming)
   const title = cancelled ? 'Your booking was cancelled' : 'Your booking is confirmed ✅';
+  const refundLine = refund === 'refunded'
+    ? '<p style="color:#065f46;line-height:1.6;font-weight:600;">Your payment has been refunded — it usually appears within 5–10 business days.</p>'
+    : refund === 'failed'
+      ? '<p style="color:#92400e;line-height:1.6;">The business will refund your payment shortly.</p>'
+      : '';
   const html = `
     <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
       <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
         <h1 style="font-size:20px;margin:0 0 12px;">${title}</h1>
         <p style="color:#444;line-height:1.6;"><strong>${bkEsc(serviceName)}</strong> at <strong>${bkEsc(siteName)}</strong></p>
         <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${bkEsc(dateLabel)} · ${bkEsc(timeLabel)}${tz ? ` <span style="color:#888;font-weight:400;">(${bkEsc(tz)})</span>` : ''}</p>
+        ${!cancelled && paidLabel ? `<p style="color:#065f46;font-weight:700;margin:6px 0 14px;">Paid: ${bkEsc(paidLabel)}${receiptUrl ? ` &nbsp;·&nbsp; <a href="${receiptUrl}" style="color:#2563eb;font-weight:600;">View receipt</a>` : ''}</p>` : ''}
         ${cancelled
-          ? '<p style="color:#444;line-height:1.6;">This time is no longer reserved. You can book a new time on the website.</p>'
+          ? `${refundLine}<p style="color:#444;line-height:1.6;">This time is no longer reserved. You can book a new time on the website.</p>`
           : `${cancelUrl ? `<p style="color:#444;line-height:1.6;">Need to change plans? You can cancel with one click:</p>
         <p style="margin:24px 0;"><a href="${cancelUrl}" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:600;display:inline-block;">Cancel this booking</a></p>` : ''}`}
       </div>

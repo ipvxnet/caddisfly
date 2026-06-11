@@ -682,7 +682,8 @@ export const en = {
     ovr_closed: 'Closed', ovr_add: 'Add',
     inbox_title: '📥 Upcoming bookings',
     inbox_empty: 'No upcoming bookings yet. Add the 📅 Bookings section to your site so visitors can book.',
-    b_cancel: 'Cancel', b_cancelled: 'Cancelled',
+    b_cancel: 'Cancel', b_cancelled: 'Cancelled', b_paid: 'Paid', b_refunded: 'Refunded',
+    svc_paid: '💳 Require payment', svc_paid_title: 'Visitors pay the price in Stripe Checkout before the slot confirms (needs a price + Stripe connected; paid plans)',
     confirm_cancel: 'Cancel this booking? The visitor will be emailed.',
     tz_other: 'Other…',
     svc_ai_desc: '✨ AI', svc_ai_desc_title: 'AI writes a short description from the service name (2 credits)',
@@ -706,10 +707,25 @@ export const en = {
     success: '✅ Booked! Check your email for the confirmation.',
     err_generic: 'Something went wrong. Please try again.',
     next_days: 'Later', prev_days: 'Earlier', close: 'Close',
+    pay_btn: 'Book & pay', f_pay_submit: 'Continue to payment',
+    redirecting: 'Taking you to secure payment…',
     err_fields: 'Please fill in your name and a valid email.',
     err_rate: 'Too many bookings — please try again later.',
     err_full: 'This calendar is fully booked this month. Please try again later.',
     err_taken: 'That time was just taken — please pick another one.',
+  },
+  bkr: {
+    title: 'Booking payment',
+    ok_title: '✅ Booked and paid!',
+    ok: 'Your appointment is confirmed — the confirmation email (with a one-click cancel link) is on its way.',
+    unpaid_title: 'Payment not completed',
+    unpaid: 'The payment didn\'t go through, so nothing was booked. Your slot was held for a few minutes — head back and try again.',
+    cancelled_title: 'Payment cancelled',
+    cancelled: 'No charge was made and nothing was booked. You can pick a new time on the website any time.',
+    conflict_title: 'That slot just got away',
+    conflict: 'Your payment arrived after the hold expired and someone else took the time. <strong>Your payment has been refunded in full.</strong> Please pick another time — sorry about that!',
+    missing_title: 'Receipt not found',
+    missing: 'We couldn\'t match this payment to a booking. If you were charged, reply to your Stripe receipt email.',
   },
   bkc: {
     title: 'Cancel booking',
@@ -1002,6 +1018,7 @@ export const en = {
           <li><strong>Add to your site</strong> — in the editor, <strong>Add section → 📅 Bookings</strong> on any page, then publish. Visitors pick a service and a time; both sides get a confirmation email and the visitor gets a one-click cancel link.</li>
           <li><strong>Stay in the loop</strong> — the upcoming-bookings inbox lives in the Bookings page, and you can mirror new-booking alerts to <strong>Discord, Slack, or Telegram</strong> (Booking settings → New-booking alerts; uses the same connections as auto-share).</li>
           <li><strong>No double-booking</strong> — slots are claimed atomically; lead time, buffers between appointments, and max-per-day are all configurable.</li>
+          <li><strong>Get paid at booking</strong> (paid plans) — give a service a price and tick <strong>💳 Require payment</strong>: visitors pay in Stripe Checkout (your connected Stripe account, like the store) before the slot confirms, and cancellations are refunded automatically.</li>
         </ul>`],
       ['blog', 'Blog, email & social', `
         <p>Open <strong>📝 Blog</strong> on your <a href="/dashboard">Dashboard</a> (or from Customize). Give the AI a few sentences about what the post should say — it drafts the full post in your site’s language; you edit and publish. Publishing adds a <strong>Blog</strong> page and menu link to your site (re-publish from Customize to put new posts live).</p>

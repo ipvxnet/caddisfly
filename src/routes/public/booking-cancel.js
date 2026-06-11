@@ -13,7 +13,7 @@ import { getProjectById } from '../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { parseBookingSettings, minutesLabel } from '../../utils/booking-slots.js';
 import { sendBookingVisitorEmail, sendBookingOwnerEmail } from '../../utils/email.js';
-import { notifyBookingEvent } from '../../utils/booking-notify.js';
+import { notifyBookingEvent, refundCancelledBooking } from '../../utils/booking-notify.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -107,10 +107,12 @@ export async function handleBookingCancelAction(ctx) {
     const dateLabel = booking.date;
     const timeLabel = minutesLabel(booking.start_min);
     const appOrigin = env.APP_URL || 'https://caddisfly.ai';
+    // Paid booking → auto-refund BEFORE the emails so they can say so.
+    const refund = await refundCancelledBooking(env, { booking, config: site.config });
     const work = Promise.allSettled([
       sendBookingVisitorEmail(env, {
         to: booking.customer_email, siteName: site.siteName, serviceName: booking.service_name || '',
-        dateLabel, timeLabel, tz: site.settings.timezone, cancelled: true,
+        dateLabel, timeLabel, tz: site.settings.timezone, cancelled: true, refund,
       }),
       sendBookingOwnerEmail(env, {
         to: site.notifyEmail, siteName: site.siteName, serviceName: booking.service_name || '',

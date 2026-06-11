@@ -676,7 +676,8 @@ export const pt = {
     ovr_closed: 'Fechado', ovr_add: 'Adicionar',
     inbox_title: '📥 Próximas reservas',
     inbox_empty: 'Ainda não há reservas. Adicione a seção 📅 Reservas ao seu site para os visitantes reservarem.',
-    b_cancel: 'Cancelar', b_cancelled: 'Cancelada',
+    b_cancel: 'Cancelar', b_cancelled: 'Cancelada', b_paid: 'Paga', b_refunded: 'Reembolsada',
+    svc_paid: '💳 Exigir pagamento', svc_paid_title: 'Os visitantes pagam o preço no Stripe Checkout antes de o horário confirmar (requer preço + Stripe conectado; planos pagos)',
     confirm_cancel: 'Cancelar esta reserva? O visitante será avisado por email.',
     tz_other: 'Outro…',
     svc_ai_desc: '✨ IA', svc_ai_desc_title: 'A IA redige uma descrição curta a partir do nome do serviço (2 créditos)',
@@ -700,10 +701,25 @@ export const pt = {
     success: '✅ Reservado! Confira seu email para a confirmação.',
     err_generic: 'Algo deu errado. Tente de novo.',
     next_days: 'Depois', prev_days: 'Antes', close: 'Fechar',
+    pay_btn: 'Reservar e pagar', f_pay_submit: 'Continuar para o pagamento',
+    redirecting: 'Levando você ao pagamento seguro…',
     err_fields: 'Preencha seu nome e um email válido.',
     err_rate: 'Muitas reservas — tente mais tarde.',
     err_full: 'A agenda está cheia este mês. Tente mais tarde.',
     err_taken: 'Esse horário acabou de ser ocupado — escolha outro.',
+  },
+  bkr: {
+    title: 'Pagamento da reserva',
+    ok_title: '✅ Reservado e pago!',
+    ok: 'Seu horário está confirmado — o email de confirmação (com link de cancelamento de um clique) está a caminho.',
+    unpaid_title: 'Pagamento não concluído',
+    unpaid: 'O pagamento não foi concluído, então nada foi reservado. Seu horário ficou retido por alguns minutos — volte e tente de novo.',
+    cancelled_title: 'Pagamento cancelado',
+    cancelled: 'Nenhuma cobrança foi feita e nada foi reservado. Você pode escolher outro horário no site quando quiser.',
+    conflict_title: 'Esse horário escapou',
+    conflict: 'Seu pagamento chegou depois que a retenção expirou e outra pessoa pegou o horário. <strong>Seu pagamento foi totalmente reembolsado.</strong> Escolha outro horário — desculpe o transtorno!',
+    missing_title: 'Recibo não encontrado',
+    missing: 'Não conseguimos associar este pagamento a uma reserva. Se houve cobrança, responda ao email de recibo do Stripe.',
   },
   bkc: {
     title: 'Cancelar reserva',
@@ -995,6 +1011,7 @@ export const pt = {
           <li><strong>Adicione ao site</strong> — no editor, <strong>Adicionar seção → 📅 Reservas</strong> em qualquer página e publique. Os visitantes escolhem serviço e horário; os dois lados recebem email de confirmação e o visitante um link de cancelamento de um clique.</li>
           <li><strong>Fique por dentro</strong> — a caixa de próximas reservas fica na página de Reservas, e você pode espelhar os avisos de nova reserva no <strong>Discord, Slack ou Telegram</strong> (Configurações de reservas → Avisos de nova reserva; usa as mesmas conexões do compartilhar-nas-redes).</li>
           <li><strong>Sem reservas duplicadas</strong> — os horários são reservados de forma atômica; antecedência, intervalos entre atendimentos e máximo por dia são configuráveis.</li>
+          <li><strong>Receba ao agendar</strong> (planos pagos) — dê um preço a um serviço e marque <strong>💳 Exigir pagamento</strong>: os visitantes pagam no Stripe Checkout (sua conta Stripe conectada, como a loja) antes de o horário confirmar, e cancelamentos são reembolsados automaticamente.</li>
         </ul>`],
       ['blog', 'Blog, email e redes', `
         <p>Abra <strong>📝 Blog</strong> no seu <a href="/dashboard">Painel</a> (ou pelo Personalizar). Dê à IA algumas frases sobre o que a publicação deve dizer — ela redige o texto completo no idioma do seu site; você edita e publica. Ao publicar, seu site ganha uma página <strong>Blog</strong> e um link no menu (republique pelo Personalizar para colocar novas publicações no ar).</p>

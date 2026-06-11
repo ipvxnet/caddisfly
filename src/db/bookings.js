@@ -43,15 +43,15 @@ export async function countServices(db, projectKey) {
 export async function createService(db, projectKey, s) {
   const c = keyCols(projectKey);
   const res = await db.prepare(
-    `INSERT INTO booking_services (ai_project_id, project_id, name, description, duration_min, buffer_min, price_cents, currency, active, sort_order, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO booking_services (ai_project_id, project_id, name, description, duration_min, buffer_min, price_cents, currency, active, sort_order, require_payment, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(c.ai, c.p, s.name, s.description || null, s.duration_min, s.buffer_min || 0,
     s.price_cents != null ? s.price_cents : null, s.currency || null,
-    s.active === 0 ? 0 : 1, s.sort_order || 0, nowSec()).run();
+    s.active === 0 ? 0 : 1, s.sort_order || 0, s.require_payment ? 1 : 0, nowSec()).run();
   return res.meta.last_row_id;
 }
 
-const SERVICE_FIELDS = new Set(['name', 'description', 'duration_min', 'buffer_min', 'price_cents', 'currency', 'active', 'sort_order']);
+const SERVICE_FIELDS = new Set(['name', 'description', 'duration_min', 'buffer_min', 'price_cents', 'currency', 'active', 'sort_order', 'require_payment']);
 
 export async function updateService(db, projectKey, id, fields) {
   const k = keyWhere(projectKey);
@@ -138,10 +138,14 @@ export async function deleteOverride(db, projectKey, id) {
 
 // ---- bookings ----
 
+// A slot is BLOCKED by a confirmed booking or an unexpired pending-payment
+// hold (paid bookings hold their slot during Stripe Checkout, ~30 min).
+const BLOCKING = "(status = 'confirmed' OR (status = 'pending' AND expires_at > unixepoch()))";
+
 export async function getBookingsInRange(db, projectKey, fromDate, toDate) {
   const k = keyWhere(projectKey);
   const res = await db.prepare(
-    `SELECT * FROM bookings WHERE ${k.sql} AND status = 'confirmed' AND date >= ? AND date <= ? ORDER BY date, start_min`
+    `SELECT * FROM bookings WHERE ${k.sql} AND ${BLOCKING} AND date >= ? AND date <= ? ORDER BY date, start_min`
   ).bind(k.val, fromDate, toDate).all();
   return res.results || [];
 }
@@ -203,19 +207,84 @@ export async function countBookingsByEmailSince(db, projectKey, email, sinceTs) 
 export async function claimBooking(db, projectKey, b) {
   const k = keyWhere(projectKey);
   const c = keyCols(projectKey);
+  const pending = !!b.pendingHold; // paid flow: hold the slot during checkout
   const res = await db.prepare(
-    `INSERT INTO bookings (ai_project_id, project_id, service_id, customer_name, customer_email, note, date, start_min, end_min, status, cancel_token, visitor_tz, created_at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?
+    `INSERT INTO bookings (ai_project_id, project_id, service_id, customer_name, customer_email, note, date, start_min, end_min, status, cancel_token, visitor_tz, payment_status, amount_cents, currency, expires_at, created_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
      WHERE NOT EXISTS (
        SELECT 1 FROM bookings
-       WHERE ${k.sql} AND date = ? AND status = 'confirmed' AND start_min < ? AND end_min > ?
+       WHERE ${k.sql} AND date = ? AND ${BLOCKING} AND start_min < ? AND end_min > ?
      )`
   ).bind(
     c.ai, c.p, b.service_id, b.customer_name, b.customer_email, b.note || null,
-    b.date, b.start_min, b.end_min, b.cancel_token, b.visitor_tz || null, nowSec(),
+    b.date, b.start_min, b.end_min,
+    pending ? 'pending' : 'confirmed', b.cancel_token, b.visitor_tz || null,
+    pending ? 'pending' : 'none',
+    b.amount_cents != null ? b.amount_cents : null, b.currency || null,
+    pending ? nowSec() + (b.holdSeconds || 1860) : null,
+    nowSec(),
     k.val, b.date, b.end_min, b.start_min
   ).run();
-  return res.meta.changes === 1;
+  if (res.meta.changes !== 1) return null;
+  return db.prepare(`SELECT * FROM bookings WHERE ${k.sql} AND cancel_token = ?`).bind(k.val, b.cancel_token).first();
+}
+
+/** Attach the Stripe Checkout session to a pending hold. */
+export async function setBookingSession(db, bookingId, sessionId) {
+  await db.prepare("UPDATE bookings SET stripe_session_id = ? WHERE id = ? AND status = 'pending'").bind(sessionId, bookingId).run();
+}
+
+/** Drop a pending hold (checkout creation failed / visitor bailed). */
+export async function releasePendingBooking(db, bookingId) {
+  await db.prepare("UPDATE bookings SET status = 'cancelled', payment_status = 'expired' WHERE id = ? AND status = 'pending'").bind(bookingId).run();
+}
+
+export async function getBookingBySession(db, sessionId) {
+  return db.prepare(
+    `SELECT b.*, s.name AS service_name FROM bookings b
+     LEFT JOIN booking_services s ON s.id = b.service_id
+     WHERE b.stripe_session_id = ?`
+  ).bind(sessionId).first();
+}
+
+/**
+ * Flip a paid pending hold to confirmed — GUARDED against the expired-hold
+ * race (hold lapsed, someone else took the slot, THEN the payment landed):
+ * the UPDATE only succeeds when no OTHER blocking row overlaps. Returns
+ * 'confirmed' | 'already' | 'conflict' | 'missing'; 'conflict' callers must
+ * refund. Idempotent via status='pending' (receipt page + webhook both call).
+ */
+export async function confirmPaidBooking(db, bookingId, paymentIntent) {
+  const b = await db.prepare('SELECT * FROM bookings WHERE id = ?').bind(bookingId).first();
+  if (!b) return 'missing';
+  if (b.status === 'confirmed') return 'already';
+  if (b.status !== 'pending') return 'conflict'; // cancelled/expired under us
+  const k = b.ai_project_id != null
+    ? { sql: 'ai_project_id = ?', val: b.ai_project_id }
+    : { sql: 'project_id = ?', val: b.project_id };
+  const res = await db.prepare(
+    `UPDATE bookings SET status = 'confirmed', payment_status = 'paid', payment_intent = ?, expires_at = NULL
+     WHERE id = ? AND status = 'pending' AND NOT EXISTS (
+       SELECT 1 FROM bookings
+       WHERE ${k.sql} AND date = ? AND id != ? AND ${BLOCKING} AND start_min < ? AND end_min > ?
+     )`
+  ).bind(paymentIntent || null, bookingId, k.val, b.date, bookingId, b.end_min, b.start_min).run();
+  return res.meta.changes === 1 ? 'confirmed' : 'conflict';
+}
+
+/** Mark the refund outcome on a booking (cancel/conflict paths). */
+export async function setPaymentStatus(db, bookingId, paymentStatus) {
+  await db.prepare('UPDATE bookings SET payment_status = ? WHERE id = ?').bind(paymentStatus, bookingId).run();
+}
+
+/** Hygiene: cancel pending holds that expired over 2h ago (cron piggyback).
+ *  A late webhook still can't double-book — confirmPaidBooking requires
+ *  status='pending', so a cancelled hold routes to the refund path. */
+export async function cancelStalePendingBookings(db) {
+  const res = await db.prepare(
+    "UPDATE bookings SET status = 'cancelled', payment_status = 'expired' WHERE status = 'pending' AND expires_at < unixepoch() - 7200"
+  ).run();
+  return res.meta.changes;
 }
 
 /** GLOBAL reminder candidates (all projects): confirmed, not yet reminded,

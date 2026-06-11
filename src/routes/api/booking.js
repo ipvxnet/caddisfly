@@ -20,7 +20,9 @@ import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import {
   getServices, getServiceById, getHours, getOverrides, getBookingsInRange,
-  claimBooking, countBookingsInMonth, countBookingsCreatedSince, countBookingsByEmailSince,
+  claimBooking, setBookingSession, releasePendingBooking,
+  confirmPaidBooking, getBookingBySession, setPaymentStatus,
+  countBookingsInMonth, countBookingsCreatedSince, countBookingsByEmailSince,
 } from '../../db/bookings.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import {
@@ -32,6 +34,9 @@ import { getUserTier, limitsDisabled } from '../../utils/rate-limiter.js';
 import { BOOKING_MONTHLY_LIMITS } from '../../utils/credits.js';
 import { generateToken } from '../../utils/crypto.js';
 import { notifyBookingEvent } from '../../utils/booking-notify.js';
+import { createStoreCheckoutSession, refundConnectPayment } from '../../utils/stripe.js';
+import { notifyOps } from '../../utils/ops-notify.js';
+import { siteForBooking } from '../public/booking-cancel.js';
 import { audit } from '../../utils/audit.js';
 import { t } from '../../i18n/index.js';
 
@@ -80,6 +85,7 @@ function publicService(s) {
     duration_min: s.duration_min,
     price_cents: s.price_cents != null ? s.price_cents : null,
     currency: s.currency || null,
+    require_payment: s.require_payment ? 1 : 0,
   };
 }
 
@@ -196,6 +202,51 @@ export async function handleBookingCreate(ctx) {
     if (!slot) return jsonResponse({ success: false, error: t(ctx.lang, 'bkw.err_taken') }, 409);
 
     const cancelToken = generateToken(24);
+    const appOrigin0 = env.APP_URL || 'https://caddisfly.ai';
+
+    // ---- PAID path: pending hold + Stripe Checkout (direct charge) ----
+    const paid = !!service.require_payment && service.price_cents > 0 && !!(site.config && site.config.stripe_account_id);
+    if (paid) {
+      const hold = await claimBooking(env.DB, site.projectKey, {
+        service_id: service.id, customer_name: name, customer_email: email, note,
+        date, start_min: slot.start_min, end_min: slot.end_min,
+        cancel_token: cancelToken, visitor_tz: visitorTz,
+        pendingHold: true, holdSeconds: 1860,
+        amount_cents: service.price_cents, currency: service.currency || 'usd',
+      });
+      if (!hold) return jsonResponse({ success: false, error: t(ctx.lang, 'bkw.err_taken') }, 409);
+
+      try {
+        const back = String(body.back || '').slice(0, 400);
+        const session = await createStoreCheckoutSession(env, {
+          account: site.config.stripe_account_id,
+          lineItems: [{
+            price_data: {
+              currency: service.currency || 'usd',
+              unit_amount: service.price_cents,
+              product_data: { name: `${service.name} — ${date} ${minutesLabel(slot.start_min)}` },
+            },
+            quantity: 1,
+          }],
+          successUrl: `${appOrigin0}/booking/receipt?s=${params.project_id}&sid={CHECKOUT_SESSION_ID}`,
+          cancelUrl: back && /^https?:\/\//.test(back) ? `${back}${back.includes('?') ? '&' : '?'}bk_cancelled=1` : `${appOrigin0}/booking/receipt?s=${params.project_id}&cancelled=1`,
+          metadata: { type: 'booking', site: params.project_id, booking_id: String(hold.id) },
+        });
+        await setBookingSession(env.DB, hold.id, session.id);
+        audit(ctx, 'booking.payment_started', {
+          actor: email, teamOwner: site.ownerEmail, resourceType: 'site', resourceId: params.project_id,
+          metadata: { booking_id: hold.id, amount_cents: service.price_cents },
+        });
+        // NO emails yet — confirmation happens when the payment lands.
+        return jsonResponse({ success: true, checkout_url: session.url });
+      } catch (e) {
+        // Couldn't start checkout — release the hold so the slot frees instantly.
+        console.error('booking checkout create failed:', e.message);
+        await releasePendingBooking(env.DB, hold.id);
+        return jsonResponse({ success: false, error: t(ctx.lang, 'bkw.err_generic') }, 502);
+      }
+    }
+
     const claimed = await claimBooking(env.DB, site.projectKey, {
       service_id: service.id, customer_name: name, customer_email: email, note,
       date, start_min: slot.start_min, end_min: slot.end_min,
@@ -240,4 +291,78 @@ export async function handleBookingCreate(ctx) {
     console.error('booking create error:', e);
     return jsonResponse({ success: false, error: 'Something went wrong' }, 500);
   }
+}
+
+// ---- paid-booking settlement (shared by the receipt page + Connect webhook) ----
+
+/**
+ * Settle a PAID checkout session against its pending hold. Idempotent — the
+ * receipt page and the webhook can both call it; only the first confirm sends
+ * the emails. The guarded confirm can return 'conflict' (hold expired AND the
+ * slot was re-taken before payment landed) — then we auto-refund and apologize.
+ * Returns { state: 'confirmed'|'already'|'unpaid'|'conflict'|'missing', booking? }.
+ */
+export async function settlePaidBooking(env, { session, account, publicId }) {
+  const meta = (session && session.metadata) || {};
+  const bookingId = parseInt(meta.booking_id, 10);
+  if (!bookingId || meta.type !== 'booking') return { state: 'missing' };
+  if (session.payment_status !== 'paid') return { state: 'unpaid' };
+
+  const paymentIntent = typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent && session.payment_intent.id) || null;
+  const outcome = await confirmPaidBooking(env.DB, bookingId, paymentIntent);
+  const booking = await getBookingBySession(env.DB, session.id);
+
+  if (outcome === 'confirmed' && booking) {
+    const site = await siteForBooking(env.DB, booking);
+    if (site) {
+      const appOrigin = env.APP_URL || 'https://caddisfly.ai';
+      const dateLabel = booking.date;
+      const timeLabel = minutesLabel(booking.start_min);
+      let paidLabel = null;
+      if (booking.amount_cents != null) {
+        try { paidLabel = new Intl.NumberFormat('en', { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(booking.amount_cents / 100); }
+        catch { paidLabel = `${(booking.amount_cents / 100).toFixed(2)} ${(booking.currency || 'usd').toUpperCase()}`; }
+      }
+      await Promise.allSettled([
+        sendBookingVisitorEmail(env, {
+          to: booking.customer_email, siteName: site.siteName, serviceName: booking.service_name || '',
+          dateLabel, timeLabel, tz: site.settings.timezone,
+          cancelUrl: `${appOrigin}/booking/cancel/${booking.cancel_token}`,
+          paidLabel,
+          receiptUrl: `${appOrigin}/booking/receipt?s=${publicId || site.publicId}&sid=${session.id}`,
+        }),
+        sendBookingOwnerEmail(env, {
+          to: site.notifyEmail, siteName: site.siteName, serviceName: booking.service_name || '',
+          customerName: booking.customer_name, customerEmail: booking.customer_email,
+          dateLabel, timeLabel, note: booking.note || '',
+          manageUrl: `${appOrigin}/ai-builder/bookings/${publicId || site.publicId}`,
+        }),
+        notifyBookingEvent(env, {
+          config: site.config, settings: site.settings, siteName: site.siteName, publicId: publicId || site.publicId,
+          booking, serviceName: booking.service_name || '',
+        }),
+      ]);
+    }
+    return { state: 'confirmed', booking };
+  }
+  if (outcome === 'already') return { state: 'already', booking };
+
+  if (outcome === 'conflict' && booking) {
+    // Money landed but the slot is gone — refund on the connected account.
+    try {
+      await refundConnectPayment(env, account, paymentIntent);
+      await setPaymentStatus(env.DB, booking.id, 'refunded');
+      await sendBookingVisitorEmail(env, {
+        to: booking.customer_email, siteName: '', serviceName: booking.service_name || '',
+        dateLabel: booking.date, timeLabel: minutesLabel(booking.start_min), tz: '',
+        cancelled: true,
+      });
+      await notifyOps(env, `↩️ *Booking payment refunded* (slot conflict): booking ${booking.id}, session ${session.id}`);
+    } catch (e) {
+      await setPaymentStatus(env.DB, booking.id, 'refund_failed');
+      await notifyOps(env, `🚨 *Booking refund FAILED* (slot conflict): booking ${booking.id}, intent ${paymentIntent} — refund manually in Stripe. ${e.message}`);
+    }
+    return { state: 'conflict', booking };
+  }
+  return { state: 'missing' };
 }
