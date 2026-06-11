@@ -1034,9 +1034,9 @@ function generateServicesFields(content, tr) {
       <label>${tr('sed.services')}</label>
       ${buildRepeater({
         jsonKey: 'services', items: (Array.isArray(content.services) && content.services.length) ? content.services : [
-          { icon: '🚀', title: 'Service 1', description: 'Description of service 1' },
-          { icon: '💡', title: 'Service 2', description: 'Description of service 2' },
-          { icon: '⭐', title: 'Service 3', description: 'Description of service 3' },
+          { icon: '🚀', title: `${tr('sed.seed_service')} 1`, description: `${tr('sed.seed_service_desc')} 1` },
+          { icon: '💡', title: `${tr('sed.seed_service')} 2`, description: `${tr('sed.seed_service_desc')} 2` },
+          { icon: '⭐', title: `${tr('sed.seed_service')} 3`, description: `${tr('sed.seed_service_desc')} 3` },
         ], addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_service'),
         fields: [
           { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
@@ -1064,9 +1064,9 @@ function generateTestimonialsFields(content, tr) {
       <label>${tr('sed.testimonials')}</label>
       ${buildRepeater({
         jsonKey: 'testimonials', items: (Array.isArray(content.testimonials) && content.testimonials.length) ? content.testimonials : [
-          { name: 'John Doe', role: 'Customer', text: 'Great service!', rating: 5 },
-          { name: 'Jane Smith', role: 'Client', text: 'Highly recommend!', rating: 5 },
-          { name: 'Bob Johnson', role: 'Partner', text: 'Excellent work!', rating: 5 },
+          { name: 'John Doe', role: tr('sed.seed_tst_role'), text: tr('sed.seed_tst_text1'), rating: 5 },
+          { name: 'Jane Smith', role: tr('sed.seed_tst_role2'), text: tr('sed.seed_tst_text2'), rating: 5 },
+          { name: 'Bob Johnson', role: tr('sed.seed_tst_role3'), text: tr('sed.seed_tst_text3'), rating: 5 },
         ], addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
         fields: [
           { key: 'name', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
