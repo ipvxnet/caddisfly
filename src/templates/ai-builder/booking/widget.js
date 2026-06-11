@@ -107,6 +107,7 @@ export function bookingWidgetTemplate(data, config) {
     sending: t(lang, 'bkw.sending'),
     success: t(lang, 'bkw.success'),
     error: t(lang, 'bkw.err_generic'),
+    your_time: t(lang, 'bkw.your_time'),
     next: t(lang, 'bkw.next_days'),
     prev: t(lang, 'bkw.prev_days'),
     close: t(lang, 'bkw.close'),
@@ -131,6 +132,7 @@ export function bookingWidgetTemplate(data, config) {
       .then(function (d) {
         days.innerHTML = '';
         if (!d.success) { days.appendChild(el('div', 'bkg-noslots', d.error || CFG.msgs.error)); return; }
+        state.tz = d.timezone || '';
         state.panel.querySelector('.bkg-tz').textContent = d.timezone || '';
         var any = false;
         d.days.forEach(function (day) {
@@ -147,7 +149,17 @@ export function bookingWidgetTemplate(data, config) {
               b.classList.add('sel');
               var f = state.panel.querySelector('.bkg-form');
               f.classList.add('show');
-              f.querySelector('.bkg-pick').textContent = CFG.msgs.pick + ' ' + state.sel.label;
+              var pick = CFG.msgs.pick + ' ' + state.sel.label;
+              // When the visitor's clock differs from the business's, show
+              // their LOCAL time too — the moment of commitment is where
+              // timezone mistakes happen.
+              try {
+                var vtz = (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone;
+                if (s.ts && vtz && state.tz && vtz !== state.tz) {
+                  pick += ' — ' + CFG.msgs.your_time + ' ' + new Date(s.ts * 1000).toLocaleString(document.documentElement.lang || 'en', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+                }
+              } catch (e) { /* cosmetic only */ }
+              f.querySelector('.bkg-pick').textContent = pick;
             };
             col.appendChild(b);
           });

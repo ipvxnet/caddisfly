@@ -21,7 +21,7 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
  * @returns {Promise<boolean>} true if a transport accepted the message, false if
  *   none is configured. Throws if a configured transport rejects the send.
  */
-async function deliverEmail(env, { to, subject, html, replyTo, fromName }) {
+async function deliverEmail(env, { to, subject, html, replyTo, fromName, attachments }) {
   const fromAddr = env.EMAIL_FROM || 'noreply@caddisfly.ai';
   // Optional display name ("Vito's Pizzeria via Caddisfly <noreply@…>") so the
   // owner's inbox shows WHICH site wrote, not a bare noreply address.
@@ -35,7 +35,12 @@ async function deliverEmail(env, { to, subject, html, replyTo, fromName }) {
         Authorization: `Bearer ${env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from, to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+      body: JSON.stringify({
+        from, to, subject, html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        // [{ filename, content(base64) }] — Resend only; the binding fallback ignores them.
+        ...(attachments && attachments.length ? { attachments } : {}),
+      }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
@@ -707,7 +712,7 @@ const bkEsc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&':
  * Visitor confirmation / cancellation for a booking. English v1 (transactional
  * email i18n is a deferred follow-up, same as the rest of email.js).
  */
-export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false, refund = null, paidLabel = null, receiptUrl = null }) {
+export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl, cancelled = false, refund = null, paidLabel = null, receiptUrl = null, ics = null }) {
   // refund: null (free booking) | 'refunded' | 'failed' (manual refund coming)
   const title = cancelled ? 'Your booking was cancelled' : 'Your booking is confirmed ✅';
   const refundLine = refund === 'refunded'
@@ -731,7 +736,16 @@ export async function sendBookingVisitorEmail(env, { to, siteName, serviceName, 
   const subject = cancelled
     ? `Booking cancelled — ${serviceName} on ${dateLabel}`
     : `Booking confirmed — ${serviceName} on ${dateLabel} at ${timeLabel}`;
-  try { return await deliverEmail(env, { to, subject, html, fromName: `${siteName} via Caddisfly` }); }
+  let attachments;
+  if (ics && !cancelled) {
+    try {
+      const bytes = new TextEncoder().encode(ics);
+      let bin = '';
+      for (const b of bytes) bin += String.fromCharCode(b);
+      attachments = [{ filename: 'booking.ics', content: btoa(bin) }];
+    } catch { /* attachment is a nicety — never block the email */ }
+  }
+  try { return await deliverEmail(env, { to, subject, html, fromName: `${siteName} via Caddisfly`, attachments }); }
   catch (e) { console.error('booking visitor email failed:', e.message); return false; }
 }
 

@@ -259,10 +259,10 @@ export const es = {
     pro_name: 'Pro', pro_tag: 'Para autónomos y negocios en crecimiento.', pro_cta: 'Elegir Pro',
     agency_name: 'Agency', agency_tag: 'Para estudios que crean muchos sitios.', agency_cta: 'Elegir Agency',
     features: {
-      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
-      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (10 productos)', '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '✨ Generador de logos con IA', '5 versiones guardadas', 'Soporte por correo'],
-      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — 50 productos', '5 dominios propios', 'Generación de imágenes prioritaria', '✨ Generador de logos con IA', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
-      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
+      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', '📅 Motor de reservas (1 servicio)',, 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
+      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (10 productos)', '📅 Reservas — 5 servicios + <strong>💳 reservas de pago</strong>',, '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '✨ Generador de logos con IA', '5 versiones guardadas', 'Soporte por correo'],
+      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — 50 productos', '📅 Reservas — 15 servicios',, '5 dominios propios', 'Generación de imágenes prioritaria', '✨ Generador de logos con IA', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
+      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', '📅 Reservas ilimitadas',, 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
     },
     faqs: [
       ['¿Qué es un “crédito de IA”?', 'Los créditos cubren el trabajo de IA detrás de tu sitio. Aprox.: crear un sitio completo ≈ 20 créditos, una edición de texto con IA ≈ 1, una imagen generada con IA ≈ 5, renovar un sitio existente ≈ 10. Tu asignación mensual se reinicia cada ciclo.'],
@@ -701,7 +701,7 @@ export const es = {
     success: '✅ ¡Reservado! Revisa tu email para la confirmación.',
     err_generic: 'Algo salió mal. Inténtalo de nuevo.',
     next_days: 'Después', prev_days: 'Antes', close: 'Cerrar',
-    pay_btn: 'Reservar y pagar', f_pay_submit: 'Continuar al pago',
+    pay_btn: 'Reservar y pagar', f_pay_submit: 'Continuar al pago', your_time: 'tu hora:',
     redirecting: 'Llevándote al pago seguro…',
     err_fields: 'Completa tu nombre y un email válido.',
     err_rate: 'Demasiadas reservas — inténtalo más tarde.',
@@ -1012,6 +1012,12 @@ export const es = {
           <li><strong>Mantente al tanto</strong> — la bandeja de próximas reservas está en la página de Reservas, y puedes duplicar los avisos de nueva reserva en <strong>Discord, Slack o Telegram</strong> (Ajustes de reservas → Avisos de nueva reserva; usa las mismas conexiones que compartir-en-redes).</li>
           <li><strong>Sin dobles reservas</strong> — los horarios se reservan de forma atómica; la antelación, los márgenes entre citas y el máximo por día son configurables.</li>
           <li><strong>Cobra al reservar</strong> (planes de pago) — pon precio a un servicio y marca <strong>💳 Requerir pago</strong>: los visitantes pagan en Stripe Checkout (tu cuenta de Stripe conectada, como la tienda) antes de confirmar la cita, y las cancelaciones se reembolsan automáticamente.</li>
+          <li><strong>Configura tu cuenta de Stripe para recibos e impuestos</strong> — los pagos llegan a <em>tu</em> cuenta de Stripe, así que su configuración es tuya:
+            <ul>
+              <li><strong>Recibos por email</strong> — en tu panel de Stripe ve a <strong>Settings → Emails</strong> y activa <em>"Successful payments"</em> para que los clientes reciban el recibo oficial de Stripe (el email de confirmación de Caddisfly también muestra el importe pagado + un enlace al recibo). Stripe nunca envía recibos en modo de prueba.</li>
+              <li><strong>Cobro de impuestos</strong> — activa <strong>Stripe Tax</strong> (o configura tipos impositivos) en tu panel de Stripe si debes cobrar IVA/impuestos sobre las reservas.</li>
+            </ul>
+            <em>Eres responsable de configurar correctamente tu propia cuenta de Stripe — incluidos recibos, cobro de impuestos y su liquidación — conforme a las leyes que apliquen a tu negocio.</em></li>
         </ul>`],
       ['blog', 'Blog, email y redes', `
         <p>Abre <strong>📝 Blog</strong> en tu <a href="/dashboard">Panel</a> (o desde Personalizar). Dale a la IA unas frases sobre lo que debe decir la publicación — redacta el texto completo en el idioma de tu sitio; tú lo editas y publicas. Al publicar, tu sitio gana una página <strong>Blog</strong> y un enlace en el menú (republica desde Personalizar para poner en línea las publicaciones nuevas).</p>
