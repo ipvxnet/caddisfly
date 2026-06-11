@@ -150,7 +150,10 @@ async function handleAdminRemindRun(ctx) {
 async function handleAdminHolidayRun(ctx) {
   const dryRun = ctx.query && (ctx.query.dry === '1' || ctx.query.dry === 'true');
   const opts = { dryRun };
-  if (dryRun && ctx.query && ctx.query.now) opts.now = String(ctx.query.now);
+  // Unlike renewals, `now` is honored on REAL runs too: applying a holiday
+  // skin is fully reversible by the inverse call (?now=<after the window>),
+  // and that's exactly how you demo a December theme in June.
+  if (ctx.query && ctx.query.now) opts.now = String(ctx.query.now);
   const summary = await processHolidayThemes(ctx.env, ctx.ctx, opts);
   return new Response(JSON.stringify({ success: true, summary }), { headers: { 'Content-Type': 'application/json' } });
 }
