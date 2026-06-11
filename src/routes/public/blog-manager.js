@@ -202,11 +202,17 @@ export async function handleBlogManager(ctx) {
       ${posts.length ? orderedPosts.map((p) => postCard(p, !!(focusPost && p.id === focusPost.id))).join('') : `<p class="muted">${tr('blogm.no_posts')}</p>`}
     </div>`;
 
-  // When deep-linked to a post (?post=), lead with the Posts panel so review
-  // lands on the post itself, not the "New post" box.
-  const panelsHtml = focusPost
-    ? (postsPanel + newPostPanel + inboundPanel + socialPanel)
-    : (newPostPanel + inboundPanel + socialPanel + postsPanel);
+  // Two tabs: ✍️ Posts (create + manage — first) and ⚙️ Settings (inbound
+  // email + social connections). Deep-links (?post=) land on Posts with the
+  // post leading; the hash keeps the tab across save-reloads.
+  const postsTabHtml = focusPost ? (postsPanel + newPostPanel) : (newPostPanel + postsPanel);
+  const panelsHtml = `
+    <div class="mgr-tabs">
+      <button class="mgr-tab" data-tab="posts" onclick="showTab('posts')">${tr('blogm.tab_posts')}</button>
+      <button class="mgr-tab" data-tab="settings" onclick="showTab('settings')">${tr('blogm.tab_settings')}</button>
+    </div>
+    <div class="mgr-pane" data-tab="posts">${postsTabHtml}</div>
+    <div class="mgr-pane" data-tab="settings" hidden>${inboundPanel + socialPanel}</div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -221,6 +227,9 @@ export async function handleBlogManager(ctx) {
     .ahead h1{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:900;color:var(--ink);letter-spacing:-.02em}
     .ahead .sub{color:var(--muted);font-size:.92rem}
     .ahead .acts{display:flex;gap:.5rem;flex-wrap:wrap}
+    .mgr-tabs{display:flex;gap:.5rem;margin-bottom:1.2rem;border-bottom:2px solid var(--line);padding-bottom:0}
+    .mgr-tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:.6rem 1rem;font-size:.95rem;font-weight:700;color:var(--muted);cursor:pointer}
+    .mgr-tab.active{color:var(--ink);border-bottom-color:var(--p1)}
     .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem 1.6rem;margin-bottom:1.2rem}
     .panel h2{font-size:1.05rem;color:var(--ink);margin-bottom:.6rem}
     .muted{color:var(--muted);font-size:.88rem}
@@ -287,7 +296,15 @@ export async function handleBlogManager(ctx) {
   </div></main>
   ${siteFooter({ lang })}
   <script>
+    // Tabs persist across the save-triggered reloads via the URL hash.
+    function showTab(name) {
+      document.querySelectorAll('.mgr-pane').forEach(function (p) { p.hidden = p.dataset.tab !== name; });
+      document.querySelectorAll('.mgr-tab').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
+      try { history.replaceState(null, '', '#' + name); } catch (e) { /* ignore */ }
+    }
     var PID = ${JSON.stringify(publicId)};
+    var FORCE_POSTS = ${focusPost ? 'true' : 'false'}; // ?post= deep-link always lands on Posts
+    showTab(!FORCE_POSTS && location.hash === '#settings' ? 'settings' : 'posts');
     var LIVE_BASE = ${JSON.stringify(liveBase)};
     var DEPLOYED = ${deployed ? 'true' : 'false'};
     async function api(method, path, body) {
