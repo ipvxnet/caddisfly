@@ -20,8 +20,9 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-/** Owner identity + site name + timezone for a booking row. */
-async function siteForBooking(db, booking) {
+/** Owner identity + site name + timezone for a booking row (also used by the
+ *  reminder cron in routes/api/bookings-remind.js). */
+export async function siteForBooking(db, booking) {
   if (booking.ai_project_id != null) {
     const p = await getAIProjectById(db, booking.ai_project_id);
     if (!p) return null;

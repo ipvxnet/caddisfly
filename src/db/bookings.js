@@ -218,6 +218,29 @@ export async function claimBooking(db, projectKey, b) {
   return res.meta.changes === 1;
 }
 
+/** GLOBAL reminder candidates (all projects): confirmed, not yet reminded,
+ *  date within the given list. The hourly cron filters by each site's
+ *  owner-timezone window; LIMIT is a runaway guard, not a page size. */
+export async function getReminderCandidates(db, dates, limit = 500) {
+  if (!dates || !dates.length) return [];
+  const qs = dates.map(() => '?').join(',');
+  const res = await db.prepare(
+    `SELECT b.*, s.name AS service_name FROM bookings b
+     LEFT JOIN booking_services s ON s.id = b.service_id
+     WHERE b.status = 'confirmed' AND b.reminded_at IS NULL AND b.date IN (${qs})
+     ORDER BY b.date, b.start_min LIMIT ?`
+  ).bind(...dates, limit).all();
+  return res.results || [];
+}
+
+/** Atomic reminder claim — true exactly once per booking. */
+export async function claimReminder(db, bookingId) {
+  const res = await db.prepare(
+    "UPDATE bookings SET reminded_at = unixepoch() WHERE id = ? AND reminded_at IS NULL AND status = 'confirmed'"
+  ).bind(bookingId).run();
+  return res.meta.changes === 1;
+}
+
 /** Cancel by token (visitor link) or by id (owner). Returns the row or null. */
 export async function cancelBookingByToken(db, token) {
   const res = await db.prepare(

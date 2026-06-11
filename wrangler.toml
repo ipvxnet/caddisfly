@@ -92,7 +92,9 @@ binding = "BROWSER"
 # preview shares the real Namecheap account, and the scheduled() handler also
 # guards on ENVIRONMENT === 'production'.
 [env.production.triggers]
-crons = ["0 8 * * *"]
+# 08:00 daily = domain renewals; hourly :30 = booking reminders (scheduled()
+# dispatches on event.cron).
+crons = ["0 8 * * *", "30 * * * *"]
 
 # [[env.production.send_email]]
 # name = "SEND_EMAIL"

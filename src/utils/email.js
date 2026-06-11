@@ -746,3 +746,19 @@ export async function sendBookingOwnerEmail(env, { to, siteName, serviceName, cu
   try { return await deliverEmail(env, { to, subject, html, replyTo: customerEmail, fromName: `${siteName} via Caddisfly` }); }
   catch (e) { console.error('booking owner email failed:', e.message); return false; }
 }
+
+/** Visitor reminder ~24h before an appointment (booking reminder cron). */
+export async function sendBookingReminderEmail(env, { to, siteName, serviceName, dateLabel, timeLabel, tz, cancelUrl }) {
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">⏰ See you tomorrow!</h1>
+        <p style="color:#444;line-height:1.6;">A friendly reminder of your booking with <strong>${bkEsc(siteName)}</strong>:</p>
+        <p style="color:#111;font-size:17px;font-weight:700;margin:14px 0;">${bkEsc(serviceName)} — ${bkEsc(dateLabel)} · ${bkEsc(timeLabel)}${tz ? ` <span style="color:#888;font-weight:400;">(${bkEsc(tz)})</span>` : ''}</p>
+        ${cancelUrl ? `<p style="color:#444;line-height:1.6;">Plans changed? You can cancel with one click:</p>
+        <p style="margin:24px 0;"><a href="${cancelUrl}" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:600;display:inline-block;">Cancel this booking</a></p>` : ''}
+      </div>
+    </body></html>`;
+  try { return await deliverEmail(env, { to, subject: `Reminder: ${serviceName} tomorrow at ${timeLabel} — ${siteName}`, html, fromName: `${siteName} via Caddisfly` }); }
+  catch (e) { console.error('booking reminder email failed:', e.message); return false; }
+}
