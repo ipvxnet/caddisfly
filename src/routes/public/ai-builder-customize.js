@@ -739,6 +739,7 @@ export async function handleAIBuilderCustomize(ctx) {
               <div class="serp-desc" id="serp-desc"></div>
             </div>
             <button class="link-btn" id="seo-save" onclick="saveSeo(this)" style="font-weight:700">${tr('cust.save_seo')}</button>
+            <button class="link-btn" id="seo-ai" onclick="aiSeoReview(this)">${tr('cust.seo_ai_btn')}</button>
             <span class="seo-saved" id="seo-saved" hidden>${tr('cust.saved')}</span>
           </div>
         </details>
@@ -914,6 +915,27 @@ export async function handleAIBuilderCustomize(ctx) {
         else alert(d.error || ${JSON.stringify(tr('cust.could_not_save_seo'))});
       } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; }
+    }
+    async function aiSeoReview(btn) {
+      btn.disabled = true;
+      const was = btn.textContent;
+      btn.textContent = ${JSON.stringify(tr('cust.seo_ai_busy'))};
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/seo/ai-review\`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pageId: seoPageId }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (r.status === 402) { alert(d.error || ${JSON.stringify(tr('cust.seo_ai_err'))}); return; }
+        if (!r.ok || !d.success) { alert(d.error || ${JSON.stringify(tr('cust.seo_ai_err'))}); return; }
+        if (d.seo) {
+          document.getElementById('seo-title').value = d.seo.seo_title || '';
+          document.getElementById('seo-desc').value = d.seo.seo_description || '';
+          seoSync();
+        }
+        showNotification(${JSON.stringify(tr('cust.seo_ai_done'))}.replace('{n}', d.pages_updated), 'success');
+      } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
+      finally { btn.disabled = false; btn.textContent = was; }
     }
     seoSync();
 

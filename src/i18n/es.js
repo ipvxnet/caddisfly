@@ -390,6 +390,7 @@ export const es = {
     seo_title_ph_suffix: 'Tu negocio',
     seo_desc_ph: 'Un resumen breve y atractivo de esta página para los resultados de búsqueda.',
     save_seo: 'Guardar SEO', saved: 'Guardado ✓', could_not_save_seo: 'No se pudo guardar el SEO.',
+    seo_ai_btn: '✨ Revisión con IA — todas las páginas (10 créditos)', seo_ai_busy: 'Revisando todas las páginas…', seo_ai_done: 'SEO revisado y guardado en {n} páginas ✓ — ajusta cualquier campo y Guarda para sobrescribir.', seo_ai_err: 'La revisión SEO falló — inténtalo de nuevo.',
     drag_reorder: 'Arrastra para reordenar', hide_section: 'Ocultar sección', show_section: 'Mostrar sección',
     edit: '✨ Editar', edit_title: 'Editar esta sección con IA', layout_title: 'Diseño / variante de plantilla',
     move_title: 'Mover a otra página', delete_section_title: 'Eliminar esta sección',

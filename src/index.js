@@ -53,7 +53,7 @@ import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
 import { handleAIEditPropose, handleAIEditApply } from './routes/api/ai-builder/ai-edit.js';
 import { handleListPages, handleCreatePage, handleReorderPages, handleUpdatePage, handleDeletePage } from './routes/api/ai-builder/pages.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
-import { handleUpdateSeo } from './routes/api/ai-builder/seo.js';
+import { handleUpdateSeo, handleSeoAiReview } from './routes/api/ai-builder/seo.js';
 import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './routes/api/ai-builder/domains.js';
 
 // Billing (Stripe + magic-link) route handlers
@@ -284,6 +284,7 @@ router.put('/api/ai-builder/:project_id/pages/reorder', autoSnap(handleReorderPa
 router.put('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleUpdatePage), PROJ);
 router.delete('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleDeletePage), PROJ);
 router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
+router.post('/api/ai-builder/:project_id/seo/ai-review', handleSeoAiReview, PROJ);
 router.post('/api/ai-builder/:project_id/logo/generate', handleLogoGenerate, PROJ);
 router.post('/api/ai-builder/:project_id/hero-video/generate', handleGenerateHeroVideo, PROJ);
 router.post('/api/ai-builder/:project_id/logo', autoSnap(handleLogoSet), PROJ);

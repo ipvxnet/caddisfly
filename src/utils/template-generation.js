@@ -12,7 +12,8 @@
 import { generateSectionContent } from './ai-content-generator.js';
 import { profileToContext, profileToFactSections } from './company-profile.js';
 import { createSection } from '../db/ai-sections.js';
-import { createPage } from '../db/ai-pages.js';
+import { createPage, updatePage } from '../db/ai-pages.js';
+import { generateSiteSeo, extractContentText } from './seo-generate.js';
 import { planPages } from './pages-blueprint.js';
 import { createWebsiteConfig } from '../db/ai-config.js';
 import { assemblePage } from './ai-page-assembler.js';
@@ -151,6 +152,32 @@ export async function generateAndStore(env, project, profile) {
       content_json: JSON.stringify(s.content),
       is_visible: 1,
     });
+  }
+
+  // 6b. Auto-SEO: per-page title + meta description in the site language —
+  // part of the build, best-effort (NULL fields keep the render fallbacks,
+  // which for refactors at least carry the Places profile description).
+  try {
+    const textBySlug = {};
+    for (const s of sections) {
+      const slug = pageSlugForSection(s.type);
+      if (slug) textBySlug[slug] = `${textBySlug[slug] || ''} ${extractContentText(s.content)}`.trim().slice(0, 600);
+    }
+    const seoPages = pagePlan.map((p) => ({
+      pageId: pageIdBySlug[p.slug], slug: p.slug, title: p.title, contentText: textBySlug[p.slug] || '',
+    }));
+    const seoMap = await generateSiteSeo(env, {
+      businessName: profile.name, industry, language: context.language || 'en',
+      description: profile.description || '',
+    }, seoPages);
+    if (seoMap) {
+      for (const [pageId, seo] of seoMap) await updatePage(env.DB, pageId, seo);
+      console.log(`auto-seo (refactor): ${seoMap.size}/${seoPages.length} pages filled`);
+    } else {
+      console.error('auto-seo (refactor): skipped (generation returned null) — SEO fields left empty');
+    }
+  } catch (e) {
+    console.error('auto-seo (refactor) pass failed:', e.message);
   }
 
   // 7. Stored R2 preview = the HOME page (shared header + home body + footer).

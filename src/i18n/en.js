@@ -390,6 +390,7 @@ export const en = {
     seo_title_ph_suffix: 'Your business',
     seo_desc_ph: 'A short, compelling summary of this page for search results.',
     save_seo: 'Save SEO', saved: 'Saved ✓', could_not_save_seo: 'Could not save SEO.',
+    seo_ai_btn: '✨ AI review — all pages (10 credits)', seo_ai_busy: 'Reviewing all pages…', seo_ai_done: 'SEO reviewed & saved on {n} pages ✓ — tweak any field and Save to override.', seo_ai_err: 'SEO review failed — please try again.',
     drag_reorder: 'Drag to reorder', hide_section: 'Hide section', show_section: 'Show section',
     edit: '✨ Edit', edit_title: 'Edit this section with AI', layout_title: 'Layout / template variant',
     move_title: 'Move to another page', delete_section_title: 'Delete this section',

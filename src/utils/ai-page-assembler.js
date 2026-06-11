@@ -31,7 +31,7 @@ export function assemblePage(sections, config, project, opts = {}) {
   const {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
     hideBadge = false, trackId = null, appOrigin = '', editOverlay = false,
-    seoTitle = null, seoDescription = null, socialImage = null, canonicalUrl = null, pageTitle = null, business = null,
+    seoTitle = null, seoDescription = null, socialImage = null, heroImage = null, canonicalUrl = null, pageTitle = null, business = null,
     lang = 'en', products = null, bookingServices = null,
   } = opts;
 
@@ -88,7 +88,7 @@ export function assemblePage(sections, config, project, opts = {}) {
     title: project.project_name || 'My Website',
     body,
     config: renderConfig,
-    seo: { seoTitle, seoDescription, socialImage, canonicalUrl, pageTitle, business },
+    seo: { seoTitle, seoDescription, socialImage, heroImage, canonicalUrl, pageTitle, business },
   });
 
   return html;
@@ -133,7 +133,7 @@ function seoHead(seo, fallbackTitle, logoUrl = '') {
   const pageTitle = s.pageTitle || fallbackTitle || bizName;
   const metaTitle = s.seoTitle || (pageTitle && pageTitle !== bizName ? `${pageTitle} | ${bizName}` : bizName);
   const metaDesc = s.seoDescription || biz.description || `${bizName} — official website.`;
-  let ogImage = s.socialImage || biz.logo || logoUrl || '';
+  let ogImage = s.socialImage || biz.logo || logoUrl || s.heroImage || '';
   const canonical = s.canonicalUrl || '';
   // og:image must be absolute for crawlers — anchor relative asset URLs
   // (/preview-asset/…) to the canonical host when we know it.
