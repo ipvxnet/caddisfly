@@ -268,7 +268,7 @@ export async function confirmPaidBooking(db, bookingId, paymentIntent) {
        SELECT 1 FROM bookings
        WHERE ${k.sql} AND date = ? AND id != ? AND ${BLOCKING} AND start_min < ? AND end_min > ?
      )`
-  ).bind(paymentIntent || null, bookingId, b.date, bookingId, b.end_min, b.start_min).run();
+  ).bind(paymentIntent || null, bookingId, k.val, b.date, bookingId, b.end_min, b.start_min).run();
   return res.meta.changes === 1 ? 'confirmed' : 'conflict';
 }
 
