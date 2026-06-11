@@ -390,7 +390,7 @@ export const pt = {
     seo_title_ph_suffix: 'O seu negócio',
     seo_desc_ph: 'Um resumo breve e atraente desta página para os resultados de busca.',
     save_seo: 'Salvar SEO', saved: 'Salvo ✓', could_not_save_seo: 'Não foi possível salvar o SEO.',
-    seo_ai_btn: '✨ Revisão com IA (2 créditos)', seo_ai_busy: 'Revisando…', seo_ai_done: 'Sugestão da IA preenchida — revise e clique em Salvar SEO.', seo_ai_err: 'A revisão de SEO falhou — tente de novo.',
+    seo_ai_btn: '✨ Revisão com IA — todas as páginas (10 créditos)', seo_ai_busy: 'Revisando todas as páginas…', seo_ai_done: 'SEO revisado e salvo em {n} páginas ✓ — ajuste qualquer campo e Salve para sobrescrever.', seo_ai_err: 'A revisão de SEO falhou — tente de novo.',
     drag_reorder: 'Arraste para reordenar', hide_section: 'Ocultar seção', show_section: 'Mostrar seção',
     edit: '✨ Editar', edit_title: 'Editar esta seção com IA', layout_title: 'Layout / variante de modelo',
     move_title: 'Mover para outra página', delete_section_title: 'Excluir esta seção',

@@ -61,16 +61,18 @@ export async function handleUpdateSeo(ctx) {
 // ---- ✨ AI SEO review (paid) ----
 
 import { getBodySectionsForPage, getHomeBodySections } from '../../../db/ai-sections.js';
-import { generatePageSeo, extractContentText } from '../../../utils/seo-generate.js';
+import { getPagesByProject } from '../../../db/ai-pages.js';
+import { generateSiteSeo, extractContentText } from '../../../utils/seo-generate.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { audit } from '../../../utils/audit.js';
 
 /**
  * POST /api/ai-builder/:project_id/seo/ai-review  { pageId }
- * Reads the page's real content and proposes an improved title + meta
- * description (site language). Charges CREDIT_COSTS.seo_review on success.
- * Returns the proposal WITHOUT saving — the panel fills the fields and the
- * user reviews + hits the normal Save. Also the upgrade path for older sites
+ * Reviews the WHOLE SITE in one shot (one LLM call over every visible page's
+ * real content, site language) and SAVES every page's title + description.
+ * Charges CREDIT_COSTS.seo_review (10) once, only on success. The response
+ * carries the requesting page's values so the panel can show them (still
+ * editable + saveable as usual). Also the upgrade path for older sites
  * generated before auto-SEO existed.
  */
 export async function handleSeoAiReview(ctx) {
@@ -104,30 +106,41 @@ export async function handleSeoAiReview(ctx) {
       owns = (p) => p && p.project_id === rp.id;
     }
 
-    const page = await getPageById(env.DB, parseInt(body.pageId, 10));
-    if (!page || !owns(page)) return json({ success: false, error: 'Page not found for this project.' }, 404);
+    const currentPageId = parseInt(body.pageId, 10) || 0;
 
     const afford = await canAfford(env, env.DB, site.email, CREDIT_COSTS.seo_review);
     if (!afford.ok) return json({ success: false, ...formatCreditError(afford.state, 'SEO review') }, 402);
 
-    const sections = page.is_home
-      ? await getHomeBodySections(env.DB, projectKey, page.id, true)
-      : await getBodySectionsForPage(env.DB, page.id, true);
-    const contentText = sections
-      .map((s) => { try { return extractContentText(JSON.parse(s.content_json || '{}')); } catch { return ''; } })
-      .filter(Boolean).join(' · ').slice(0, 600);
+    // Every visible page's real content, one prompt, one call.
+    const pages = (await getPagesByProject(env.DB, projectKey)).filter((p) => p.is_visible !== 0 && owns(p));
+    if (!pages.length) return json({ success: false, error: 'No pages to review.' }, 400);
+    const seoPages = [];
+    for (const page of pages) {
+      const sections = page.is_home
+        ? await getHomeBodySections(env.DB, projectKey, page.id, true)
+        : await getBodySectionsForPage(env.DB, page.id, true);
+      const contentText = sections
+        .map((s) => { try { return extractContentText(JSON.parse(s.content_json || '{}')); } catch { return ''; } })
+        .filter(Boolean).join(' · ').slice(0, 600);
+      seoPages.push({ pageId: page.id, slug: page.slug, title: page.title || page.nav_label, contentText });
+    }
 
-    const seo = await generatePageSeo(env, site, {
-      pageId: page.id, slug: page.slug, title: page.title || page.nav_label, contentText,
-    });
-    if (!seo) return json({ success: false, error: 'The AI came back malformed — please try again (you were not charged).' }, 502);
+    const seoMap = await generateSiteSeo(env, site, seoPages);
+    if (!seoMap) return json({ success: false, error: 'The AI came back malformed — please try again (you were not charged).' }, 502);
+
+    for (const [pageId, seo] of seoMap) await updatePage(env.DB, pageId, seo);
 
     await chargeCredits(env, env.DB, site.email, CREDIT_COSTS.seo_review);
     audit(ctx, 'credit.seo_review', {
       teamOwner: site.email, resourceType: 'site', resourceId: publicId,
-      metadata: { credits: CREDIT_COSTS.seo_review, page_id: page.id },
+      metadata: { credits: CREDIT_COSTS.seo_review, pages_updated: seoMap.size, of: seoPages.length },
     });
-    return json({ success: true, seo });
+    return json({
+      success: true,
+      pages_updated: seoMap.size,
+      of: seoPages.length,
+      seo: seoMap.get(currentPageId) || null, // fill the open panel when we have it
+    });
   } catch (e) {
     console.error('seo ai-review error:', e);
     return json({ success: false, error: 'SEO review failed — please try again.' }, 500);

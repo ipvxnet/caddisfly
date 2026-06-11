@@ -927,11 +927,13 @@ export async function handleAIBuilderCustomize(ctx) {
         });
         const d = await r.json().catch(() => ({}));
         if (r.status === 402) { alert(d.error || ${JSON.stringify(tr('cust.seo_ai_err'))}); return; }
-        if (!r.ok || !d.success || !d.seo) { alert(d.error || ${JSON.stringify(tr('cust.seo_ai_err'))}); return; }
-        document.getElementById('seo-title').value = d.seo.seo_title || '';
-        document.getElementById('seo-desc').value = d.seo.seo_description || '';
-        seoSync();
-        showNotification(${JSON.stringify(tr('cust.seo_ai_done'))}, 'success');
+        if (!r.ok || !d.success) { alert(d.error || ${JSON.stringify(tr('cust.seo_ai_err'))}); return; }
+        if (d.seo) {
+          document.getElementById('seo-title').value = d.seo.seo_title || '';
+          document.getElementById('seo-desc').value = d.seo.seo_description || '';
+          seoSync();
+        }
+        showNotification(${JSON.stringify(tr('cust.seo_ai_done'))}.replace('{n}', d.pages_updated), 'success');
       } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; btn.textContent = was; }
     }
