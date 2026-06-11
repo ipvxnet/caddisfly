@@ -33,6 +33,12 @@ export const SNAPSHOT_LIMITS = { free_trial: 2, starter: 5, pro: 10, agency: 30 
 // store manager but not list products. Enforced in production only.
 export const PRODUCT_LIMITS = { free_trial: 0, starter: 10, pro: 50, agency: Infinity };
 
+// Booking engine — free WITH CAPS on every tier (decided 2026-06-10; vs Wix
+// gating bookings behind $29): service types per site, and confirmed bookings
+// per site per calendar month. Enforced in production only (limitsDisabled).
+export const BOOKING_SERVICE_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: Infinity };
+export const BOOKING_MONTHLY_LIMITS = { free_trial: 20, starter: 200, pro: 1000, agency: Infinity };
+
 /** Team seat cap for a tier (defaults to free). */
 export function teamLimit(tier) {
   return TEAM_LIMITS[tier] != null ? TEAM_LIMITS[tier] : TEAM_LIMITS.free_trial;

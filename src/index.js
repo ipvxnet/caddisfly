@@ -80,6 +80,14 @@ import { handleFormsInbox } from './routes/public/forms-inbox.js';
 import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
 import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
+import { handleBookingManager } from './routes/public/booking-manager.js';
+import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
+import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
+import {
+  handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete,
+  handleBookingHoursSave, handleBookingOverrideSave, handleBookingOverrideDelete,
+  handleBookingSettingsSave, handleBookingOwnerCancel,
+} from './routes/api/ai-builder/booking.js';
 import {
   handleBlogList, handleBlogCreate, handleBlogAIDraft, handleBlogUpdate,
   handleBlogPublish, handleBlogSocial, handleBlogCover, handleBlogDelete,
@@ -197,6 +205,8 @@ router.get('/billing/logout', handleBillingLogout);
 // Customer dashboard (websites + team) and team management
 router.get('/dashboard', handleDashboard, [billingAuth]);
 router.get('/team/accept/:token', handleTeamAccept);
+router.get('/booking/cancel/:token', handleBookingCancelPage);
+router.post('/booking/cancel/:token', handleBookingCancelAction);
 
 // Help/docs (public) + support tickets (customer, magic-link auth)
 router.get('/help', handleHelp);
@@ -234,6 +244,10 @@ router.post('/api/track', handleTrack);
 
 // Contact-form submissions from published sites (public, cross-origin like /api/track)
 router.post('/api/forms/submit', handleFormSubmit);
+// Booking engine (public, called cross-origin from published sites like forms)
+router.get('/api/booking/:project_id/services', handleBookingServices);
+router.get('/api/booking/:project_id/slots', handleBookingSlots);
+router.post('/api/booking/:project_id/book', handleBookingCreate);
 // Store checkout — public, called cross-origin by the mini cart on shop pages
 router.post('/api/store/checkout', handleStoreCheckout);
 router.post('/api/store/subscribe', handleStoreSubscribe);
@@ -289,6 +303,17 @@ router.put('/api/ai-builder/:project_id/forms/settings', handleFormSettings, PRO
 
 // Blog manager + API (owner-facing; same access model as customize)
 router.get('/ai-builder/blog/:project_id', handleBlogManager, PROJ);
+router.get('/ai-builder/bookings/:project_id', handleBookingManager, PROJ);
+// Booking engine — owner management
+router.get('/api/ai-builder/:project_id/booking/services', handleBookingServiceList, PROJ);
+router.post('/api/ai-builder/:project_id/booking/services', handleBookingServiceCreate, PROJ);
+router.put('/api/ai-builder/:project_id/booking/services/:service_id', handleBookingServiceUpdate, PROJ);
+router.delete('/api/ai-builder/:project_id/booking/services/:service_id', handleBookingServiceDelete, PROJ);
+router.put('/api/ai-builder/:project_id/booking/hours', handleBookingHoursSave, PROJ);
+router.post('/api/ai-builder/:project_id/booking/overrides', handleBookingOverrideSave, PROJ);
+router.delete('/api/ai-builder/:project_id/booking/overrides/:override_id', handleBookingOverrideDelete, PROJ);
+router.put('/api/ai-builder/:project_id/booking/settings', handleBookingSettingsSave, PROJ);
+router.post('/api/ai-builder/:project_id/booking/:booking_id/cancel', handleBookingOwnerCancel, PROJ);
 router.get('/api/ai-builder/:project_id/blog', handleBlogList, PROJ);
 router.post('/api/ai-builder/:project_id/blog', handleBlogCreate, PROJ);
 router.post('/api/ai-builder/:project_id/blog/ai-draft', handleBlogAIDraft, PROJ);
