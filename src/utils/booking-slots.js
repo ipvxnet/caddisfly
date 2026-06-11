@@ -32,6 +32,10 @@ export function parseBookingSettings(config) {
   // Booking-notification platforms (validated against the allowed list in
   // booking-notify.js at send/save time; kept verbatim here).
   s.notify_platforms = Array.isArray(s.notify_platforms) ? s.notify_platforms : [];
+  // Self-service cancel/reschedule cutoff: minutes before the appointment
+  // after which the visitor links stop working (0 = up to the start time).
+  // Past the START it's ALWAYS blocked — prevents attend-then-refund abuse.
+  s.cancel_cutoff_min = clampInt(s.cancel_cutoff_min, 0, 7 * 24 * 60, 0);
   return s;
 }
 
@@ -87,6 +91,15 @@ export function minutesUntil(booking, now) {
   const [y2, m2, d2] = booking.date.split('-').map(Number);
   const days = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
   return days * 1440 + booking.start_min - now.minutes;
+}
+
+/**
+ * Can the VISITOR still self-service this booking (cancel/reschedule)?
+ * False once the appointment started — the attend-then-refund hole — or
+ * inside the owner's cutoff window. Owner actions are never gated by this.
+ */
+export function visitorCanModify(booking, settings, now) {
+  return minutesUntil(booking, now) > (settings.cancel_cutoff_min || 0);
 }
 
 /** 'HH:MM' label for minutes-from-midnight. */

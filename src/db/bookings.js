@@ -272,6 +272,28 @@ export async function confirmPaidBooking(db, bookingId, paymentIntent) {
   return res.meta.changes === 1 ? 'confirmed' : 'conflict';
 }
 
+/**
+ * Move a CONFIRMED booking to a new slot — guarded like confirmPaidBooking:
+ * the UPDATE only succeeds when no OTHER blocking row overlaps the target.
+ * Resets reminded_at so the reminder cron re-arms for the new time. Payment
+ * fields are untouched (same service, same price). Returns 'moved' |
+ * 'conflict' | 'missing'.
+ */
+export async function rescheduleBooking(db, booking, { date, start_min, end_min }) {
+  if (!booking || booking.status !== 'confirmed') return 'missing';
+  const k = booking.ai_project_id != null
+    ? { sql: 'ai_project_id = ?', val: booking.ai_project_id }
+    : { sql: 'project_id = ?', val: booking.project_id };
+  const res = await db.prepare(
+    `UPDATE bookings SET date = ?, start_min = ?, end_min = ?, reminded_at = NULL
+     WHERE id = ? AND status = 'confirmed' AND NOT EXISTS (
+       SELECT 1 FROM bookings
+       WHERE ${k.sql} AND date = ? AND id != ? AND ${BLOCKING} AND start_min < ? AND end_min > ?
+     )`
+  ).bind(date, start_min, end_min, booking.id, k.val, date, booking.id, end_min, start_min).run();
+  return res.meta.changes === 1 ? 'moved' : 'conflict';
+}
+
 /** Mark the refund outcome on a booking (cancel/conflict paths). */
 export async function setPaymentStatus(db, bookingId, paymentStatus) {
   await db.prepare('UPDATE bookings SET payment_status = ? WHERE id = ?').bind(paymentStatus, bookingId).run();

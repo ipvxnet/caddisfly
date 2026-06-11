@@ -11,7 +11,7 @@ import { getBookingByToken, cancelBookingByToken } from '../../db/bookings.js';
 import { getAIProjectById } from '../../db/ai-projects.js';
 import { getProjectById } from '../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
-import { parseBookingSettings, minutesLabel } from '../../utils/booking-slots.js';
+import { parseBookingSettings, minutesLabel, nowInTimezone, visitorCanModify } from '../../utils/booking-slots.js';
 import { sendBookingVisitorEmail, sendBookingOwnerEmail } from '../../utils/email.js';
 import { notifyBookingEvent, refundCancelledBooking } from '../../utils/booking-notify.js';
 import { translator } from '../../i18n/index.js';
@@ -88,15 +88,36 @@ export async function handleBookingCancelPage(ctx) {
       <p class="bkc-meta">${esc(booking.service_name || '')} — ${when}</p>
       <p class="bkc-muted">${tr('bkc.already')}</p>`);
   }
+  // Attend-then-refund guard: once started (or inside the owner's cutoff),
+  // self-service ends — the business handles it from the inbox.
+  const siteGate = await siteForBooking(env.DB, booking);
+  if (siteGate && !visitorCanModify(booking, siteGate.settings, nowInTimezone(siteGate.settings.timezone))) {
+    return page(ctx, tr, tr('bkc.title'), `<h1>${tr('bkc.too_late_title')}</h1>
+      <p class="bkc-meta">${esc(booking.service_name || '')} — ${when}</p>
+      <p class="bkc-muted">${tr('bkc.too_late')}</p>`);
+  }
   return page(ctx, tr, tr('bkc.title'), `<h1>${tr('bkc.title')}</h1>
     <p class="bkc-meta">${esc(booking.service_name || '')} — ${when}</p>
     <p class="bkc-muted">${tr('bkc.confirm_note')}</p>
-    <form method="POST"><button class="bkc-btn" type="submit">${tr('bkc.confirm_btn')}</button></form>`);
+    <form method="POST"><button class="bkc-btn" type="submit">${tr('bkc.confirm_btn')}</button></form>
+    <p class="bkc-muted" style="margin-top:1rem">${tr('bkc.or_reschedule')} <a href="/booking/reschedule/${esc(params.token)}">${tr('bkc.reschedule_link')}</a></p>`);
 }
 
 export async function handleBookingCancelAction(ctx) {
   const { env, params } = ctx;
   const tr = translator(ctx.lang || 'en');
+  // Server-side enforcement of the same gate the page shows (POST can be
+  // crafted directly — the page button is not the security boundary).
+  const existing = await getBookingByToken(env.DB, params.token || '');
+  if (existing && existing.status === 'confirmed') {
+    const siteGate = await siteForBooking(env.DB, existing);
+    if (siteGate && !visitorCanModify(existing, siteGate.settings, nowInTimezone(siteGate.settings.timezone))) {
+      const when = `${esc(existing.date)} · ${minutesLabel(existing.start_min)}`;
+      return page(ctx, tr, tr('bkc.title'), `<h1>${tr('bkc.too_late_title')}</h1>
+        <p class="bkc-meta">${esc(existing.service_name || '')} — ${when}</p>
+        <p class="bkc-muted">${tr('bkc.too_late')}</p>`);
+    }
+  }
   const booking = await cancelBookingByToken(env.DB, params.token || '');
   if (!booking) {
     // Token bad OR already cancelled — re-render the GET view either way.

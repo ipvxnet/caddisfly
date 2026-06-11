@@ -90,6 +90,11 @@ export async function handleBookingManager(ctx) {
           <input id="bk-max" type="number" min="0" max="200" value="${settings.max_per_day}"></div>
         <div><label>${tr('bkm.step')}</label>
           <select id="bk-step">${stepOpts}</select></div>
+        <div><label>${tr('bkm.cutoff')} <span class="hint">${tr('bkm.cutoff_hint')}</span></label>
+          <select id="bk-cutoff">
+            ${[[0, tr('bkm.cutoff_none')], [120, '2h'], [720, '12h'], [1440, '24h'], [2880, '48h']]
+              .map(([v, l]) => `<option value="${v}"${settings.cancel_cutoff_min === v ? ' selected' : ''}>${l}</option>`).join('')}
+          </select></div>
       </div>
       <div style="margin-top:.9rem">
         <label>${tr('bkm.notify_title')} <span class="hint">${tr('bkm.notify_hint')}</span></label>
@@ -346,6 +351,7 @@ export async function handleBookingManager(ctx) {
           lead_time_min: parseInt(document.getElementById('bk-lead').value, 10),
           max_per_day: parseInt(document.getElementById('bk-max').value, 10) || 0,
           slot_step: parseInt(document.getElementById('bk-step').value, 10),
+          cancel_cutoff_min: parseInt(document.getElementById('bk-cutoff').value, 10),
           notify_platforms: notify,
         });
         status('bk-settings-status', T.saved);

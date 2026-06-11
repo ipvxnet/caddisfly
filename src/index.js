@@ -83,6 +83,7 @@ import { handleBlogManager } from './routes/public/blog-manager.js';
 import { handleBookingManager } from './routes/public/booking-manager.js';
 import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
 import { handleBookingReceipt } from './routes/public/booking-receipt.js';
+import { handleBookingReschedulePage, handleBookingRescheduleAction } from './routes/public/booking-reschedule.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
@@ -221,6 +222,8 @@ router.get('/team/accept/:token', handleTeamAccept);
 router.get('/booking/receipt', handleBookingReceipt);
 router.get('/booking/cancel/:token', handleBookingCancelPage);
 router.post('/booking/cancel/:token', handleBookingCancelAction);
+router.get('/booking/reschedule/:token', handleBookingReschedulePage);
+router.post('/booking/reschedule/:token', handleBookingRescheduleAction);
 
 // Help/docs (public) + support tickets (customer, magic-link auth)
 router.get('/help', handleHelp);

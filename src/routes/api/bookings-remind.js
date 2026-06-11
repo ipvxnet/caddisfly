@@ -60,6 +60,7 @@ export async function processBookingReminders(env, opts = {}) {
         timeLabel: minutesLabel(b.start_min),
         tz: site.settings.timezone,
         cancelUrl: `${env.APP_URL || 'https://caddisfly.ai'}/booking/cancel/${b.cancel_token}`,
+        rescheduleUrl: `${env.APP_URL || 'https://caddisfly.ai'}/booking/reschedule/${b.cancel_token}`,
       });
       summary.reminded++;
     } catch (e) {
