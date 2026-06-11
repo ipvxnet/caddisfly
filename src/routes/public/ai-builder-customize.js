@@ -747,29 +747,6 @@ export async function handleAIBuilderCustomize(ctx) {
           </div>
         </details>
 
-        <details class="design-group" id="holiday-group">
-          <summary>${tr('hol.summary')}</summary>
-          <div class="design-group-body">
-            <p class="seo-hint">${tr('hol.hint')}</p>
-            <label class="bk-check" style="display:flex;gap:.5rem;align-items:center;cursor:pointer;margin-bottom:.6rem">
-              <input type="checkbox" id="hol-enabled"${holidaySettings.enabled ? ' checked' : ''}> <strong>${tr('hol.enable')}</strong>
-            </label>
-            <div id="hol-list" style="display:flex;flex-direction:column;gap:.35rem;margin:.3rem 0 .7rem">
-              ${HOLIDAY_KEYS.map((k) => `<label style="display:flex;gap:.5rem;align-items:center;cursor:pointer;font-size:.9rem">
-                <input type="checkbox" class="hol-day" value="${k}"${holidaySettings.holidays.includes(k) ? ' checked' : ''}>
-                ${HOLIDAY_SKINS[k].emoji} ${tr(`hol.h_${k}`)}
-                <span style="display:inline-flex;gap:3px;margin-left:auto">
-                  <span style="width:14px;height:14px;border-radius:4px;background:${HOLIDAY_SKINS[k].colors.primary}"></span>
-                  <span style="width:14px;height:14px;border-radius:4px;background:${HOLIDAY_SKINS[k].colors.secondary}"></span>
-                </span>
-              </label>`).join('')}
-            </div>
-            ${holidaySettings.applied ? `<p class="seo-hint" style="color:#92400e">${tr('hol.active_now')} ${HOLIDAY_SKINS[holidaySettings.applied.holiday] ? HOLIDAY_SKINS[holidaySettings.applied.holiday].emoji : ''} ${tr(`hol.h_${holidaySettings.applied.holiday}`)}</p>` : ''}
-            <button class="link-btn" style="font-weight:700" onclick="saveHolidays(this)">${tr('hol.save')}</button>
-            <span class="seo-saved" id="hol-saved" hidden>${tr('cust.saved')}</span>
-          </div>
-        </details>
-
         <details class="design-group" id="versions-group" ontoggle="if(this.open) loadSnapshots()">
           <summary>${tr('snap.summary')}</summary>
           <div class="design-group-body">
@@ -809,6 +786,29 @@ export async function handleAIBuilderCustomize(ctx) {
               <p class="logo-disclaimer">${tr('logo.disclaimer')}</p>
             </div>
           </details>
+
+        <details class="design-group" id="holiday-group">
+          <summary>${tr('hol.summary')}</summary>
+          <div class="design-group-body">
+            <p class="seo-hint">${tr('hol.hint')}</p>
+            <label class="bk-check" style="display:flex;gap:.5rem;align-items:center;cursor:pointer;margin-bottom:.6rem">
+              <input type="checkbox" id="hol-enabled"${holidaySettings.enabled ? ' checked' : ''}> <strong>${tr('hol.enable')}</strong>
+            </label>
+            <div id="hol-list" style="display:flex;flex-direction:column;gap:.35rem;margin:.3rem 0 .7rem">
+              ${HOLIDAY_KEYS.map((k) => `<label style="display:flex;gap:.5rem;align-items:center;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" class="hol-day" value="${k}"${holidaySettings.holidays.includes(k) ? ' checked' : ''}>
+                ${HOLIDAY_SKINS[k].emoji} ${tr(`hol.h_${k}`)}
+                <span style="display:inline-flex;gap:3px;margin-left:auto">
+                  <span style="width:14px;height:14px;border-radius:4px;background:${HOLIDAY_SKINS[k].colors.primary}"></span>
+                  <span style="width:14px;height:14px;border-radius:4px;background:${HOLIDAY_SKINS[k].colors.secondary}"></span>
+                </span>
+              </label>`).join('')}
+            </div>
+            ${holidaySettings.applied ? `<p class="seo-hint" style="color:#92400e">${tr('hol.active_now')} ${HOLIDAY_SKINS[holidaySettings.applied.holiday] ? HOLIDAY_SKINS[holidaySettings.applied.holiday].emoji : ''} ${tr(`hol.h_${holidaySettings.applied.holiday}`)}</p>` : ''}
+            <button class="link-btn" style="font-weight:700" onclick="saveHolidays(this)">${tr('hol.save')}</button>
+            <span class="seo-saved" id="hol-saved" hidden>${tr('cust.saved')}</span>
+          </div>
+        </details>
         </div>
       </div>
 
