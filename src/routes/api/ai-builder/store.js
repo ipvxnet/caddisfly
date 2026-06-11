@@ -45,6 +45,7 @@ import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/c
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS, PRODUCT_LIMITS } from '../../../utils/credits.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { audit } from '../../../utils/audit.js';
+import { settlePaidBooking } from '../booking.js';
 import { generateImageToR2 } from './ai-edit.js';
 
 function json(body, status = 200) {
@@ -801,6 +802,13 @@ export async function handleStoreWebhook(ctx) {
         // Re-fetch with line items expanded (webhook payloads omit them).
         const full = await getStoreCheckoutSession(env, event.account, session.id);
         await recordStoreOrder(env, meta.site, full);
+      }
+      // Paid-bookings backstop: settle the pending hold even if the visitor
+      // never lands on the receipt page (idempotent in settlePaidBooking).
+      if (meta.type === 'booking' && meta.site && session.payment_status === 'paid') {
+        const full = await getStoreCheckoutSession(env, event.account, session.id);
+        const r = await settlePaidBooking(env, { session: full, account: event.account, publicId: meta.site });
+        console.log('booking webhook settle:', meta.booking_id, r.state);
       }
     }
     return json({ received: true });

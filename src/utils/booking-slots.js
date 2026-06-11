@@ -129,7 +129,8 @@ export function slotsForDate({ date, service, hours, overrides, bookings, settin
   }
   if (!windows.length) return [];
 
-  const dayBookings = (bookings || []).filter((b) => b.date === date && b.status === 'confirmed');
+  // Callers pass BLOCKING rows: confirmed + unexpired pending-payment holds.
+  const dayBookings = (bookings || []).filter((b) => b.date === date && (b.status === 'confirmed' || b.status === 'pending'));
   if (settings.max_per_day > 0 && dayBookings.length >= settings.max_per_day) return [];
 
   // Lead time: today's earliest start is now + lead (rounded up to the step).

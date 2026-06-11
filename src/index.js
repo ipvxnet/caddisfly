@@ -82,6 +82,7 @@ import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
 import { handleBookingManager } from './routes/public/booking-manager.js';
 import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
+import { handleBookingReceipt } from './routes/public/booking-receipt.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
@@ -217,6 +218,7 @@ router.get('/billing/logout', handleBillingLogout);
 // Customer dashboard (websites + team) and team management
 router.get('/dashboard', handleDashboard, [billingAuth]);
 router.get('/team/accept/:token', handleTeamAccept);
+router.get('/booking/receipt', handleBookingReceipt);
 router.get('/booking/cancel/:token', handleBookingCancelPage);
 router.post('/booking/cancel/:token', handleBookingCancelAction);
 

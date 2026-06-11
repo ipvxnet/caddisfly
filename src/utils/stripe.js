@@ -224,6 +224,11 @@ export async function refundPaymentIntent(env, paymentIntentId) {
 }
 
 /** A customer's saved card payment methods (newest first). */
+/** Full refund of a DIRECT CHARGE on a connected account (paid bookings). */
+export async function refundConnectPayment(env, account, paymentIntentId) {
+  return stripeRequest(env, '/refunds', { payment_intent: paymentIntentId }, account);
+}
+
 export async function listCustomerCards(env, customerId) {
   const res = await fetch(`${STRIPE_API}/payment_methods?customer=${encodeURIComponent(customerId)}&type=card&limit=10`, {
     headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },

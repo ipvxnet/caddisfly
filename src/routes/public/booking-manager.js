@@ -129,6 +129,7 @@ export async function handleBookingManager(ctx) {
         <button class="btn ghost" onclick="bkAiDesc(this)" title="${esc(tr('bkm.svc_ai_desc_title'))}">${tr('bkm.svc_ai_desc')}</button></div></div>
       <div class="brief-actions">
         <label class="bk-check"><input type="checkbox" class="sv-active"${s.active ? ' checked' : ''}> ${tr('bkm.svc_active')}</label>
+        <label class="bk-check" title="${esc(tr('bkm.svc_paid_title'))}"><input type="checkbox" class="sv-paid"${s.require_payment ? ' checked' : ''}> ${tr('bkm.svc_paid')}</label>
         <button class="btn ghost" onclick="bkSaveService(this)">${tr('bkm.save')}</button>
         <button class="link-btn danger" onclick="bkDeleteService(this)">${tr('bkm.delete')}</button>
       </div>
@@ -215,6 +216,8 @@ export async function handleBookingManager(ctx) {
     <div class="bk-row${b.status !== 'confirmed' ? ' cancelled' : ''}">
       <div>
         <strong>${esc(b.date)} · ${minutesLabel(b.start_min)}</strong> — ${esc(b.service_name || '')}
+        ${b.payment_status === 'paid' ? `<span class="pill ok">💳 ${tr('bkm.b_paid')}</span>` : ''}
+        ${b.payment_status === 'refunded' ? `<span class="pill">↩ ${tr('bkm.b_refunded')}</span>` : ''}
         ${b.status !== 'confirmed' ? `<span class="pill">${tr('bkm.b_cancelled')}</span>` : ''}
         <div class="muted">${esc(b.customer_name)} &lt;${esc(b.customer_email)}&gt;${b.note ? ` — “${esc(b.note)}”` : ''}</div>
       </div>
@@ -254,6 +257,7 @@ export async function handleBookingManager(ctx) {
     .link-btn{background:none;border:none;color:var(--p2);cursor:pointer;font-size:.85rem;font-weight:600;padding:0 .3rem}
     .link-btn.danger{color:#b91c1c}
     .pill{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:.1rem .6rem;font-size:.72rem;font-weight:700;color:var(--p2);vertical-align:middle}
+    .pill.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
     .grid-4{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:.8rem}
     .bk-svc{border:1px solid var(--line);border-radius:12px;padding:.9rem 1.1rem 1rem;margin:.8rem 0;background:var(--soft,#f8f9fc)}
     .bk-svc.bk-new{background:#fff;border-style:dashed}
@@ -343,6 +347,7 @@ export async function handleBookingManager(ctx) {
         buffer_min: parseInt(root.querySelector('.sv-buf, #nsv-buf').value, 10),
         price_cents: price === '' ? null : Math.round(parseFloat(price) * 100),
         active: root.querySelector('.sv-active') ? root.querySelector('.sv-active').checked : true,
+        require_payment: root.querySelector('.sv-paid') ? root.querySelector('.sv-paid').checked : false,
       };
     }
     async function bkAddService(btn) {

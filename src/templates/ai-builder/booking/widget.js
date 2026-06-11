@@ -44,13 +44,13 @@ export function bookingWidgetTemplate(data, config) {
   }
 
   const card = (s) => `
-    <div class="bkg-card" data-svc="${s.id}" data-dur="${s.duration_min}">
+    <div class="bkg-card" data-svc="${s.id}" data-dur="${s.duration_min}" data-paid="${s.require_payment ? 1 : 0}">
       <div class="bkg-card-body">
         <h3>${esc(s.name)}</h3>
         <div class="bkg-meta">${s.duration_min} min${s.price_cents != null ? ` · ${money(s.price_cents, s.currency, lang)}` : ''}</div>
         ${s.description ? `<p class="bkg-desc">${esc(s.description)}</p>` : ''}
       </div>
-      <button class="bkg-book-btn" type="button">${t(lang, 'bkw.book_btn')}</button>
+      <button class="bkg-book-btn" type="button">${s.require_payment && s.price_cents ? t(lang, 'bkw.pay_btn') : t(lang, 'bkw.book_btn')}</button>
     </div>`;
 
   const styles = `
@@ -102,6 +102,8 @@ export function bookingWidgetTemplate(data, config) {
     email: t(lang, 'bkw.f_email'),
     note: t(lang, 'bkw.f_note'),
     submit: t(lang, 'bkw.f_submit'),
+    pay_submit: t(lang, 'bkw.f_pay_submit'),
+    redirecting: t(lang, 'bkw.redirecting'),
     sending: t(lang, 'bkw.sending'),
     success: t(lang, 'bkw.success'),
     error: t(lang, 'bkw.err_generic'),
@@ -170,7 +172,7 @@ export function bookingWidgetTemplate(data, config) {
       + '<input name="email" type="email" placeholder="' + CFG.msgs.email + '" required maxlength="320">'
       + '<textarea name="note" placeholder="' + CFG.msgs.note + '" rows="2" maxlength="500"></textarea>'
       + '<input class="bkg-hp" name="hp" tabindex="-1" autocomplete="off">'
-      + '<button class="bkg-submit" type="submit">' + CFG.msgs.submit + '</button>'
+      + '<button class="bkg-submit" type="submit">' + (card.dataset.paid === '1' ? CFG.msgs.pay_submit : CFG.msgs.submit) + '</button>'
       + '<div class="bkg-status"></div></form>';
     card.parentNode.insertBefore(p, card.nextSibling);
     state.panel = p;
@@ -190,10 +192,12 @@ export function bookingWidgetTemplate(data, config) {
           service_id: state.svc, date: state.sel.date, start_min: state.sel.start_min,
           name: f.name.value, email: f.email.value, note: f.note.value, hp: f.hp.value,
           tz: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
+          back: location.href,
         }),
       })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok && d.success, d: d }; }); })
         .then(function (res) {
+          if (res.ok && res.d.checkout_url) { st.className = 'bkg-status ok'; st.textContent = CFG.msgs.redirecting; window.location.href = res.d.checkout_url; return; }
           if (res.ok) { st.className = 'bkg-status ok'; st.textContent = CFG.msgs.success; f.querySelector('.bkg-submit').style.display = 'none'; }
           else {
             st.className = 'bkg-status err'; st.textContent = (res.d && res.d.error) || CFG.msgs.error;

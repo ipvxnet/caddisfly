@@ -24,7 +24,7 @@ import {
   replaceHours, upsertOverride, deleteOverride, addHolidayOverrides, getBookingById, cancelBookingById,
 } from '../../../db/bookings.js';
 import { upcomingHolidays, HOLIDAY_COUNTRIES } from '../../../utils/booking-holidays.js';
-import { BOOKING_NOTIFY_PLATFORMS, notifyBookingEvent } from '../../../utils/booking-notify.js';
+import { BOOKING_NOTIFY_PLATFORMS, notifyBookingEvent, refundCancelledBooking } from '../../../utils/booking-notify.js';
 import {
   parseBookingSettings, isValidTimezone, isValidDateStr, minutesLabel, nowInTimezone, DEFAULT_SETTINGS,
 } from '../../../utils/booking-slots.js';
@@ -66,6 +66,34 @@ const clampInt = (v, min, max, dflt) => {
   return Number.isNaN(n) ? dflt : Math.min(max, Math.max(min, n));
 };
 
+/**
+ * The "require payment at booking" toggle needs: a price, Stripe connected,
+ * and Starter+ (paid plans sell — same gate as store products; bypassed in
+ * preview via limitsDisabled). Returns a Response to short-circuit, or null.
+ */
+async function paidToggleGate(env, r, fields) {
+  if (!fields.require_payment) return null;
+  if (!fields.price_cents || fields.price_cents <= 0) {
+    return json({ success: false, error: 'Set a price to require payment at booking.' }, 400);
+  }
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  if (!config.stripe_account_id) {
+    return json({ success: false, error: 'Connect Stripe first (Store page → Connect Stripe), then enable paid bookings.' }, 400);
+  }
+  if (!limitsDisabled(env)) {
+    const tier = await getUserTier(env.DB, r.email);
+    if (tier === 'free_trial') {
+      return json({
+        success: false,
+        error: 'Paid bookings are available on paid plans.',
+        upgrade_message: 'Upgrade to Starter or higher to charge for bookings.',
+        billing_url: '/billing',
+      }, 402);
+    }
+  }
+  return null;
+}
+
 /** Validate a service payload from the manager form. */
 function serviceFields(body) {
   const name = String(body.name || '').trim().slice(0, 120);
@@ -78,10 +106,12 @@ function serviceFields(body) {
     active: body.active === false || body.active === 0 ? 0 : 1,
     sort_order: clampInt(body.sort_order, 0, 9999, 0),
   };
-  // Price is display-only in v1 (paid bookings = roadmap fast-follow).
   const price = body.price_cents != null && body.price_cents !== '' ? clampInt(body.price_cents, 0, 100000000, null) : null;
   out.price_cents = price;
   out.currency = price != null ? (String(body.currency || 'usd').toLowerCase().slice(0, 3) || 'usd') : null;
+  // Paid bookings: visitors pay this price in Stripe Checkout before the slot
+  // confirms (gated in paidToggleGate — price + Stripe connected + Starter+).
+  out.require_payment = body.require_payment ? 1 : 0;
   return { fields: out };
 }
 
@@ -115,6 +145,8 @@ export async function handleBookingServiceCreate(ctx) {
     const body = await request.json().catch(() => ({}));
     const v = serviceFields(body);
     if (v.error) return json({ success: false, error: v.error }, 400);
+    const gate = await paidToggleGate(env, r, v.fields);
+    if (gate) return gate;
     const id = await createService(env.DB, r.projectKey, v.fields);
     audit(ctx, 'booking.service_create', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, resourceName: v.fields.name });
     return json({ success: true, id });
@@ -132,6 +164,8 @@ export async function handleBookingServiceUpdate(ctx) {
     const body = await request.json().catch(() => ({}));
     const v = serviceFields(body);
     if (v.error) return json({ success: false, error: v.error }, 400);
+    const gate = await paidToggleGate(env, r, v.fields);
+    if (gate) return gate;
     const okay = await updateService(env.DB, r.projectKey, parseInt(params.service_id, 10), v.fields);
     if (!okay) return json({ success: false, error: 'Service not found' }, 404);
     return json({ success: true });
@@ -318,10 +352,11 @@ export async function handleBookingOwnerCancel(ctx) {
     const config = await getOrCreateConfig(env.DB, r.projectKey);
     const settings = parseBookingSettings(config);
     const service = await getServiceById(env.DB, r.projectKey, booking.service_id);
+    const refund = await refundCancelledBooking(env, { booking, config });
     const work = Promise.allSettled([
       sendBookingVisitorEmail(env, {
         to: booking.customer_email, siteName: r.name, serviceName: (service && service.name) || '',
-        dateLabel: booking.date, timeLabel: minutesLabel(booking.start_min), tz: settings.timezone, cancelled: true,
+        dateLabel: booking.date, timeLabel: minutesLabel(booking.start_min), tz: settings.timezone, cancelled: true, refund,
       }),
       notifyBookingEvent(env, {
         config, settings, siteName: r.name, publicId: params.project_id,
