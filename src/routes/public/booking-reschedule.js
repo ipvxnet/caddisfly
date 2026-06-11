@@ -11,7 +11,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getBookingByToken, getServiceById, getHours, getOverrides, getBookingsInRange, rescheduleBooking } from '../../db/bookings.js';
 import { siteForBooking } from './booking-cancel.js';
-import { parseBookingSettings, nowInTimezone, slotsForDate, minutesLabel, isValidDateStr } from '../../utils/booking-slots.js';
+import { parseBookingSettings, nowInTimezone, slotsForDate, minutesLabel, isValidDateStr, visitorCanModify } from '../../utils/booking-slots.js';
 import { sendBookingVisitorEmail, sendBookingOwnerEmail } from '../../utils/email.js';
 import { notifyBookingEvent } from '../../utils/booking-notify.js';
 import { bookingIcs } from '../../utils/booking-ics.js';
@@ -67,6 +67,12 @@ export async function handleBookingReschedulePage(ctx) {
   const site = await siteForBooking(env.DB, booking);
   if (!site || !site.publicId) {
     return page(ctx, tr('bkres.title'), `<h1>${tr('bkres.not_found_title')}</h1><p class="bkrs-muted">${tr('bkres.not_found')}</p>`);
+  }
+  // Attend-then-reschedule guard (mirrors the cancel page).
+  if (!visitorCanModify(booking, site.settings, nowInTimezone(site.settings.timezone))) {
+    return page(ctx, tr('bkres.title'), `<h1>${tr('bkres.too_late_title')}</h1>
+      <p class="bkrs-meta">${esc(booking.service_name || '')} — ${esc(booking.date)} · ${minutesLabel(booking.start_min)}</p>
+      <p class="bkrs-muted">${tr('bkres.too_late')}</p>`);
   }
 
   const when = `${esc(booking.date)} · ${minutesLabel(booking.start_min)}`;
@@ -163,6 +169,9 @@ export async function handleBookingRescheduleAction(ctx) {
     if (!booking || booking.status !== 'confirmed') return json({ success: false, error: tr('bkres.not_found') }, 404);
     const site = await siteForBooking(env.DB, booking);
     if (!site) return json({ success: false, error: tr('bkres.not_found') }, 404);
+    if (!visitorCanModify(booking, site.settings, nowInTimezone(site.settings.timezone))) {
+      return json({ success: false, error: tr('bkres.too_late') }, 403);
+    }
 
     const body = await request.json().catch(() => ({}));
     const date = String(body.date || '');

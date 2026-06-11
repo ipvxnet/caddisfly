@@ -322,6 +322,7 @@ export async function handleBookingSettingsSave(ctx) {
       horizon_days: clampInt(body.horizon_days, 1, 365, DEFAULT_SETTINGS.horizon_days),
       notify_platforms: (Array.isArray(body.notify_platforms) ? body.notify_platforms : [])
         .filter((p) => BOOKING_NOTIFY_PLATFORMS.includes(p)),
+      cancel_cutoff_min: clampInt(body.cancel_cutoff_min, 0, 7 * 24 * 60, 0),
     };
     const config = await getOrCreateConfig(env.DB, r.projectKey);
     await updateWebsiteConfigById(env.DB, config.id, { booking_settings_json: JSON.stringify(next) });
