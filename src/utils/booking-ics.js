@@ -34,7 +34,7 @@ const icsEscape = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\
  * One-event ICS string. booking: { date, start_min, end_min, cancel_token };
  * site: { siteName, timezone }; serviceName; cancelUrl.
  */
-export function bookingIcs({ booking, siteName, timezone, serviceName, cancelUrl }) {
+export function bookingIcs({ booking, siteName, timezone, serviceName, cancelUrl, sequence = 0 }) {
   const startMs = zonedTimeToUtc(booking.date, booking.start_min, timezone);
   const endMs = zonedTimeToUtc(booking.date, booking.end_min, timezone);
   const lines = [
@@ -45,6 +45,7 @@ export function bookingIcs({ booking, siteName, timezone, serviceName, cancelUrl
     'BEGIN:VEVENT',
     `UID:${booking.cancel_token}@caddisfly.ai`,
     `DTSTAMP:${icsStamp(Date.now())}`,
+    `SEQUENCE:${sequence}`, // bumped on reschedule — same UID updates the event
     `DTSTART:${icsStamp(startMs)}`,
     `DTEND:${icsStamp(endMs)}`,
     `SUMMARY:${icsEscape(`${serviceName} — ${siteName}`)}`,

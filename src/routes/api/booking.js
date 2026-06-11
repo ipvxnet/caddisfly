@@ -128,11 +128,15 @@ export async function handleBookingSlots(ctx) {
     const days = Math.min(MAX_RANGE_DAYS, Math.max(1, parseInt(url.searchParams.get('days'), 10) || 7));
 
     const toDate = addDays(from, days - 1);
-    const [hours, overrides, bookings] = await Promise.all([
+    const [hours, overrides, allBookings] = await Promise.all([
       getHours(env.DB, site.projectKey),
       getOverrides(env.DB, site.projectKey, { fromDate: from }),
       getBookingsInRange(env.DB, site.projectKey, from, toDate),
     ]);
+    // Reschedule flow: the visitor's OWN booking (identified by their secret
+    // cancel token) must not block its neighboring slots — they're moving it.
+    const excludeToken = url.searchParams.get('exclude_token') || '';
+    const bookings = excludeToken ? allBookings.filter((b) => b.cancel_token !== excludeToken) : allBookings;
 
     const range = slotsForRange({ fromDate: from, days, service, hours, overrides, bookings, settings, now });
     return jsonResponse({
@@ -274,6 +278,7 @@ export async function handleBookingCreate(ctx) {
     const dateLabel = date;
     const timeLabel = minutesLabel(slot.start_min);
     const cancelUrl = `${appOrigin}/booking/cancel/${cancelToken}`;
+    const rescheduleUrl = `${appOrigin}/booking/reschedule/${cancelToken}`;
     const ics = bookingIcs({
       booking: { date, start_min: slot.start_min, end_min: slot.end_min, cancel_token: cancelToken },
       siteName: site.siteName, timezone: settings.timezone, serviceName: service.name, cancelUrl,
@@ -282,7 +287,7 @@ export async function handleBookingCreate(ctx) {
       sendBookingVisitorEmail(env, {
         to: email, siteName: site.siteName, serviceName: service.name,
         dateLabel, timeLabel, tz: settings.timezone,
-        cancelUrl, ics,
+        cancelUrl, rescheduleUrl, ics,
       }),
       sendBookingOwnerEmail(env, {
         to: site.notifyEmail, siteName: site.siteName, serviceName: service.name,
@@ -339,6 +344,7 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
         catch { paidLabel = `${(booking.amount_cents / 100).toFixed(2)} ${(booking.currency || 'usd').toUpperCase()}`; }
       }
       const cancelUrl = `${appOrigin}/booking/cancel/${booking.cancel_token}`;
+      const rescheduleUrl = `${appOrigin}/booking/reschedule/${booking.cancel_token}`;
       const ics = bookingIcs({
         booking, siteName: site.siteName, timezone: site.settings.timezone,
         serviceName: booking.service_name || '', cancelUrl,
@@ -347,7 +353,7 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
         sendBookingVisitorEmail(env, {
           to: booking.customer_email, siteName: site.siteName, serviceName: booking.service_name || '',
           dateLabel, timeLabel, tz: site.settings.timezone,
-          cancelUrl, ics,
+          cancelUrl, rescheduleUrl, ics,
           paidLabel,
           receiptUrl: `${appOrigin}/booking/receipt?s=${publicId || site.publicId}&sid=${session.id}`,
         }),

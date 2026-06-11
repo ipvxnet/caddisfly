@@ -53,14 +53,14 @@ export function activeNotifyPlatforms(settings, config) {
  * Fire-and-forget per platform. booking = { date, start_min, customer_name,
  * customer_email, note? }; serviceName resolved by the caller.
  */
-export async function notifyBookingEvent(env, { config, settings, siteName, publicId, booking, serviceName, cancelled = false }) {
+export async function notifyBookingEvent(env, { config, settings, siteName, publicId, booking, serviceName, cancelled = false, rescheduled = false }) {
   try {
     const targets = activeNotifyPlatforms(settings, config);
     if (!targets.length) return;
     const conns = parseConnections(config);
     const when = `${booking.date} · ${minutesLabel(booking.start_min)}`;
     const ann = {
-      title: cancelled ? `❌ Booking cancelled — ${serviceName}` : `📅 New booking — ${serviceName}`,
+      title: cancelled ? `❌ Booking cancelled — ${serviceName}` : rescheduled ? `🔁 Booking rescheduled — ${serviceName}` : `📅 New booking — ${serviceName}`,
       excerpt: `${when}\n${booking.customer_name} <${booking.customer_email}>${booking.note ? `\n“${booking.note}”` : ''}`,
       url: `${env.APP_URL || 'https://caddisfly.ai'}/ai-builder/bookings/${publicId}`,
       image: '',

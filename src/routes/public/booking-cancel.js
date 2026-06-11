@@ -91,7 +91,8 @@ export async function handleBookingCancelPage(ctx) {
   return page(ctx, tr, tr('bkc.title'), `<h1>${tr('bkc.title')}</h1>
     <p class="bkc-meta">${esc(booking.service_name || '')} — ${when}</p>
     <p class="bkc-muted">${tr('bkc.confirm_note')}</p>
-    <form method="POST"><button class="bkc-btn" type="submit">${tr('bkc.confirm_btn')}</button></form>`);
+    <form method="POST"><button class="bkc-btn" type="submit">${tr('bkc.confirm_btn')}</button></form>
+    <p class="bkc-muted" style="margin-top:1rem">${tr('bkc.or_reschedule')} <a href="/booking/reschedule/${esc(params.token)}">${tr('bkc.reschedule_link')}</a></p>`);
 }
 
 export async function handleBookingCancelAction(ctx) {
