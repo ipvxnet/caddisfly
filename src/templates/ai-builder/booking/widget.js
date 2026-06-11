@@ -50,7 +50,11 @@ export function bookingWidgetTemplate(data, config) {
         <div class="bkg-meta">${s.duration_min} min${s.price_cents != null ? ` · ${money(s.price_cents, s.currency, lang)}` : ''}</div>
         ${s.description ? `<p class="bkg-desc">${esc(s.description)}</p>` : ''}
       </div>
-      <button class="bkg-book-btn" type="button">${s.require_payment && s.price_cents ? t(lang, 'bkw.pay_btn') : t(lang, 'bkw.book_btn')}</button>
+      <button class="bkg-book-btn" type="button">${s.require_payment && s.price_cents
+        ? (s.deposit_cents > 0 && s.deposit_cents < s.price_cents
+          ? t(lang, 'bkw.deposit_btn', { amt: money(s.deposit_cents, s.currency, lang) })
+          : t(lang, 'bkw.pay_btn'))
+        : t(lang, 'bkw.book_btn')}</button>
     </div>`;
 
   const styles = `

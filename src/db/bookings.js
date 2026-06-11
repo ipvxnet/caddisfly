@@ -43,15 +43,16 @@ export async function countServices(db, projectKey) {
 export async function createService(db, projectKey, s) {
   const c = keyCols(projectKey);
   const res = await db.prepare(
-    `INSERT INTO booking_services (ai_project_id, project_id, name, description, duration_min, buffer_min, price_cents, currency, active, sort_order, require_payment, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO booking_services (ai_project_id, project_id, name, description, duration_min, buffer_min, price_cents, currency, active, sort_order, require_payment, deposit_cents, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(c.ai, c.p, s.name, s.description || null, s.duration_min, s.buffer_min || 0,
     s.price_cents != null ? s.price_cents : null, s.currency || null,
-    s.active === 0 ? 0 : 1, s.sort_order || 0, s.require_payment ? 1 : 0, nowSec()).run();
+    s.active === 0 ? 0 : 1, s.sort_order || 0, s.require_payment ? 1 : 0,
+    s.deposit_cents != null ? s.deposit_cents : null, nowSec()).run();
   return res.meta.last_row_id;
 }
 
-const SERVICE_FIELDS = new Set(['name', 'description', 'duration_min', 'buffer_min', 'price_cents', 'currency', 'active', 'sort_order', 'require_payment']);
+const SERVICE_FIELDS = new Set(['name', 'description', 'duration_min', 'buffer_min', 'price_cents', 'currency', 'active', 'sort_order', 'require_payment', 'deposit_cents']);
 
 export async function updateService(db, projectKey, id, fields) {
   const k = keyWhere(projectKey);

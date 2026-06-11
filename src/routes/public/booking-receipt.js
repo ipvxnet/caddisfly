@@ -102,8 +102,16 @@ export async function handleBookingReceipt(ctx) {
     : '';
 
   if (result.state === 'confirmed' || result.state === 'already') {
+    let remainLine = '';
+    if (result.remaining_cents > 0 && b) {
+      let amt;
+      try { amt = new Intl.NumberFormat(ctx.lang || 'en', { style: 'currency', currency: (b.currency || 'usd').toUpperCase() }).format(result.remaining_cents / 100); }
+      catch { amt = `${(result.remaining_cents / 100).toFixed(2)}`; }
+      remainLine = `<p class="bkr-meta" style="color:#92400e">${tr('bkr.remaining', { amt })}</p>`;
+    }
     return page(ctx, tr('bkr.title'), `<h1 class="bkr-ok">${tr('bkr.ok_title')}</h1>
       <p class="bkr-meta">${esc((b && b.service_name) || '')} — ${when}</p>
+      ${remainLine}
       <p class="bkr-muted">${tr('bkr.ok')}</p>${backBtn}`);
   }
   if (result.state === 'unpaid') {

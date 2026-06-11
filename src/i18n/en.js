@@ -690,6 +690,7 @@ export const en = {
     inbox_title: '📥 Upcoming bookings',
     inbox_empty: 'No upcoming bookings yet. Add the 📅 Bookings section to your site so visitors can book.',
     b_cancel: 'Cancel', b_cancelled: 'Cancelled', b_paid: 'Paid', b_refunded: 'Refunded',
+    svc_deposit: 'Deposit', svc_deposit_title: 'Charge only this fixed amount at booking (must be less than the price); the rest is settled at the appointment. Cancellations before the cutoff refund the deposit.',
     svc_paid: '💳 Require payment', svc_paid_title: 'Visitors pay the price in Stripe Checkout before the slot confirms (needs a price + Stripe connected; paid plans)',
     confirm_cancel: 'Cancel this booking? The visitor will be emailed.',
     tz_other: 'Other…',
@@ -714,7 +715,7 @@ export const en = {
     success: '✅ Booked! Check your email for the confirmation.',
     err_generic: 'Something went wrong. Please try again.',
     next_days: 'Later', prev_days: 'Earlier', close: 'Close',
-    pay_btn: 'Book & pay', f_pay_submit: 'Continue to payment', your_time: 'your time:',
+    pay_btn: 'Book & pay', deposit_btn: 'Book — {amt} deposit', f_pay_submit: 'Continue to payment', your_time: 'your time:',
     redirecting: 'Taking you to secure payment…',
     err_fields: 'Please fill in your name and a valid email.',
     err_rate: 'Too many bookings — please try again later.',
@@ -725,6 +726,7 @@ export const en = {
     title: 'Booking payment',
     ok_title: '✅ Booked and paid!',
     ok: 'Your appointment is confirmed — the confirmation email (with a one-click cancel link) is on its way.',
+    remaining: 'Remaining due at your appointment: {amt}',
     unpaid_title: 'Payment not completed',
     unpaid: 'The payment didn\'t go through, so nothing was booked. Your slot was held for a few minutes — head back and try again.',
     cancelled_title: 'Payment cancelled',
@@ -1040,7 +1042,7 @@ export const en = {
           <li><strong>Add to your site</strong> — in the editor, <strong>Add section → 📅 Bookings</strong> on any page, then publish. Visitors pick a service and a time; both sides get a confirmation email and the visitor gets a one-click cancel link.</li>
           <li><strong>Stay in the loop</strong> — the upcoming-bookings inbox lives in the Bookings page, you can mirror new-booking alerts to <strong>Discord, Slack, or Telegram</strong> (Booking settings → New-booking alerts; uses the same connections as auto-share), and the <strong>📆 calendar feed</strong> (Booking settings) drops every confirmed booking into your own Google/Apple/Outlook calendar via subscribe-by-URL.</li>
           <li><strong>No double-booking</strong> — slots are claimed atomically; lead time, buffers between appointments, and max-per-day are all configurable.</li>
-          <li><strong>Get paid at booking</strong> (paid plans) — give a service a price and tick <strong>💳 Require payment</strong>: visitors pay in Stripe Checkout (your connected Stripe account, like the store) before the slot confirms, and cancellations are refunded automatically.</li>
+          <li><strong>Get paid at booking</strong> (paid plans) — give a service a price and tick <strong>💳 Require payment</strong>: visitors pay in Stripe Checkout (your connected Stripe account, like the store) before the slot confirms, and cancellations are refunded automatically. Set an optional <strong>deposit</strong> to charge only part upfront — the rest is settled at the appointment, and the emails spell out the remaining balance for both sides.</li>
           <li><strong>Set up your Stripe account for receipts & taxes</strong> — payments land in <em>your</em> Stripe account, so its configuration is yours to manage:
             <ul>
               <li><strong>Email receipts</strong> — in your Stripe Dashboard go to <strong>Settings → Emails</strong> and enable <em>"Successful payments"</em> so customers get Stripe's official card receipt (Caddisfly's confirmation email also shows the amount paid + a receipt link). Stripe never sends receipts in test mode.</li>
