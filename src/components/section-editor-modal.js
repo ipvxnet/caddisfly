@@ -32,7 +32,7 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
 
       <details class="manual-edit" open>
         <summary>${tr('sed.edit_manual')}</summary>
-        <form id="section-edit-form" onsubmit="saveSectionChanges(event)">
+        <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
           ${generateFormFields(section.section_type, content, tr, projectId)}
 
           <div class="form-actions">
@@ -403,6 +403,11 @@ async function saveSectionChanges(event) {
   event.preventDefault();
 
   const form = event.target;
+  // The save target comes from the FORM itself, never the window globals — a
+  // stale window.currentSectionId once saved one section's form onto ANOTHER
+  // section's row (prod hero wiped with navbar fields, 2026-06-11).
+  const sectionId = form.dataset.sectionId;
+  if (!sectionId) { alert('Editor out of sync — please reopen this section.'); return; }
   const formData = new FormData(form);
   const saveBtn = document.getElementById('save-btn');
 
@@ -431,7 +436,7 @@ async function saveSectionChanges(event) {
   saveBtn.textContent = ${JSON.stringify(tr('sed.saving'))};
 
   try {
-    const response = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${window.currentSectionId}\`, {
+    const response = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${sectionId}\`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content })

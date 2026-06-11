@@ -26,7 +26,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
   const canRemove = imageTargets.includes('background_image') || imageTargets.includes('image_url');
 
   return `
-<div class="ai-edit-panel">
+<div class="ai-edit-panel" data-section-id="${section.id}">
   <div class="ai-edit-head">
     <span class="ai-edit-title">${tr('aip.title')}</span>
     <span class="ai-edit-sub">${tr('aip.sub')}</span>
@@ -106,6 +106,14 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
 
 <script>
 window.aiEditHistory = [];
+
+// Section id from the LIVE panel DOM — never the window global, which can go
+// stale when modal scripts fail to re-execute (caused cross-section writes:
+// a video applied to the navbar 2026-06-09, a hero wiped 2026-06-11).
+function aiEditSectionId() {
+  var p = document.querySelector('.ai-edit-panel[data-section-id]');
+  return (p && p.dataset.sectionId) || window.currentSectionId;
+}
 window.aiEditSectionType = '${sectionType}';
 window.aiEditImageField = '${imageField}';
 window.aiEditIsHero = ${isHero ? 'true' : 'false'};
@@ -139,7 +147,7 @@ async function aiEditSend() {
   log.scrollTop = log.scrollHeight;
 
   try {
-    const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${window.currentSectionId}/ai-edit\`, {
+    const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${aiEditSectionId()}/ai-edit\`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, history: window.aiEditHistory })
@@ -203,7 +211,7 @@ async function aiEditApply(btn) {
 }
 
 async function aiEditPostApply(payload) {
-  const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${window.currentSectionId}/ai-edit/apply\`, {
+  const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/sections/\${aiEditSectionId()}/ai-edit/apply\`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -212,7 +220,7 @@ async function aiEditPostApply(payload) {
   if (!data.success) throw new Error(data.error || ${JSON.stringify(tr('aip.failed_apply'))});
   const iframe = document.getElementById('preview-iframe');
   if (iframe) {
-    const sid = window.currentSectionId;
+    const sid = aiEditSectionId();
     // After reload, scroll the preview back to the section we just edited.
     iframe.addEventListener('load', function once() {
       iframe.removeEventListener('load', once);
@@ -236,7 +244,7 @@ async function aiEditGenVideo() {
   var brief = ((document.getElementById('ai-edit-genvid-prompt') || {}).value || '').trim();
   try {
     const res = await fetch(\`/api/ai-builder/\${window.currentProjectId}/hero-video/generate\`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief, section_id: window.currentSectionId })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: brief, section_id: aiEditSectionId() })
     });
     const data = await res.json().catch(function(){ return {}; });
     if (!res.ok || !data.success) {
