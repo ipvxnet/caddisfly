@@ -804,6 +804,9 @@ export async function handleAIBuilderCustomize(ctx) {
                 </span>
               </label>`).join('')}
             </div>
+            <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer;font-size:.9rem;margin-bottom:.6rem">
+              <input type="checkbox" id="hol-decor"${holidaySettings.decor ? ' checked' : ''}> ${tr('hol.decor')}
+            </label>
             ${holidaySettings.applied ? `<p class="seo-hint" style="color:#92400e">${tr('hol.active_now')} ${HOLIDAY_SKINS[holidaySettings.applied.holiday] ? HOLIDAY_SKINS[holidaySettings.applied.holiday].emoji : ''} ${tr(`hol.h_${holidaySettings.applied.holiday}`)}</p>` : ''}
             <button class="link-btn" style="font-weight:700" onclick="saveHolidays(this)">${tr('hol.save')}</button>
             <span class="seo-saved" id="hol-saved" hidden>${tr('cust.saved')}</span>
@@ -949,7 +952,7 @@ export async function handleAIBuilderCustomize(ctx) {
         document.querySelectorAll('.hol-day:checked').forEach(function (el) { hols.push(el.value); });
         const r = await fetch(\`/api/ai-builder/\${projectId}/holiday-themes\`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ enabled: document.getElementById('hol-enabled').checked, holidays: hols }),
+          body: JSON.stringify({ enabled: document.getElementById('hol-enabled').checked, holidays: hols, decor: document.getElementById('hol-decor').checked }),
         });
         const d = await r.json().catch(() => ({}));
         if (d.success) {

@@ -737,6 +737,7 @@ export const pt = {
     enable: 'Ativar temas de festas programados',
     h_christmas: 'Natal (18–27 dez)', h_halloween: 'Halloween (24 out – 1 nov)',
     h_valentines: 'Dia dos Namorados (7–15 fev)', h_july4: '4 de Julho (28 jun – 5 jul)', h_easter: 'Páscoa (semana anterior – segunda de Páscoa)',
+    decor: '✨ Decorações animadas (Papai Noel voando e companhia — discretas, não bloqueiam cliques, respeitam reduced-motion)',
     active_now: 'Ativo agora:',
     save: 'Salvar temas de festas', saved_note: 'Salvo — o agendador diário cuida do resto ✓',
   },

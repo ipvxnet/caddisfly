@@ -54,6 +54,7 @@ export function parseHolidaySettings(config) {
   return {
     enabled: !!raw.enabled,
     holidays: (Array.isArray(raw.holidays) ? raw.holidays : []).filter((h) => HOLIDAY_KEYS.includes(h)),
+    decor: raw.decor !== false, // animated decorations (Santa flyby…) — default ON
     applied: raw.applied && HOLIDAY_KEYS.includes(raw.applied.holiday) ? raw.applied : null,
   };
 }

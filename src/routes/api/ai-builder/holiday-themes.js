@@ -41,6 +41,7 @@ export async function handleHolidayThemesSave(ctx) {
     const next = {
       enabled: !!body.enabled,
       holidays: (Array.isArray(body.holidays) ? body.holidays : []).filter((h) => HOLIDAY_KEYS.includes(h)),
+      decor: body.decor !== false && body.decor !== 'false',
       applied: prev.applied, // the cron owns this field
     };
     await updateWebsiteConfigById(env.DB, config.id, { holiday_themes_json: JSON.stringify(next) });
@@ -105,7 +106,7 @@ export async function processHolidayThemes(env, cronCtx, opts = {}) {
         await updateWebsiteConfigById(env.DB, config.id, {
           primary_color: skin.colors.primary,
           secondary_color: skin.colors.secondary,
-          holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, applied }),
+          holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, decor: hs.decor, applied }),
         });
         await republish(env, cronCtx, proj.publicId, proj.email);
         console.log(`holiday theme APPLIED ${active} → ${proj.publicId}`);
@@ -116,7 +117,7 @@ export async function processHolidayThemes(env, cronCtx, opts = {}) {
         await updateWebsiteConfigById(env.DB, config.id, {
           primary_color: hs.applied.prev_primary,
           secondary_color: hs.applied.prev_secondary,
-          holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, applied: null }),
+          holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, decor: hs.decor, applied: null }),
         });
         await republish(env, cronCtx, proj.publicId, proj.email);
         console.log(`holiday theme REVERTED ${hs.applied.holiday} → ${proj.publicId}`);

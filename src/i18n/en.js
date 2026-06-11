@@ -743,6 +743,7 @@ export const en = {
     enable: 'Enable scheduled holiday themes',
     h_christmas: 'Christmas (Dec 18–27)', h_halloween: 'Halloween (Oct 24 – Nov 1)',
     h_valentines: "Valentine's Day (Feb 7–15)", h_july4: 'July 4th (Jun 28 – Jul 5)', h_easter: 'Easter (week before – Easter Monday)',
+    decor: '✨ Animated decorations (Santa flyby & friends — tasteful, click-through, honors reduced-motion)',
     active_now: 'Active now:',
     save: 'Save holiday themes', saved_note: 'Saved — the daily scheduler takes it from here ✓',
   },

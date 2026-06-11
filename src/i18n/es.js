@@ -737,6 +737,7 @@ export const es = {
     enable: 'Activar temas festivos programados',
     h_christmas: 'Navidad (18–27 dic)', h_halloween: 'Halloween (24 oct – 1 nov)',
     h_valentines: 'San Valentín (7–15 feb)', h_july4: '4 de julio (28 jun – 5 jul)', h_easter: 'Pascua (semana previa – lunes de Pascua)',
+    decor: '✨ Decoraciones animadas (Papá Noel volando y compañía — discretas, no bloquean clics, respetan reduced-motion)',
     active_now: 'Activo ahora:',
     save: 'Guardar temas festivos', saved_note: 'Guardado — el programador diario se encarga desde aquí ✓',
   },
