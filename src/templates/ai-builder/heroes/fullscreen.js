@@ -2,7 +2,7 @@
 // Full viewport hero with scroll indicator
 
 export function heroFullscreenTemplate(data, config) {
-  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, background_image } = data;
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, background_image } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   const backgroundUrl = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920';
@@ -19,7 +19,7 @@ export function heroFullscreenTemplate(data, config) {
     ${
       cta_text
         ? `
-    <a href="${cta_url || '#contact'}" class="cta-button-outline">
+    <a href="${cta_link || cta_url || '#contact'}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''} class="cta-button-outline">
       ${cta_text}
     </a>
     `

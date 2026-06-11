@@ -2,7 +2,7 @@
 // Clean, text-focused hero with subtle animations
 
 export function heroMinimalTemplate(data, config) {
-  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_url = '#contact' } = data;
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_url = '', cta_link = '', cta_link_new_tab = false } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `
@@ -18,7 +18,7 @@ export function heroMinimalTemplate(data, config) {
       cta_text
         ? `
     <div class="hero-minimal-cta">
-      <a href="${cta_url || '#contact'}" class="cta-button" style="background: ${primaryColor};">
+      <a href="${cta_link || cta_url || '#contact'}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''} class="cta-button" style="background: ${primaryColor};">
         ${cta_text}
       </a>
     </div>
