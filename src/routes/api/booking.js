@@ -34,6 +34,7 @@ import { getUserTier, limitsDisabled } from '../../utils/rate-limiter.js';
 import { BOOKING_MONTHLY_LIMITS } from '../../utils/credits.js';
 import { generateToken } from '../../utils/crypto.js';
 import { notifyBookingEvent } from '../../utils/booking-notify.js';
+import { bookingIcs, zonedTimeToUtc } from '../../utils/booking-ics.js';
 import { createStoreCheckoutSession, refundConnectPayment } from '../../utils/stripe.js';
 import { notifyOps } from '../../utils/ops-notify.js';
 import { siteForBooking } from '../public/booking-cancel.js';
@@ -139,7 +140,12 @@ export async function handleBookingSlots(ctx) {
       timezone: settings.timezone,
       days: range.map((d) => ({
         date: d.date,
-        slots: d.slots.map((s) => ({ start_min: s.start_min, label: minutesLabel(s.start_min) })),
+        slots: d.slots.map((s) => ({
+          start_min: s.start_min,
+          label: minutesLabel(s.start_min),
+          // UTC epoch seconds — lets the widget show the visitor's local time.
+          ts: Math.floor(zonedTimeToUtc(d.date, s.start_min, settings.timezone) / 1000),
+        })),
       })),
     });
   } catch (e) {
@@ -263,11 +269,16 @@ export async function handleBookingCreate(ctx) {
     const appOrigin = env.APP_URL || 'https://caddisfly.ai';
     const dateLabel = date;
     const timeLabel = minutesLabel(slot.start_min);
+    const cancelUrl = `${appOrigin}/booking/cancel/${cancelToken}`;
+    const ics = bookingIcs({
+      booking: { date, start_min: slot.start_min, end_min: slot.end_min, cancel_token: cancelToken },
+      siteName: site.siteName, timezone: settings.timezone, serviceName: service.name, cancelUrl,
+    });
     const emailWork = Promise.allSettled([
       sendBookingVisitorEmail(env, {
         to: email, siteName: site.siteName, serviceName: service.name,
         dateLabel, timeLabel, tz: settings.timezone,
-        cancelUrl: `${appOrigin}/booking/cancel/${cancelToken}`,
+        cancelUrl, ics,
       }),
       sendBookingOwnerEmail(env, {
         to: site.notifyEmail, siteName: site.siteName, serviceName: service.name,
@@ -323,11 +334,16 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
         try { paidLabel = new Intl.NumberFormat('en', { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(booking.amount_cents / 100); }
         catch { paidLabel = `${(booking.amount_cents / 100).toFixed(2)} ${(booking.currency || 'usd').toUpperCase()}`; }
       }
+      const cancelUrl = `${appOrigin}/booking/cancel/${booking.cancel_token}`;
+      const ics = bookingIcs({
+        booking, siteName: site.siteName, timezone: site.settings.timezone,
+        serviceName: booking.service_name || '', cancelUrl,
+      });
       await Promise.allSettled([
         sendBookingVisitorEmail(env, {
           to: booking.customer_email, siteName: site.siteName, serviceName: booking.service_name || '',
           dateLabel, timeLabel, tz: site.settings.timezone,
-          cancelUrl: `${appOrigin}/booking/cancel/${booking.cancel_token}`,
+          cancelUrl, ics,
           paidLabel,
           receiptUrl: `${appOrigin}/booking/receipt?s=${publicId || site.publicId}&sid=${session.id}`,
         }),

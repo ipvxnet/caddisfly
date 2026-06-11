@@ -259,10 +259,10 @@ export const es = {
     pro_name: 'Pro', pro_tag: 'Para autónomos y negocios en crecimiento.', pro_cta: 'Elegir Pro',
     agency_name: 'Agency', agency_tag: 'Para estudios que crean muchos sitios.', agency_cta: 'Elegir Agency',
     features: {
-      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
-      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (10 productos)', '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '✨ Generador de logos con IA', '5 versiones guardadas', 'Soporte por correo'],
-      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — 50 productos', '5 dominios propios', 'Generación de imágenes prioritaria', '✨ Generador de logos con IA', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
-      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
+      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', '📅 Motor de reservas (1 servicio)',, 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
+      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (10 productos)', '📅 Reservas — 5 servicios + <strong>💳 reservas de pago</strong>',, '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '✨ Generador de logos con IA', '5 versiones guardadas', 'Soporte por correo'],
+      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — 50 productos', '📅 Reservas — 15 servicios',, '5 dominios propios', 'Generación de imágenes prioritaria', '✨ Generador de logos con IA', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
+      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', '📅 Reservas ilimitadas',, 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
     },
     faqs: [
       ['¿Qué es un “crédito de IA”?', 'Los créditos cubren el trabajo de IA detrás de tu sitio. Aprox.: crear un sitio completo ≈ 20 créditos, una edición de texto con IA ≈ 1, una imagen generada con IA ≈ 5, renovar un sitio existente ≈ 10. Tu asignación mensual se reinicia cada ciclo.'],
@@ -701,7 +701,7 @@ export const es = {
     success: '✅ ¡Reservado! Revisa tu email para la confirmación.',
     err_generic: 'Algo salió mal. Inténtalo de nuevo.',
     next_days: 'Después', prev_days: 'Antes', close: 'Cerrar',
-    pay_btn: 'Reservar y pagar', f_pay_submit: 'Continuar al pago',
+    pay_btn: 'Reservar y pagar', f_pay_submit: 'Continuar al pago', your_time: 'tu hora:',
     redirecting: 'Llevándote al pago seguro…',
     err_fields: 'Completa tu nombre y un email válido.',
     err_rate: 'Demasiadas reservas — inténtalo más tarde.',
