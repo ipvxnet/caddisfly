@@ -236,7 +236,11 @@ export async function handleBookingCreate(ctx) {
           }],
           successUrl: `${appOrigin0}/booking/receipt?s=${params.project_id}&sid={CHECKOUT_SESSION_ID}`,
           cancelUrl: back && /^https?:\/\//.test(back) ? `${back}${back.includes('?') ? '&' : '?'}bk_cancelled=1` : `${appOrigin0}/booking/receipt?s=${params.project_id}&cancelled=1`,
-          metadata: { type: 'booking', site: params.project_id, booking_id: String(hold.id) },
+          metadata: {
+            type: 'booking', site: params.project_id, booking_id: String(hold.id),
+            // Where the visitor booked from — the receipt page's way home.
+            back: back && /^https?:\/\//.test(back) ? back : '',
+          },
         });
         await setBookingSession(env.DB, hold.id, session.id);
         audit(ctx, 'booking.payment_started', {

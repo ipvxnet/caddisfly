@@ -718,6 +718,7 @@ export const pt = {
     cancelled: 'Nenhuma cobrança foi feita e nada foi reservado. Você pode escolher outro horário no site quando quiser.',
     conflict_title: 'Esse horário escapou',
     conflict: 'Seu pagamento chegou depois que a retenção expirou e outra pessoa pegou o horário. <strong>Seu pagamento foi totalmente reembolsado.</strong> Escolha outro horário — desculpe o transtorno!',
+    back: 'Voltar para', back_site: 'o site',
     missing_title: 'Recibo não encontrado',
     missing: 'Não conseguimos associar este pagamento a uma reserva. Se houve cobrança, responda ao email de recibo do Stripe.',
   },
