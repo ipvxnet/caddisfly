@@ -31,6 +31,40 @@ const icsStamp = (ms) => {
 const icsEscape = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 
 /**
+ * Owner feed: ALL confirmed bookings as one subscribable calendar. Cancelled
+ * bookings simply disappear from the feed — calendar apps drop events that
+ * stop appearing on refresh.
+ */
+export function bookingsFeedIcs({ siteName, timezone, bookings }) {
+  const events = (bookings || []).map((b) => {
+    const startMs = zonedTimeToUtc(b.date, b.start_min, timezone);
+    const endMs = zonedTimeToUtc(b.date, b.end_min, timezone);
+    const paid = b.payment_status === 'paid' ? ' · 💳 paid' : '';
+    return [
+      'BEGIN:VEVENT',
+      `UID:${b.cancel_token}@caddisfly.ai`,
+      `DTSTAMP:${icsStamp(Date.now())}`,
+      `DTSTART:${icsStamp(startMs)}`,
+      `DTEND:${icsStamp(endMs)}`,
+      `SUMMARY:${icsEscape(`${b.service_name || 'Booking'} — ${b.customer_name}`)}`,
+      `DESCRIPTION:${icsEscape(`${b.customer_name} <${b.customer_email}>${paid}${b.note ? `\n“${b.note}”` : ''}`)}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+    ].join('\r\n');
+  });
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Caddisfly//Bookings//EN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:${icsEscape(`${siteName} — bookings`)}`,
+    `X-WR-TIMEZONE:${timezone}`,
+    ...events,
+    'END:VCALENDAR',
+  ].join('\r\n');
+}
+
+/**
  * One-event ICS string. booking: { date, start_min, end_min, cancel_token };
  * site: { siteName, timezone }; serviceName; cancelUrl.
  */

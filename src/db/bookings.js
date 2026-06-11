@@ -150,6 +150,17 @@ export async function getBookingsInRange(db, projectKey, fromDate, toDate) {
   return res.results || [];
 }
 
+/** Bookings for the owner's iCal feed: confirmed, recent past + all future. */
+export async function getFeedBookings(db, projectKey, fromDate, limit = 500) {
+  const k = keyWhere(projectKey);
+  const res = await db.prepare(
+    `SELECT b.*, s.name AS service_name FROM bookings b
+     LEFT JOIN booking_services s ON s.id = b.service_id
+     WHERE b.${k.sql} AND b.status = 'confirmed' AND b.date >= ? ORDER BY b.date, b.start_min LIMIT ?`
+  ).bind(k.val, fromDate, limit).all();
+  return res.results || [];
+}
+
 /** Upcoming bookings for the owner inbox (joined with the service name). */
 export async function getUpcomingBookings(db, projectKey, fromDate, limit = 100) {
   const k = keyWhere(projectKey);

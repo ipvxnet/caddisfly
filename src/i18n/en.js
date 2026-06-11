@@ -667,6 +667,10 @@ export const en = {
     lead: 'Lead time', lead_hint: '(min notice before a booking)', lead_none: 'None',
     max_day: 'Max per day', max_day_hint: '(0 = unlimited)',
     step: 'Slot spacing', step_auto: 'Service duration',
+    ical_title: '📆 Calendar feed', ical_hint: '(subscribe in Google/Apple/Outlook Calendar)',
+    ical_create: '＋ Create calendar link', ical_copy: 'Copy', ical_rotate: 'Rotate link',
+    ical_rotate_confirm: 'Rotate the calendar link? The old URL stops working and you must re-subscribe.',
+    ical_note: 'Read-only feed of your confirmed bookings — add it to your calendar app via "subscribe by URL". Anyone with the link can see your bookings; rotate it if it leaks.',
     cutoff: 'Cancellation cutoff', cutoff_hint: '(visitors can self-cancel/reschedule until this long before — never after the start)', cutoff_none: 'Up to start time',
     save: 'Save', saved: 'Saved ✓', err: 'Something went wrong. Try again.',
     tab_upcoming: '📥 Upcoming bookings', tab_settings: '⚙️ Settings',
@@ -1034,7 +1038,7 @@ export const en = {
         <ul>
           <li><strong>Set up</strong> — open <strong>Bookings</strong> from your dashboard: add your services (duration, optional price, ✨ AI description), set weekly hours and your timezone, and close holidays with one click (<strong>＋ Add holidays</strong>).</li>
           <li><strong>Add to your site</strong> — in the editor, <strong>Add section → 📅 Bookings</strong> on any page, then publish. Visitors pick a service and a time; both sides get a confirmation email and the visitor gets a one-click cancel link.</li>
-          <li><strong>Stay in the loop</strong> — the upcoming-bookings inbox lives in the Bookings page, and you can mirror new-booking alerts to <strong>Discord, Slack, or Telegram</strong> (Booking settings → New-booking alerts; uses the same connections as auto-share).</li>
+          <li><strong>Stay in the loop</strong> — the upcoming-bookings inbox lives in the Bookings page, you can mirror new-booking alerts to <strong>Discord, Slack, or Telegram</strong> (Booking settings → New-booking alerts; uses the same connections as auto-share), and the <strong>📆 calendar feed</strong> (Booking settings) drops every confirmed booking into your own Google/Apple/Outlook calendar via subscribe-by-URL.</li>
           <li><strong>No double-booking</strong> — slots are claimed atomically; lead time, buffers between appointments, and max-per-day are all configurable.</li>
           <li><strong>Get paid at booking</strong> (paid plans) — give a service a price and tick <strong>💳 Require payment</strong>: visitors pay in Stripe Checkout (your connected Stripe account, like the store) before the slot confirms, and cancellations are refunded automatically.</li>
           <li><strong>Set up your Stripe account for receipts & taxes</strong> — payments land in <em>your</em> Stripe account, so its configuration is yours to manage:

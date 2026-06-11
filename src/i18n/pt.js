@@ -661,6 +661,10 @@ export const pt = {
     lead: 'Antecedência', lead_hint: '(aviso mínimo antes de uma reserva)', lead_none: 'Nenhuma',
     max_day: 'Máx. por dia', max_day_hint: '(0 = sem limite)',
     step: 'Intervalo', step_auto: 'Duração do serviço',
+    ical_title: '📆 Feed de calendário', ical_hint: '(assine no Google/Apple/Outlook Calendar)',
+    ical_create: '＋ Criar link de calendário', ical_copy: 'Copiar', ical_rotate: 'Trocar link',
+    ical_rotate_confirm: 'Trocar o link do calendário? A URL antiga para de funcionar e você precisa assinar de novo.',
+    ical_note: 'Feed somente leitura com suas reservas confirmadas — adicione ao seu calendário via "assinar por URL". Qualquer pessoa com o link vê suas reservas; troque-o se vazar.',
     cutoff: 'Limite de cancelamento', cutoff_hint: '(visitantes podem cancelar/remarcar até esta antecedência — nunca depois do início)', cutoff_none: 'Até a hora de início',
     save: 'Salvar', saved: 'Salvo ✓', err: 'Algo deu errado. Tente de novo.',
     tab_upcoming: '📥 Próximas reservas', tab_settings: '⚙️ Configurações',
@@ -1027,7 +1031,7 @@ export const pt = {
         <ul>
           <li><strong>Configure</strong> — abra <strong>Reservas</strong> no seu painel: adicione seus serviços (duração, preço opcional, descrição com ✨ IA), defina o horário semanal e seu fuso, e feche os feriados com um clique (<strong>＋ Adicionar feriados</strong>).</li>
           <li><strong>Adicione ao site</strong> — no editor, <strong>Adicionar seção → 📅 Reservas</strong> em qualquer página e publique. Os visitantes escolhem serviço e horário; os dois lados recebem email de confirmação e o visitante um link de cancelamento de um clique.</li>
-          <li><strong>Fique por dentro</strong> — a caixa de próximas reservas fica na página de Reservas, e você pode espelhar os avisos de nova reserva no <strong>Discord, Slack ou Telegram</strong> (Configurações de reservas → Avisos de nova reserva; usa as mesmas conexões do compartilhar-nas-redes).</li>
+          <li><strong>Fique por dentro</strong> — a caixa de próximas reservas fica na página de Reservas, você pode espelhar os avisos de nova reserva no <strong>Discord, Slack ou Telegram</strong> (Configurações de reservas → Avisos de nova reserva; usa as mesmas conexões do compartilhar-nas-redes), e o <strong>📆 feed de calendário</strong> (Configurações de reservas) leva cada reserva confirmada para o seu próprio calendário Google/Apple/Outlook via assinatura por URL.</li>
           <li><strong>Sem reservas duplicadas</strong> — os horários são reservados de forma atômica; antecedência, intervalos entre atendimentos e máximo por dia são configuráveis.</li>
           <li><strong>Receba ao agendar</strong> (planos pagos) — dê um preço a um serviço e marque <strong>💳 Exigir pagamento</strong>: os visitantes pagam no Stripe Checkout (sua conta Stripe conectada, como a loja) antes de o horário confirmar, e cancelamentos são reembolsados automaticamente.</li>
           <li><strong>Configure sua conta Stripe para recibos e impostos</strong> — os pagamentos caem na <em>sua</em> conta Stripe, então a configuração dela é sua:

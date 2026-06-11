@@ -33,6 +33,7 @@ import { getUserTier, limitsDisabled } from '../../../utils/rate-limiter.js';
 import { BOOKING_SERVICE_LIMITS, CREDIT_COSTS, canAfford, chargeCredits, formatCreditError } from '../../../utils/credits.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { audit } from '../../../utils/audit.js';
+import { generateToken } from '../../../utils/crypto.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -302,6 +303,26 @@ export async function handleBookingHolidaysAdd(ctx) {
   } catch (e) {
     console.error('booking holidays error:', e);
     return json({ success: false, error: 'Could not add the holidays.' }, 500);
+  }
+}
+
+/**
+ * POST /booking/ical-token — generate (or rotate) the secret iCal feed URL.
+ * Rotating invalidates the old URL instantly (unique column swap).
+ */
+export async function handleBookingIcalToken(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    const token = generateToken(24);
+    await updateWebsiteConfigById(env.DB, config.id, { booking_ical_token: token });
+    audit(ctx, 'booking.ical_token', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id });
+    return json({ success: true, url: `${env.APP_URL || 'https://caddisfly.ai'}/booking/feed/${token}` });
+  } catch (e) {
+    console.error('booking ical token error:', e);
+    return json({ success: false, error: 'Could not create the calendar link.' }, 500);
   }
 }
 
