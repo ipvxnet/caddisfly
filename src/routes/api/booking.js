@@ -318,11 +318,18 @@ export async function settlePaidBooking(env, { session, account, publicId }) {
       const appOrigin = env.APP_URL || 'https://caddisfly.ai';
       const dateLabel = booking.date;
       const timeLabel = minutesLabel(booking.start_min);
+      let paidLabel = null;
+      if (booking.amount_cents != null) {
+        try { paidLabel = new Intl.NumberFormat('en', { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(booking.amount_cents / 100); }
+        catch { paidLabel = `${(booking.amount_cents / 100).toFixed(2)} ${(booking.currency || 'usd').toUpperCase()}`; }
+      }
       await Promise.allSettled([
         sendBookingVisitorEmail(env, {
           to: booking.customer_email, siteName: site.siteName, serviceName: booking.service_name || '',
           dateLabel, timeLabel, tz: site.settings.timezone,
           cancelUrl: `${appOrigin}/booking/cancel/${booking.cancel_token}`,
+          paidLabel,
+          receiptUrl: `${appOrigin}/booking/receipt?s=${publicId || site.publicId}&sid=${session.id}`,
         }),
         sendBookingOwnerEmail(env, {
           to: site.notifyEmail, siteName: site.siteName, serviceName: booking.service_name || '',
