@@ -114,6 +114,7 @@ import { handleGenerateHeroVideo } from './routes/api/ai-builder/hero-video.js';
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSync, handleDnsSave, handleDnsEmailSetup, handleRenewCheckout, handleRenewReceipt } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
+import { processBookingReminders } from './routes/api/bookings-remind.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
@@ -126,6 +127,17 @@ async function handleAdminRenewRun(ctx) {
   const nowOverride = parseInt(ctx.query && ctx.query.now, 10);
   if (dryRun && Number.isFinite(nowOverride)) opts.now = nowOverride;
   const summary = await processRenewals(ctx.env, opts);
+  return new Response(JSON.stringify({ success: true, summary }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+/** GET /api/admin/bookings/remind?dry=1&now=<unix> — manual reminder run
+ *  (admin-only test; `now` simulates the clock, honored only with dry=1). */
+async function handleAdminRemindRun(ctx) {
+  const dryRun = ctx.query && (ctx.query.dry === '1' || ctx.query.dry === 'true');
+  const opts = { dryRun };
+  const nowOverride = parseInt(ctx.query && ctx.query.now, 10);
+  if (dryRun && Number.isFinite(nowOverride)) opts.now = nowOverride;
+  const summary = await processBookingReminders(ctx.env, opts);
   return new Response(JSON.stringify({ success: true, summary }), { headers: { 'Content-Type': 'application/json' } });
 }
 import { handleStoreManager } from './routes/public/store-manager.js';
@@ -383,6 +395,7 @@ router.get('/admin/tickets', handleAdminTickets, [authMiddleware, adminMiddlewar
 router.get('/admin/audit', handleAdminAudit, [authMiddleware, adminMiddleware]);
 router.get('/admin/revenue', handleAdminRevenue, [authMiddleware, adminMiddleware]);
 router.get('/api/admin/domains/renew', handleAdminRenewRun, [authMiddleware, adminMiddleware]);
+router.get('/api/admin/bookings/remind', handleAdminRemindRun, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/reply', handleAdminTicketReply, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/tickets/:public_id/status', handleAdminTicketStatus, [authMiddleware, adminMiddleware]);
 router.get('/admin/legal', handleAdminLegal, [authMiddleware, adminMiddleware]);
@@ -427,6 +440,16 @@ export default {
   // there would really renew + charge.
   async scheduled(event, env, ctx) {
     if (env.ENVIRONMENT !== 'production') return;
+    // Two schedules share this handler — dispatch on the cron expression.
+    if (event && event.cron === '30 * * * *') {
+      try {
+        const summary = await processBookingReminders(env);
+        console.log('booking reminders:', JSON.stringify(summary));
+      } catch (e) {
+        console.error('scheduled booking reminders failed:', e.message);
+      }
+      return;
+    }
     try {
       const summary = await processRenewals(env);
       console.log('renewals:', JSON.stringify(summary));

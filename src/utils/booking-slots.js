@@ -80,6 +80,15 @@ export function isValidDateStr(s) {
   return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
 }
 
+/** Minutes from `now` (owner tz, from nowInTimezone) until a booking's start.
+ *  Negative = already started/past. Pure calendar math, DST-safe. */
+export function minutesUntil(booking, now) {
+  const [y1, m1, d1] = now.date.split('-').map(Number);
+  const [y2, m2, d2] = booking.date.split('-').map(Number);
+  const days = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+  return days * 1440 + booking.start_min - now.minutes;
+}
+
 /** 'HH:MM' label for minutes-from-midnight. */
 export function minutesLabel(min) {
   const h = Math.floor(min / 60);
