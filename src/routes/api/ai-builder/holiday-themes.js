@@ -96,35 +96,42 @@ export async function processHolidayThemes(env, cronCtx, opts = {}) {
       const proj = await projectForConfig(env, config);
       if (!proj) { summary.skipped++; continue; }
 
-      const active = activeHoliday(today, hs.holidays);
+      // ONE pass handles both transitions: revert an expired theme AND apply
+      // a newly-active one in the same tick (single republish). Matters for
+      // demos that teleport the clock between windows, and is harmless for
+      // the real cron (windows never adjoin today).
+      let applied = hs.applied;
+      let curPrimary = config.primary_color || '#667eea';
+      let curSecondary = config.secondary_color || '#764ba2';
+      let action = null;
 
-      if (!hs.applied && active) {
-        // Window opened → save prior colors, skin, republish.
-        const skin = HOLIDAY_SKINS[active];
-        if (dryRun) { summary.applied++; continue; }
-        const applied = { holiday: active, prev_primary: config.primary_color || '#667eea', prev_secondary: config.secondary_color || '#764ba2' };
-        await updateWebsiteConfigById(env.DB, config.id, {
-          primary_color: skin.colors.primary,
-          secondary_color: skin.colors.secondary,
-          holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, decor: hs.decor, applied }),
-        });
-        await republish(env, cronCtx, proj.publicId, proj.email);
-        console.log(`holiday theme APPLIED ${active} → ${proj.publicId}`);
-        summary.applied++;
-      } else if (hs.applied && holidayWindowOver(hs.applied.holiday, today)) {
-        // Window closed → restore, republish.
-        if (dryRun) { summary.reverted++; continue; }
-        await updateWebsiteConfigById(env.DB, config.id, {
-          primary_color: hs.applied.prev_primary,
-          secondary_color: hs.applied.prev_secondary,
-          holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, decor: hs.decor, applied: null }),
-        });
-        await republish(env, cronCtx, proj.publicId, proj.email);
-        console.log(`holiday theme REVERTED ${hs.applied.holiday} → ${proj.publicId}`);
-        summary.reverted++;
-      } else {
-        summary.skipped++;
+      if (applied && holidayWindowOver(applied.holiday, today)) {
+        curPrimary = applied.prev_primary;
+        curSecondary = applied.prev_secondary;
+        applied = null;
+        action = 'reverted';
       }
+      const active = activeHoliday(today, hs.holidays);
+      if (!applied && active) {
+        applied = { holiday: active, prev_primary: curPrimary, prev_secondary: curSecondary };
+        const skin = HOLIDAY_SKINS[active];
+        curPrimary = skin.colors.primary;
+        curSecondary = skin.colors.secondary;
+        action = action === 'reverted' ? 'switched' : 'applied';
+      }
+
+      if (!action) { summary.skipped++; continue; }
+      if (action === 'reverted' || action === 'switched') summary.reverted++;
+      if (action === 'applied' || action === 'switched') summary.applied++;
+      if (dryRun) continue;
+
+      await updateWebsiteConfigById(env.DB, config.id, {
+        primary_color: curPrimary,
+        secondary_color: curSecondary,
+        holiday_themes_json: JSON.stringify({ enabled: true, holidays: hs.holidays, decor: hs.decor, applied }),
+      });
+      await republish(env, cronCtx, proj.publicId, proj.email);
+      console.log(`holiday theme ${action.toUpperCase()} ${applied ? applied.holiday : hs.applied.holiday} → ${proj.publicId}`);
     } catch (e) {
       summary.errors++;
       console.error('holiday theme tick failed for config', config.id, e.message);

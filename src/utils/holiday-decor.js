@@ -82,11 +82,35 @@ const HEART = (fill) => `<svg viewBox="0 0 32 30" xmlns="http://www.w3.org/2000/
 </svg>`;
 
 // ---------------------------------------------------------------- july4
-const BURST = (color) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" stroke="${color}" stroke-width="3" stroke-linecap="round">
+// Burst shapes: rays, a halo ring, and sparkle dots — varied per instance.
+const BURST = (color, variant = 0) => `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="${color}" stroke-width="3.5" stroke-linecap="round" fill="none">
   ${Array.from({ length: 12 }, (_, i) => {
-    const a = (i / 12) * Math.PI * 2;
-    return `<line x1="${(50 + Math.cos(a) * 14).toFixed(1)}" y1="${(50 + Math.sin(a) * 14).toFixed(1)}" x2="${(50 + Math.cos(a) * 46).toFixed(1)}" y2="${(50 + Math.sin(a) * 46).toFixed(1)}"/>`;
+    const a = (i / 12) * Math.PI * 2 + (variant ? 0.26 : 0);
+    return `<line x1="${(60 + Math.cos(a) * 16).toFixed(1)}" y1="${(60 + Math.sin(a) * 16).toFixed(1)}" x2="${(60 + Math.cos(a) * 52).toFixed(1)}" y2="${(60 + Math.sin(a) * 52).toFixed(1)}"/>`;
   }).join('')}
+  ${variant ? `<circle cx="60" cy="60" r="34" stroke-width="2.2" stroke-dasharray="3 7"/>` : ''}
+  </g>
+  ${Array.from({ length: 12 }, (_, i) => {
+    const a = (i / 12) * Math.PI * 2 + 0.13;
+    return `<circle cx="${(60 + Math.cos(a) * 56).toFixed(1)}" cy="${(60 + Math.sin(a) * 56).toFixed(1)}" r="2.4" fill="${color}"/>`;
+  }).join('')}
+</svg>`;
+
+// Waving US flag, pole on the LEFT (it leads the right→left flight).
+const FLAG_SVG = `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="4" width="7" height="142" rx="3" fill="#8a6d3b"/>
+  <circle cx="11.5" cy="6" r="6" fill="#d4a017"/>
+  <g class="cf-flag-cloth">
+    <g>
+      ${Array.from({ length: 13 }, (_, i) => `<rect x="15" y="${10 + i * 8}" width="240" height="8" fill="${i % 2 ? '#ffffff' : '#b22234'}"/>`).join('')}
+      <rect x="15" y="10" width="100" height="56" fill="#3c3b6e"/>
+      ${Array.from({ length: 15 }, (_, i) => {
+        const r = Math.floor(i / 5); const c = i % 5;
+        return `<circle cx="${28 + c * 19}" cy="${20 + r * 18}" r="3.2" fill="#ffffff"/>`;
+      }).join('')}
+    </g>
+  </g>
 </svg>`;
 
 // ---------------------------------------------------------------- easter
@@ -157,9 +181,9 @@ const DECOR = {
   }),
 
   halloween: () => flyby({
-    key: 'halloween', art: BATS_SVG, width: 190, mobileWidth: 120, top: '10vh', duration: 11, every: 55,
-    extraCss: `.cf-bat-wing { animation: cfBatFlap .45s ease-in-out infinite alternate; transform-origin: 0 -4px; }
-@keyframes cfBatFlap { from { transform: scaleY(1); } to { transform: scaleY(.45); } }`,
+    key: 'halloween', art: BATS_SVG, width: 215, mobileWidth: 135, top: '10vh', duration: 11, every: 19,
+    extraCss: `.cf-bat-wing { animation: cfBatFlap .4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes cfBatFlap { from { transform: scaleY(1); } to { transform: scaleY(.4); } }`,
   }),
 
   // Hearts drift up from the bottom edge, staggered and softly transparent.
@@ -187,25 +211,31 @@ ${REDUCED}
 </style>`;
   },
 
-  // Subtle firework bursts near the top, staggered around a 9s cycle.
+  // Flag flies across like Santa; big bold bursts bloom around the top.
   july4: () => {
     const bursts = [
-      { x: '12vw', y: '12vh', s: 90, d: 0, c: '#d23c45' }, { x: '78vw', y: '9vh', s: 110, d: 2.4, c: '#3f51b5' },
-      { x: '52vw', y: '6vh', s: 75, d: 4.6, c: '#d4a017' }, { x: '30vw', y: '16vh', s: 70, d: 6.5, c: '#3f51b5' },
-    ].map((b) => `<span class="cf-burst" style="left:${b.x};top:${b.y};width:${b.s}px;animation-delay:${b.d}s">${BURST(b.c)}</span>`).join('');
-    return `
-<!-- holiday decor (july4) -->
+      { x: '8vw', y: '10vh', s: 150, d: 0, c: '#e63946', v: 0 }, { x: '74vw', y: '7vh', s: 180, d: 1.6, c: '#3f51b5', v: 1 },
+      { x: '46vw', y: '4vh', s: 130, d: 3.1, c: '#ffd166', v: 0 }, { x: '26vw', y: '15vh', s: 120, d: 4.4, c: '#9aa5b1', v: 1 },
+      { x: '88vw', y: '18vh', s: 110, d: 5.6, c: '#e63946', v: 1 }, { x: '60vw', y: '13vh', s: 160, d: 6.8, c: '#3f51b5', v: 0 },
+    ].map((b) => `<span class="cf-burst" style="left:${b.x};top:${b.y};width:${b.s}px;animation-delay:${b.d}s">${BURST(b.c, b.v)}</span>`).join('');
+    const flag = flyby({
+      key: 'july4flag', art: FLAG_SVG, width: 210, mobileWidth: 130, top: '6vh', duration: 13, every: 22,
+      extraCss: `.cf-flag-cloth { animation: cfFlagWave 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: left center; }
+@keyframes cfFlagWave { from { transform: skewY(-2.2deg); } to { transform: skewY(2.4deg); } }`,
+    });
+    return `${flag}
+<!-- holiday decor (july4 bursts) -->
 <div class="cf-holiday-decor cf-hd-july4" aria-hidden="true">${bursts}</div>
 <style>
-.cf-hd-july4 { position: fixed; inset: 0; z-index: 9999; pointer-events: none; }
-.cf-hd-july4 .cf-burst { position: absolute; opacity: 0; animation: cfBurst 9s ease-out infinite; }
+.cf-hd-july4 { position: fixed; inset: 0; z-index: 9998; pointer-events: none; }
+.cf-hd-july4 .cf-burst { position: absolute; opacity: 0; animation: cfBurst 8s ease-out infinite; }
 @keyframes cfBurst {
-  0%   { transform: scale(.15); opacity: 0; }
-  4%   { opacity: .85; }
-  13%  { transform: scale(1); opacity: 0; }
+  0%   { transform: scale(.1); opacity: 0; }
+  5%   { opacity: .95; }
+  16%  { transform: scale(1); opacity: 0; }
   100% { transform: scale(1); opacity: 0; }
 }
-@media (max-width: 640px) { .cf-hd-july4 .cf-burst { transform: scale(.6); } }
+@media (max-width: 640px) { .cf-hd-july4 .cf-burst { transform: scale(.55); } }
 ${REDUCED}
 </style>`;
   },
