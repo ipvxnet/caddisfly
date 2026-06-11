@@ -84,9 +84,16 @@ export async function handleAIBuilderSectionUpdate(ctx) {
     const body = await request.json();
     const { content, is_visible, section_order, html_template, page_id } = body;
 
-    // Update content if provided
+    // Update content if provided — MERGED over the existing content, never a
+    // blind replace. Editor forms only carry the fields they render, so a
+    // replace destroys every key the form doesn't know about (a hero save
+    // dropped video_url/background_image/_variant in prod, 2026-06-11 —
+    // "the video is gone"). Payload keys always win (an empty string still
+    // clears a field); keys absent from the payload survive.
     if (content !== undefined) {
-      await updateSectionContent(env.DB, section.id, content);
+      let existing = {};
+      try { existing = JSON.parse(section.content_json || '{}') || {}; } catch { existing = {}; }
+      await updateSectionContent(env.DB, section.id, { ...existing, ...content });
     }
 
     // Update other fields if provided
