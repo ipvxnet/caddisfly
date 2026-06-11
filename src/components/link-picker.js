@@ -82,7 +82,12 @@ export function linkPickerAssets(lang = 'en') {
 </style>
 <script>
 (function(){
-  if (window.__lpInit) return; window.__lpInit = true;
+  // Define-once, but ALWAYS init the pickers in the freshly injected modal:
+  // the old early-return swallowed the trailing initLinkPickers() call on
+  // every modal after the first, leaving DEAD pickers — blank search box and
+  // typed URLs never committed to the hidden field ("the link is empty again").
+  if (window.__lpInit) { window.initLinkPickers(); return; }
+  window.__lpInit = true;
   var T = ${JSON.stringify(T)};
   function data(){ return window.linkPickerData || { pages: [], sections: [], phone: '', email: '' }; }
   function knownAnchors(){
