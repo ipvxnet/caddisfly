@@ -13,6 +13,7 @@ import { getProjectById } from '../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { parseBookingSettings, minutesLabel } from '../../utils/booking-slots.js';
 import { sendBookingVisitorEmail, sendBookingOwnerEmail } from '../../utils/email.js';
+import { notifyBookingEvent } from '../../utils/booking-notify.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -31,6 +32,7 @@ async function siteForBooking(db, booking) {
       notifyEmail: (config && config.notify_email) || p.customer_email,
       publicId: p.project_id,
       settings: parseBookingSettings(config),
+      config,
     };
   }
   const p = await getProjectById(db, booking.project_id);
@@ -44,6 +46,7 @@ async function siteForBooking(db, booking) {
     notifyEmail: (config && config.notify_email) || p.customer_email,
     publicId: p.preview_id,
     settings: parseBookingSettings(config),
+    config,
   };
 }
 
@@ -113,6 +116,10 @@ export async function handleBookingCancelAction(ctx) {
         customerName: booking.customer_name, customerEmail: booking.customer_email,
         dateLabel, timeLabel, note: '', cancelled: true,
         manageUrl: site.publicId ? `${appOrigin}/ai-builder/bookings/${site.publicId}` : '',
+      }),
+      notifyBookingEvent(env, {
+        config: site.config, settings: site.settings, siteName: site.siteName, publicId: site.publicId,
+        booking, serviceName: booking.service_name || '', cancelled: true,
       }),
     ]);
     if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(work);

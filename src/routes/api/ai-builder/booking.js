@@ -21,29 +21,42 @@ import { getOrCreateConfig } from './store.js';
 import { updateWebsiteConfigById } from '../../../db/ai-config.js';
 import {
   getServices, getServiceById, countServices, createService, updateService, deleteService,
-  replaceHours, upsertOverride, deleteOverride, getBookingById, cancelBookingById,
+  replaceHours, upsertOverride, deleteOverride, addHolidayOverrides, getBookingById, cancelBookingById,
 } from '../../../db/bookings.js';
+import { upcomingHolidays, HOLIDAY_COUNTRIES } from '../../../utils/booking-holidays.js';
+import { BOOKING_NOTIFY_PLATFORMS, notifyBookingEvent } from '../../../utils/booking-notify.js';
 import {
-  parseBookingSettings, isValidTimezone, isValidDateStr, minutesLabel, DEFAULT_SETTINGS,
+  parseBookingSettings, isValidTimezone, isValidDateStr, minutesLabel, nowInTimezone, DEFAULT_SETTINGS,
 } from '../../../utils/booking-slots.js';
 import { sendBookingVisitorEmail } from '../../../utils/email.js';
 import { getUserTier, limitsDisabled } from '../../../utils/rate-limiter.js';
-import { BOOKING_SERVICE_LIMITS } from '../../../utils/credits.js';
+import { BOOKING_SERVICE_LIMITS, CREDIT_COSTS, canAfford, chargeCredits, formatCreditError } from '../../../utils/credits.js';
+import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { audit } from '../../../utils/audit.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-/** Resolve :project_id (ai-first) to { projectKey, email, name }. */
+/** Resolve :project_id (ai-first) to { projectKey, email, name, industry, language }. */
 async function resolveProject(env, project_id) {
   const ai = await getAIProjectByProjectId(env.DB, project_id);
-  if (ai) return { projectKey: { aiProjectId: ai.id }, email: ai.customer_email, name: ai.project_name || 'My Website' };
+  if (ai) {
+    return {
+      projectKey: { aiProjectId: ai.id }, email: ai.customer_email,
+      name: ai.project_name || 'My Website', industry: ai.industry || '', language: ai.language || 'en',
+    };
+  }
   const rp = await getProjectByPreviewId(env.DB, project_id);
   if (rp) {
     let name = rp.website_url || 'My Website';
-    try { const p = JSON.parse(rp.company_profile_json || '{}'); if (p && p.name) name = p.name; } catch { /* ignore */ }
-    return { projectKey: { projectId: rp.id }, email: rp.customer_email, name };
+    let industry = '';
+    try {
+      const p = JSON.parse(rp.company_profile_json || '{}');
+      if (p && p.name) name = p.name;
+      if (p && p.category) industry = p.category;
+    } catch { /* ignore */ }
+    return { projectKey: { projectId: rp.id }, email: rp.customer_email, name, industry, language: rp.language || 'en' };
   }
   return null;
 }
@@ -137,6 +150,41 @@ export async function handleBookingServiceDelete(ctx) {
   return json({ success: true });
 }
 
+const DESC_LANGS = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
+
+/**
+ * POST /booking/services/describe  { name } — AI writes a 1-2 sentence service
+ * description in the site language (CREDIT_COSTS.product_desc, charged on
+ * success). Returns { description }; the manager fills the field, the owner
+ * edits freely and saves as usual.
+ */
+export async function handleBookingServiceDescribe(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const body = await request.json().catch(() => ({}));
+    const svcName = String(body.name || '').trim().slice(0, 120);
+    if (!svcName) return json({ success: false, error: 'Give the service a name first.' }, 400);
+
+    const afford = await canAfford(env, env.DB, r.email, CREDIT_COSTS.product_desc);
+    if (!afford.ok) return json({ ...formatCreditError(afford.state, 'service descriptions') }, 402);
+
+    const langName = DESC_LANGS[r.language] || 'English';
+    const prompt = `Write a short, inviting description (1-2 sentences, max 220 characters, in ${langName}) for this bookable service offered by "${r.name}"${r.industry ? ` (${r.industry})` : ''}: "${svcName}". Speak to the customer, mention the benefit, no quotes, no price, no emoji.`;
+    const raw = await callWorkersAI(env, prompt, { max_tokens: 120, temperature: 0.6, system_message: 'You write crisp service descriptions for small-business booking pages.' });
+    const description = String(raw || '').replace(/^["'“”]+|["'“”]+$/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    if (!description) return json({ success: false, error: 'The AI came back empty — please try again (you were not charged).' }, 502);
+
+    await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.product_desc);
+    audit(ctx, 'credit.booking_desc', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.product_desc, service: svcName } });
+    return json({ success: true, description });
+  } catch (e) {
+    console.error('booking describe error:', e);
+    return json({ success: false, error: 'Could not write the description.' }, 500);
+  }
+}
+
 /** PUT hours — body { windows: [{weekday, start_min, end_min}] } replaces all. */
 export async function handleBookingHoursSave(ctx) {
   const { env, request, params } = ctx;
@@ -196,6 +244,33 @@ export async function handleBookingOverrideDelete(ctx) {
   return json({ success: true });
 }
 
+/**
+ * POST /booking/holidays  { country } — one-click closed-date overrides for the
+ * country's major holidays, from today (owner tz) through the end of NEXT
+ * year. Dates that already have an override are skipped (owner's custom days
+ * win); every inserted row is individually deletable like any override.
+ */
+export async function handleBookingHolidaysAdd(ctx) {
+  const { env, request, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    const body = await request.json().catch(() => ({}));
+    const country = String(body.country || '').toUpperCase();
+    if (!HOLIDAY_COUNTRIES.includes(country)) return json({ success: false, error: 'Pick a country.' }, 400);
+
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    const settings = parseBookingSettings(config);
+    const today = nowInTimezone(settings.timezone).date;
+    const added = await addHolidayOverrides(env.DB, r.projectKey, upcomingHolidays(country, today));
+    audit(ctx, 'booking.holidays_add', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { country, added } });
+    return json({ success: true, added });
+  } catch (e) {
+    console.error('booking holidays error:', e);
+    return json({ success: false, error: 'Could not add the holidays.' }, 500);
+  }
+}
+
 /** PUT settings — { timezone, lead_time_min, max_per_day, slot_step, horizon_days }. */
 export async function handleBookingSettingsSave(ctx) {
   const { env, request, params } = ctx;
@@ -211,6 +286,8 @@ export async function handleBookingSettingsSave(ctx) {
       max_per_day: clampInt(body.max_per_day, 0, 200, 0),
       slot_step: [0, 15, 30, 60].includes(Number(body.slot_step)) ? Number(body.slot_step) : 0,
       horizon_days: clampInt(body.horizon_days, 1, 365, DEFAULT_SETTINGS.horizon_days),
+      notify_platforms: (Array.isArray(body.notify_platforms) ? body.notify_platforms : [])
+        .filter((p) => BOOKING_NOTIFY_PLATFORMS.includes(p)),
     };
     const config = await getOrCreateConfig(env.DB, r.projectKey);
     await updateWebsiteConfigById(env.DB, config.id, { booking_settings_json: JSON.stringify(next) });
@@ -241,10 +318,16 @@ export async function handleBookingOwnerCancel(ctx) {
     const config = await getOrCreateConfig(env.DB, r.projectKey);
     const settings = parseBookingSettings(config);
     const service = await getServiceById(env.DB, r.projectKey, booking.service_id);
-    const work = sendBookingVisitorEmail(env, {
-      to: booking.customer_email, siteName: r.name, serviceName: (service && service.name) || '',
-      dateLabel: booking.date, timeLabel: minutesLabel(booking.start_min), tz: settings.timezone, cancelled: true,
-    });
+    const work = Promise.allSettled([
+      sendBookingVisitorEmail(env, {
+        to: booking.customer_email, siteName: r.name, serviceName: (service && service.name) || '',
+        dateLabel: booking.date, timeLabel: minutesLabel(booking.start_min), tz: settings.timezone, cancelled: true,
+      }),
+      notifyBookingEvent(env, {
+        config, settings, siteName: r.name, publicId: params.project_id,
+        booking, serviceName: (service && service.name) || '', cancelled: true,
+      }),
+    ]);
     if (ctx.ctx && ctx.ctx.waitUntil) ctx.ctx.waitUntil(work);
     else await work;
     return json({ success: true });
