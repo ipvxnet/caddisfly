@@ -233,20 +233,21 @@ const DECOR = {
 <div class="cf-holiday-decor cf-hd-nativity" aria-hidden="true">${NATIVITY_SVG}</div>
 <style>
 .cf-hd-nativity {
-  position: fixed; bottom: 4vh; right: 2.5vw; width: 215px;
+  position: fixed; bottom: 4vh; right: 2.5vw; width: 108px;
   z-index: 9998; pointer-events: none; opacity: 0;
   animation: cfNativity 100s linear infinite;
   animation-delay: 3s;
 }
 .cf-hd-nativity .cf-nat-glow { animation: cfNatBreathe 7s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+/* visible ~10s of each 100s cycle (3s fade in/out around a 10s hold) */
 @keyframes cfNativity {
-  0%, 28%  { opacity: 0; }
+  0%, 30%  { opacity: 0; }
   33%      { opacity: .95; }
-  60%      { opacity: .95; }
-  65%, 100%{ opacity: 0; }
+  43%      { opacity: .95; }
+  46%, 100%{ opacity: 0; }
 }
 @keyframes cfNatBreathe { from { opacity: .7; } to { opacity: 1; transform: scale(1.05); } }
-@media (max-width: 640px) { .cf-hd-nativity { width: 140px; bottom: 2vh; } }
+@media (max-width: 640px) { .cf-hd-nativity { width: 72px; bottom: 2vh; } }
 ${REDUCED}
 </style>`;
   },
@@ -318,15 +319,21 @@ ${REDUCED}
 <div class="cf-holiday-decor cf-hd-easter" aria-hidden="true">${EASTER_SVG}</div>
 <style>
 .cf-hd-easter {
-  position: fixed; bottom: 4vh; right: 2.5vw; width: 210px;
+  position: fixed; bottom: 4vh; right: 2.5vw; width: 105px;
   z-index: 9999; pointer-events: none; opacity: 0;
-  animation: cfEasterIn 3.5s ease-out forwards;
-  animation-delay: 1.5s;
+  animation: cfEasterCycle 60s linear infinite;
+  animation-delay: 2s;
 }
 .cf-hd-easter .cf-eg-halo { animation: cfEasterBreathe 7s ease-in-out infinite alternate; transform-origin: 110px 92px; }
-@keyframes cfEasterIn { to { opacity: .92; } }
+/* visible ~10s of each 60s cycle */
+@keyframes cfEasterCycle {
+  0%, 4%   { opacity: 0; }
+  9%       { opacity: .92; }
+  26%      { opacity: .92; }
+  31%, 100%{ opacity: 0; }
+}
 @keyframes cfEasterBreathe { from { opacity: .75; } to { opacity: 1; transform: scale(1.06); } }
-@media (max-width: 640px) { .cf-hd-easter { width: 110px; bottom: 1vh; right: 2vw; } }
+@media (max-width: 640px) { .cf-hd-easter { width: 70px; bottom: 1vh; right: 2vw; } }
 ${REDUCED}
 </style>`,
 };
