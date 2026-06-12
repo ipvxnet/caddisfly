@@ -115,6 +115,7 @@ export const es = {
     title: 'Crea tu sitio web con IA',
     subtitle: 'Solo describe tu negocio. La IA hace el resto — diseño, textos y SEO automático. Consigue un sitio profesional y listo para buscadores en minutos.',
     get_started: 'Empieza ahora',
+    signed_in_as: 'Creando como', 
     email_label: 'Tu correo',
     email_ph: 'tu@ejemplo.com',
     prompt_label: '¿Qué tipo de sitio necesitas?',

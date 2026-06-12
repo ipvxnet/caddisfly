@@ -9,6 +9,10 @@ import { translator } from '../../i18n/index.js';
  * @returns {Response} HTTP response
  */
 export async function handleAIBuilderLanding(ctx) {
+  // Signed-in users (billing session) skip the email field — the server uses
+  // their session identity in /api/ai-builder/create.
+  const signedInEmail = ctx.billingEmail || '';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
   const html = `
@@ -265,10 +269,16 @@ export async function handleAIBuilderLanding(ctx) {
         <div id="error" class="error"></div>
         <div id="success" class="success"></div>
         <form id="start-form">
+          ${signedInEmail ? `
+          <div class="form-group">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.7rem .9rem;font-size:.92rem;color:#166534">
+              ✓ ${tr('builder.signed_in_as')} <strong>${esc(signedInEmail)}</strong>
+            </div>
+          </div>` : `
           <div class="form-group">
             <label for="email">${tr('builder.email_label')}</label>
             <input type="email" id="email" name="email" required placeholder="${tr('builder.email_ph')}">
-          </div>
+          </div>`}
           <div class="form-group">
             <label for="prompt">${tr('builder.prompt_label')}</label>
             <textarea id="prompt" name="prompt" required placeholder="${tr('builder.prompt_ph')}"></textarea>
@@ -321,7 +331,8 @@ export async function handleAIBuilderLanding(ctx) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const email = document.getElementById('email').value;
+      const emailEl = document.getElementById('email');
+      const email = emailEl ? emailEl.value : ''; // signed-in: server uses the session
       const prompt = document.getElementById('prompt').value;
       const siteLang = document.getElementById('site-lang').value;
       const agreed = document.getElementById('agree').checked;

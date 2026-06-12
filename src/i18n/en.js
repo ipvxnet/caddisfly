@@ -115,6 +115,7 @@ export const en = {
     title: 'Build Your Website with AI',
     subtitle: 'Just describe your business. AI handles the rest — design, copy, and automatic SEO. Get a professional, search-ready website in minutes.',
     get_started: 'Get Started Now',
+    signed_in_as: 'Building as', 
     email_label: 'Your Email',
     email_ph: 'you@example.com',
     prompt_label: 'What kind of website do you need?',
