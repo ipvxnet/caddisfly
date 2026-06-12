@@ -245,9 +245,10 @@ export async function handleDashboard(ctx) {
         ${isAdmin ? `<a class="btn admin" href="/admin">⚙ ${tr('dash.admin')}</a>` : ''}
         <a class="btn ghost" href="/domains">${tr('dash.buy_domain')}</a>
         <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
+        <a class="btn ghost" href="/billing/logout" style="color:#b91c1c">${tr('dash.sign_out')} →</a>
       </div>
     </div>
-    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/activity">${tr('dash.activity')}</a> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a> · <a class="muted-link" href="/billing/logout">${tr('dash.sign_out')}</a></p>
+    <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/activity">${tr('dash.activity')}</a> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a></p>
 
     ${ownSites.some((s) => s.subdomain) ? `
     <div class="note-banner" id="republish-note" hidden>
