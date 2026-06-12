@@ -59,6 +59,50 @@ const SANTA_SVG = `<svg viewBox="0 0 560 140" xmlns="http://www.w3.org/2000/svg"
   </g>
 </svg>`;
 
+// Nativity vignette (alternates with the Santa flyby): stable, Star of
+// Bethlehem, Mary in blue kneeling left, Joseph in brown with staff right,
+// the manger with the Child (halo) between them.
+const NATIVITY_SVG = `<svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="cfNatGlow" cx="50%" cy="38%" r="60%">
+      <stop offset="0%" stop-color="#f7e8b8" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#f7e8b8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="84" r="95" fill="url(#cfNatGlow)" class="cf-nat-glow"/>
+  <!-- stable -->
+  <path d="M22 86 L120 26 L218 86" stroke="#7a5a3a" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <rect x="30" y="84" width="8" height="92" fill="#7a5a3a"/>
+  <rect x="202" y="84" width="8" height="92" fill="#7a5a3a"/>
+  <!-- star of Bethlehem -->
+  <g fill="#f2c14e">
+    <path d="M120 8 l4.5 12 12 4.5 -12 4.5 -4.5 12 -4.5 -12 -12 -4.5 12 -4.5 z"/>
+    <rect x="118.6" y="40" width="2.8" height="16" rx="1.4" opacity=".7"/>
+  </g>
+  <!-- Mary (blue, kneeling, inclined toward the manger) -->
+  <g>
+    <path d="M64 176 q-6 -34 18 -46 q14 -6 20 6 l-4 40 z" fill="#3f6bb0"/>
+    <circle cx="92" cy="124" r="11" fill="#f5cba7"/>
+    <path d="M80 116 q12 -12 24 0 q2 10 -4 12 q-8 -8 -16 0 q-6 -2 -4 -12 z" fill="#35599a"/>
+  </g>
+  <!-- Joseph (brown, standing, staff) -->
+  <g>
+    <path d="M156 176 l2 -52 q4 -12 16 -10 q12 2 12 14 l2 48 z" fill="#7a5230"/>
+    <circle cx="170" cy="106" r="11" fill="#e8b88a"/>
+    <path d="M158 100 q12 -10 24 0 l-2 8 q-10 -6 -20 0 z" fill="#5e3e22"/>
+    <rect x="190" y="96" width="4.5" height="80" rx="2" fill="#9a7245"/>
+  </g>
+  <!-- manger + the Child -->
+  <g>
+    <path d="M102 168 h44 l-8 14 h-28 z" fill="#9a7245"/>
+    <path d="M100 168 l-8 16 M148 168 l8 16" stroke="#7a5a3a" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="124" cy="162" rx="20" ry="8" fill="#e9d8a6"/>
+    <circle cx="124" cy="156" r="7" fill="#f5cba7"/>
+    <circle cx="124" cy="156" r="10.5" fill="none" stroke="#f2c14e" stroke-width="2" opacity=".85"/>
+    <path d="M112 162 q12 8 24 0 l-2 6 q-10 6 -20 0 z" fill="#ffffff"/>
+  </g>
+</svg>`;
+
 // ---------------------------------------------------------------- halloween
 // A small colony of bats, wings flapping (scaleY oscillation per wing).
 const BAT = (x, y, s, dly) => `<g transform="translate(${x},${y}) scale(${s})">
@@ -97,20 +141,21 @@ const BURST = (color, variant = 0) => `<svg viewBox="0 0 120 120" xmlns="http://
   }).join('')}
 </svg>`;
 
-// Waving US flag, pole on the LEFT (it leads the right→left flight).
-const FLAG_SVG = `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
-  <rect x="8" y="4" width="7" height="142" rx="3" fill="#8a6d3b"/>
-  <circle cx="11.5" cy="6" r="6" fill="#d4a017"/>
-  <g class="cf-flag-cloth">
-    <g>
-      ${Array.from({ length: 13 }, (_, i) => `<rect x="15" y="${10 + i * 8}" width="240" height="8" fill="${i % 2 ? '#ffffff' : '#b22234'}"/>`).join('')}
-      <rect x="15" y="10" width="100" height="56" fill="#3c3b6e"/>
-      ${Array.from({ length: 15 }, (_, i) => {
-        const r = Math.floor(i / 5); const c = i % 5;
-        return `<circle cx="${28 + c * 19}" cy="${20 + r * 18}" r="3.2" fill="#ffffff"/>`;
-      }).join('')}
-    </g>
+// Small waving US flag (pole on the LEFT — it leads the right→left flight).
+const SMALL_FLAG = (x, y, s, waveClass) => `<g transform="translate(${x},${y}) scale(${s})">
+  <rect x="0" y="0" width="5" height="92" rx="2.5" fill="#8a6d3b"/>
+  <circle cx="2.5" cy="1" r="4" fill="#d4a017"/>
+  <g class="cf-flag-cloth ${waveClass}">
+    ${Array.from({ length: 7 }, (_, i) => `<rect x="5" y="${4 + i * 8}" width="120" height="8" fill="${i % 2 ? '#ffffff' : '#b22234'}"/>`).join('')}
+    <rect x="5" y="4" width="48" height="24" fill="#3c3b6e"/>
+    ${Array.from({ length: 6 }, (_, i) => `<circle cx="${13 + (i % 3) * 16}" cy="${11 + Math.floor(i / 3) * 11}" r="2.4" fill="#ffffff"/>`).join('')}
   </g>
+</g>`;
+// Loose echelon of three flags flying together.
+const FLAG_FORMATION_SVG = `<svg viewBox="0 0 330 200" xmlns="http://www.w3.org/2000/svg">
+  ${SMALL_FLAG(8, 10, 1.0, 'w1')}
+  ${SMALL_FLAG(150, 52, 0.85, 'w2')}
+  ${SMALL_FLAG(60, 110, 0.72, 'w3')}
 </svg>`;
 
 // ---------------------------------------------------------------- easter
@@ -143,7 +188,8 @@ const EASTER_SVG = `<svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg
   </g>
 </svg>`;
 
-const REDUCED = '@media (prefers-reduced-motion: reduce) { .cf-holiday-decor { display: none !important; } }';
+const REDUCED = `.cf-holiday-decor svg { width: 100%; height: auto; display: block; }
+@media (prefers-reduced-motion: reduce) { .cf-holiday-decor { display: none !important; } }`;
 
 /** Generic horizontal flyby (right→left), used by christmas + halloween. */
 function flyby({ key, art, width, top, duration, every, extraCss = '', mobileWidth }) {
@@ -176,9 +222,34 @@ ${REDUCED}
 }
 
 const DECOR = {
-  christmas: () => flyby({
-    key: 'christmas', art: SANTA_SVG, width: 265, mobileWidth: 165, top: '7vh', duration: 14, every: 75,
-  }),
+  // Santa and the nativity take turns: Santa flies at the top of each 100s
+  // cycle; the nativity vignette glows in the corner during the middle.
+  christmas: () => {
+    const santa = flyby({
+      key: 'christmas', art: SANTA_SVG, width: 265, mobileWidth: 165, top: '7vh', duration: 14, every: 86,
+    });
+    return `${santa}
+<!-- holiday decor (christmas nativity) -->
+<div class="cf-holiday-decor cf-hd-nativity" aria-hidden="true">${NATIVITY_SVG}</div>
+<style>
+.cf-hd-nativity {
+  position: fixed; bottom: 4vh; right: 2.5vw; width: 215px;
+  z-index: 9998; pointer-events: none; opacity: 0;
+  animation: cfNativity 100s linear infinite;
+  animation-delay: 3s;
+}
+.cf-hd-nativity .cf-nat-glow { animation: cfNatBreathe 7s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes cfNativity {
+  0%, 28%  { opacity: 0; }
+  33%      { opacity: .95; }
+  60%      { opacity: .95; }
+  65%, 100%{ opacity: 0; }
+}
+@keyframes cfNatBreathe { from { opacity: .7; } to { opacity: 1; transform: scale(1.05); } }
+@media (max-width: 640px) { .cf-hd-nativity { width: 140px; bottom: 2vh; } }
+${REDUCED}
+</style>`;
+  },
 
   halloween: () => flyby({
     key: 'halloween', art: BATS_SVG, width: 215, mobileWidth: 135, top: '10vh', duration: 11, every: 19,
@@ -219,9 +290,10 @@ ${REDUCED}
       { x: '88vw', y: '18vh', s: 110, d: 5.6, c: '#e63946', v: 1 }, { x: '60vw', y: '13vh', s: 160, d: 6.8, c: '#3f51b5', v: 0 },
     ].map((b) => `<span class="cf-burst" style="left:${b.x};top:${b.y};width:${b.s}px;animation-delay:${b.d}s">${BURST(b.c, b.v)}</span>`).join('');
     const flag = flyby({
-      key: 'july4flag', art: FLAG_SVG, width: 210, mobileWidth: 130, top: '6vh', duration: 13, every: 22,
+      key: 'july4flag', art: FLAG_FORMATION_SVG, width: 250, mobileWidth: 150, top: '6vh', duration: 13, every: 22,
       extraCss: `.cf-flag-cloth { animation: cfFlagWave 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: left center; }
-@keyframes cfFlagWave { from { transform: skewY(-2.2deg); } to { transform: skewY(2.4deg); } }`,
+.cf-flag-cloth.w2 { animation-delay: .25s; } .cf-flag-cloth.w3 { animation-delay: .5s; }
+@keyframes cfFlagWave { from { transform: skewY(-2.4deg); } to { transform: skewY(2.6deg); } }`,
     });
     return `${flag}
 <!-- holiday decor (july4 bursts) -->
@@ -246,7 +318,7 @@ ${REDUCED}
 <div class="cf-holiday-decor cf-hd-easter" aria-hidden="true">${EASTER_SVG}</div>
 <style>
 .cf-hd-easter {
-  position: fixed; bottom: 2vh; right: 2vw; width: 170px;
+  position: fixed; bottom: 4vh; right: 2.5vw; width: 210px;
   z-index: 9999; pointer-events: none; opacity: 0;
   animation: cfEasterIn 3.5s ease-out forwards;
   animation-delay: 1.5s;
