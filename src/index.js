@@ -208,7 +208,7 @@ router.get('/verify/:token', handleVerify);
 router.get('/preview-asset/:preview_id/:filename', handlePreviewAsset);
 
 // AI Builder public routes
-router.get('/ai-builder', handleAIBuilderLanding);
+router.get('/ai-builder', handleAIBuilderLanding, [billingAuth]);
 router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, projectAccess]);
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
@@ -293,7 +293,7 @@ router.post('/store/orders/send', handleBuyerOrdersSend);
 router.get('/store/orders', handleBuyerOrders);
 
 // AI Builder API routes
-router.post('/api/ai-builder/create', handleAIBuilderCreate);
+router.post('/api/ai-builder/create', handleAIBuilderCreate, [billingAuth]);
 // All project-scoped editing routes are gated [billingAuth, projectAccess]:
 // signed-in non-members are blocked (cross-account); deploy/domains additionally
 // check ctx.projectRole inside their handlers.

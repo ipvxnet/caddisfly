@@ -20,7 +20,10 @@ export async function handleAIBuilderCreate(ctx) {
   try {
     // Parse request body
     const body = await request.json();
-    const { email, initial_prompt } = body;
+    // A signed-in user's SESSION identity wins — they never re-enter (or
+    // spoof) an email; anonymous visitors still supply one in the form.
+    const email = ctx.billingEmail || body.email;
+    const { initial_prompt } = body;
     const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
     // Site language: explicit selector → UI language → English.
     const LANGS = ['en', 'es', 'pt'];
