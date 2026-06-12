@@ -731,6 +731,16 @@ export const es = {
     missing_title: 'Recibo no encontrado',
     missing: 'No pudimos asociar este pago a una reserva. Si se te cobró, responde al email de recibo de Stripe.',
   },
+  hol: {
+    summary: '🎄 Temas festivos',
+    hint: 'Elige festividades y tu sitio se decora solo una semana antes de cada una (solo colores) y vuelve a la normalidad después — republicándose en ambos casos.',
+    enable: 'Activar temas festivos programados',
+    h_christmas: 'Navidad (18–27 dic)', h_halloween: 'Halloween (24 oct – 1 nov)',
+    h_valentines: 'San Valentín (7–15 feb)', h_july4: '4 de julio (28 jun – 5 jul)', h_easter: 'Pascua (semana previa – lunes de Pascua)',
+    decor: '✨ Decoraciones animadas (Papá Noel volando y compañía — discretas, no bloquean clics, respetan reduced-motion)',
+    active_now: 'Activo ahora:',
+    save: 'Guardar temas festivos', saved_note: 'Guardado — el programador diario se encarga desde aquí ✓',
+  },
   bkres: {
     title: 'Elige un nuevo horario',
     intro: 'Elige un nuevo horario abajo — tu hora actual sigue reservada hasta que confirmes el cambio. Cualquier pago se mantiene.',
@@ -810,6 +820,9 @@ export const es = {
     feat_count: 'Productos a mostrar', feat_heading_ph: 'Nuestros productos', feat_cta_ph: 'Visita la tienda',
     feat_hint: 'Muestra tus productos más recientes automáticamente — añádelos o edítalos en la',
     feat_store_link: '🛍 página Tienda →',
+    seed_service: 'Servicio', seed_service_desc: 'Descripción del servicio',
+    seed_tst_role: 'Cliente', seed_tst_role2: 'Clienta', seed_tst_role3: 'Socio',
+    seed_tst_text1: '¡Excelente servicio!', seed_tst_text2: '¡Muy recomendable!', seed_tst_text3: '¡Trabajo excelente!',
     bkg_heading_ph: 'Reserva una cita',
     bkg_hint: 'Los visitantes eligen un servicio y un horario — gestiona servicios, horarios y reservas en la',
     bkg_manager_link: 'página 📅 Reservas →',
@@ -996,6 +1009,7 @@ export const es = {
       ['customizing', 'Personalizar tu sitio', `
         <ul>
           <li><strong>Secciones</strong> — haz clic en una sección para seleccionarla y luego <strong>✨ Editar</strong> (texto, imágenes o cambios con IA). Arrastra el controlador ⋮⋮ para reordenar.</li>
+          <li><strong>🎄 Temas festivos</strong> — en el panel de Diseño, actívalos y elige festividades (Navidad, Halloween, San Valentín, 4 de julio, Pascua): tu sitio luce colores a juego desde una semana antes hasta justo después, y luego vuelve a la normalidad — republicándose en ambos casos.</li>
           <li><strong>Añadir / quitar</strong> — <strong>+ Añadir sección</strong> agrega una sección y te deja elegir su diseño; el botón 🗑 la quita. El encabezado y el pie son de todo el sitio.</li>
           <li><strong>Páginas</strong> — añade páginas con la pestaña <strong>+ Página</strong> y mueve secciones entre ellas.</li>
           <li><strong>Galería</strong> — abre el editor de una galería para reordenar (arrastrar), reemplazar, quitar o añadir fotos individuales (sin regenerar con IA).</li>

@@ -737,6 +737,16 @@ export const en = {
     missing_title: 'Receipt not found',
     missing: 'We couldn\'t match this payment to a booking. If you were charged, reply to your Stripe receipt email.',
   },
+  hol: {
+    summary: '🎄 Holiday themes',
+    hint: 'Pick holidays and your site auto-dresses up about a week before each one (colors only), then reverts after — republishing itself both times.',
+    enable: 'Enable scheduled holiday themes',
+    h_christmas: 'Christmas (Dec 18–27)', h_halloween: 'Halloween (Oct 24 – Nov 1)',
+    h_valentines: "Valentine's Day (Feb 7–15)", h_july4: 'July 4th (Jun 28 – Jul 5)', h_easter: 'Easter (week before – Easter Monday)',
+    decor: '✨ Animated decorations (Santa flyby & friends — tasteful, click-through, honors reduced-motion)',
+    active_now: 'Active now:',
+    save: 'Save holiday themes', saved_note: 'Saved — the daily scheduler takes it from here ✓',
+  },
   bkres: {
     title: 'Pick a new time',
     intro: 'Choose a new slot below — your current time stays reserved until you confirm the change. Any payment carries over.',
@@ -816,6 +826,9 @@ export const en = {
     feat_count: 'Products to show', feat_heading_ph: 'Our products', feat_cta_ph: 'Visit the shop',
     feat_hint: 'Shows your newest products automatically — add or edit them on the',
     feat_store_link: '🛍 Store page →',
+    seed_service: 'Service', seed_service_desc: 'Description of service',
+    seed_tst_role: 'Customer', seed_tst_role2: 'Client', seed_tst_role3: 'Partner',
+    seed_tst_text1: 'Great service!', seed_tst_text2: 'Highly recommend!', seed_tst_text3: 'Excellent work!',
     bkg_heading_ph: 'Book an appointment',
     bkg_hint: 'Visitors pick a service and a time slot — manage services, hours, and bookings on the',
     bkg_manager_link: '📅 Bookings page →',
@@ -1003,6 +1016,7 @@ export const en = {
       ['customizing', 'Customizing your site', `
         <ul>
           <li><strong>Sections</strong> — click a section to select it, then <strong>✨ Edit</strong> (text, images, or AI-assisted changes). Drag the ⋮⋮ handle to reorder.</li>
+          <li><strong>🎄 Holiday themes</strong> — in the Design panel, opt in and pick holidays (Christmas, Halloween, Valentine's, July 4th, Easter): your site automatically wears matching colors from about a week before until just after, then reverts — republishing itself both times.</li>
           <li><strong>Add / remove</strong> — <strong>+ Add section</strong> adds a section and lets you choose its layout; the 🗑 button removes one. Header &amp; footer are site-wide.</li>
           <li><strong>Pages</strong> — add pages with the <strong>+ Page</strong> tab and move sections between them.</li>
           <li><strong>Gallery</strong> — open a gallery’s editor to drag-reorder, replace, remove, or add individual photos (no AI re-roll needed).</li>

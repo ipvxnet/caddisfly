@@ -2,6 +2,7 @@
 // Assembles complete HTML pages from sections
 
 import { renderSection } from '../templates/ai-builder/registry.js';
+import { holidayDecorHtml } from './holiday-decor.js';
 import { getTheme, darkModeCss } from './site-themes.js';
 import { translator } from '../i18n/index.js';
 
@@ -32,12 +33,12 @@ export function assemblePage(sections, config, project, opts = {}) {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
     hideBadge = false, trackId = null, appOrigin = '', editOverlay = false,
     seoTitle = null, seoDescription = null, socialImage = null, heroImage = null, canonicalUrl = null, pageTitle = null, business = null,
-    lang = 'en', products = null, bookingServices = null,
+    lang = 'en', products = null, bookingServices = null, holiday = null,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
   // ignore it). `products` feeds the 🛍 featured-products section live data.
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, booking_services: bookingServices, editOverlay };
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, booking_services: bookingServices, holiday, editOverlay };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.
@@ -280,6 +281,7 @@ ${hideBadge ? '' : `<div style="text-align: center; padding: 1rem; background: #
   Built with <a href="${appOrigin || 'https://caddisfly.ai'}" target="_blank" style="color: ${primary_color}; text-decoration: none; font-weight: 600;">Caddisfly</a>
 </div>`}
 
+${holidayDecorHtml(config.holiday)}
 ${trackId ? `<!-- Caddisfly analytics (cookieless) -->
 <script>(function(){try{fetch('${appOrigin}/api/track',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({s:'${trackId}',p:location.pathname,r:document.referrer})});}catch(e){}})();</script>` : ''}
 

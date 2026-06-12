@@ -19,6 +19,7 @@ import { autoSyndicateOnDeploy } from './social.js';
 import { blogNavPage, blogListSection, blogPostSection } from '../../../utils/blog-render.js';
 import { getProductsByProject } from '../../../db/products.js';
 import { getServices } from '../../../db/bookings.js';
+import { parseHolidaySettings } from '../../../utils/holiday-themes.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
 
 function json(body, status = 200) {
@@ -118,6 +119,10 @@ export async function handleAIBuilderDeploy(ctx) {
     // 📅 booking section: active services render live; slots come via the API.
     const bookingServices = await getServices(env.DB, projectKey, { activeOnly: true });
 
+    // 🎄 holiday decor: baked only while a skin is applied (and decor is on).
+    const holSettings = parseHolidaySettings(config);
+    const activeHolidayDecor = holSettings.applied && holSettings.decor ? holSettings.applied.holiday : null;
+
     // Shared site sections (header/footer) — rendered on every page.
     const siteSections = await getSiteSections(env.DB, projectKey, true);
     const header = siteSections.filter((s) => s.section_type === 'header');
@@ -184,6 +189,7 @@ export async function handleAIBuilderDeploy(ctx) {
         lang: siteLang,
         products: activeProducts, // 🛍 featured-products section (live data)
         bookingServices, // 📅 booking section (live data)
+        holiday: activeHolidayDecor, // 🎄 flyby overlay while a skin is applied
         // SEO: per-page overrides + site social image + business identity.
         seoTitle: page.seo_title || null,
         seoDescription: page.seo_description || null,
