@@ -15,6 +15,8 @@ import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../..
 import { inferIndustry, paletteFor, imageKeywordsFor } from '../../../utils/industry-style.js';
 import { getRecipe, recipeVariant } from '../../../utils/industry-recipe.js';
 import { generateSiteSeo, extractContentText } from '../../../utils/seo-generate.js';
+import { generateBlogDraftContent } from '../../../utils/blog-draft.js';
+import { createPost, uniquePostSlug } from '../../../db/blog-posts.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 
@@ -138,8 +140,12 @@ export async function handleAIBuilderGenerate(ctx) {
     // Generate content for each selected section. Fall back to sensible defaults
     // on failure so a selected section is never silently dropped.
     // Use the user's selected sections, else the industry recipe's line-up.
+    // 'blog' in the wizard is a FEATURE choice, not a section type — pull it
+    // out here; we seed a welcome DRAFT post after generation instead (the
+    // /blog pages appear automatically once a post is published).
+    const wantsBlog = context.selected_sections.includes('blog');
     const selected = context.selected_sections.length > 0
-      ? context.selected_sections
+      ? context.selected_sections.filter((s) => s !== 'blog')
       : recipe.sections;
     // Always lead with a brand header (text wordmark — no original logo here).
     const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
@@ -171,6 +177,11 @@ export async function handleAIBuilderGenerate(ctx) {
       let usedFallback = false;
       if (sectionType === 'header') {
         content = { logo: '', business_name: context.business_name, cta_link: '#contact' };
+      } else if (sectionType === 'products' || sectionType === 'booking') {
+        // Live-data sections: products/services are injected at render time
+        // and the headings default from i18n — no AI content to generate.
+        // They show a helper placeholder in the editor until configured.
+        content = {};
       } else {
         try {
           content = await generateSectionContent(env, sectionType, context);
@@ -194,7 +205,10 @@ export async function handleAIBuilderGenerate(ctx) {
       }
 
       // Pick the recipe's variant for this section, then inject real images.
-      const variant = recipeVariant(recipe, sectionType);
+      // (products/booking aren't in any recipe — pin their registry variants.)
+      const variant = sectionType === 'products' ? 'grid'
+        : sectionType === 'booking' ? 'panel'
+        : recipeVariant(recipe, sectionType);
       attachImages(sectionType, content, pickPhoto);
       content._variant = variant;
 
@@ -225,6 +239,25 @@ export async function handleAIBuilderGenerate(ctx) {
       } catch (error) {
         console.error(`Failed to save ${sectionType} section:`, error);
         generationResults.push({ section: sectionType, success: false, error: error.message });
+      }
+    }
+
+    // Blog selected in the wizard → seed ONE welcome DRAFT post (free, part
+    // of generation; best-effort) so the blog manager isn't empty. Publishing
+    // it is the owner's call — that's when /blog goes live on the site.
+    if (wantsBlog) {
+      try {
+        const draft = await generateBlogDraftContent(env, {
+          businessName: context.business_name, industry: context.industry, language: project.language || 'en',
+        }, `A short welcome post introducing ${context.business_name} to its first visitors: who we are, what we offer, and an invitation to get in touch.`);
+        const slug = await uniquePostSlug(env.DB, { aiProjectId: project.id }, draft.title);
+        await createPost(env.DB, { aiProjectId: project.id }, {
+          slug, title: draft.title, excerpt: draft.excerpt, content: draft.content,
+          cover_image: null, status: 'draft', source: 'ai', source_message_id: null,
+        });
+        console.log('wizard blog: welcome draft seeded');
+      } catch (e) {
+        console.error('wizard blog draft failed (non-fatal):', e.message);
       }
     }
 
