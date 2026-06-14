@@ -433,10 +433,16 @@ export function deduplicateCSS(html) {
 export function generatePreview(sections, config, project, opts = {}) {
   const pageHtml = assemblePage(sections, config, project, opts);
 
+  // Optional "Add your details" link → opens the detailed form (Phase 7), so a
+  // refactor owner can supply real history/founder/social/photos and rebuild.
+  const detailsLink = opts.detailedLink
+    ? `<a href="/ai-builder/detailed/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">✨ Add your details</a>`
+    : '';
+
   // Add preview banner with project ID
   const previewBanner = `
 <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%); color: white; padding: 0.75rem 1rem; text-align: center; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 0.875rem;">
-  <strong>Preview Mode</strong> - This is a preview of your website. <a href="/ai-builder/customize/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">Customize</a>
+  <strong>Preview Mode</strong> - This is a preview of your website. <a href="/ai-builder/customize/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">Customize</a>${detailsLink}
 </div>
 <div style="height: 50px;"></div>
 `;

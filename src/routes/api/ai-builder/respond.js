@@ -6,12 +6,14 @@ import {
   createConversationEntry,
   getLatestUnansweredEntry,
   updateConversationAnswer,
+  getAnsweredConversations,
 } from '../../../db/ai-conversations.js';
 import {
   validateAnswer,
   getNextStep,
   formatStepForResponse,
   isConversationComplete,
+  buildConversationSummary,
 } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
 import { checkRequestRateLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
@@ -128,8 +130,26 @@ export async function handleAIBuilderRespond(ctx) {
       });
     }
 
+    // Persist the branching selections (Q1/Q2) onto the project so the rest of
+    // the flow — and generation — knows which path the user is on.
+    if (currentQuestion.step_name === 'business_status') {
+      const patch = { business_status: answer };
+      if (answer === 'new_business') patch.flow_path = 'regular';
+      await updateAIProject(env.DB, project.id, patch);
+    } else if (currentQuestion.step_name === 'data_mode') {
+      await updateAIProject(env.DB, project.id, {
+        data_mode: answer,
+        flow_path: answer === 'detailed' ? 'detailed' : 'regular',
+      });
+    }
+
+    // Build the answers-so-far summary (includes the answer just stored) so the
+    // branching `next` functions can route correctly.
+    const answeredSoFar = await getAnsweredConversations(env.DB, project.id);
+    const answersSummary = buildConversationSummary(answeredSoFar);
+
     // Determine next step
-    const nextStepName = getNextStep(currentQuestion.step_name);
+    const nextStepName = getNextStep(currentQuestion.step_name, answersSummary);
 
     // Check if conversation is complete (no next step or next step is null)
     if (!nextStepName || isConversationComplete(currentQuestion.step_name)) {
@@ -153,8 +173,30 @@ export async function handleAIBuilderRespond(ctx) {
       );
     }
 
+    const pathKey = answersSummary.data_mode === 'detailed' ? 'detailed' : 'regular';
+    const nextStepConfig = formatStepForResponse(nextStepName, project.language || 'en', pathKey);
+
+    // Hand-off step: the detailed form is a separate page, not a chat question.
+    // Move the project to that step and tell the client where to go.
+    if (nextStepConfig && nextStepConfig.type === 'form') {
+      await updateAIProject(env.DB, project.id, {
+        conversation_step: nextStepName,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          conversation_complete: false,
+          redirect: `/ai-builder/detailed/${project.project_id}`,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Check if next step is an info-type step (doesn't need answer) - treat as complete
-    const nextStepConfig = formatStepForResponse(nextStepName, project.language || 'en');
     if (nextStepConfig && nextStepConfig.type === 'info') {
       // Don't create conversation entry for info steps, just mark complete
       await updateAIProject(env.DB, project.id, {

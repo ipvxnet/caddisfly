@@ -19,6 +19,7 @@ import { generateBlogDraftContent } from '../../../utils/blog-draft.js';
 import { createPost, uniquePostSlug } from '../../../db/blog-posts.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
+import { parseDetailedProfile } from '../../../utils/detailed-profile.js';
 
 /**
  * Handle preview generation
@@ -128,14 +129,20 @@ export async function handleAIBuilderGenerate(ctx) {
     context.service_hints = recipe.serviceHints;
     if (!context.tone || context.tone === 'professional') context.tone = recipe.tone;
 
+    // Detailed flow assets: the user's own logo + photos (uploaded or found by
+    // research) take priority over stock imagery.
+    const detailed = parseDetailedProfile(project.detailed_profile_json);
+
     // Fetch real imagery once for the whole site (graceful [] without a key).
     const stockPhotos = await searchStockPhotos(
       env,
       imageKeywordsFor(industry, context.business_name),
       8
     );
-    const pickPhoto = makePhotoPicker(stockPhotos);
-    console.log(`Industry=${industry}, palette=${palette.primary}, stockPhotos=${stockPhotos.length}`);
+    // User-supplied pictures lead the pool so real photos are used before stock.
+    const userPhotos = detailed.picture_urls.map((url) => ({ url, alt: context.business_name }));
+    const pickPhoto = makePhotoPicker([...userPhotos, ...stockPhotos]);
+    console.log(`Industry=${industry}, palette=${palette.primary}, userPhotos=${userPhotos.length}, stockPhotos=${stockPhotos.length}`);
 
     // Generate content for each selected section. Fall back to sensible defaults
     // on failure so a selected section is never silently dropped.
@@ -176,7 +183,7 @@ export async function handleAIBuilderGenerate(ctx) {
       let content;
       let usedFallback = false;
       if (sectionType === 'header') {
-        content = { logo: '', business_name: context.business_name, cta_link: '#contact' };
+        content = { logo: detailed.logo_url || '', business_name: context.business_name, cta_link: '#contact' };
       } else if (sectionType === 'products' || sectionType === 'booking') {
         // Live-data sections: products/services are injected at render time
         // and the headings default from i18n — no AI content to generate.
@@ -202,6 +209,17 @@ export async function handleAIBuilderGenerate(ctx) {
       // services/features templates render a `description` subtitle; AI returns `subheading`.
       if ((sectionType === 'services' || sectionType === 'features') && !content.description && content.subheading) {
         content.description = content.subheading;
+      }
+
+      // Overlay HARD FACTS (contact details, social links) over AI content so the
+      // site shows the real phone/email/address and only the social links the
+      // user actually provided — never invented placeholders.
+      if (sectionType === 'contact' && context.facts) {
+        if (context.facts.contact) Object.assign(content, context.facts.contact);
+        if (context.facts.social) content.social_links = context.facts.social.social_links;
+      }
+      if (sectionType === 'footer' && context.facts && context.facts.social) {
+        content.social = context.facts.social.social_links;
       }
 
       // Pick the recipe's variant for this section, then inject real images.

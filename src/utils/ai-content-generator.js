@@ -1,6 +1,7 @@
 // AI Content Generation using Workers AI
 
 import { POLICY_INSTRUCTION } from './content-policy.js';
+import { detailedToContext } from './detailed-profile.js';
 
 /**
  * Call Workers AI with a prompt
@@ -310,6 +311,18 @@ export function buildContext(project, conversations) {
         break;
     }
   });
+
+  // Detailed flow: the rich business info lives in a JSON blob, not in chat
+  // rows. Merge it so prompts ground copy in real history/founder/services and
+  // contact/social facts are available to overlay onto sections.
+  if (project.detailed_profile_json) {
+    const det = detailedToContext(project.detailed_profile_json);
+    if (det.description) context.description = det.description;
+    if (det.audience) context.audience = det.audience;
+    if (det.location) context.location = det.location;
+    if (det.source_material) context.source_material = det.source_material;
+    if (det.facts) context.facts = det.facts;
+  }
 
   return context;
 }

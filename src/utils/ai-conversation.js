@@ -7,6 +7,28 @@ import { t } from '../i18n/index.js';
  * Each step defines a question, type, and next step
  */
 export const CONVERSATION_STEPS = {
+  // Q1 — branches the whole flow. New businesses go straight to the regular
+  // prompts; existing businesses are asked Q2 (data_mode) next.
+  business_status: {
+    question: 'Do you already have a website for your business?',
+    type: 'single_choice',
+    options: [
+      { value: 'new_business', label: 'New business — no website yet', description: "I'm starting fresh and may need a logo too" },
+      { value: 'existing_business', label: 'Existing business — I have a website', description: 'I already have an online presence' },
+    ],
+    next: (a) => (a.business_status === 'new_business' ? 'business_info' : 'data_mode'),
+  },
+  // Q2 — only reached for existing businesses. "detailed" hands off to the
+  // single-page detailed form; "ai_generated" continues the regular prompts.
+  data_mode: {
+    question: 'How would you like to build your site?',
+    type: 'single_choice',
+    options: [
+      { value: 'detailed', label: 'Use my real business details', description: 'Logo, history, founders, services, photos, social links — for the best result' },
+      { value: 'ai_generated', label: 'Let AI generate it for now', description: "AI writes the text and picks images; I'll add details later" },
+    ],
+    next: (a) => (a.data_mode === 'detailed' ? 'detailed_form' : 'business_info'),
+  },
   initial_prompt: {
     question: 'What kind of website do you need? Describe your business or project.',
     type: 'text',
@@ -72,6 +94,23 @@ export const CONVERSATION_STEPS = {
     type: 'info',
     next: null, // End of conversation
   },
+  // Hand-off step: not a chat question. respond.js detects type 'form' and
+  // redirects to the single-page detailed form instead of generating.
+  detailed_form: {
+    question: 'Tell us about your business',
+    type: 'form',
+    next: null,
+  },
+};
+
+/**
+ * Ordered step lists per flow path, used for the progress indicator. The
+ * `initial_prompt` describe step is collected on the landing page (not in chat),
+ * so it is intentionally excluded here.
+ */
+export const PATHS = {
+  regular: ['business_status', 'data_mode', 'business_info', 'features', 'audience', 'style', 'content_source', 'review'],
+  detailed: ['business_status', 'data_mode', 'detailed_form'],
 };
 
 /**
@@ -92,13 +131,17 @@ export function getStepConfig(stepName) {
 }
 
 /**
- * Get next step name
+ * Get next step name. A step's `next` may be a string or a function of the
+ * answers-so-far (for branching, e.g. business_status / data_mode).
  * @param {string} currentStep - Current step name
+ * @param {object} [answers] - Map of step_name -> answer (from buildConversationSummary)
  * @returns {string|null} Next step name or null if conversation complete
  */
-export function getNextStep(currentStep) {
+export function getNextStep(currentStep, answers = {}) {
   const stepConfig = getStepConfig(currentStep);
-  return stepConfig?.next || null;
+  const next = stepConfig?.next;
+  if (typeof next === 'function') return next(answers) || null;
+  return next || null;
 }
 
 /**
@@ -133,8 +176,8 @@ export function validateAnswer(stepName, answer) {
     return { valid: false, error: 'Invalid step' };
   }
 
-  // Info type doesn't require answer validation
-  if (stepConfig.type === 'info') {
+  // Info and form-handoff types don't require a chat answer.
+  if (stepConfig.type === 'info' || stepConfig.type === 'form') {
     return { valid: true };
   }
 
@@ -191,10 +234,13 @@ export function validateAnswer(stepName, answer) {
  * @param {string} currentStep - Current step name
  * @returns {object} Progress information { current: number, total: number, percentage: number }
  */
-export function getConversationProgress(currentStep) {
-  const steps = Object.keys(CONVERSATION_STEPS);
-  const currentIndex = steps.indexOf(currentStep);
-  const total = steps.length;
+export function getConversationProgress(currentStep, pathKey = 'regular') {
+  const list = PATHS[pathKey] || PATHS.regular;
+  let currentIndex = list.indexOf(currentStep);
+  // A step that isn't on the chosen path (e.g. a transient data_mode before
+  // flow_path is decided) falls back to the regular superset for a sane number.
+  if (currentIndex === -1) currentIndex = PATHS.regular.indexOf(currentStep);
+  const total = list.length;
 
   return {
     current: currentIndex >= 0 ? currentIndex + 1 : 0,
@@ -216,7 +262,7 @@ export function getAllSteps() {
  * @param {string} stepName - Step name
  * @returns {object} Formatted step data
  */
-export function formatStepForResponse(stepName, lang = 'en') {
+export function formatStepForResponse(stepName, lang = 'en', pathKey = 'regular') {
   const stepConfig = getStepConfig(stepName);
 
   if (!stepConfig) {
@@ -242,7 +288,7 @@ export function formatStepForResponse(stepName, lang = 'en') {
     response.placeholder = t(lang, `convo.ph.${stepName}`);
   }
 
-  response.progress = getConversationProgress(stepName);
+  response.progress = getConversationProgress(stepName, pathKey);
 
   return response;
 }

@@ -92,6 +92,11 @@ export async function generateAndStore(env, project, profile) {
     if ((type === 'services' || type === 'features') && !content.description && content.subheading) {
       content.description = content.subheading;
     }
+    // Overlay confirmed social links onto the footer (contact gets them via its
+    // fact section). No-op unless a detailed override supplied real links.
+    if (type === 'footer' && Array.isArray(profile.social) && profile.social.length) {
+      content.social = profile.social;
+    }
 
     const variant = recipeVariant(recipe, type);
     attachImages(type, content, pickPhoto);
@@ -215,6 +220,12 @@ export async function generateAndStore(env, project, profile) {
  */
 async function buildPhotoPool(env, project, profile, industry) {
   const pool = [];
+
+  // User-confirmed photos (from the detailed form, Phase 7) lead the pool so
+  // the owner's real images are used before Places/stock.
+  if (Array.isArray(profile.user_pictures)) {
+    for (const url of profile.user_pictures) pool.push({ url, alt: profile.name });
+  }
 
   // Real business photos from Google Places → R2 → our served URL.
   const names = Array.isArray(profile.photos) ? profile.photos.slice(0, 6) : [];
