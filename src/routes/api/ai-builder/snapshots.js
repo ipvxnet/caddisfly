@@ -12,7 +12,7 @@
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSnapshotsByProject, getSnapshotById, deleteSnapshotRow } from '../../../db/snapshots.js';
-import { takeSnapshot, restoreSnapshot } from '../../../utils/site-snapshot.js';
+import { takeSnapshot, restoreSnapshot, restoreDesignFromSnapshot } from '../../../utils/site-snapshot.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId, updateWebsiteConfigById } from '../../../db/ai-config.js';
 
@@ -77,7 +77,9 @@ export async function handleSnapshotRestore(ctx) {
 
 /**
  * POST /api/ai-builder/:project_id/revert-original
- * Restore the protected "original" (AI-generated) baseline snapshot. Takes a
+ * Reset the DESIGN/TEMPLATE (theme, fonts, colors, section layouts) to the
+ * original AI-generated baseline, PRESERVING all content the user built (section
+ * text/images, added sections, order, pages, blog, bookings). Takes a
  * pre_restore safety snapshot first, so the revert is itself undoable.
  */
 export async function handleRevertToOriginal(ctx) {
@@ -95,7 +97,8 @@ export async function handleRevertToOriginal(ctx) {
     const tier = await getUserTier(env.DB, r.email);
     await takeSnapshot(env, r.projectKey, params.project_id, { label: '', trigger: 'pre_restore', tier });
 
-    const result = await restoreSnapshot(env, r.projectKey, original);
+    // Design-only: restore the original template, keep the user's content.
+    const result = await restoreDesignFromSnapshot(env, r.projectKey, original);
     return json({ success: true, restored: result });
   } catch (e) {
     console.error('revert-to-original error:', e);

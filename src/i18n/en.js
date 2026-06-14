@@ -603,9 +603,9 @@ export const en = {
     restore: 'Restore', restoring: 'Restoring…',
     restore_confirm: 'Restore this version? Your current pages, sections and design will be replaced. (A backup of the current state is saved automatically, and your published site only changes when you publish.)',
     delete: 'Delete', delete_confirm: 'Delete this saved version? This cannot be undone.',
-    revert_original: 'Revert to original', reverting: 'Reverting…',
-    revert_original_hint: 'Go back to the original AI-generated site, undoing every change.',
-    revert_confirm: 'Revert to the original AI-generated site? All your changes (design, edits, sections) will be undone. A backup of the current state is saved first, so this is reversible.',
+    revert_original: 'Revert design to original', reverting: 'Reverting…',
+    revert_original_hint: 'Resets the design only — template, colors, fonts and section layouts — back to the original. Your content (text, photos, sections, blog, bookings) is kept.',
+    revert_confirm: 'Reset the design to the original AI-generated template? Colors, fonts and section layouts revert; all your content — text, photos, sections, blog and bookings — is kept. A backup of the current state is saved first.',
     revert_none: 'No original version is available for this site yet.',
   },
 

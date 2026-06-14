@@ -170,6 +170,65 @@ export async function autoSnapshotAfterEdit(env, publicId) {
   return maybeAutoSnapshot(env, projectKey, publicId, { email, tier });
 }
 
+// Design-only fields (the "template"): theme + fonts + colors. social_image is
+// content, so it's intentionally excluded.
+const DESIGN_COLS = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme'];
+
+/**
+ * Restore ONLY the design/template from a snapshot — theme, fonts, colors, and
+ * each section's layout variant — while PRESERVING all content: section text &
+ * images (content_json), sections the user added, order, pages, blog, bookings.
+ *
+ * This backs "Revert to original": undo template/theme experiments without
+ * losing the work done since. A current video hero is kept (never reverted to a
+ * picture). Sections are matched to the snapshot by section_type.
+ * @returns {Promise<{config: boolean, sections_updated: number}>}
+ */
+export async function restoreDesignFromSnapshot(env, projectKey, snapshotRow) {
+  const text = await getFromR2(env.STORAGE, snapshotRow.r2_path);
+  if (!text) throw new Error('Snapshot data is missing from storage');
+  let state;
+  try { state = JSON.parse(text); } catch { throw new Error('Snapshot data is corrupted'); }
+  if (!state || state.version !== SNAPSHOT_VERSION) throw new Error('Snapshot has an unsupported format');
+
+  const db = env.DB;
+  const k = keyWhere(projectKey);
+
+  // 1) Restore the design config fields only (leaves content fields untouched).
+  if (state.config) {
+    const sets = DESIGN_COLS.map((c) => `${c} = ?`).join(', ');
+    await db
+      .prepare(`UPDATE ai_website_configs SET ${sets}, updated_at = unixepoch() WHERE ${k.sql}`)
+      .bind(...DESIGN_COLS.map((c) => (state.config[c] != null ? state.config[c] : null)), k.val)
+      .run();
+  }
+
+  // 2) Reset each existing section's layout VARIANT to the original (by type),
+  //    keeping its content_json. Don't add/remove/reorder sections. Keep a video
+  //    hero as-is so templates continue to respect it.
+  const origVariantByType = new Map();
+  for (const s of state.sections || []) {
+    if (!origVariantByType.has(s.section_type)) origVariantByType.set(s.section_type, s.html_template);
+  }
+  const current =
+    (await db.prepare(`SELECT id, section_type, html_template FROM ai_sections WHERE ${k.sql}`).bind(k.val).all())
+      .results || [];
+
+  const updates = [];
+  for (const sec of current) {
+    if (sec.section_type === 'hero' && sec.html_template === 'video') continue; // keep video hero
+    const variant = origVariantByType.get(sec.section_type);
+    if (variant && variant !== sec.html_template) {
+      updates.push(
+        db.prepare(`UPDATE ai_sections SET html_template = ?, updated_at = unixepoch() WHERE id = ?`).bind(variant, sec.id)
+      );
+    }
+  }
+  if (updates.length) await db.batch(updates);
+
+  return { config: !!state.config, sections_updated: updates.length };
+}
+
 /**
  * Restore a snapshot: rewrite the project's pages + sections + config from the
  * blob. Pages get NEW ids; section.page_id is remapped old→new. Two D1 batches

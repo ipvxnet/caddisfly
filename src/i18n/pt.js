@@ -597,9 +597,9 @@ export const pt = {
     restore: 'Restaurar', restoring: 'Restaurando…',
     restore_confirm: 'Restaurar esta versão? As suas páginas, seções e design atuais serão substituídos. (Uma cópia automática é salva antes, e o site publicado só muda quando você publica.)',
     delete: 'Excluir', delete_confirm: 'Excluir esta versão salva? Não é possível desfazer.',
-    revert_original: 'Voltar ao original', reverting: 'Restaurando…',
-    revert_original_hint: 'Volte ao site original gerado por IA, desfazendo todas as alterações.',
-    revert_confirm: 'Voltar ao site original gerado por IA? Todas as suas alterações (design, edições, seções) serão desfeitas. Uma cópia do estado atual é salva antes, então é reversível.',
+    revert_original: 'Restaurar design ao original', reverting: 'Restaurando…',
+    revert_original_hint: 'Restaura apenas o design — modelo, cores, fontes e layouts de seção — ao original. O seu conteúdo (textos, fotos, seções, blog, reservas) é mantido.',
+    revert_confirm: 'Restaurar o design para o modelo original gerado por IA? Cores, fontes e layouts de seção voltam ao original; todo o seu conteúdo — textos, fotos, seções, blog e reservas — é mantido. Uma cópia do estado atual é salva antes.',
     revert_none: 'Ainda não há uma versão original disponível para este site.',
   },
 
