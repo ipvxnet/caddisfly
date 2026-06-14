@@ -42,30 +42,43 @@ export function navbarTemplate(data, config) {
   // exactly what we want there). Single-page sites still get the anchor nav.
   const homeHref = previewBase ? `${previewBase}/home${embedSuffix}` : pages.length > 1 ? '/' : '#top';
 
-  const pageLinks =
-    pages.length > 1
-      ? pages
-          .map((p) => {
-            const active = p.slug === currentSlug ? ' nav-link-active' : '';
-            const aria = p.slug === currentSlug ? ' aria-current="page"' : '';
-            return `<a class="nav-link${active}"${aria} href="${escapeAttr(`${previewBase}/${p.slug}${embedSuffix}`)}">${escapeHtml(p.nav_label || p.title || p.slug)}</a>`;
-          })
-          .join('\n      ')
-      : '';
+  // Decide multi-page vs single-page. Blog/Shop are standalone nav pages that can
+  // coexist with a single-page (one-pager) content site, so they don't count as
+  // "multi-page content".
+  const CONTENT_SLUGS = new Set(['home', 'about', 'services', 'gallery', 'contact']);
+  const contentPages = pages.filter((p) => CONTENT_SLUGS.has(p.slug));
+  const extraPages = pages.filter((p) => !CONTENT_SLUGS.has(p.slug)); // e.g. blog, shop
+  const multiPage = contentPages.length > 1;
+  const sectionNav = Array.isArray(config.sectionNav) ? config.sectionNav : [];
 
-  const actions = pageLinks
-    ? `${pageLinks}\n      ${phoneLink}`
+  const pageLink = (p) => {
+    const active = p.slug === currentSlug ? ' nav-link-active' : '';
+    const aria = p.slug === currentSlug ? ' aria-current="page"' : '';
+    return `<a class="nav-link${active}"${aria} href="${escapeAttr(`${previewBase}/${p.slug}${embedSuffix}`)}">${escapeHtml(p.nav_label || p.title || p.slug)}</a>`;
+  };
+  const anchorLink = (s) => `<a class="nav-link" href="${escapeAttr(s.anchor)}">${escapeHtml(s.label)}</a>`;
+
+  // Multi-page → page links. Single-page → in-page section anchors, plus any
+  // standalone pages (blog/shop) that live outside the scrolling home.
+  const navLinks = multiPage
+    ? pages.map(pageLink).join('\n      ')
+    : [sectionNav.map(anchorLink).join('\n      '), extraPages.map(pageLink).join('\n      ')]
+        .filter(Boolean)
+        .join('\n      ');
+
+  const actions = navLinks
+    ? `${navLinks}\n      ${phoneLink}`
     : `${phoneLink}\n      <a class="nav-cta" href="${escapeAttr(cta_link)}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''}>${escapeHtml(contactLabel)}</a>`;
 
-  // Multi-page sites get a hamburger on small screens (the link row would
-  // otherwise wrap into a wall of links). Single-page anchor navs stay as-is.
-  const toggle = pageLinks
+  // A populated menu collapses behind a hamburger on small screens (section
+  // anchors included — they scroll the one-pager on tap).
+  const toggle = navLinks
     ? `<button class="nav-toggle" aria-label="Menu" aria-expanded="false"
         onclick="var n=this.closest('.site-nav');var o=n.classList.toggle('nav-open');this.setAttribute('aria-expanded',o);this.textContent=o?'✕':'☰'">☰</button>`
     : '';
 
   return `
-<header class="site-nav${pageLinks ? ' has-menu' : ''}">
+<header class="site-nav${navLinks ? ' has-menu' : ''}">
   <div class="site-nav-inner">
     <a class="nav-brand" href="${escapeAttr(homeHref)}">${brand}</a>
     ${toggle}

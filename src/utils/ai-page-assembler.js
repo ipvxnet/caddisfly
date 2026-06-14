@@ -50,6 +50,11 @@ export function assemblePage(sections, config, project, opts = {}) {
   const currentTypes = new Set(visibleSections.map((s) => s.section_type));
   const seenTypes = new Set();
 
+  // Single-page anchor nav: give the navbar a list of {anchor,label} for the
+  // sections actually present, so the top menu scrolls to each section on the
+  // page (the navbar ignores this when the site is multi-page).
+  renderConfig.sectionNav = buildSectionNav(visibleSections, lang);
+
   const renderedSections = visibleSections
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
@@ -93,6 +98,31 @@ export function assemblePage(sections, config, project, opts = {}) {
   });
 
   return html;
+}
+
+// Localized nav labels for the single-page anchor menu, and the order they
+// appear in. header/footer/cta/stats are intentionally not navigable.
+const SECTION_NAV_LABELS = {
+  en: { hero: 'Home', about: 'About', services: 'Services', features: 'Features', gallery: 'Gallery', testimonials: 'Reviews', pricing: 'Pricing', contact: 'Contact' },
+  es: { hero: 'Inicio', about: 'Acerca de', services: 'Servicios', features: 'Características', gallery: 'Galería', testimonials: 'Opiniones', pricing: 'Precios', contact: 'Contacto' },
+  pt: { hero: 'Início', about: 'Sobre', services: 'Serviços', features: 'Recursos', gallery: 'Galeria', testimonials: 'Avaliações', pricing: 'Preços', contact: 'Contato' },
+};
+const SECTION_NAV_ORDER = ['hero', 'about', 'services', 'features', 'gallery', 'testimonials', 'pricing', 'contact'];
+
+/**
+ * Build the section anchor nav for a single-page site from the sections present.
+ * @param {Array<{section_type:string}>} visibleSections
+ * @param {string} lang
+ * @returns {Array<{anchor:string,label:string}>}
+ */
+function buildSectionNav(visibleSections, lang = 'en') {
+  const labels = SECTION_NAV_LABELS[lang] || SECTION_NAV_LABELS.en;
+  const present = new Set((visibleSections || []).map((s) => s.section_type));
+  const nav = [];
+  for (const type of SECTION_NAV_ORDER) {
+    if (present.has(type) && labels[type]) nav.push({ anchor: `#${type}`, label: labels[type] });
+  }
+  return nav;
 }
 
 /**
@@ -296,6 +326,13 @@ ${trackId ? `<!-- Caddisfly analytics (cookieless) -->
       const target = document.querySelector(href);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth' });
+      }
+      // Close the mobile menu after jumping to a section.
+      const nav = document.querySelector('.site-nav.nav-open');
+      if (nav) {
+        nav.classList.remove('nav-open');
+        const t = nav.querySelector('.nav-toggle');
+        if (t) { t.setAttribute('aria-expanded', 'false'); t.textContent = '☰'; }
       }
     });
   });
