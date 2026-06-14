@@ -20,6 +20,7 @@ import { createPost, uniquePostSlug } from '../../../db/blog-posts.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 import { parseDetailedProfile } from '../../../utils/detailed-profile.js';
+import { attachServiceImages } from '../../../utils/service-images.js';
 
 /**
  * Handle preview generation
@@ -215,6 +216,11 @@ export async function handleAIBuilderGenerate(ctx) {
       // services/features templates render a `description` subtitle; AI returns `subheading`.
       if ((sectionType === 'services' || sectionType === 'features') && !content.description && content.subheading) {
         content.description = content.subheading;
+      }
+
+      // Generate a picture tile per service (best-effort; falls back to icons).
+      if (sectionType === 'services') {
+        await attachServiceImages(env, project.project_id, content, context);
       }
 
       // Overlay HARD FACTS (contact details, social links) over AI content so the

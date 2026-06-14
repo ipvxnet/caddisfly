@@ -11,6 +11,7 @@
 
 import { generateSectionContent } from './ai-content-generator.js';
 import { profileToContext, profileToFactSections } from './company-profile.js';
+import { attachServiceImages } from './service-images.js';
 import { createSection } from '../db/ai-sections.js';
 import { createPage, updatePage } from '../db/ai-pages.js';
 import { generateSiteSeo, extractContentText } from './seo-generate.js';
@@ -91,6 +92,10 @@ export async function generateAndStore(env, project, profile) {
     // These templates render a `description` subtitle; AI returns `subheading`.
     if ((type === 'services' || type === 'features') && !content.description && content.subheading) {
       content.description = content.subheading;
+    }
+    // Picture tile per service (best-effort; falls back to icons).
+    if (type === 'services') {
+      await attachServiceImages(env, project.preview_id, content, context);
     }
     // Overlay confirmed social links onto the footer (contact gets them via its
     // fact section). No-op unless a detailed override supplied real links.
