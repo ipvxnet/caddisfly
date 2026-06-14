@@ -10,7 +10,9 @@
 const INDUSTRY_KEYWORDS = [
   ['food', ['restaurant', 'food', 'cafe', 'coffee', 'bakery', 'burrito', 'taco', 'pizza', 'sushi', 'grill', 'diner', 'bar', 'bistro', 'catering', 'kitchen', 'eatery', 'brewery', 'mexican', 'italian', 'cuisine']],
   ['fitness', ['gym', 'fitness', 'yoga', 'crossfit', 'pilates', 'training', 'workout', 'wellness studio']],
-  ['beauty', ['salon', 'spa', 'beauty', 'hair', 'nails', 'barber', 'skincare', 'cosmetic', 'massage']],
+  // Barbershop before beauty so "barber" gets a masculine look, not a salon one.
+  ['barbershop', ['barbershop', 'barber shop', 'barber', 'barbers', 'fade', 'mens grooming', "men's grooming"]],
+  ['beauty', ['salon', 'spa', 'beauty', 'hair', 'nails', 'skincare', 'cosmetic', 'massage']],
   ['health', ['clinic', 'dental', 'dentist', 'medical', 'doctor', 'health', 'therapy', 'chiropractic', 'veterinary', 'pharmacy']],
   ['legal', ['law', 'lawyer', 'attorney', 'legal', 'firm', 'accounting', 'accountant', 'finance', 'insurance', 'consulting']],
   ['realestate', ['real estate', 'realtor', 'property', 'realty', 'mortgage', 'broker']],
@@ -27,6 +29,8 @@ const INDUSTRY_KEYWORDS = [
 const PALETTES = {
   food: { primary: '#c0392b', secondary: '#e67e22', accent: '#27ae60' }, // warm red/orange + green
   fitness: { primary: '#e74c3c', secondary: '#2c3e50', accent: '#f39c12' },
+  // Classic barbershop: near-black + warm brass, deep barber-red accent.
+  barbershop: { primary: '#1c1c1e', secondary: '#b08d57', accent: '#9b2226' },
   beauty: { primary: '#c98ca0', secondary: '#7d5a6b', accent: '#e8c1a0' },
   health: { primary: '#16a085', secondary: '#2980b9', accent: '#1abc9c' },
   legal: { primary: '#1a2980', secondary: '#26334d', accent: '#c9a227' }, // navy + gold
@@ -45,6 +49,7 @@ const PALETTES = {
 const IMAGE_KEYWORDS = {
   food: 'restaurant food dish plating',
   fitness: 'gym fitness workout',
+  barbershop: 'barbershop barber haircut beard grooming',
   beauty: 'salon spa beauty',
   health: 'medical clinic healthcare',
   legal: 'office professional business',
