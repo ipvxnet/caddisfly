@@ -4,8 +4,8 @@
 import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
 import { audit } from '../../../utils/audit.js';
 import { getAnsweredConversations } from '../../../db/ai-conversations.js';
-import { createSection } from '../../../db/ai-sections.js';
-import { createPage, updatePage } from '../../../db/ai-pages.js';
+import { createSection, deleteSectionsByProjectId } from '../../../db/ai-sections.js';
+import { createPage, updatePage, deletePagesByAIProjectId } from '../../../db/ai-pages.js';
 import { planPages } from '../../../utils/pages-blueprint.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
@@ -156,6 +156,12 @@ export async function handleAIBuilderGenerate(ctx) {
       : recipe.sections;
     // Always lead with a brand header (text wordmark — no original logo here).
     const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
+
+    // Idempotent (re)generation: clear any prior pages/sections so a rebuild
+    // doesn't collide on the (ai_project_id, slug) unique index. No-op on a
+    // first build. Lets sites built with the deprecated model be regenerated.
+    await deleteSectionsByProjectId(env.DB, project.id);
+    await deletePagesByAIProjectId(env.DB, project.id);
 
     // Multi-page: split sections across pages (deterministic blueprint; thin
     // sites collapse to a single Home page). Create the page rows up front.
