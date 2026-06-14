@@ -149,6 +149,10 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card',
+  // Service detail modal — keep it on-theme (its title is an h3 inside the
+  // services section, so the dark heading override would otherwise be invisible
+  // on a white card).
+  '.cf-svc-modal__card',
 ];
 
 /**

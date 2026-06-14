@@ -33,10 +33,10 @@ export function heroSplitTemplate(data, config) {
 
 <style>
 .hero-split {
-  min-height: 100vh;
+  min-height: 78vh;
   display: flex;
   align-items: center;
-  padding: 2rem;
+  padding: 5rem 2rem;
   background: #f7fafc;
 }
 
@@ -93,7 +93,8 @@ export function heroSplitTemplate(data, config) {
 
 .hero-split-image img {
   width: 100%;
-  height: auto;
+  height: clamp(320px, 46vh, 480px);
+  object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
