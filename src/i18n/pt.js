@@ -597,6 +597,10 @@ export const pt = {
     restore: 'Restaurar', restoring: 'Restaurando…',
     restore_confirm: 'Restaurar esta versão? As suas páginas, seções e design atuais serão substituídos. (Uma cópia automática é salva antes, e o site publicado só muda quando você publica.)',
     delete: 'Excluir', delete_confirm: 'Excluir esta versão salva? Não é possível desfazer.',
+    revert_original: 'Voltar ao original', reverting: 'Restaurando…',
+    revert_original_hint: 'Volte ao site original gerado por IA, desfazendo todas as alterações.',
+    revert_confirm: 'Voltar ao site original gerado por IA? Todas as suas alterações (design, edições, seções) serão desfeitas. Uma cópia do estado atual é salva antes, então é reversível.',
+    revert_none: 'Ainda não há uma versão original disponível para este site.',
   },
 
   // Gerenciador de loja (interface do app, idioma do usuário).

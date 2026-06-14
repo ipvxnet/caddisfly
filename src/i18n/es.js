@@ -597,6 +597,10 @@ export const es = {
     restore: 'Restaurar', restoring: 'Restaurando…',
     restore_confirm: '¿Restaurar esta versión? Tus páginas, secciones y diseño actuales serán reemplazados. (Antes se guarda una copia automática, y tu sitio publicado solo cambia cuando publicas.)',
     delete: 'Eliminar', delete_confirm: '¿Eliminar esta versión guardada? No se puede deshacer.',
+    revert_original: 'Volver al original', reverting: 'Restaurando…',
+    revert_original_hint: 'Vuelve al sitio original generado por IA, deshaciendo todos los cambios.',
+    revert_confirm: '¿Volver al sitio original generado por IA? Se desharán todos tus cambios (diseño, ediciones, secciones). Antes se guarda una copia del estado actual, así que es reversible.',
+    revert_none: 'Aún no hay una versión original disponible para este sitio.',
   },
 
   // Gestor de tienda (interfaz de la app, idioma del usuario).

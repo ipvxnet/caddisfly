@@ -603,6 +603,10 @@ export const en = {
     restore: 'Restore', restoring: 'Restoring…',
     restore_confirm: 'Restore this version? Your current pages, sections and design will be replaced. (A backup of the current state is saved automatically, and your published site only changes when you publish.)',
     delete: 'Delete', delete_confirm: 'Delete this saved version? This cannot be undone.',
+    revert_original: 'Revert to original', reverting: 'Reverting…',
+    revert_original_hint: 'Go back to the original AI-generated site, undoing every change.',
+    revert_confirm: 'Revert to the original AI-generated site? All your changes (design, edits, sections) will be undone. A backup of the current state is saved first, so this is reversible.',
+    revert_none: 'No original version is available for this site yet.',
   },
 
   // Store manager (app UI, viewer's language).

@@ -82,8 +82,9 @@ export async function takeSnapshot(env, projectKey, publicId, { label = '', trig
   if (excessCount > 0) {
     const isAutoClass = (s) => s.trigger_type === 'auto' || s.trigger_type === 'pre_restore';
     // Oldest-first victims: auto-class first, manuals only as a last resort —
-    // and never the row we just created.
-    const oldestFirst = all.slice().reverse().filter((s) => s.id !== row.id);
+    // never the row we just created, and never the protected 'original' baseline
+    // (the "Revert to original" target must always survive).
+    const oldestFirst = all.slice().reverse().filter((s) => s.id !== row.id && s.trigger_type !== 'original');
     const victims = [
       ...oldestFirst.filter(isAutoClass),
       ...oldestFirst.filter((s) => !isAutoClass(s)),
@@ -95,6 +96,31 @@ export async function takeSnapshot(env, projectKey, publicId, { label = '', trig
     }
   }
   return { row, pruned };
+}
+
+/**
+ * Capture (or refresh) the protected "original" baseline snapshot — the
+ * AI-generated starting point a user can always revert to. Keeps exactly one:
+ * removes any prior 'original' first. Best-effort; never throws into generation.
+ * @returns {Promise<object|null>} the snapshot row, or null on failure
+ */
+export async function takeOriginalSnapshot(env, projectKey, publicId, { tier = 'free_trial' } = {}) {
+  try {
+    const prior = (await getSnapshotsByProject(env.DB, projectKey)).filter((s) => s.trigger_type === 'original');
+    for (const s of prior) {
+      try { await env.STORAGE.delete(s.r2_path); } catch (e) { console.error('original snapshot prune (blob):', e.message); }
+      await deleteSnapshotRow(env.DB, projectKey, s.id);
+    }
+    const { row } = await takeSnapshot(env, projectKey, publicId, {
+      label: 'Original — AI generated',
+      trigger: 'original',
+      tier,
+    });
+    return row;
+  } catch (e) {
+    console.error('takeOriginalSnapshot failed (non-fatal):', e.message);
+    return null;
+  }
 }
 
 /**

@@ -75,6 +75,34 @@ export async function handleSnapshotRestore(ctx) {
   }
 }
 
+/**
+ * POST /api/ai-builder/:project_id/revert-original
+ * Restore the protected "original" (AI-generated) baseline snapshot. Takes a
+ * pre_restore safety snapshot first, so the revert is itself undoable.
+ */
+export async function handleRevertToOriginal(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (r.error) return r.error;
+
+    const all = await getSnapshotsByProject(env.DB, r.projectKey);
+    const original = all.find((s) => s.trigger_type === 'original');
+    if (!original) {
+      return json({ success: false, error: 'No original version is available for this site.' }, 404);
+    }
+
+    const tier = await getUserTier(env.DB, r.email);
+    await takeSnapshot(env, r.projectKey, params.project_id, { label: '', trigger: 'pre_restore', tier });
+
+    const result = await restoreSnapshot(env, r.projectKey, original);
+    return json({ success: true, restored: result });
+  } catch (e) {
+    console.error('revert-to-original error:', e);
+    return json({ success: false, error: e.message || 'Revert failed' }, 500);
+  }
+}
+
 /** PUT /api/ai-builder/:project_id/snapshots/auto — per-site auto-save toggle. */
 export async function handleSnapshotAutoToggle(ctx) {
   const { env, request, params } = ctx;

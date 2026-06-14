@@ -21,6 +21,7 @@ import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 import { parseDetailedProfile } from '../../../utils/detailed-profile.js';
 import { attachServiceImages } from '../../../utils/service-images.js';
+import { takeOriginalSnapshot } from '../../../utils/site-snapshot.js';
 
 /**
  * Handle preview generation
@@ -316,6 +317,9 @@ export async function handleAIBuilderGenerate(ctx) {
     await updateAIProject(env.DB, project.id, {
       status: 'preview_ready',
     });
+
+    // Capture the protected "original" baseline so the user can always revert.
+    await takeOriginalSnapshot(env, { aiProjectId: project.id }, project.project_id, { tier });
 
     // Charge AI credits for the generation (after success)
     await chargeCredits(env, env.DB, project.customer_email, CREDIT_COSTS.generate);
