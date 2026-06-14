@@ -24,6 +24,7 @@ import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../..
 import { enrichBusiness } from '../../utils/google-places.js';
 import { buildProfile } from '../../utils/company-profile.js';
 import { generateAndStore } from '../../utils/template-generation.js';
+import { takeOriginalSnapshot } from '../../utils/site-snapshot.js';
 import { sendPreviewEmail } from '../../utils/email.js';
 import { htmlResponse, redirect, badRequest } from '../../utils/response.js';
 import { brandMark } from '../../components/brand.js';
@@ -166,6 +167,10 @@ export async function runBuild(env, project, origin) {
     place_id: places.place_id || null,
     company_profile_json: JSON.stringify(profile),
   });
+
+  // Protected "original" baseline for the "Revert to original" feature.
+  const tier = await getUserTier(env.DB, project.customer_email);
+  await takeOriginalSnapshot(env, { projectId: project.id }, project.preview_id, { tier });
 
   // Best-effort preview email (no-op until SEND_EMAIL is wired).
   try {

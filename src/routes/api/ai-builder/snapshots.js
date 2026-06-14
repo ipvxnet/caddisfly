@@ -12,7 +12,7 @@
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSnapshotsByProject, getSnapshotById, deleteSnapshotRow } from '../../../db/snapshots.js';
-import { takeSnapshot, restoreSnapshot } from '../../../utils/site-snapshot.js';
+import { takeSnapshot, restoreSnapshot, restoreDesignFromSnapshot } from '../../../utils/site-snapshot.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId, updateWebsiteConfigById } from '../../../db/ai-config.js';
 
@@ -72,6 +72,37 @@ export async function handleSnapshotRestore(ctx) {
   } catch (e) {
     console.error('snapshot restore error:', e);
     return json({ success: false, error: e.message || 'Restore failed' }, 500);
+  }
+}
+
+/**
+ * POST /api/ai-builder/:project_id/revert-original
+ * Reset the DESIGN/TEMPLATE (theme, fonts, colors, section layouts) to the
+ * original AI-generated baseline, PRESERVING all content the user built (section
+ * text/images, added sections, order, pages, blog, bookings). Takes a
+ * pre_restore safety snapshot first, so the revert is itself undoable.
+ */
+export async function handleRevertToOriginal(ctx) {
+  const { env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (r.error) return r.error;
+
+    const all = await getSnapshotsByProject(env.DB, r.projectKey);
+    const original = all.find((s) => s.trigger_type === 'original');
+    if (!original) {
+      return json({ success: false, error: 'No original version is available for this site.' }, 404);
+    }
+
+    const tier = await getUserTier(env.DB, r.email);
+    await takeSnapshot(env, r.projectKey, params.project_id, { label: '', trigger: 'pre_restore', tier });
+
+    // Design-only: restore the original template, keep the user's content.
+    const result = await restoreDesignFromSnapshot(env, r.projectKey, original);
+    return json({ success: true, restored: result });
+  } catch (e) {
+    console.error('revert-to-original error:', e);
+    return json({ success: false, error: e.message || 'Revert failed' }, 500);
   }
 }
 

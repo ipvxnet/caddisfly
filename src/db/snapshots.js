@@ -17,7 +17,7 @@ export async function createSnapshotRow(db, projectKey, { label, trigger_type, r
       projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
       projectKey.projectId != null ? projectKey.projectId : null,
       (label || '').slice(0, 120),
-      ['pre_restore', 'auto', 'manual'].includes(trigger_type) ? trigger_type : 'manual',
+      ['pre_restore', 'auto', 'manual', 'original'].includes(trigger_type) ? trigger_type : 'manual',
       r2_path,
       size_bytes || 0
     )

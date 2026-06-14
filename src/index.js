@@ -102,7 +102,7 @@ import {
 import { handleSocialSettings, handleSocialTest, handleSocialShare } from './routes/api/ai-builder/social.js';
 import {
   handleSnapshotList, handleSnapshotCreate, handleSnapshotRestore, handleSnapshotDelete,
-  handleSnapshotAutoToggle,
+  handleSnapshotAutoToggle, handleRevertToOriginal,
 } from './routes/api/ai-builder/snapshots.js';
 import { autoSnapshotAfterEdit } from './utils/site-snapshot.js';
 import { handleSiteExport } from './routes/api/ai-builder/export.js';
@@ -404,6 +404,7 @@ router.get('/api/ai-builder/:project_id/export', handleSiteExport, PROJ);
 // QR code for the site's live URL (print/share) — first-party, all tiers
 router.get('/api/ai-builder/:project_id/qr', handleSiteQr, PROJ);
 router.post('/api/ai-builder/:project_id/snapshots/:snapshot_id/restore', handleSnapshotRestore, PROJ);
+router.post('/api/ai-builder/:project_id/revert-original', handleRevertToOriginal, PROJ);
 router.delete('/api/ai-builder/:project_id/snapshots/:snapshot_id', handleSnapshotDelete, PROJ);
 router.delete('/api/ai-builder/:project_id/blog/:post_id', handleBlogDelete, PROJ);
 

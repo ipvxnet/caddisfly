@@ -12,6 +12,26 @@ import {
 } from '../../../db/ai-config.js';
 import { getAvailableVariants } from '../../../templates/ai-builder/registry.js';
 import { getTheme } from '../../../utils/site-themes.js';
+import { inferIndustry, paletteFor } from '../../../utils/industry-style.js';
+
+/** Best-effort industry palette key for a project (for restoring brand colors). */
+function industryForProject(aiProject, regularProject) {
+  if (aiProject) {
+    let extra = '';
+    try {
+      const d = JSON.parse(aiProject.detailed_profile_json || '{}');
+      extra = [d.business_name, d.services].filter(Boolean).join(' ');
+    } catch {}
+    return inferIndustry(aiProject.project_name || '', extra);
+  }
+  let name = '', cat = '';
+  try {
+    const cp = JSON.parse(regularProject.company_profile_json || '{}');
+    name = cp.name || '';
+    cat = cp.category || '';
+  } catch {}
+  return inferIndustry(cat, name, regularProject.project_name || '');
+}
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -60,6 +80,9 @@ export async function handleApplyTemplate(ctx) {
     // defines one for that type AND the variant exists in the registry.
     let updated = 0;
     for (const section of sections) {
+      // Never replace a VIDEO hero with a theme's image hero. The user explicitly
+      // set a background video; every template must respect it across switches.
+      if (section.section_type === 'hero' && section.html_template === 'video') continue;
       const variant = theme.variants[section.section_type];
       if (!variant || variant === section.html_template) continue;
       // Never persist a variant the registry doesn't actually have for this type.
@@ -76,9 +99,19 @@ export async function handleApplyTemplate(ctx) {
         font_body: theme.fonts.body,
         style_theme: theme.key,
       };
+      const prevTheme = getTheme(config.style_theme);
+      const leavingDark = prevTheme && prevTheme.mode === 'dark';
       if (theme.colors) {
+        // The theme carries its own palette (dark themes) — apply it.
         configUpdate.primary_color = theme.colors.primary;
         configUpdate.secondary_color = theme.colors.secondary;
+      } else if (leavingDark) {
+        // Switching from a dark theme to a light one: the dark palette was
+        // theme-imposed, so restore the site's brand/industry colors rather than
+        // leaving them stuck. (Light→light keeps colors, preserving manual edits.)
+        const pal = paletteFor(industryForProject(aiProject, regularProject));
+        configUpdate.primary_color = pal.primary;
+        configUpdate.secondary_color = pal.secondary;
       }
       await updateWebsiteConfigById(env.DB, config.id, configUpdate);
     }

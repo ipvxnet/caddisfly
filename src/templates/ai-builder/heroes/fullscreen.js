@@ -8,7 +8,7 @@ export function heroFullscreenTemplate(data, config) {
   const backgroundUrl = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920';
 
   return `
-<section class="hero-fullscreen" style="background: linear-gradient(135deg, ${primaryColor}dd, ${secondaryColor}dd), url('${backgroundUrl}') center/cover;">
+<section class="hero-fullscreen" style="background: linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0.55) 100%), linear-gradient(135deg, ${primaryColor}99, ${secondaryColor}4d), url('${backgroundUrl}') center/cover;">
   <div class="hero-fullscreen-content">
     <h1 class="hero-fullscreen-heading" style="font-family: ${fontHeading};">
       ${heading}

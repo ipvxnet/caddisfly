@@ -1,33 +1,43 @@
 /**
- * Generate a small AI image per service (Flux → R2) so the services section can
- * show picture tiles instead of plain emoji icons. Best-effort per service: a
- * failure leaves image_url unset and the template falls back to the icon tile.
+ * Attach a relevant real photo to each service tile (Pexels stock, keyed to the
+ * industry + service name) so the services section shows clean pictures instead
+ * of plain emoji icons.
+ *
+ * We deliberately use stock photos rather than text-to-image generation: diffusion
+ * models bake in garbled text and misread abstract service names (e.g. "Signature
+ * Combo" → a hamburger). Stock photos are real, on-topic, free and fast. Falls
+ * back to the emoji icon tile when no photo is found.
  */
 
-import { generateImageToR2 } from '../routes/api/ai-builder/ai-edit.js';
+import { searchStockPhotos } from './stock-photos.js';
+import { imageKeywordsFor } from './industry-style.js';
 
 /**
- * @param {object} env - bindings (needs AI + STORAGE)
- * @param {string} publicId - project_id (AI builder) or preview_id (refactor) — the R2 asset namespace
+ * @param {object} env - bindings (needs PEXELS_API_KEY for stock photos)
+ * @param {string} _publicId - kept for call-site compatibility (unused for stock)
  * @param {object} content - services section content ({ services: [...] }), mutated in place
- * @param {object} context - generation context (business_type/name/industry for the prompt)
+ * @param {object} context - generation context (industry/business_type for relevance)
  * @returns {Promise<object>} the same content
  */
-export async function attachServiceImages(env, publicId, content, context = {}) {
-  if (!env || !env.AI || !content || !Array.isArray(content.services)) return content;
+export async function attachServiceImages(env, _publicId, content, context = {}) {
+  if (!env || !content || !Array.isArray(content.services)) return content;
 
-  const biz = context.business_type || context.industry || 'business';
-  const name = context.business_name ? ` for ${context.business_name}` : '';
+  const industry = context.industry || '';
+  const used = new Set();
 
   for (const svc of content.services) {
     if (!svc || svc.image_url || !svc.title) continue;
     try {
-      const prompt =
-        `Professional, high-quality photograph representing the service "${svc.title}"${name}, a ${biz}. ` +
-        `Realistic, well-lit, clean modern composition. No text, no words, no watermark, no logo.`;
-      svc.image_url = await generateImageToR2(env, publicId, prompt);
+      // Lead the query with the service name, backed by industry keywords.
+      const results = await searchStockPhotos(env, imageKeywordsFor(industry, svc.title), 5);
+      const pick = (results || []).find((p) => p && p.url && !used.has(p.url)) || (results && results[0]);
+      if (pick && pick.url) {
+        svc.image_url = pick.url;
+        if (!svc.image_alt) svc.image_alt = pick.alt || svc.title;
+        used.add(pick.url);
+      }
     } catch (e) {
-      console.error(`Service image failed for "${svc.title}" (non-fatal):`, e.message);
+      console.error(`Service stock photo failed for "${svc.title}" (non-fatal):`, e.message);
     }
   }
   return content;

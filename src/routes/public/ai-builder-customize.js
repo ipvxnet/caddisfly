@@ -756,6 +756,8 @@ export async function handleAIBuilderCustomize(ctx) {
               <button class="add-section-btn" id="snap-save-btn" onclick="saveSnapshot(this)">${tr('snap.save_btn')}</button>
             </div>
             <label class="snap-auto"><input type="checkbox" id="snap-auto-cb" ${config.auto_snapshot === 0 ? '' : 'checked'} onchange="toggleAutoSnap(this)"> ${tr('snap.auto_toggle')}</label>
+            <button class="link-btn" id="revert-original-btn" onclick="revertToOriginal(this)" style="margin:.4rem 0 .2rem">↩ ${tr('snap.revert_original')}</button>
+            <p class="seo-hint">${tr('snap.revert_original_hint')}</p>
             <div id="snap-list"><p class="seo-hint">${tr('snap.loading')}</p></div>
           </div>
         </details>
@@ -841,6 +843,10 @@ export async function handleAIBuilderCustomize(ctx) {
       saving: tr('snap.saving'),
       save_btn: tr('snap.save_btn'),
       restoring: tr('snap.restoring'),
+      revert_original: tr('snap.revert_original'),
+      revert_confirm: tr('snap.revert_confirm'),
+      reverting: tr('snap.reverting'),
+      revert_none: tr('snap.revert_none'),
     })};
     const SNAP_LANG = ${JSON.stringify(lang)};
     let snapsLoaded = false;
@@ -897,6 +903,19 @@ export async function handleAIBuilderCustomize(ctx) {
         flashToast(${JSON.stringify(tr('cust.toast_snapshot_restored'))});
         location.reload();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = SNAP_T.restore; }
+    }
+    async function revertToOriginal(btn) {
+      if (!confirm(SNAP_T.revert_confirm)) return;
+      const label = btn.innerHTML;
+      btn.disabled = true; btn.textContent = SNAP_T.reverting;
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/revert-original', { method: 'POST' });
+        const d = await r.json();
+        if (r.status === 404) { alert(SNAP_T.revert_none); btn.disabled = false; btn.innerHTML = label; return; }
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Failed');
+        flashToast(${JSON.stringify(tr('cust.toast_snapshot_restored'))});
+        location.reload();
+      } catch (e) { alert(e.message); btn.disabled = false; btn.innerHTML = label; }
     }
     async function toggleAutoSnap(cb) {
       try {
