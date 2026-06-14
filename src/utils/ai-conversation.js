@@ -60,6 +60,9 @@ export const CONVERSATION_STEPS = {
       { value: 'contact', label: 'Contact Form', description: 'Let visitors get in touch' },
       { value: 'footer', label: 'Footer', description: 'Contact info and social links' },
     ],
+    // Pre-checked by default so non-technical users get a complete site out of
+    // the box. They can still uncheck any of these (or add Store/Bookings/Blog).
+    defaults: ['hero', 'about', 'services', 'gallery', 'testimonials', 'cta', 'contact', 'footer'],
     next: 'audience',
   },
   audience: {
@@ -286,6 +289,10 @@ export function formatStepForResponse(stepName, lang = 'en', pathKey = 'regular'
 
   if (stepConfig.placeholder) {
     response.placeholder = t(lang, `convo.ph.${stepName}`);
+  }
+
+  if (Array.isArray(stepConfig.defaults)) {
+    response.defaults = stepConfig.defaults;
   }
 
   response.progress = getConversationProgress(stepName, pathKey);

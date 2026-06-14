@@ -503,6 +503,7 @@ function buildInputArea(currentStep, lang = 'en') {
   if (!currentStep) return '';
 
   const { type, options, placeholder } = currentStep;
+  const defaults = Array.isArray(currentStep.defaults) ? currentStep.defaults : [];
 
   if (type === 'text') {
     return `
@@ -549,7 +550,7 @@ function buildInputArea(currentStep, lang = 'en') {
     const optionsHTML = options
       .map(
         (opt) => `
-      <button class="option-button" data-value="${opt.value}" onclick="toggleMultiOption('${opt.value}')">
+      <button class="option-button${defaults.includes(opt.value) ? ' selected' : ''}" data-value="${opt.value}" onclick="toggleMultiOption('${opt.value}')">
         <div class="option-label">${escapeHtml(opt.label)}</div>
         <div class="option-description">${escapeHtml(opt.description)}</div>
       </button>
@@ -576,7 +577,9 @@ function buildInputArea(currentStep, lang = 'en') {
 function buildChatScript(lang = 'en') {
   const tr = translator(lang);
   return `
-    const selectedOptions = new Set();
+    // Pre-select the recommended sections (server marks them as defaults) so
+    // non-technical users get a complete site; they can still toggle any off.
+    const selectedOptions = new Set((currentStep && Array.isArray(currentStep.defaults)) ? currentStep.defaults : []);
 
     async function sendAnswer() {
       const input = document.getElementById('chat-input');
