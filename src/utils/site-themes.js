@@ -174,6 +174,10 @@ export function darkModeCss(theme) {
     ${DARK_CARD_SURFACES.join(', ')} { background: ${s.card} !important; border-color: ${s.border} !important; }
     section h1, section h2, section h3, section h4, section h5, section h6 { color: ${s.text} !important; }
     section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p { color: ${s.muted} !important; }
+    /* Key content text that isn't a p/li/heading — keep it bright, not dark-on-dark.
+       (review quotes/authors, contact details, form labels, social links.) */
+    .quote-text, .author-name, .testimonial-text, .testimonial-author,
+    .contact-info-item, .contact-social-link, .contact-form label, .form-group label { color: ${s.text} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }
     .shop-card-body h3, .shop-product-name { color: ${s.text} !important; }
