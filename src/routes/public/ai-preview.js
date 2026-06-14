@@ -200,6 +200,8 @@ export async function handleAIPreview(ctx) {
       products: activeProducts, // 🛍 featured-products section (live data)
       bookingServices, // 📅 booking section (live data; widget inert until published)
       holiday: holSettings.applied && holSettings.decor ? holSettings.applied.holiday : null,
+      // Refactor previews get an "Add your details" link to the detailed form.
+      detailedLink: !isAIBuilder,
       // Badge "Built with Caddisfly" links back to THIS app origin (the new
       // landing), not the hardcoded prod domain that still runs old code.
       appOrigin: env.APP_URL || '',

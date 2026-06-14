@@ -58,6 +58,13 @@ const RECIPES = {
     tone: 'energetic, motivating, bold',
     serviceHints: 'Personal training, Group classes, Strength training, Nutrition coaching, Memberships',
   },
+  barbershop: {
+    sections: ['header', 'hero', 'services', 'gallery', 'about', 'testimonials', 'contact', 'footer'],
+    variants: { hero: 'fullscreen', gallery: 'masonry', services: 'cards' },
+    fonts: { heading: 'Oswald', body: 'Roboto' },
+    tone: 'classic, masculine, sharp, welcoming',
+    serviceHints: 'Haircuts, Fades, Beard trims, Hot towel shaves, Line-ups, Kids cuts, Hair styling, Shampoo',
+  },
   beauty: {
     sections: ['header', 'hero', 'services', 'gallery', 'about', 'testimonials', 'contact', 'footer'],
     variants: { hero: 'fullscreen', gallery: 'masonry', services: 'cards' },

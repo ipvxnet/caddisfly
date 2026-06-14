@@ -175,6 +175,20 @@ export async function deleteWebsiteConfig(db, aiProjectId) {
 }
 
 /**
+ * Delete the website config for a refactor (regular) project — used before
+ * re-generating from a confirmed detailed profile (Phase 7) so a fresh config
+ * row isn't duplicated.
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Refactor projects.id
+ * @returns {boolean} Success
+ */
+export async function deleteWebsiteConfigByRegularProjectId(db, projectId) {
+  await db.prepare('DELETE FROM ai_website_configs WHERE project_id = ?').bind(projectId).run();
+
+  return true;
+}
+
+/**
  * Get or create website configuration (ensures config exists)
  * @param {object} db - D1 database instance
  * @param {number} aiProjectId - AI project ID

@@ -8,6 +8,8 @@
  * Pure functions, no I/O, no global state.
  */
 
+import { coerceDetailedProfile, SOCIAL_PLATFORMS } from './detailed-profile.js';
+
 /**
  * Extract a lightweight signal from scraped HTML without any dependencies.
  * Safe to call on thin/app-shell HTML — missing pieces come back empty.
@@ -159,12 +161,15 @@ function buildSourceMaterial(profile) {
 export function profileToFactSections(profile) {
   const sections = {};
 
-  if (profile.phone || profile.address || profile.website) {
+  const socialLinks = Array.isArray(profile.social) ? profile.social.filter((s) => s && s.url) : [];
+
+  if (profile.phone || profile.address || profile.website || profile.email || socialLinks.length) {
     sections.contact = {
       heading: 'Get In Touch',
       phone: profile.phone || '',
       address: profile.address || '',
-      email: '',
+      email: profile.email || '',
+      social_links: socialLinks,
     };
   }
 
@@ -186,6 +191,54 @@ export function profileToFactSections(profile) {
   }
 
   return sections;
+}
+
+/**
+ * Overlay a user-confirmed detailed profile onto a company profile so the human
+ * edits win over scraped/Places facts (refactor reuse, Phase 7). Returns a new
+ * profile; the detailed founder/services/demographics are folded into the
+ * source sample so AI copy reflects them.
+ * @param {object} profile - canonical company profile (from buildProfile)
+ * @param {object|string} detailedRaw - detailed profile (object or JSON string)
+ * @returns {object} overridden profile
+ */
+export function applyDetailedOverride(profile, detailedRaw) {
+  const d = coerceDetailedProfile(typeof detailedRaw === 'string' ? safeParse(detailedRaw) : detailedRaw);
+  const out = { ...(profile || {}) };
+
+  if (d.business_name) out.name = d.business_name;
+  if (d.history) out.description = d.history;
+  if (d.contact.phone) out.phone = d.contact.phone;
+  if (d.contact.address) out.address = d.contact.address;
+  if (d.contact.email) out.email = d.contact.email;
+  if (d.logo_url) out.logo = d.logo_url;
+
+  const social = SOCIAL_PLATFORMS.filter((k) => d.social[k]).map((k) => ({ platform: k, url: d.social[k] }));
+  if (social.length) out.social = social;
+
+  const extra = [
+    d.founder && `About the founder: ${d.founder}`,
+    d.services && `Services/products: ${d.services}`,
+    d.demographics && `Target customers: ${d.demographics}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  if (extra) {
+    const prevSample = (out.source && out.source.scrape_sample) || '';
+    out.source = { ...(out.source || {}), scrape_sample: `${prevSample}\n${extra}`.trim() };
+  }
+
+  if (Array.isArray(d.picture_urls) && d.picture_urls.length) out.user_pictures = d.picture_urls;
+
+  return out;
+}
+
+function safeParse(json) {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return {};
+  }
 }
 
 // ---- internal helpers ----

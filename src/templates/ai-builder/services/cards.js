@@ -1,9 +1,13 @@
 // Service Cards Template
-// Services displayed as hoverable cards with icons
+// Services as clickable cards with an AI image tile; tapping opens a modal with
+// the full description + a contact/booking CTA.
+
+import { serviceMediaTile, serviceCardAttrs, serviceModalAssets, serviceLabels } from './service-modal.js';
 
 export function servicesCardsTemplate(data, config) {
   const { heading = 'Our Services', description = '', services } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
+  const labels = serviceLabels(config.lang || 'en');
 
   // Default services if not provided
   const serviceList = services || [
@@ -41,21 +45,20 @@ export function servicesCardsTemplate(data, config) {
       ${serviceList
         .map(
           (service, index) => `
-        <div class="service-card" data-index="${index}">
+        <button type="button" class="service-card" data-index="${index}" ${serviceCardAttrs(service)}>
           <div class="service-card-inner">
-            <div class="service-icon" style="background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});">
-              ${service.icon}
-            </div>
+            ${serviceMediaTile(service, primaryColor, secondaryColor)}
             <h3 class="service-title">${service.title}</h3>
             <p class="service-description">${service.description}</p>
-            <div class="service-arrow" style="color: ${primaryColor};">→</div>
+            <span class="svc-more">${labels.more} →</span>
           </div>
-        </div>
+        </button>
       `
         )
         .join('')}
     </div>
   </div>
+  ${serviceModalAssets(config)}
 </section>
 
 <style>
@@ -98,6 +101,15 @@ export function servicesCardsTemplate(data, config) {
 .service-card {
   opacity: 0;
   animation: fadeInUp 0.6s ease-out forwards;
+  /* reset button defaults — the whole card is now a click target */
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .service-card:nth-child(1) { animation-delay: 0.1s; }

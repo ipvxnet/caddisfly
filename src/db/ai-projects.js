@@ -117,6 +117,13 @@ export async function updateAIProject(db, id, data) {
     'terms_accepted_at',
     'subdomain',
     'inbound_email_token',
+    // Onboarding redesign: branching flow + detailed-profile blob.
+    'flow_path',
+    'business_status',
+    'data_mode',
+    'detailed_profile_json',
+    'enrichment_status',
+    'enrichment_started_at',
   ];
 
   const updates = [];
@@ -142,6 +149,32 @@ export async function updateAIProject(db, id, data) {
   const result = await db.prepare(sql).bind(...values).first();
 
   return result;
+}
+
+/**
+ * Atomically claim a research/prefill build for an AI project. Mirrors the
+ * refactor flow's claimEnrichmentBuild (on the `projects` table) so concurrent
+ * prefill clicks can't double-spend the paid Google Places call. Exactly one
+ * caller wins; a stale 'running' claim (dead request) is reclaimable.
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Internal ai_projects ID
+ * @param {number} now - Current unix seconds (recorded as enrichment_started_at)
+ * @param {number} staleBefore - Claims older than this are considered dead
+ * @returns {Promise<boolean>} true if THIS caller won the claim
+ */
+export async function claimEnrichmentBuildAI(db, projectId, now, staleBefore) {
+  const r = await db
+    .prepare(
+      `UPDATE ai_projects
+       SET enrichment_status = 'running', enrichment_started_at = ?
+       WHERE id = ?
+         AND (enrichment_status IS NULL
+              OR enrichment_status = 'pending'
+              OR (enrichment_status = 'running' AND COALESCE(enrichment_started_at, 0) < ?))`
+    )
+    .bind(now, projectId, staleBefore)
+    .run();
+  return !!(r && r.meta && r.meta.changes === 1);
 }
 
 /**

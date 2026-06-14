@@ -143,6 +143,30 @@ export async function deletePage(db, projectKey, id) {
 }
 
 /**
+ * Delete all pages for a refactor (regular) project — used when re-generating a
+ * refactor site from a user-confirmed detailed profile (Phase 7).
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Refactor projects.id
+ * @returns {boolean} Success
+ */
+export async function deletePagesByRegularProjectId(db, projectId) {
+  await db.prepare('DELETE FROM ai_pages WHERE project_id = ?').bind(projectId).run();
+  return true;
+}
+
+/**
+ * Delete all pages for an AI-builder project — used to make generation
+ * idempotent so a rebuild doesn't collide on the (ai_project_id, slug) index.
+ * @param {object} db - D1 database instance
+ * @param {number} aiProjectId - ai_projects.id
+ * @returns {boolean} Success
+ */
+export async function deletePagesByAIProjectId(db, aiProjectId) {
+  await db.prepare('DELETE FROM ai_pages WHERE ai_project_id = ?').bind(aiProjectId).run();
+  return true;
+}
+
+/**
  * Ensure a project has at least a home page; lazily upgrades legacy single-page
  * projects by creating 'home' and adopting their unassigned (page_id NULL) body
  * sections. Idempotent. Returns the project's pages.

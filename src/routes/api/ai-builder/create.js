@@ -2,7 +2,7 @@
 // Creates a new AI project and starts the conversation
 
 import { createAIProject, updateAIProject } from '../../../db/ai-projects.js';
-import { createConversationEntry } from '../../../db/ai-conversations.js';
+import { createConversationEntry, updateConversationAnswer } from '../../../db/ai-conversations.js';
 import { createWebsiteConfig } from '../../../db/ai-config.js';
 import { getFirstStep, formatStepForResponse } from '../../../utils/ai-conversation.js';
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
@@ -93,11 +93,12 @@ export async function handleAIBuilderCreate(ctx) {
       });
     }
 
-    // Create AI project
+    // Create AI project. Chat opens at Q1 (business_status); the free-text
+    // describe-prompt is collected on the landing page (stored below).
     const project = await createAIProject(env.DB, {
       customer_email: email,
       status: 'conversation',
-      conversation_step: 'initial_prompt',
+      conversation_step: 'business_status',
       pricing_tier: 'free_trial',
       language,
     });
@@ -109,18 +110,26 @@ export async function handleAIBuilderCreate(ctx) {
       console.error('Failed to record terms acceptance:', e.message);
     }
 
-    // Create initial conversation entry
-    const firstStep = getFirstStep();
-    const firstQuestion = formatStepForResponse(firstStep, language);
+    // The landing page already collected the free-text "describe your business"
+    // prompt. Store it as the (answered) initial_prompt entry so we don't
+    // re-ask it in chat — it still feeds AI extraction and buildContext.
+    const promptStep = getFirstStep(); // 'initial_prompt'
+    const promptQuestion = formatStepForResponse(promptStep, language);
+    const promptEntry = await createConversationEntry(env.DB, {
+      ai_project_id: project.id,
+      step_name: promptStep,
+      question: promptQuestion.question,
+    });
+    await updateConversationAnswer(env.DB, promptEntry.id, initial_prompt);
 
+    // First interactive chat question: Q1 — new vs existing business.
+    const firstStep = 'business_status';
+    const firstQuestion = formatStepForResponse(firstStep, language);
     await createConversationEntry(env.DB, {
       ai_project_id: project.id,
       step_name: firstStep,
       question: firstQuestion.question,
     });
-
-    // Store the initial prompt as the answer to the first question
-    // We'll update this in the respond endpoint
 
     // Create default website config
     await createWebsiteConfig(env.DB, {
@@ -136,18 +145,15 @@ export async function handleAIBuilderCreate(ctx) {
       // Continue without extracted data
     }
 
-    // Determine next question
-    const nextStep = 'business_info';
-    const nextQuestion = formatStepForResponse(nextStep, language);
-
-    // Return response with next question
+    // Return response. The chat UI is driven by project.conversation_step on
+    // load, so this next_question is informational (the first chat step, Q1).
     return new Response(
       JSON.stringify({
         success: true,
         project_id: project.project_id,
         message: 'AI project created successfully',
         extracted_data: extractedData,
-        next_question: nextQuestion,
+        next_question: firstQuestion,
       }),
       {
         status: 201,

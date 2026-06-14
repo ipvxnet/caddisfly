@@ -31,7 +31,7 @@ export async function handleAIBuilderChat(ctx) {
     const conversations = await getConversationsByProjectId(env.DB, project.id);
 
     // Get current question
-    const currentStep = formatStepForResponse(project.conversation_step, project.language || 'en');
+    const currentStep = formatStepForResponse(project.conversation_step, project.language || 'en', project.flow_path || 'regular');
 
     // Build conversation history for display
     const conversationHistory = conversations
@@ -605,7 +605,9 @@ function buildChatScript(lang = 'en') {
         const data = await response.json();
 
         if (data.success) {
-          if (data.conversation_complete) {
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else if (data.conversation_complete) {
             // Trigger preview generation
             await generatePreview();
           } else {
@@ -637,7 +639,9 @@ function buildChatScript(lang = 'en') {
         const data = await response.json();
 
         if (data.success) {
-          if (data.conversation_complete) {
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else if (data.conversation_complete) {
             await generatePreview();
           } else {
             window.location.reload();
@@ -692,7 +696,9 @@ function buildChatScript(lang = 'en') {
         const data = await response.json();
 
         if (data.success) {
-          if (data.conversation_complete) {
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else if (data.conversation_complete) {
             await generatePreview();
           } else {
             window.location.reload();

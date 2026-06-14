@@ -139,16 +139,19 @@ Return this JSON structure:
     {
       "title": "string (service name, max 30 chars)",
       "description": "string (brief description, max 120 chars)",
-      "icon": "string (emoji or icon name)"
+      "details": "string (a fuller 2-3 sentence description of this service: what it includes, who it's for, why it's great — shown when the visitor taps the service)",
+      "icon": "string (single emoji that represents this service)"
     },
     {
       "title": "string",
       "description": "string",
+      "details": "string",
       "icon": "string"
     },
     {
       "title": "string",
       "description": "string",
+      "details": "string",
       "icon": "string"
     }
   ]

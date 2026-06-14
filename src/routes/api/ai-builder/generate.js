@@ -4,8 +4,8 @@
 import { getAIProjectByProjectId, updateAIProject } from '../../../db/ai-projects.js';
 import { audit } from '../../../utils/audit.js';
 import { getAnsweredConversations } from '../../../db/ai-conversations.js';
-import { createSection } from '../../../db/ai-sections.js';
-import { createPage, updatePage } from '../../../db/ai-pages.js';
+import { createSection, deleteSectionsByProjectId } from '../../../db/ai-sections.js';
+import { createPage, updatePage, deletePagesByAIProjectId } from '../../../db/ai-pages.js';
 import { planPages } from '../../../utils/pages-blueprint.js';
 import { getOrCreateWebsiteConfig, updateWebsiteConfig } from '../../../db/ai-config.js';
 import { buildContext, generateSectionContent } from '../../../utils/ai-content-generator.js';
@@ -19,6 +19,8 @@ import { generateBlogDraftContent } from '../../../utils/blog-draft.js';
 import { createPost, uniquePostSlug } from '../../../db/blog-posts.js';
 import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
+import { parseDetailedProfile } from '../../../utils/detailed-profile.js';
+import { attachServiceImages } from '../../../utils/service-images.js';
 
 /**
  * Handle preview generation
@@ -128,14 +130,20 @@ export async function handleAIBuilderGenerate(ctx) {
     context.service_hints = recipe.serviceHints;
     if (!context.tone || context.tone === 'professional') context.tone = recipe.tone;
 
+    // Detailed flow assets: the user's own logo + photos (uploaded or found by
+    // research) take priority over stock imagery.
+    const detailed = parseDetailedProfile(project.detailed_profile_json);
+
     // Fetch real imagery once for the whole site (graceful [] without a key).
     const stockPhotos = await searchStockPhotos(
       env,
       imageKeywordsFor(industry, context.business_name),
       8
     );
-    const pickPhoto = makePhotoPicker(stockPhotos);
-    console.log(`Industry=${industry}, palette=${palette.primary}, stockPhotos=${stockPhotos.length}`);
+    // User-supplied pictures lead the pool so real photos are used before stock.
+    const userPhotos = detailed.picture_urls.map((url) => ({ url, alt: context.business_name }));
+    const pickPhoto = makePhotoPicker([...userPhotos, ...stockPhotos]);
+    console.log(`Industry=${industry}, palette=${palette.primary}, userPhotos=${userPhotos.length}, stockPhotos=${stockPhotos.length}`);
 
     // Generate content for each selected section. Fall back to sensible defaults
     // on failure so a selected section is never silently dropped.
@@ -149,6 +157,12 @@ export async function handleAIBuilderGenerate(ctx) {
       : recipe.sections;
     // Always lead with a brand header (text wordmark — no original logo here).
     const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
+
+    // Idempotent (re)generation: clear any prior pages/sections so a rebuild
+    // doesn't collide on the (ai_project_id, slug) unique index. No-op on a
+    // first build. Lets sites built with the deprecated model be regenerated.
+    await deleteSectionsByProjectId(env.DB, project.id);
+    await deletePagesByAIProjectId(env.DB, project.id);
 
     // Multi-page: split sections across pages (deterministic blueprint; thin
     // sites collapse to a single Home page). Create the page rows up front.
@@ -176,7 +190,7 @@ export async function handleAIBuilderGenerate(ctx) {
       let content;
       let usedFallback = false;
       if (sectionType === 'header') {
-        content = { logo: '', business_name: context.business_name, cta_link: '#contact' };
+        content = { logo: detailed.logo_url || '', business_name: context.business_name, cta_link: '#contact' };
       } else if (sectionType === 'products' || sectionType === 'booking') {
         // Live-data sections: products/services are injected at render time
         // and the headings default from i18n — no AI content to generate.
@@ -202,6 +216,22 @@ export async function handleAIBuilderGenerate(ctx) {
       // services/features templates render a `description` subtitle; AI returns `subheading`.
       if ((sectionType === 'services' || sectionType === 'features') && !content.description && content.subheading) {
         content.description = content.subheading;
+      }
+
+      // Generate a picture tile per service (best-effort; falls back to icons).
+      if (sectionType === 'services') {
+        await attachServiceImages(env, project.project_id, content, context);
+      }
+
+      // Overlay HARD FACTS (contact details, social links) over AI content so the
+      // site shows the real phone/email/address and only the social links the
+      // user actually provided — never invented placeholders.
+      if (sectionType === 'contact' && context.facts) {
+        if (context.facts.contact) Object.assign(content, context.facts.contact);
+        if (context.facts.social) content.social_links = context.facts.social.social_links;
+      }
+      if (sectionType === 'footer' && context.facts && context.facts.social) {
+        content.social = context.facts.social.social_links;
       }
 
       // Pick the recipe's variant for this section, then inject real images.

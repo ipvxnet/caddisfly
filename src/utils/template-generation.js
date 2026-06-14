@@ -11,6 +11,7 @@
 
 import { generateSectionContent } from './ai-content-generator.js';
 import { profileToContext, profileToFactSections } from './company-profile.js';
+import { attachServiceImages } from './service-images.js';
 import { createSection } from '../db/ai-sections.js';
 import { createPage, updatePage } from '../db/ai-pages.js';
 import { generateSiteSeo, extractContentText } from './seo-generate.js';
@@ -91,6 +92,15 @@ export async function generateAndStore(env, project, profile) {
     // These templates render a `description` subtitle; AI returns `subheading`.
     if ((type === 'services' || type === 'features') && !content.description && content.subheading) {
       content.description = content.subheading;
+    }
+    // Picture tile per service (best-effort; falls back to icons).
+    if (type === 'services') {
+      await attachServiceImages(env, project.preview_id, content, context);
+    }
+    // Overlay confirmed social links onto the footer (contact gets them via its
+    // fact section). No-op unless a detailed override supplied real links.
+    if (type === 'footer' && Array.isArray(profile.social) && profile.social.length) {
+      content.social = profile.social;
     }
 
     const variant = recipeVariant(recipe, type);
@@ -215,6 +225,12 @@ export async function generateAndStore(env, project, profile) {
  */
 async function buildPhotoPool(env, project, profile, industry) {
   const pool = [];
+
+  // User-confirmed photos (from the detailed form, Phase 7) lead the pool so
+  // the owner's real images are used before Places/stock.
+  if (Array.isArray(profile.user_pictures)) {
+    for (const url of profile.user_pictures) pool.push({ url, alt: profile.name });
+  }
 
   // Real business photos from Google Places → R2 → our served URL.
   const names = Array.isArray(profile.photos) ? profile.photos.slice(0, 6) : [];

@@ -47,6 +47,17 @@ export function contactFormTemplate(data, config) {
     ? `<div class="contact-info">${infoItems.join('')}</div>`
     : '';
 
+  // Real social links (when provided) — rendered as labeled chips, no placeholders.
+  const SOCIAL_LABELS = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', twitter: 'X', youtube: 'YouTube', linkedin: 'LinkedIn', tiktok: 'TikTok' };
+  const socialLinks = Array.isArray(data.social_links)
+    ? data.social_links.filter((s) => s && s.url && s.url !== '#')
+    : [];
+  const socialInfo = socialLinks.length
+    ? `<div class="contact-social">${socialLinks
+        .map((s) => `<a class="contact-social-link" href="${attr(s.url)}" target="_blank" rel="noopener">${SOCIAL_LABELS[String(s.platform).toLowerCase()] || s.platform}</a>`)
+        .join('')}</div>`
+    : '';
+
   return `
 <section id="contact" class="contact-section">
   <div class="contact-container">
@@ -55,6 +66,7 @@ export function contactFormTemplate(data, config) {
       <p class="contact-subheading">${subheading}</p>
     </div>
     ${contactInfo}
+    ${socialInfo}
     <form class="contact-form" data-cf-site="${attr(siteId)}" data-cf-endpoint="${attr(endpoint)}"
       data-msg-sending="${attr(t(lang, 'formw.sending'))}" data-msg-success="${attr(t(lang, 'formw.success'))}"
       data-msg-error="${attr(t(lang, 'formw.error'))}" data-msg-preview="${attr(t(lang, 'formw.preview'))}">
@@ -166,6 +178,31 @@ export function contactFormTemplate(data, config) {
 }
 
 a.contact-info-item:hover {
+  color: ${primary_color};
+}
+
+.contact-social {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.contact-social-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 999px;
+  color: #2d3748;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.contact-social-link:hover {
+  border-color: ${primary_color};
   color: ${primary_color};
 }
 

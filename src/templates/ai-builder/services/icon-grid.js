@@ -1,7 +1,10 @@
 // Services Section with Icon Grid
 
+import { serviceMediaTile, serviceCardAttrs, serviceModalAssets, serviceLabels } from './service-modal.js';
+
 /**
- * Generates a services section with icon grid
+ * Generates a services section with an image/icon grid; cards open a modal with
+ * the full description + a contact/booking CTA.
  * @param {object} data - Content data
  * @param {object} config - Website configuration
  * @returns {string} HTML template
@@ -16,7 +19,8 @@ export function servicesIconGridTemplate(data, config) {
       { title: 'Service 3', description: 'Description of service 3', icon: '⭐' },
     ],
   } = data;
-  const { primary_color = '#667eea', font_heading = 'Inter' } = config;
+  const { primary_color = '#667eea', secondary_color = '#764ba2', font_heading = 'Inter' } = config;
+  const labels = serviceLabels(config.lang || 'en');
 
   return `
 <section id="services" class="services-section">
@@ -29,16 +33,18 @@ export function servicesIconGridTemplate(data, config) {
       ${services
         .map(
           (service) => `
-        <div class="service-card">
-          <div class="service-icon">${service.icon}</div>
+        <button type="button" class="service-card" ${serviceCardAttrs(service)}>
+          ${serviceMediaTile(service, primary_color, secondary_color)}
           <h3 class="service-title">${service.title}</h3>
           <p class="service-description">${service.description}</p>
-        </div>
+          <span class="svc-more">${labels.more} →</span>
+        </button>
       `
         )
         .join('')}
     </div>
   </div>
+  ${serviceModalAssets(config)}
 </section>
 
 <style>
@@ -83,12 +89,21 @@ export function servicesIconGridTemplate(data, config) {
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   transition: all 0.3s ease;
   text-align: center;
+  /* reset button defaults — the whole card is a click target */
+  display: block;
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .service-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
+
+/* center the icon-tile fallback in this centered layout */
+.service-card .svc-media--icon { margin-left: auto; margin-right: auto; }
 
 .service-icon {
   font-size: 3rem;

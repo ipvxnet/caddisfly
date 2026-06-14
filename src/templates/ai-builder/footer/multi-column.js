@@ -16,24 +16,46 @@ export function footerMultiColumnTemplate(data, config) {
       { label: 'Services', url: '#services' },
       { label: 'Contact', url: '#contact' },
     ],
-    social = [
-      { platform: 'facebook', url: '#' },
-      { platform: 'instagram', url: '#' },
-      { platform: 'twitter', url: '#' },
-    ],
+    social = [],
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
+
+  // Render only real social links — no dead '#' placeholders.
+  const socialLinks = (Array.isArray(social) ? social : []).filter(
+    (s) => s && s.url && s.url !== '#'
+  );
 
   const getSocialIcon = (platform) => {
     const icons = {
       facebook: 'F',
       instagram: 'I',
       twitter: 'T',
+      x: 'X',
       linkedin: 'in',
       youtube: 'Y',
+      tiktok: 'TT',
     };
-    return icons[platform.toLowerCase()] || '•';
+    return icons[String(platform).toLowerCase()] || '•';
   };
+
+  // The "Follow Us" column appears only when there are real links.
+  const socialBlock = socialLinks.length
+    ? `
+    <div class="footer-social">
+      <h4 class="footer-social-heading">Follow Us</h4>
+      <div class="footer-social-icons">
+        ${socialLinks
+          .map(
+            (item) => `
+          <a href="${item.url}" class="social-icon" target="_blank" rel="noopener" aria-label="${item.platform}">
+            ${getSocialIcon(item.platform)}
+          </a>
+        `
+          )
+          .join('')}
+      </div>
+    </div>`
+    : '';
 
   return `
 <footer class="footer-section">
@@ -48,20 +70,7 @@ export function footerMultiColumnTemplate(data, config) {
         ${links.map((link) => `<li><a href="${link.url}"${link.new_tab ? ' target="_blank" rel="noopener"' : ''}>${link.label}</a></li>`).join('')}
       </ul>
     </div>
-    <div class="footer-social">
-      <h4 class="footer-social-heading">Follow Us</h4>
-      <div class="footer-social-icons">
-        ${social
-          .map(
-            (item) => `
-          <a href="${item.url}" class="social-icon" aria-label="${item.platform}">
-            ${getSocialIcon(item.platform)}
-          </a>
-        `
-          )
-          .join('')}
-      </div>
-    </div>
+    ${socialBlock}
   </div>
   <div class="footer-bottom">
     <p class="footer-copyright">${copyright}</p>

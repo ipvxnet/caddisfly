@@ -160,6 +160,19 @@ export async function deleteSectionsByProjectId(db, aiProjectId) {
 }
 
 /**
+ * Delete all sections for a refactor (regular) project — used when re-generating
+ * a refactor site from a user-confirmed detailed profile (Phase 7).
+ * @param {object} db - D1 database instance
+ * @param {number} projectId - Refactor projects.id
+ * @returns {boolean} Success
+ */
+export async function deleteSectionsByRegularProjectId(db, projectId) {
+  await db.prepare('DELETE FROM ai_sections WHERE project_id = ?').bind(projectId).run();
+
+  return true;
+}
+
+/**
  * Reorder sections by id. Ownership is verified by the caller, so this scopes by
  * section id only (works for both ai_project_id and project_id flows — the old
  * `AND ai_project_id = ?` clause silently no-op'd for refactor projects).

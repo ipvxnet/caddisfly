@@ -224,6 +224,48 @@ export async function checkEnrichmentLimit(db, email, tier = 'free_trial') {
 }
 
 /**
+ * Enrichment limit for the AI-builder wizard's research prefill. Shares the same
+ * per-day quota as the refactor flow by counting paid enrichments across BOTH
+ * the `projects` and `ai_projects` tables, so a user can't bypass the cap by
+ * using both flows.
+ * @param {object} db - D1 database
+ * @param {string} email - User email
+ * @param {string} tier - Pricing tier
+ * @returns {object} { allowed, count, remaining, limit, resetAt, tier }
+ */
+export async function checkEnrichmentLimitAI(db, email, tier = 'free_trial') {
+  const limits = RATE_LIMITS[tier];
+  if (!limits) {
+    throw new Error(`Invalid tier: ${tier}`);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const startOfDay = Math.floor(now / 86400) * 86400;
+  const resetAt = startOfDay + 86400;
+
+  const result = await db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM projects
+            WHERE customer_email = ? AND verified_at >= ?
+            AND enrichment_status IS NOT NULL AND enrichment_status != 'pending')
+         +
+         (SELECT COUNT(*) FROM ai_projects
+            WHERE customer_email = ? AND enrichment_started_at >= ?
+            AND enrichment_status IS NOT NULL AND enrichment_status != 'pending')
+         AS count`
+    )
+    .bind(email, startOfDay, email, startOfDay)
+    .first();
+
+  const count = result?.count || 0;
+  const remaining = Math.max(0, limits.enrichments_per_day - count);
+  const allowed = count < limits.enrichments_per_day;
+
+  return { allowed, count, remaining, limit: limits.enrichments_per_day, resetAt, tier };
+}
+
+/**
  * Get user's pricing tier. The billing account (Stripe subscription state, set
  * by the webhook) is the source of truth when present — the webhook downgrades
  * canceled subs back to 'free_trial', so the stored tier can be trusted. Falls

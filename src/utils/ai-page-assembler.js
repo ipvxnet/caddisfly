@@ -50,6 +50,11 @@ export function assemblePage(sections, config, project, opts = {}) {
   const currentTypes = new Set(visibleSections.map((s) => s.section_type));
   const seenTypes = new Set();
 
+  // Single-page anchor nav: give the navbar a list of {anchor,label} for the
+  // sections actually present, so the top menu scrolls to each section on the
+  // page (the navbar ignores this when the site is multi-page).
+  renderConfig.sectionNav = buildSectionNav(visibleSections, lang);
+
   const renderedSections = visibleSections
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
@@ -93,6 +98,31 @@ export function assemblePage(sections, config, project, opts = {}) {
   });
 
   return html;
+}
+
+// Localized nav labels for the single-page anchor menu, and the order they
+// appear in. header/footer/cta/stats are intentionally not navigable.
+const SECTION_NAV_LABELS = {
+  en: { hero: 'Home', about: 'About', services: 'Services', features: 'Features', gallery: 'Gallery', testimonials: 'Reviews', pricing: 'Pricing', contact: 'Contact' },
+  es: { hero: 'Inicio', about: 'Acerca de', services: 'Servicios', features: 'Características', gallery: 'Galería', testimonials: 'Opiniones', pricing: 'Precios', contact: 'Contacto' },
+  pt: { hero: 'Início', about: 'Sobre', services: 'Serviços', features: 'Recursos', gallery: 'Galeria', testimonials: 'Avaliações', pricing: 'Preços', contact: 'Contato' },
+};
+const SECTION_NAV_ORDER = ['hero', 'about', 'services', 'features', 'gallery', 'testimonials', 'pricing', 'contact'];
+
+/**
+ * Build the section anchor nav for a single-page site from the sections present.
+ * @param {Array<{section_type:string}>} visibleSections
+ * @param {string} lang
+ * @returns {Array<{anchor:string,label:string}>}
+ */
+function buildSectionNav(visibleSections, lang = 'en') {
+  const labels = SECTION_NAV_LABELS[lang] || SECTION_NAV_LABELS.en;
+  const present = new Set((visibleSections || []).map((s) => s.section_type));
+  const nav = [];
+  for (const type of SECTION_NAV_ORDER) {
+    if (present.has(type) && labels[type]) nav.push({ anchor: `#${type}`, label: labels[type] });
+  }
+  return nav;
 }
 
 /**
@@ -297,6 +327,13 @@ ${trackId ? `<!-- Caddisfly analytics (cookieless) -->
       if (target) {
         target.scrollIntoView({ behavior: 'smooth' });
       }
+      // Close the mobile menu after jumping to a section.
+      const nav = document.querySelector('.site-nav.nav-open');
+      if (nav) {
+        nav.classList.remove('nav-open');
+        const t = nav.querySelector('.nav-toggle');
+        if (t) { t.setAttribute('aria-expanded', 'false'); t.textContent = '☰'; }
+      }
     });
   });
 </script>
@@ -433,10 +470,16 @@ export function deduplicateCSS(html) {
 export function generatePreview(sections, config, project, opts = {}) {
   const pageHtml = assemblePage(sections, config, project, opts);
 
+  // Optional "Add your details" link → opens the detailed form (Phase 7), so a
+  // refactor owner can supply real history/founder/social/photos and rebuild.
+  const detailsLink = opts.detailedLink
+    ? `<a href="/ai-builder/detailed/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">✨ Add your details</a>`
+    : '';
+
   // Add preview banner with project ID
   const previewBanner = `
 <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%); color: white; padding: 0.75rem 1rem; text-align: center; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 0.875rem;">
-  <strong>Preview Mode</strong> - This is a preview of your website. <a href="/ai-builder/customize/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">Customize</a>
+  <strong>Preview Mode</strong> - This is a preview of your website. <a href="/ai-builder/customize/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">Customize</a>${detailsLink}
 </div>
 <div style="height: 50px;"></div>
 `;

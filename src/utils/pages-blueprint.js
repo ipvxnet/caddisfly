@@ -43,9 +43,13 @@ export function planPages(sectionTypes, lang = 'en') {
   for (const def of PAGE_DEFS) for (const t of def.types) typeToSlug[t] = def.slug;
   const slugOf = (t) => typeToSlug[t] || 'home';
 
-  // Collapse thin sites (or sites that would only fill Home) to a single page.
+  // Single-page by default: every body section lives on Home with anchor-scroll
+  // nav. This gives small-business sites a rich, mobile-friendly scrolling home
+  // (like a classic one-pager) instead of a hero-only landing behind a
+  // hamburger. The multi-page logic below is retained for potential future use.
+  const SINGLE_PAGE = true;
   const distinctSlugs = new Set(bodyTypes.map(slugOf));
-  if (bodyTypes.length <= COLLAPSE_THRESHOLD || distinctSlugs.size <= 1) {
+  if (SINGLE_PAGE || bodyTypes.length <= COLLAPSE_THRESHOLD || distinctSlugs.size <= 1) {
     return {
       pages: [{ slug: 'home', title: names.home, nav_label: names.home, order: 0, is_home: 1 }],
       assign: () => 'home',
