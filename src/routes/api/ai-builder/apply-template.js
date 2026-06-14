@@ -80,6 +80,9 @@ export async function handleApplyTemplate(ctx) {
     // defines one for that type AND the variant exists in the registry.
     let updated = 0;
     for (const section of sections) {
+      // Never replace a VIDEO hero with a theme's image hero. The user explicitly
+      // set a background video; every template must respect it across switches.
+      if (section.section_type === 'hero' && section.html_template === 'video') continue;
       const variant = theme.variants[section.section_type];
       if (!variant || variant === section.html_template) continue;
       // Never persist a variant the registry doesn't actually have for this type.
