@@ -3,6 +3,11 @@
 import { POLICY_INSTRUCTION } from './content-policy.js';
 import { detailedToContext } from './detailed-profile.js';
 
+// Workers AI text model — centralized so a deprecation is a one-line swap.
+// NOTE: '@cf/meta/llama-3.1-8b-instruct' was DEPRECATED 2026-05-30 (AiError 5028)
+// and silently broke ALL generation (sections fell back to defaults).
+export const TEXT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+
 /**
  * Call Workers AI with a prompt
  * @param {object} env - Environment bindings
@@ -18,7 +23,7 @@ export async function callWorkersAI(env, prompt, options = {}) {
   const { max_tokens = 2048, temperature = 0.3, system_message = 'You are a helpful AI assistant.' } = options;
 
   try {
-    const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+    const response = await env.AI.run(TEXT_MODEL, {
       messages: [
         {
           role: 'system',
@@ -33,15 +38,56 @@ export async function callWorkersAI(env, prompt, options = {}) {
       temperature,
     });
 
-    if (!response || !response.response) {
+    // Workers AI response shapes vary by model. Older models returned
+    // { response: "text" }; newer ones may return a string, nest the text, or
+    // use a choices[] envelope. Extract defensively so a shape change doesn't
+    // silently break all generation again.
+    const text = extractAIText(response);
+    if (typeof text !== 'string' || !text.trim()) {
+      console.error('Unexpected AI response shape:', JSON.stringify(response).slice(0, 400));
       throw new Error('Invalid AI response');
     }
 
-    return response.response.trim();
+    return text.trim();
   } catch (error) {
     console.error('Workers AI error:', error);
     throw error;
   }
+}
+
+/**
+ * Pull the generated text out of a Workers AI response across model shapes:
+ *   "text" | { response } | { result } | { output_text } | { choices:[{message:{content}}] }
+ * @param {any} response
+ * @returns {string}
+ */
+export function extractAIText(response) {
+  if (response == null) return '';
+  if (typeof response === 'string') return response;
+
+  const r = response.response !== undefined ? response.response : response.result;
+  if (typeof r === 'string') return r;
+
+  if (r && typeof r === 'object') {
+    if (typeof r.response === 'string') return r.response;
+    if (typeof r.text === 'string') return r.text;
+    if (typeof r.output_text === 'string') return r.output_text;
+    if (Array.isArray(r.output_text)) return r.output_text.join('');
+    // Newer models (e.g. llama-3.3-70b-fp8-fast) return JSON-mode output as an
+    // already-parsed object. Re-serialize so the JSON-expecting callers (section
+    // content) parse it back; plain-text callers don't hit this branch.
+    return JSON.stringify(r);
+  }
+
+  if (typeof response.output_text === 'string') return response.output_text;
+
+  const choice = response.choices && response.choices[0];
+  if (choice) {
+    if (choice.message && typeof choice.message.content === 'string') return choice.message.content;
+    if (typeof choice.text === 'string') return choice.text;
+  }
+
+  return '';
 }
 
 /**

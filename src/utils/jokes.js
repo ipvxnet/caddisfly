@@ -3,6 +3,8 @@
 // supply (rendered with the page immediately) and the fallback when AI is
 // unavailable or slow.
 
+import { TEXT_MODEL } from './ai-content-generator.js';
+
 const FALLBACK = {
   en: [
     "Why did the web developer leave the restaurant? Because of the table layout.",
@@ -49,7 +51,7 @@ export async function aiJoke(env, lang = 'en') {
   try {
     if (!env || !env.AI) return cannedJoke(Date.now(), lang);
     const language = AI_LANG[lang] || 'English';
-    const r = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+    const r = await env.AI.run(TEXT_MODEL, {
       messages: [
         {
           role: 'system',

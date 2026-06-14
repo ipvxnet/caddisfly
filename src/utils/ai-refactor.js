@@ -2,6 +2,8 @@
  * AI-powered HTML refactoring utilities using Workers AI
  */
 
+import { TEXT_MODEL } from './ai-content-generator.js';
+
 const MAX_HTML_SIZE_BYTES = 12 * 1024; // 12KB - conservative limit for LLM context
 const FALLBACK_CSS = `
 <style>
@@ -153,7 +155,7 @@ export async function callWorkersAI(env, prompt) {
   }
 
   try {
-    const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+    const response = await env.AI.run(TEXT_MODEL, {
       messages: [
         {
           role: 'system',
