@@ -20,6 +20,20 @@ const INDUSTRY_LABEL = {
   general: 'Any Business',
 };
 
+// Coarse categories for the filter bar (keeps the chip row short at 100 templates).
+const CATEGORY = {
+  food: 'Food & Drink', fitness: 'Health & Wellness', beauty: 'Health & Wellness',
+  dental: 'Health & Wellness', health: 'Health & Wellness', pet: 'Health & Wellness',
+  barbershop: 'Personal Services', events: 'Personal Services', photography: 'Creative',
+  creative: 'Creative', tech: 'Tech & Startups', finance: 'Professional',
+  legal: 'Professional', realestate: 'Professional', education: 'Professional',
+  nonprofit: 'Professional', construction: 'Home & Trades', home: 'Home & Trades',
+  automotive: 'Home & Trades', retail: 'Retail', travel: 'Travel & Leisure',
+  general: 'Other',
+};
+const CATEGORY_ORDER = ['Food & Drink', 'Health & Wellness', 'Personal Services', 'Home & Trades', 'Professional', 'Creative', 'Tech & Startups', 'Retail', 'Travel & Leisure', 'Other'];
+const STYLE_LABEL = { modern: 'Modern', classic: 'Classic', minimal: 'Minimal', bold: 'Bold', elegant: 'Elegant', luxe: 'Luxe', playful: 'Playful' };
+
 /** GET /templates/:key — full live demo. */
 export function handleTemplateDemo(ctx) {
   const { params, query, url } = ctx;
@@ -44,10 +58,12 @@ export function handleTemplatesShowcase(ctx) {
   const cards = templates.map((t) => {
     const dots = [t.colors.primary, t.colors.secondary, t.colors.accent]
       .map((c) => `<span class="dot" style="background:${escapeHtml(c)}"></span>`).join('');
+    const cat = CATEGORY[t.industry] || CATEGORY.general;
+    const search = `${t.label} ${INDUSTRY_LABEL[t.industry] || ''} ${cat} ${t.style} ${t.description}`.toLowerCase();
     return `
-    <article class="card${t.dark ? ' dark' : ''}">
+    <article class="card${t.dark ? ' dark' : ''}" data-cat="${escapeHtml(cat)}" data-style="${escapeHtml(t.style)}" data-search="${escapeHtml(search)}">
       <a class="frame" href="/templates/${t.key}" target="_blank" rel="noopener" aria-label="Live preview of ${escapeHtml(t.label)}">
-        <iframe src="/templates/${t.key}?embed=1" title="${escapeHtml(t.label)} preview" loading="lazy" tabindex="-1" scrolling="no"></iframe>
+        <iframe data-src="/templates/${t.key}?embed=1" title="${escapeHtml(t.label)} preview" loading="lazy" tabindex="-1" scrolling="no"></iframe>
         <span class="frame-cta">${tr('tplpage.live_preview')} ↗</span>
       </a>
       <div class="meta">
@@ -64,6 +80,14 @@ export function handleTemplatesShowcase(ctx) {
       </div>
     </article>`;
   }).join('');
+
+  // Filter bar: category chips (only those present) + style chips + search.
+  const presentCats = CATEGORY_ORDER.filter((c) => templates.some((t) => (CATEGORY[t.industry] || CATEGORY.general) === c));
+  const presentStyles = Object.keys(STYLE_LABEL).filter((s) => templates.some((t) => t.style === s));
+  const catChips = [`<button class="chip active" data-filter="cat" data-val="">${tr('tplpage.all')}</button>`]
+    .concat(presentCats.map((c) => `<button class="chip" data-filter="cat" data-val="${escapeHtml(c)}">${escapeHtml(c)}</button>`)).join('');
+  const styleChips = [`<button class="chip active" data-filter="style" data-val="">${tr('tplpage.all_styles')}</button>`]
+    .concat(presentStyles.map((s) => `<button class="chip" data-filter="style" data-val="${s}">${escapeHtml(STYLE_LABEL[s])}</button>`)).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -115,7 +139,17 @@ export function handleTemplatesShowcase(ctx) {
     .cta-band{text-align:center;background:#fff;border-top:1px solid var(--line);padding:clamp(2.5rem,6vw,4rem) 0}
     .cta-band h2{font-size:clamp(1.5rem,4vw,2.2rem);color:var(--ink)}
     .cta-band p{margin:.6rem auto 1.4rem;max-width:520px}
-    @media(max-width:480px){.grid{grid-template-columns:1fr}}
+    .filterbar{display:flex;flex-direction:column;gap:.7rem;padding:.5rem 0 1.5rem;position:sticky;top:66px;z-index:20;background:linear-gradient(var(--bg) 70%,transparent)}
+    .search{width:100%;max-width:420px;padding:.6rem .9rem;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:.92rem;background:#fff}
+    .search:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(102,126,234,.15)}
+    .chips{display:flex;flex-wrap:wrap;gap:.4rem}
+    .chip{font:inherit;font-size:.8rem;font-weight:600;color:var(--body);background:#fff;border:1px solid var(--line);border-radius:999px;padding:.34rem .8rem;cursor:pointer;transition:all .15s}
+    .chip:hover{border-color:var(--brand);color:var(--ink)}
+    .chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+    #style-chips .chip.active{background:var(--brand);border-color:var(--brand)}
+    .card[hidden]{display:none}
+    .noresults{text-align:center;color:var(--body);padding:3rem 0}
+    @media(max-width:480px){.grid{grid-template-columns:1fr}.filterbar{position:static}}
   </style>
 </head>
 <body>
@@ -137,7 +171,13 @@ export function handleTemplatesShowcase(ctx) {
       <p>${tr('tplpage.sub')}</p>
     </section>
     <section class="wrap">
-      <div class="grid">${cards}</div>
+      <div class="filterbar">
+        <input type="search" id="tpl-search" class="search" placeholder="${tr('tplpage.search_ph')}" aria-label="${tr('tplpage.search_ph')}">
+        <div class="chips" id="cat-chips">${catChips}</div>
+        <div class="chips" id="style-chips">${styleChips}</div>
+      </div>
+      <div class="grid" id="tpl-grid">${cards}</div>
+      <p class="noresults" id="noresults" hidden>${tr('tplpage.no_results')}</p>
     </section>
     <section class="cta-band">
       <div class="wrap">
@@ -148,21 +188,63 @@ export function handleTemplatesShowcase(ctx) {
     </section>
   </main>
   <script>
-    // Scale each preview iframe to exactly fill its card width (the iframe
-    // renders the page at a fixed 1280px, then we scale to fit) — perfect across
-    // all viewport sizes, no horizontal clipping.
     (function () {
       var BASE = 1280;
+      // Scale each preview iframe to exactly fill its card width (rendered at a
+      // fixed 1280px, then scaled) — no horizontal clipping at any viewport.
       function fit() {
         document.querySelectorAll('.frame').forEach(function (f) {
           var ifr = f.querySelector('iframe');
-          if (!ifr) return;
-          ifr.style.transform = 'scale(' + (f.clientWidth / BASE) + ')';
+          if (ifr) ifr.style.transform = 'scale(' + (f.clientWidth / BASE) + ')';
         });
       }
       window.addEventListener('resize', fit);
       window.addEventListener('load', fit);
+
+      // Lazy-load previews: only request a demo when its card nears the viewport,
+      // so 100 templates don't fire 100 worker requests at once.
+      var io = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var ifr = e.target.querySelector('iframe[data-src]');
+          if (ifr) { ifr.src = ifr.getAttribute('data-src'); ifr.removeAttribute('data-src'); }
+          io.unobserve(e.target);
+        });
+      }, { rootMargin: '400px 0px' }) : null;
+      function observe(card) {
+        if (card.hidden) return;
+        if (io) io.observe(card);
+        else { var ifr = card.querySelector('iframe[data-src]'); if (ifr) { ifr.src = ifr.getAttribute('data-src'); ifr.removeAttribute('data-src'); } }
+      }
+      var cards = [].slice.call(document.querySelectorAll('.card'));
+      cards.forEach(observe);
       fit();
+
+      // Filtering: category chip + style chip + search, all combined.
+      var state = { cat: '', style: '', q: '' };
+      function apply() {
+        var shown = 0;
+        cards.forEach(function (c) {
+          var ok = (!state.cat || c.dataset.cat === state.cat)
+            && (!state.style || c.dataset.style === state.style)
+            && (!state.q || c.dataset.search.indexOf(state.q) !== -1);
+          c.hidden = !ok;
+          if (ok) { shown++; observe(c); }
+        });
+        document.getElementById('noresults').hidden = shown > 0;
+        fit();
+      }
+      document.querySelectorAll('.chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          var grp = chip.dataset.filter;
+          document.querySelectorAll('.chip[data-filter="' + grp + '"]').forEach(function (c) { c.classList.remove('active'); });
+          chip.classList.add('active');
+          state[grp] = chip.dataset.val;
+          apply();
+        });
+      });
+      var search = document.getElementById('tpl-search');
+      search.addEventListener('input', function () { state.q = search.value.trim().toLowerCase(); apply(); });
     })();
   </script>
 </body>

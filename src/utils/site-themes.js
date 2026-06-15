@@ -437,6 +437,19 @@ export const SITE_THEMES = [
   },
 ];
 
+// Style tag per template (modern/classic/minimal/bold/elegant/luxe/playful) — used
+// by the showcase filters and to let the wizard's style choice pick a variation
+// within an industry. With one template per industry today each is its industry's
+// default; as variations land, give each a distinct `style` and mark one `default`.
+const STYLE_TAGS = {
+  bold: 'bold', elegant: 'elegant', minimal: 'minimal', classic: 'classic',
+  midnight: 'bold', goldcard: 'luxe', savory: 'classic', care: 'modern',
+  studio: 'modern', estate: 'modern', trades: 'bold', smile: 'modern',
+  ledger: 'classic', build: 'bold', paws: 'playful', voyage: 'modern',
+  celebration: 'elegant', scholar: 'modern', cause: 'modern', lens: 'minimal',
+};
+for (const t of SITE_THEMES) { if (!t.style) t.style = STYLE_TAGS[t.key] || 'modern'; }
+
 /**
  * Look up a theme by key.
  * @param {string} key
@@ -476,17 +489,35 @@ export function listThemes() {
 }
 
 /**
- * Pick a template for a generated site. An explicit wizard "style" that maps to
- * a template wins; otherwise the first template whose `industries` includes the
- * inferred industry; otherwise a safe, universal default.
+ * Pick a template for a generated site. The industry decides the candidate set;
+ * within it, the wizard "style" (modern/classic/minimal/bold/…) picks the
+ * matching VARIATION when one exists, else the industry's default variation.
+ *
+ * (Previously a generic style word that happened to be a template key — 'classic',
+ * 'minimal', 'bold' — would override the industry pick entirely; that's fixed:
+ * the industry now leads, and style only chooses among that industry's looks.)
  * @param {string} industry - inferIndustry() key
- * @param {string} [style] - the wizard's style choice (may be a template key)
+ * @param {string} [style] - the wizard's style choice (a style TAG, not a key)
  * @returns {object} a theme
  */
 export function selectTemplate(industry, style) {
+  const candidates = SITE_THEMES.filter((t) => Array.isArray(t.industries) && t.industries.includes(industry));
+  if (candidates.length) {
+    if (style) {
+      const byStyle = candidates.find((t) => t.style === style);
+      if (byStyle) return byStyle;
+    }
+    return candidates.find((t) => t.default) || candidates[0];
+  }
+  // No industry template (e.g. 'general'): honor an explicit template key if the
+  // caller passed one, else a safe universal default.
   if (style && getTheme(style)) return getTheme(style);
-  const byIndustry = SITE_THEMES.find((t) => Array.isArray(t.industries) && t.industries.includes(industry));
-  return byIndustry || getTheme('classic') || SITE_THEMES[0];
+  return getTheme('classic') || SITE_THEMES[0];
+}
+
+/** Templates that serve a given industry, in display order (for variation pickers). */
+export function templatesForIndustry(industry) {
+  return SITE_THEMES.filter((t) => Array.isArray(t.industries) && t.industries.includes(industry));
 }
 
 // Section wrappers that hardcode a light background — flipped to surface.bg.

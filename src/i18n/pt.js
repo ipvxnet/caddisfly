@@ -24,6 +24,7 @@ export const pt = {
     sub: 'Cada um é um design completo e pronto para celular: fontes, cores e layout. Veja qualquer um ao vivo e torne-o seu com IA.',
     live_preview: 'Ver ao vivo',
     use_style: 'Usar este estilo',
+    all: 'Todos', all_styles: 'Todos os estilos', search_ph: 'Buscar modelos…', no_results: 'Nenhum modelo corresponde aos seus filtros.',
     cta_h2: 'Encontrou um que gostou?',
     cta_sub: 'Crie seu site com IA em minutos: o modelo já vem pronto, basta adicionar seu conteúdo.',
   },
