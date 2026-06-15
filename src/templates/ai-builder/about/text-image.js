@@ -35,12 +35,12 @@ export function aboutTextImageTemplate(data, config) {
 
 <style>
 .about-section {
-  padding: 5rem 2rem;
+  padding: var(--cf-section-pad, 5rem) 2rem;
   background: white;
 }
 
 .about-container {
-  max-width: 1200px;
+  max-width: var(--cf-container, 1200px);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -51,8 +51,8 @@ export function aboutTextImageTemplate(data, config) {
 .about-image img {
   width: 100%;
   height: auto;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  border-radius: var(--cf-img-radius, 12px);
+  box-shadow: var(--cf-shadow, 0 10px 40px rgba(0,0,0,0.1));
 }
 
 .about-heading {

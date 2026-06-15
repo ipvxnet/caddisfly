@@ -63,12 +63,12 @@ export function servicesCardsTemplate(data, config) {
 
 <style>
 .services-cards {
-  padding: 6rem 2rem;
+  padding: var(--cf-section-pad, 6rem) 2rem;
   background: white;
 }
 
 .services-cards-container {
-  max-width: 1200px;
+  max-width: var(--cf-container, 1200px);
   margin: 0 auto;
 }
 
@@ -121,7 +121,7 @@ export function servicesCardsTemplate(data, config) {
   height: 100%;
   padding: 2.5rem;
   background: #f7fafc;
-  border-radius: 16px;
+  border-radius: var(--cf-radius, 16px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
@@ -143,7 +143,7 @@ export function servicesCardsTemplate(data, config) {
 .service-card:hover .service-card-inner {
   background: white;
   transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--cf-shadow, 0 20px 40px rgba(0, 0, 0, 0.12));
 }
 
 .service-card:hover .service-card-inner::before {

@@ -17,6 +17,23 @@
  * site (colors are preserved when switching themes).
  */
 
+/**
+ * Design-token bundles — the "feel" knobs beyond color/font (corner radius,
+ * shadow depth, section spacing density, container width, button/image radius).
+ * Each template picks ONE bundle via its `tokens` key. Section templates read
+ * these as CSS vars (var(--cf-radius, <fallback>)), so a template can express
+ * "sharp & flat" vs "soft & rounded" vs "editorial" without bespoke layouts.
+ * Injected at render time (templateTokensCss) — no DB column.
+ */
+export const TOKEN_PRESETS = {
+  sharp: { radius: '4px', radiusSm: '3px', shadow: '0 2px 10px rgba(0,0,0,.10)', shadowSm: '0 1px 3px rgba(0,0,0,.08)', sectionPad: '4.5rem', container: '1200px', btnRadius: '4px', imgRadius: '6px' },
+  editorial: { radius: '3px', radiusSm: '2px', shadow: '0 18px 50px rgba(0,0,0,.10)', shadowSm: '0 6px 18px rgba(0,0,0,.06)', sectionPad: '7rem', container: '1080px', btnRadius: '2px', imgRadius: '3px' },
+  round: { radius: '22px', radiusSm: '14px', shadow: '0 16px 40px rgba(0,0,0,.08)', shadowSm: '0 6px 16px rgba(0,0,0,.05)', sectionPad: '6rem', container: '1080px', btnRadius: '999px', imgRadius: '18px' },
+  classic: { radius: '8px', radiusSm: '6px', shadow: '0 6px 20px rgba(0,0,0,.10)', shadowSm: '0 2px 8px rgba(0,0,0,.08)', sectionPad: '5.5rem', container: '1200px', btnRadius: '6px', imgRadius: '8px' },
+  modern: { radius: '14px', radiusSm: '10px', shadow: '0 12px 32px rgba(0,0,0,.16)', shadowSm: '0 4px 14px rgba(0,0,0,.12)', sectionPad: '6rem', container: '1200px', btnRadius: '10px', imgRadius: '14px' },
+  luxe: { radius: '4px', radiusSm: '3px', shadow: '0 16px 44px rgba(0,0,0,.28)', shadowSm: '0 6px 18px rgba(0,0,0,.22)', sectionPad: '7rem', container: '1120px', btnRadius: '2px', imgRadius: '4px' },
+};
+
 export const SITE_THEMES = [
   {
     key: 'bold',
@@ -31,6 +48,7 @@ export const SITE_THEMES = [
       gallery: 'masonry',
     },
     fonts: { heading: 'Oswald', body: 'Roboto' },
+    tokens: 'sharp',
   },
   {
     key: 'elegant',
@@ -45,6 +63,7 @@ export const SITE_THEMES = [
       gallery: 'carousel',
     },
     fonts: { heading: 'Playfair Display', body: 'Lato' },
+    tokens: 'editorial',
   },
   {
     key: 'minimal',
@@ -59,6 +78,7 @@ export const SITE_THEMES = [
       gallery: 'masonry',
     },
     fonts: { heading: 'Inter', body: 'Inter' },
+    tokens: 'round',
   },
   {
     key: 'classic',
@@ -73,6 +93,7 @@ export const SITE_THEMES = [
       gallery: 'masonry',
     },
     fonts: { heading: 'Merriweather', body: 'Source Sans Pro' },
+    tokens: 'classic',
   },
   // Dark themes carry their own palette (colors) + surface tokens + mode:'dark'.
   // Applying one overrides colors (unlike the light themes above, which preserve
@@ -93,6 +114,7 @@ export const SITE_THEMES = [
     fonts: { heading: 'Space Grotesk', body: 'Inter' },
     colors: { primary: '#3b82f6', secondary: '#60a5fa' },
     surface: { bg: '#0d0d0f', card: '#18181b', text: '#f4f4f5', muted: '#a1a1aa', border: '#27272a' },
+    tokens: 'modern',
   },
   {
     key: 'goldcard',
@@ -110,6 +132,7 @@ export const SITE_THEMES = [
     fonts: { heading: 'Instrument Serif', body: 'Instrument Sans' },
     colors: { primary: '#f0c94f', secondary: '#cfae44' },
     surface: { bg: '#000000', card: '#15130d', text: '#f5ecd6', muted: '#b8a98a', border: '#3a3320' },
+    tokens: 'luxe',
   },
 ];
 
@@ -120,6 +143,27 @@ export const SITE_THEMES = [
  */
 export function getTheme(key) {
   return SITE_THEMES.find((t) => t.key === key) || null;
+}
+
+/**
+ * CSS custom-property declarations for a theme's design-token bundle, to drop
+ * inside the page :root. Empty when the theme has no token bundle (sections then
+ * use their hardcoded fallbacks, so legacy/un-regenerated sites are unchanged).
+ * @param {object} theme - a theme (with a `tokens` preset key)
+ * @returns {string} CSS declarations (no selector wrapper)
+ */
+export function templateTokensCss(theme) {
+  const p = theme && theme.tokens && TOKEN_PRESETS[theme.tokens];
+  if (!p) return '';
+  return `
+    --cf-radius: ${p.radius};
+    --cf-radius-sm: ${p.radiusSm};
+    --cf-shadow: ${p.shadow};
+    --cf-shadow-sm: ${p.shadowSm};
+    --cf-section-pad: ${p.sectionPad};
+    --cf-container: ${p.container};
+    --cf-btn-radius: ${p.btnRadius};
+    --cf-img-radius: ${p.imgRadius};`;
 }
 
 /**

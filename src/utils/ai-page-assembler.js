@@ -3,7 +3,7 @@
 
 import { renderSection } from '../templates/ai-builder/registry.js';
 import { holidayDecorHtml } from './holiday-decor.js';
-import { getTheme, darkModeCss } from './site-themes.js';
+import { getTheme, darkModeCss, templateTokensCss } from './site-themes.js';
 import { translator } from '../i18n/index.js';
 
 // Google Fonts that ship a single (400) weight only — requesting extra weights in
@@ -226,6 +226,8 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
   const theme = getTheme(config.style_theme);
   const isDark = theme && theme.mode === 'dark';
   const darkLayer = isDark ? darkModeCss(theme) : '';
+  // Per-template design tokens (radius/shadow/spacing/etc.) → :root CSS vars.
+  const tokenVars = templateTokensCss(theme);
 
   const fontsHref = `https://fonts.googleapis.com/css2?${fontFamilyParam(font_heading, '400;600;700')}&${fontFamilyParam(font_body, '400;500;600')}&display=swap`;
 
@@ -277,7 +279,7 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
     /* CSS Variables */
     :root {
       --primary-color: ${primary_color};
-      --primary-color-rgb: ${hexToRgb(primary_color)};
+      --primary-color-rgb: ${hexToRgb(primary_color)};${tokenVars}
     }
 
     /* Smooth scroll offset for anchor links */

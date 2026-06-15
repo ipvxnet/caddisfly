@@ -129,7 +129,7 @@ export function contactFormTemplate(data, config) {
 
 <style>
 .contact-section {
-  padding: 5rem 2rem;
+  padding: var(--cf-section-pad, 5rem) 2rem;
   background: #f7fafc;
 }
 
@@ -209,8 +209,8 @@ a.contact-info-item:hover {
 .contact-form {
   background: white;
   padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-radius: var(--cf-radius, 12px);
+  box-shadow: var(--cf-shadow-sm, 0 4px 20px rgba(0,0,0,0.08));
 }
 
 .form-row {
@@ -263,7 +263,7 @@ a.contact-info-item:hover {
   background: ${primary_color};
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--cf-btn-radius, 8px);
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;

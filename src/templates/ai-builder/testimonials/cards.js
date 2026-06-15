@@ -81,12 +81,12 @@ export function testimonialsCardsTemplate(data, config) {
 
 <style>
 .testimonials-section {
-  padding: 5rem 2rem;
+  padding: var(--cf-section-pad, 5rem) 2rem;
   background: white;
 }
 
 .testimonials-container {
-  max-width: 1200px;
+  max-width: var(--cf-container, 1200px);
   margin: 0 auto;
 }
 
@@ -117,14 +117,14 @@ export function testimonialsCardsTemplate(data, config) {
 .testimonial-card {
   background: #f7fafc;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: var(--cf-radius, 12px);
   border-left: 4px solid ${primary_color};
   transition: all 0.3s ease;
 }
 
 .testimonial-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  box-shadow: var(--cf-shadow, 0 8px 25px rgba(0,0,0,0.1));
 }
 
 .testimonial-rating {

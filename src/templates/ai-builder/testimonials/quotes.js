@@ -56,11 +56,11 @@ export function testimonialsQuotesTemplate(data, config) {
 
 <style>
 .testimonials-quotes {
-  padding: 6rem 2rem;
+  padding: var(--cf-section-pad, 6rem) 2rem;
 }
 
 .testimonials-quotes-container {
-  max-width: 1200px;
+  max-width: var(--cf-container, 1200px);
   margin: 0 auto;
 }
 
@@ -81,8 +81,8 @@ export function testimonialsQuotesTemplate(data, config) {
 .quote-card {
   background: white;
   padding: 2.5rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: var(--cf-radius, 16px);
+  box-shadow: var(--cf-shadow-sm, 0 4px 20px rgba(0, 0, 0, 0.08));
   transition: transform 0.3s, box-shadow 0.3s;
   opacity: 0;
   animation: fadeInUp 0.6s ease-out forwards;
@@ -94,7 +94,7 @@ export function testimonialsQuotesTemplate(data, config) {
 
 .quote-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--cf-shadow, 0 12px 30px rgba(0, 0, 0, 0.15));
 }
 
 .quote-mark {
