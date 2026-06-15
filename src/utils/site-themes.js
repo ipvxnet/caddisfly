@@ -663,6 +663,44 @@ export const SITE_THEMES = [
     surface: { bg: '#141416', card: '#1f1f22', text: '#f5f5f5', muted: '#a3a3a3', border: '#2c2c30' },
     tokens: 'sharp',
   },
+
+  // ── Batch from browser research (childcare/landscaping/medspa/winery) ─────
+  {
+    key: 'sprout', label: 'Sprout', style: 'playful',
+    description: 'Bright, cheerful childcare — rounded shapes, playful color, schedule-a-tour cards.',
+    accent: 'linear-gradient(135deg, #ff8fab 0%, #56c2e6 100%)',
+    industries: ['childcare'],
+    variants: { hero: 'overlap', features: 'actions', about: 'text-image', services: 'icon-grid', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
+    fonts: { heading: 'Baloo 2', body: 'Nunito' },
+    tokens: 'round',
+  },
+  {
+    key: 'verdant', label: 'Verdant', style: 'modern',
+    description: 'Lush, photo-forward landscaping — full-bleed greenery, before/after gallery, free-quote CTA.',
+    accent: 'linear-gradient(135deg, #3a7d3a 0%, #a3d62b 100%)',
+    industries: ['landscaping'],
+    variants: { hero: 'fullscreen', features: 'actions', about: 'text-image', services: 'cards', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
+    fonts: { heading: 'Bitter', body: 'Inter' },
+    tokens: 'modern',
+  },
+  {
+    key: 'aura', label: 'Aura', style: 'elegant',
+    description: 'Luxe-clinical med spa — soft neutrals, editorial serif, spacious, spotlight treatments.',
+    accent: 'linear-gradient(135deg, #5b6b73 0%, #c9a96b 100%)',
+    industries: ['medspa'],
+    variants: { hero: 'overlap', about: 'text-image', services: 'spotlight', testimonials: 'spotlight', gallery: 'carousel', contact: 'split', footer: 'minimal', cta: 'boxed' },
+    fonts: { heading: 'Cormorant Garamond', body: 'Jost' },
+    tokens: 'editorial',
+  },
+  {
+    key: 'vintner', label: 'Vintner', style: 'classic',
+    description: 'Estate winery elegance — golden-hour full-bleed hero, refined serif, visit & wine club.',
+    accent: 'linear-gradient(135deg, #6e2639 0%, #c9a227 100%)',
+    industries: ['winery'],
+    variants: { hero: 'fullscreen', about: 'text-image', services: 'spotlight', testimonials: 'quotes', gallery: 'carousel', contact: 'split', footer: 'multi-column', cta: 'boxed' },
+    fonts: { heading: 'Cormorant Garamond', body: 'Lato' },
+    tokens: 'editorial',
+  },
 ];
 
 // Style tag per template (modern/classic/minimal/bold/elegant/luxe/playful) — used

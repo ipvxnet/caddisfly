@@ -11,12 +11,16 @@ const INDUSTRY_KEYWORDS = [
   // Café/bakery before food so a coffee shop gets a cozy look, not a restaurant one.
   ['cafe', ['coffee shop', 'coffee house', 'coffeehouse', 'coffee', 'cafe', 'café', 'espresso', 'roastery', 'coffee roaster', 'latte']],
   ['bakery', ['bakery', 'bakeshop', 'pastry', 'patisserie', 'baked goods', 'cupcake', 'donut']],
+  // Winery before food so a vineyard gets an elegant estate look, not a bar/grill one.
+  ['winery', ['winery', 'vineyard', 'wine tasting', 'tasting room', 'wine cellar', 'wines', 'wine estate']],
   ['food', ['restaurant', 'food', 'burrito', 'taco', 'pizza', 'sushi', 'grill', 'diner', 'bar', 'bistro', 'catering', 'kitchen', 'eatery', 'brewery', 'mexican', 'italian', 'cuisine', 'steakhouse']],
   ['fitness', ['gym', 'fitness', 'yoga', 'crossfit', 'pilates', 'training', 'workout', 'wellness studio']],
   // Barbershop before beauty so "barber" gets a masculine look, not a salon one.
   ['barbershop', ['barbershop', 'barber shop', 'barber', 'barbers', 'fade', 'mens grooming', "men's grooming"]],
+  // Med spa before spa/beauty/health so aesthetics gets the luxe-clinical look.
+  ['medspa', ['med spa', 'medical spa', 'medspa', 'aesthetics', 'aesthetic clinic', 'botox', 'dermal filler', 'injectables', 'laser hair', 'skin clinic']],
   // Spa before beauty so a spa gets a tranquil look, not a hair-salon one.
-  ['spa', ['spa', 'massage', 'day spa', 'med spa', 'sauna', 'wellness retreat', 'reiki']],
+  ['spa', ['spa', 'massage', 'day spa', 'sauna', 'wellness retreat', 'reiki']],
   ['beauty', ['salon', 'beauty', 'hair', 'nails', 'skincare', 'cosmetic', 'lashes', 'waxing']],
   ['tattoo', ['tattoo', 'tattoos', 'tattoo studio', 'piercing', 'body art', 'ink studio']],
   // Dental before health so a dentist gets the bright clinical look, not generic medical.
@@ -33,12 +37,16 @@ const INDUSTRY_KEYWORDS = [
   // Construction before home so a contractor gets the industrial look; home keeps
   // the lighter recurring-services trades (plumbing/electric/hvac/cleaning).
   ['construction', ['construction', 'contractor', 'builder', 'remodel', 'remodeling', 'renovation', 'roofing', 'masonry', 'framing', 'concrete']],
-  ['home', ['plumbing', 'plumber', 'electric', 'electrician', 'hvac', 'landscaping', 'lawn care', 'cleaning', 'pest control']],
+  // Landscaping before home so lawn/garden work gets the verdant photo-forward look.
+  ['landscaping', ['landscaping', 'lawn care', 'landscape', 'lawn mowing', 'hardscaping', 'irrigation', 'tree service', 'garden design']],
+  ['home', ['plumbing', 'plumber', 'electric', 'electrician', 'hvac', 'cleaning', 'pest control']],
   ['automotive', ['auto', 'car', 'mechanic', 'automotive', 'repair', 'tire', 'dealership']],
   ['pet', ['pet', 'pets', 'dog', 'dogs', 'cat', 'cats', 'puppy', 'kennel', 'pet grooming', 'pet store', 'doggy daycare', 'animal shelter']],
   ['travel', ['travel', 'tour', 'tours', 'tourism', 'hotel', 'resort', 'vacation', 'hostel', 'getaway', 'itinerary', 'destination', 'safari']],
   ['events', ['wedding', 'weddings', 'event planning', 'event planner', 'events', 'party', 'parties', 'celebration', 'banquet', 'venue', 'quinceanera']],
-  ['education', ['school', 'academy', 'tutoring', 'tutor', 'tutors', 'courses', 'education', 'e-learning', 'learning center', 'preschool', 'kindergarten', 'university', 'college']],
+  // Childcare before education so a daycare gets the playful look, not an academic one.
+  ['childcare', ['childcare', 'child care', 'daycare', 'day care', 'preschool', 'pre-school', 'nursery', 'montessori', 'early learning', 'kindergarten', 'after school']],
+  ['education', ['school', 'academy', 'tutoring', 'tutor', 'tutors', 'courses', 'education', 'e-learning', 'learning center', 'university', 'college']],
   ['nonprofit', ['nonprofit', 'non-profit', 'charity', 'charitable', 'foundation', 'ngo', 'donate', 'donation', 'volunteer', 'mission-driven']],
   ['museum', ['museum', 'exhibit', 'exhibition', 'planetarium', 'science center', 'historical society', 'cultural center', 'heritage', 'aquarium']],
   // Architecture/interior before creative so they don't get caught by 'design'/'studio'.
@@ -61,12 +69,16 @@ const INDUSTRY_KEYWORDS = [
 
 // Palette per industry: { primary, secondary, accent }
 const PALETTES = {
+  winery: { primary: '#6e2639', secondary: '#3d2b24', accent: '#c9a227' }, // burgundy + earth + gold
+  childcare: { primary: '#ff8fab', secondary: '#56c2e6', accent: '#ffcf56' }, // coral + sky + sunny yellow
+  landscaping: { primary: '#3a7d3a', secondary: '#1f5130', accent: '#a3d62b' }, // forest + lime green
   cafe: { primary: '#6f4e37', secondary: '#c8a27c', accent: '#e8b04b' }, // espresso brown + cream + honey
   bakery: { primary: '#d8849b', secondary: '#a9744f', accent: '#f6c453' }, // pink + caramel + butter
   food: { primary: '#c0392b', secondary: '#e67e22', accent: '#27ae60' }, // warm red/orange + green
   fitness: { primary: '#e74c3c', secondary: '#2c3e50', accent: '#f39c12' },
   // Classic barbershop: near-black + warm brass, deep barber-red accent.
   barbershop: { primary: '#1c1c1e', secondary: '#b08d57', accent: '#9b2226' },
+  medspa: { primary: '#5b6b73', secondary: '#b8a99a', accent: '#c9a96b' }, // soft slate + taupe + gold
   spa: { primary: '#6b8e7f', secondary: '#a8c0b5', accent: '#d9b382' }, // sage + soft green + sand
   beauty: { primary: '#c98ca0', secondary: '#7d5a6b', accent: '#e8c1a0' },
   tattoo: { primary: '#e63946', secondary: '#1a1a1a', accent: '#9b2226' }, // ink red + charcoal
@@ -104,6 +116,10 @@ const PALETTES = {
 
 // Base stock-photo keywords per industry (appended to business hints).
 const IMAGE_KEYWORDS = {
+  winery: 'vineyard winery wine grapes landscape',
+  childcare: 'happy children daycare preschool play',
+  landscaping: 'landscaping lush garden lawn green',
+  medspa: 'medical spa aesthetics skincare treatment',
   cafe: 'coffee shop cafe latte barista',
   bakery: 'bakery pastry bread cake',
   food: 'restaurant food dish plating',

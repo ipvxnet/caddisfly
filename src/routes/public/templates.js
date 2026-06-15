@@ -10,14 +10,15 @@ import { translator } from '../../i18n/index.js';
 import { escapeHtml } from '../../utils/ai-page-assembler.js';
 
 const INDUSTRY_LABEL = {
-  food: 'Restaurants', cafe: 'Cafés & Coffee', bakery: 'Bakeries',
+  food: 'Restaurants', cafe: 'Cafés & Coffee', bakery: 'Bakeries', winery: 'Wineries & Vineyards',
   fitness: 'Gyms & Fitness', barbershop: 'Barbershops', spa: 'Spas & Massage',
-  beauty: 'Salons & Beauty', tattoo: 'Tattoo Studios', dental: 'Dental & Clinics',
+  beauty: 'Salons & Beauty', medspa: 'Med Spa & Aesthetics', tattoo: 'Tattoo Studios', dental: 'Dental & Clinics',
   veterinary: 'Veterinary', menshealth: 'Men’s Health', health: 'Healthcare', finance: 'Finance & Accounting',
   legal: 'Law & Professional', realestate: 'Real Estate', construction: 'Construction',
   home: 'Home Services', automotive: 'Automotive', pet: 'Pet Services',
   florist: 'Florists', travel: 'Travel & Tourism', events: 'Weddings & Events',
-  education: 'Education', nonprofit: 'Nonprofits', museum: 'Museums & Culture', architecture: 'Architecture',
+  childcare: 'Childcare & Preschool', education: 'Education', nonprofit: 'Nonprofits', museum: 'Museums & Culture',
+  landscaping: 'Landscaping & Lawn', architecture: 'Architecture',
   interior: 'Interior Design', coaching: 'Coaching', church: 'Faith & Community',
   photography: 'Photography', creative: 'Creative & Agencies', jeweler: 'Jewelry',
   retail: 'Retail & Boutiques', dispensary: 'Dispensaries', tech: 'Tech & SaaS',
@@ -26,8 +27,8 @@ const INDUSTRY_LABEL = {
 
 // Coarse categories for the filter bar (keeps the chip row short at 100 templates).
 const CATEGORY = {
-  food: 'Food & Drink', cafe: 'Food & Drink', bakery: 'Food & Drink',
-  fitness: 'Health & Wellness', beauty: 'Health & Wellness', spa: 'Health & Wellness',
+  food: 'Food & Drink', cafe: 'Food & Drink', bakery: 'Food & Drink', winery: 'Food & Drink',
+  fitness: 'Health & Wellness', beauty: 'Health & Wellness', spa: 'Health & Wellness', medspa: 'Health & Wellness',
   dental: 'Health & Wellness', health: 'Health & Wellness', veterinary: 'Health & Wellness',
   menshealth: 'Health & Wellness', pet: 'Health & Wellness',
   barbershop: 'Personal Services', tattoo: 'Personal Services',
@@ -35,8 +36,9 @@ const CATEGORY = {
   creative: 'Creative', architecture: 'Creative', interior: 'Creative',
   tech: 'Tech & Startups', finance: 'Professional', legal: 'Professional',
   realestate: 'Professional', education: 'Professional', nonprofit: 'Professional',
-  coaching: 'Professional', church: 'Professional', museum: 'Professional', construction: 'Home & Trades',
-  home: 'Home & Trades', automotive: 'Home & Trades', retail: 'Retail',
+  coaching: 'Professional', church: 'Professional', museum: 'Professional', childcare: 'Professional',
+  construction: 'Home & Trades', home: 'Home & Trades', landscaping: 'Home & Trades',
+  automotive: 'Home & Trades', retail: 'Retail',
   jeweler: 'Retail', dispensary: 'Retail', travel: 'Travel & Leisure',
   general: 'Other',
 };
