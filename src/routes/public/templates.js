@@ -10,25 +10,33 @@ import { translator } from '../../i18n/index.js';
 import { escapeHtml } from '../../utils/ai-page-assembler.js';
 
 const INDUSTRY_LABEL = {
-  food: 'Restaurants & Cafés', fitness: 'Gyms & Fitness', barbershop: 'Barbershops',
-  beauty: 'Salons & Spas', dental: 'Dental & Clinics', health: 'Healthcare',
-  finance: 'Finance & Accounting', legal: 'Law & Professional', realestate: 'Real Estate',
-  construction: 'Construction', home: 'Home Services', automotive: 'Automotive',
-  pet: 'Pet Services', travel: 'Travel & Tourism', events: 'Weddings & Events',
-  education: 'Education', nonprofit: 'Nonprofits', photography: 'Photography',
-  creative: 'Creative & Agencies', retail: 'Retail & Boutiques', tech: 'Tech & SaaS',
+  food: 'Restaurants', cafe: 'Cafés & Coffee', bakery: 'Bakeries',
+  fitness: 'Gyms & Fitness', barbershop: 'Barbershops', spa: 'Spas & Massage',
+  beauty: 'Salons & Beauty', tattoo: 'Tattoo Studios', dental: 'Dental & Clinics',
+  veterinary: 'Veterinary', health: 'Healthcare', finance: 'Finance & Accounting',
+  legal: 'Law & Professional', realestate: 'Real Estate', construction: 'Construction',
+  home: 'Home Services', automotive: 'Automotive', pet: 'Pet Services',
+  florist: 'Florists', travel: 'Travel & Tourism', events: 'Weddings & Events',
+  education: 'Education', nonprofit: 'Nonprofits', architecture: 'Architecture',
+  interior: 'Interior Design', coaching: 'Coaching', church: 'Faith & Community',
+  photography: 'Photography', creative: 'Creative & Agencies', jeweler: 'Jewelry',
+  retail: 'Retail & Boutiques', dispensary: 'Dispensaries', tech: 'Tech & SaaS',
   general: 'Any Business',
 };
 
 // Coarse categories for the filter bar (keeps the chip row short at 100 templates).
 const CATEGORY = {
-  food: 'Food & Drink', fitness: 'Health & Wellness', beauty: 'Health & Wellness',
-  dental: 'Health & Wellness', health: 'Health & Wellness', pet: 'Health & Wellness',
-  barbershop: 'Personal Services', events: 'Personal Services', photography: 'Creative',
-  creative: 'Creative', tech: 'Tech & Startups', finance: 'Professional',
-  legal: 'Professional', realestate: 'Professional', education: 'Professional',
-  nonprofit: 'Professional', construction: 'Home & Trades', home: 'Home & Trades',
-  automotive: 'Home & Trades', retail: 'Retail', travel: 'Travel & Leisure',
+  food: 'Food & Drink', cafe: 'Food & Drink', bakery: 'Food & Drink',
+  fitness: 'Health & Wellness', beauty: 'Health & Wellness', spa: 'Health & Wellness',
+  dental: 'Health & Wellness', health: 'Health & Wellness', veterinary: 'Health & Wellness',
+  pet: 'Health & Wellness', barbershop: 'Personal Services', tattoo: 'Personal Services',
+  events: 'Personal Services', florist: 'Personal Services', photography: 'Creative',
+  creative: 'Creative', architecture: 'Creative', interior: 'Creative',
+  tech: 'Tech & Startups', finance: 'Professional', legal: 'Professional',
+  realestate: 'Professional', education: 'Professional', nonprofit: 'Professional',
+  coaching: 'Professional', church: 'Professional', construction: 'Home & Trades',
+  home: 'Home & Trades', automotive: 'Home & Trades', retail: 'Retail',
+  jeweler: 'Retail', dispensary: 'Retail', travel: 'Travel & Leisure',
   general: 'Other',
 };
 const CATEGORY_ORDER = ['Food & Drink', 'Health & Wellness', 'Personal Services', 'Home & Trades', 'Professional', 'Creative', 'Tech & Startups', 'Retail', 'Travel & Leisure', 'Other'];
