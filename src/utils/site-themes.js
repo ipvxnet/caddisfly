@@ -184,6 +184,7 @@ const DARK_SURFACE_SECTIONS = [
   '.testimonials-section', '.testimonials-quotes',
   '.gallery-section', '.gallery-carousel',
   '.contact-section', '.pricing-tables',
+  '.services-spotlight', '.footer-minimal',
   '.blog-list-section', '.blog-post-section',
   '.shop-list-section', '.shop-product-section',
 ];
@@ -193,6 +194,7 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card',
+  '.footer-minimal-social a',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -221,7 +223,8 @@ export function darkModeCss(theme) {
     /* Key content text that isn't a p/li/heading — keep it bright, not dark-on-dark.
        (review quotes/authors, contact details, form labels, social links.) */
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
-    .contact-info-item, .contact-social-link, .contact-form label, .form-group label { color: ${s.text} !important; }
+    .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
+    .footer-minimal-links a, .footer-minimal-brand { color: ${s.text} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }
     .shop-card-body h3, .shop-product-name { color: ${s.text} !important; }
