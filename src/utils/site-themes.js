@@ -181,7 +181,7 @@ const DARK_SURFACE_SECTIONS = [
   '.hero-minimal', '.hero-split', '.hero-split-content', '.hero-overlap', '.cta-boxed',
   '.about-section', '.about-team', '.about-timeline',
   '.services-cards', '.services-section', '.features-grid',
-  '.testimonials-section', '.testimonials-quotes',
+  '.testimonials-section', '.testimonials-quotes', '.testimonials-spotlight',
   '.gallery-section', '.gallery-carousel',
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
@@ -224,7 +224,8 @@ export function darkModeCss(theme) {
        (review quotes/authors, contact details, form labels, social links.) */
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
-    .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title { color: ${s.text} !important; }
+    .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
+    .tspot-quote, .tspot-author { color: ${s.text} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }
     .shop-card-body h3, .shop-product-name { color: ${s.text} !important; }
