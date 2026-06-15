@@ -31,6 +31,7 @@ import { galleryCarouselTemplate } from './gallery/carousel.js';
 
 // Contact templates
 import { contactFormTemplate } from './contact/form.js';
+import { contactSplitTemplate } from './contact/split.js';
 
 // Footer templates
 import { footerMultiColumnTemplate } from './footer/multi-column.js';
@@ -95,6 +96,7 @@ export const TEMPLATE_REGISTRY = {
   },
   contact: {
     form: contactFormTemplate,
+    split: contactSplitTemplate,
     default: contactFormTemplate,
   },
   footer: {
