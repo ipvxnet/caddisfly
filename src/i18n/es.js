@@ -24,6 +24,7 @@ export const es = {
     sub: 'Cada una es un diseño completo y listo para móviles: fuentes, colores y disposición. Previsualiza cualquiera y hazla tuya con IA.',
     live_preview: 'Vista previa',
     use_style: 'Usar este estilo',
+    all: 'Todas', all_styles: 'Todos los estilos', search_ph: 'Buscar plantillas…', no_results: 'Ninguna plantilla coincide con tus filtros.',
     cta_h2: '¿Encontraste una que te gusta?',
     cta_sub: 'Crea tu sitio con IA en minutos: la plantilla viene lista, solo añade tu contenido.',
   },

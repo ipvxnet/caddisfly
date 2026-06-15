@@ -435,7 +435,100 @@ export const SITE_THEMES = [
     surface: { bg: '#0f0f10', card: '#1a1a1c', text: '#f5f5f5', muted: '#a3a3a3', border: '#2a2a2c' },
     tokens: 'modern',
   },
+
+  // ── Style variations on existing verticals (industry × style) ─────────────
+  // Same industry + palette as the default; a distinct LAYOUT (hero/section mix),
+  // token density and type pairing give each a different feel. The wizard's style
+  // choice selects among these; the original (listed first) stays the default.
+  {
+    key: 'noir', label: 'Noir', style: 'elegant',
+    description: 'Dark, fine-dining drama — moody surfaces, gold accents, editorial serif.',
+    mode: 'dark',
+    accent: 'linear-gradient(135deg, #1a1411 0%, #c9a227 100%)',
+    industries: ['food'],
+    variants: { hero: 'fullscreen', about: 'text-image', services: 'spotlight', testimonials: 'spotlight', gallery: 'carousel', contact: 'split', footer: 'minimal', cta: 'boxed' },
+    fonts: { heading: 'Cormorant Garamond', body: 'Inter' },
+    colors: { primary: '#c9a227', secondary: '#b08d57' },
+    surface: { bg: '#14100c', card: '#201a14', text: '#f5efe6', muted: '#b8ab97', border: '#332b22' },
+    tokens: 'editorial',
+  },
+  {
+    key: 'gridiron', label: 'Gridiron', style: 'minimal',
+    description: 'Clean, no-nonsense fitness — minimal hero, numbered programs, lots of air.',
+    accent: 'linear-gradient(135deg, #e74c3c 0%, #2c3e50 100%)',
+    industries: ['fitness'],
+    variants: { hero: 'minimal', about: 'text-image', services: 'numbered', features: 'grid', testimonials: 'quotes', gallery: 'masonry', contact: 'form', footer: 'minimal', cta: 'banner' },
+    fonts: { heading: 'Archivo', body: 'Inter' },
+    tokens: 'minimal',
+  },
+  {
+    key: 'glow', label: 'Glow', style: 'modern',
+    description: 'Soft, modern salon — rounded cards, overlap hero, a carousel of looks.',
+    accent: 'linear-gradient(135deg, #c98ca0 0%, #e8c1a0 100%)',
+    industries: ['beauty'],
+    variants: { hero: 'overlap', about: 'text-image', services: 'cards', testimonials: 'cards', gallery: 'carousel', contact: 'split', footer: 'minimal', cta: 'boxed' },
+    fonts: { heading: 'Poppins', body: 'Inter' },
+    tokens: 'round',
+  },
+  {
+    key: 'manor', label: 'Manor', style: 'classic',
+    description: 'Stately, editorial real estate — full-bleed hero, spotlight listings, serif.',
+    accent: 'linear-gradient(135deg, #2c3e50 0%, #e1b12c 100%)',
+    industries: ['realestate'],
+    variants: { hero: 'fullscreen', about: 'text-image', services: 'spotlight', testimonials: 'quotes', gallery: 'carousel', contact: 'split', footer: 'multi-column', cta: 'boxed' },
+    fonts: { heading: 'Playfair Display', body: 'Lato' },
+    tokens: 'editorial',
+  },
+  {
+    key: 'launch', label: 'Launch', style: 'bold',
+    description: 'Bold, high-contrast SaaS — punchy fullscreen hero, sharp cards, big CTA.',
+    accent: 'linear-gradient(135deg, #5b2be0 0%, #00cec9 100%)',
+    industries: ['tech'],
+    variants: { hero: 'fullscreen', about: 'text-image', services: 'cards', features: 'grid', testimonials: 'cards', gallery: 'masonry', contact: 'form', footer: 'multi-column', cta: 'banner' },
+    fonts: { heading: 'Space Grotesk', body: 'Inter' },
+    tokens: 'sharp',
+  },
+  {
+    key: 'counsel', label: 'Counsel', style: 'modern',
+    description: 'Modern, approachable law firm — split hero, clean cards, sans-serif.',
+    accent: 'linear-gradient(135deg, #1a2980 0%, #4b6cb7 100%)',
+    industries: ['legal'],
+    variants: { hero: 'split', about: 'text-image', services: 'cards', features: 'grid', testimonials: 'quotes', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'boxed' },
+    fonts: { heading: 'Manrope', body: 'Source Sans Pro' },
+    tokens: 'modern',
+  },
+  {
+    key: 'vault', label: 'Vault', style: 'minimal',
+    description: 'Bright, minimal boutique — airy hero, masonry lookbook, restrained type.',
+    accent: 'linear-gradient(135deg, #e84393 0%, #fdcb6e 100%)',
+    industries: ['retail'],
+    variants: { hero: 'minimal', about: 'text-image', services: 'cards', testimonials: 'cards', gallery: 'masonry', contact: 'form', footer: 'minimal', cta: 'banner' },
+    fonts: { heading: 'Jost', body: 'Inter' },
+    tokens: 'minimal',
+  },
+  {
+    key: 'clinic', label: 'Clinic', style: 'classic',
+    description: 'Traditional, reassuring healthcare — split hero, icon services, serif headings.',
+    accent: 'linear-gradient(135deg, #16a085 0%, #2980b9 100%)',
+    industries: ['health'],
+    variants: { hero: 'split', about: 'text-image', services: 'icon-grid', features: 'grid', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
+    fonts: { heading: 'Merriweather', body: 'Open Sans' },
+    tokens: 'classic',
+  },
 ];
+
+// Style tag per template (modern/classic/minimal/bold/elegant/luxe/playful) — used
+// by the showcase filters and to let the wizard's style choice pick a variation
+// within an industry. With one template per industry today each is its industry's
+// default; as variations land, give each a distinct `style` and mark one `default`.
+const STYLE_TAGS = {
+  bold: 'bold', elegant: 'elegant', minimal: 'minimal', classic: 'classic',
+  midnight: 'bold', goldcard: 'luxe', savory: 'classic', care: 'modern',
+  studio: 'modern', estate: 'modern', trades: 'bold', smile: 'modern',
+  ledger: 'classic', build: 'bold', paws: 'playful', voyage: 'modern',
+  celebration: 'elegant', scholar: 'modern', cause: 'modern', lens: 'minimal',
+};
+for (const t of SITE_THEMES) { if (!t.style) t.style = STYLE_TAGS[t.key] || 'modern'; }
 
 /**
  * Look up a theme by key.
@@ -476,17 +569,35 @@ export function listThemes() {
 }
 
 /**
- * Pick a template for a generated site. An explicit wizard "style" that maps to
- * a template wins; otherwise the first template whose `industries` includes the
- * inferred industry; otherwise a safe, universal default.
+ * Pick a template for a generated site. The industry decides the candidate set;
+ * within it, the wizard "style" (modern/classic/minimal/bold/…) picks the
+ * matching VARIATION when one exists, else the industry's default variation.
+ *
+ * (Previously a generic style word that happened to be a template key — 'classic',
+ * 'minimal', 'bold' — would override the industry pick entirely; that's fixed:
+ * the industry now leads, and style only chooses among that industry's looks.)
  * @param {string} industry - inferIndustry() key
- * @param {string} [style] - the wizard's style choice (may be a template key)
+ * @param {string} [style] - the wizard's style choice (a style TAG, not a key)
  * @returns {object} a theme
  */
 export function selectTemplate(industry, style) {
+  const candidates = SITE_THEMES.filter((t) => Array.isArray(t.industries) && t.industries.includes(industry));
+  if (candidates.length) {
+    if (style) {
+      const byStyle = candidates.find((t) => t.style === style);
+      if (byStyle) return byStyle;
+    }
+    return candidates.find((t) => t.default) || candidates[0];
+  }
+  // No industry template (e.g. 'general'): honor an explicit template key if the
+  // caller passed one, else a safe universal default.
   if (style && getTheme(style)) return getTheme(style);
-  const byIndustry = SITE_THEMES.find((t) => Array.isArray(t.industries) && t.industries.includes(industry));
-  return byIndustry || getTheme('classic') || SITE_THEMES[0];
+  return getTheme('classic') || SITE_THEMES[0];
+}
+
+/** Templates that serve a given industry, in display order (for variation pickers). */
+export function templatesForIndustry(industry) {
+  return SITE_THEMES.filter((t) => Array.isArray(t.industries) && t.industries.includes(industry));
 }
 
 // Section wrappers that hardcode a light background — flipped to surface.bg.

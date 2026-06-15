@@ -189,6 +189,7 @@ export function demoTemplates() {
       label: t.label,
       description: t.description,
       industry: p.industry,
+      style: t.style || 'modern',
       dark: t.mode === 'dark',
       fonts: t.fonts,
       tokens: t.tokens,

@@ -24,6 +24,7 @@ export const en = {
     sub: 'Each one is a complete, mobile-ready design — fonts, colors, layout and all. Preview any of them live, then make it yours with AI.',
     live_preview: 'Live preview',
     use_style: 'Use this style',
+    all: 'All', all_styles: 'All styles', search_ph: 'Search templates…', no_results: 'No templates match your filters.',
     cta_h2: 'Found one you like?',
     cta_sub: 'Build your site with AI in minutes — your template comes ready, just add your content.',
   },
