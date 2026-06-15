@@ -114,7 +114,16 @@ export async function handleAIBuilderGenerate(ctx) {
 
     // Industry-aware styling: pick a palette + recipe that fit the business
     // instead of a generic AI-guessed blue (e.g. a restaurant gets warm colors).
-    const industry = inferIndustry(context.industry, context.business_type, context.business_name);
+    // Infer from EVERYTHING we know — name alone is often vague ("Trattoria
+    // Lucia"); the describe-prompt + detailed description/services carry the real
+    // signal ("Italian restaurant, pasta, pizza"). Drives palette + template.
+    const industry = inferIndustry(
+      context.industry,
+      context.business_type,
+      context.business_name,
+      context.description || '',
+      context.prompt || ''
+    );
     const recipe = getRecipe(industry);
     const palette = paletteFor(industry);
     // Phase C: pick a curated TEMPLATE for the vertical — it composes the section

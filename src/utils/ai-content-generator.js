@@ -321,6 +321,9 @@ export function buildContext(project, conversations) {
 
     switch (conv.step_name) {
       case 'initial_prompt':
+        // Keep the raw describe-prompt; it's the richest industry signal (e.g.
+        // "Italian restaurant with pasta and pizza") and feeds inferIndustry.
+        if (typeof conv.answer === 'string') context.prompt = conv.answer;
         // Try to parse extracted data if stored
         try {
           const extracted = JSON.parse(conv.answer);
