@@ -91,6 +91,19 @@ const PROFILES = {
     services: [['Engagement Rings', 'For the big question', '💍'], ['Custom Design', 'One of a kind', '💎'], ['Repairs', 'Restored to brilliance', '🔧']] },
   dispensary: { brand: 'Green Leaf', hero: ['Feel Good, Naturally', 'Premium, lab-tested products and expert guidance'],
     services: [['Flower', 'Curated strains', '🌿'], ['Edibles', 'Measured and tasty', '🍪'], ['Wellness', 'CBD and more', '🧘']] },
+  menshealth: { brand: 'BioDesign Men’s Clinic', hero: ['Elevate Your Health', 'For men who want to live a better life by design'],
+    tags: ['More Energy', 'Better Sleep', 'Strong Muscle', 'Peak Focus'],
+    services: [['Testosterone', 'Optimize your levels', '💪'], ['Peptides', 'Recover and perform', '🧬'], ['Performance', 'Feel your best, daily', '⚡']] },
+  museum: { brand: 'Cape Coast Museum', hero: ['Where History Comes Alive', 'Explore exhibits, archives, and events for all ages'],
+    services: [['Exhibits', 'Permanent & touring shows', '🏛️'], ['Education', 'Programs for schools & groups', '🎓'], ['Events', 'Talks, tours, and more', '🎟️']] },
+  childcare: { brand: 'Sunshine Learning Center', hero: ['Where Little Ones Bloom', 'Nurturing, play-based care for ages 1–5'],
+    services: [['Infant Care', 'Safe, loving, attentive', '🍼'], ['Preschool', 'Learning through play', '🎨'], ['After School', 'Homework & fun', '🎒']] },
+  landscaping: { brand: 'GreenScape', hero: ['Your Lawn, Beautifully Done', 'Design, build, and care for outdoor spaces that wow'],
+    services: [['Lawn Care', 'Lush and healthy, year-round', '🌱'], ['Landscape Design', 'From vision to reality', '🌳'], ['Hardscaping', 'Patios, walls, and walkways', '🧱']] },
+  medspa: { brand: 'Aura Aesthetics', hero: ['Beauty, Backed by Science', 'Advanced aesthetic treatments in a calm, modern setting'],
+    services: [['Injectables', 'Botox & dermal fillers', '💉'], ['Laser & Skin', 'Resurfacing and renewal', '✨'], ['Body', 'Contouring and wellness', '🌿']] },
+  winery: { brand: 'Oakridge Estate', hero: ['Wine, Crafted by Hand', 'Estate-grown vintages and tastings in the heart of the valley'],
+    services: [['Tastings', 'Guided flights daily', '🍷'], ['Wine Club', 'Members-only releases', '🍇'], ['Events', 'Weddings & private parties', '🥂']] },
   general: { brand: 'Acme Co.', hero: ['Welcome to Acme', 'Quality service you can count on'],
     services: [['Service One', 'What we do best', '⭐'], ['Service Two', 'Reliable and proven', '✅'], ['Service Three', 'Built around you', '🤝']] },
 };
@@ -125,7 +138,16 @@ function demoSections(theme) {
   out.push(section('hero', v.hero, {
     heading: p.hero[0], subheading: p.hero[1], cta_text: 'Get Started', cta_link: '#contact',
     background_image: photo(0), image_url: photo(1),
+    tags: p.tags || (p.services || []).map((s) => s[0]).slice(0, 4), // pill-tags hero
   }, order++));
+  // Quick-action cards sit right under the hero (vet/clinic/museum pattern).
+  if (v.features === 'actions') {
+    out.push(section('features', 'actions', { features: [
+      { icon: '📅', title: 'Book Now', description: 'Schedule online in seconds', link: '#contact' },
+      { icon: '📞', title: 'Call Us', description: 'We’re happy to help', link: '#contact' },
+      { icon: '📍', title: 'Find Us', description: 'Get directions & hours', link: '#contact' },
+    ] }, order++));
+  }
   out.push(section('about', v.about, {
     heading: 'About Us', subheading: `Why ${p.brand}`,
     content: `At ${p.brand}, we combine craft, care, and consistency to deliver an experience our customers come back for. Get to know what makes us different.`,
@@ -135,10 +157,9 @@ function demoSections(theme) {
   out.push(section('services', v.services, {
     heading: 'What We Offer', subheading: 'Services tailored to you', description: 'Services tailored to you', services,
   }, order++));
-  if (v.features) {
+  if (v.features && v.features !== 'actions') {
     out.push(section('features', v.features, {
-      heading: 'Why Choose Us', description: 'What sets us apart',
-      features: [
+      heading: 'Why Choose Us', description: 'What sets us apart', features: [
         { title: 'Proven Results', description: 'A track record you can trust', icon: '🏆' },
         { title: 'Fair Pricing', description: 'Clear quotes, no surprises', icon: '💲' },
         { title: 'On Your Schedule', description: 'Flexible, on-time service', icon: '⏱️' },
