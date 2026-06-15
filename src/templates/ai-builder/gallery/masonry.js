@@ -43,12 +43,12 @@ export function galleryMasonryTemplate(data, config) {
 
 <style>
 .gallery-section {
-  padding: 5rem 2rem;
+  padding: var(--cf-section-pad, 5rem) 2rem;
   background: white;
 }
 
 .gallery-container {
-  max-width: 1200px;
+  max-width: var(--cf-container, 1200px);
   margin: 0 auto;
 }
 
@@ -79,14 +79,14 @@ export function galleryMasonryTemplate(data, config) {
 .gallery-item {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border-radius: var(--cf-img-radius, 12px);
+  box-shadow: var(--cf-shadow-sm, 0 4px 15px rgba(0,0,0,0.1));
   transition: all 0.3s ease;
 }
 
 .gallery-item:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: var(--cf-shadow, 0 8px 25px rgba(0,0,0,0.15));
 }
 
 .gallery-item img {

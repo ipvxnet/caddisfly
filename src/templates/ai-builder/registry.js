@@ -19,6 +19,7 @@ import { aboutTeamTemplate } from './about/team.js';
 // Service templates
 import { servicesIconGridTemplate } from './services/icon-grid.js';
 import { servicesCardsTemplate } from './services/cards.js';
+import { servicesSpotlightTemplate } from './services/spotlight.js';
 
 // Testimonials templates
 import { testimonialsCardsTemplate } from './testimonials/cards.js';
@@ -30,9 +31,11 @@ import { galleryCarouselTemplate } from './gallery/carousel.js';
 
 // Contact templates
 import { contactFormTemplate } from './contact/form.js';
+import { contactSplitTemplate } from './contact/split.js';
 
 // Footer templates
 import { footerMultiColumnTemplate } from './footer/multi-column.js';
+import { footerMinimalTemplate } from './footer/minimal.js';
 
 // New section types
 import { pricingTablesTemplate } from './pricing/tables.js';
@@ -78,6 +81,7 @@ export const TEMPLATE_REGISTRY = {
   services: {
     'icon-grid': servicesIconGridTemplate,
     cards: servicesCardsTemplate,
+    spotlight: servicesSpotlightTemplate,
     default: servicesIconGridTemplate,
   },
   testimonials: {
@@ -92,10 +96,12 @@ export const TEMPLATE_REGISTRY = {
   },
   contact: {
     form: contactFormTemplate,
+    split: contactSplitTemplate,
     default: contactFormTemplate,
   },
   footer: {
     'multi-column': footerMultiColumnTemplate,
+    minimal: footerMinimalTemplate,
     default: footerMultiColumnTemplate,
   },
   pricing: {

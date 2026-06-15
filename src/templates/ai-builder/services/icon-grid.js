@@ -49,12 +49,12 @@ export function servicesIconGridTemplate(data, config) {
 
 <style>
 .services-section {
-  padding: 5rem 2rem;
+  padding: var(--cf-section-pad, 5rem) 2rem;
   background: #f7fafc;
 }
 
 .services-container {
-  max-width: 1200px;
+  max-width: var(--cf-container, 1200px);
   margin: 0 auto;
 }
 
@@ -85,8 +85,8 @@ export function servicesIconGridTemplate(data, config) {
 .service-card {
   background: white;
   padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-radius: var(--cf-radius, 12px);
+  box-shadow: var(--cf-shadow-sm, 0 4px 20px rgba(0,0,0,0.08));
   transition: all 0.3s ease;
   text-align: center;
   /* reset button defaults — the whole card is a click target */
@@ -99,7 +99,7 @@ export function servicesIconGridTemplate(data, config) {
 
 .service-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  box-shadow: var(--cf-shadow, 0 8px 30px rgba(0,0,0,0.12));
 }
 
 /* center the icon-tile fallback in this centered layout */

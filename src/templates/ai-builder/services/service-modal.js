@@ -69,7 +69,7 @@ export function serviceModalAssets(config = {}) {
 
 <style>
 .svc-media {
-  width: 100%; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden;
+  width: 100%; aspect-ratio: 16 / 10; border-radius: var(--cf-img-radius, 14px); overflow: hidden;
   margin-bottom: 1.5rem; background: #edf2f7;
 }
 .svc-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -87,7 +87,7 @@ export function serviceModalAssets(config = {}) {
 }
 .cf-svc-modal__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(2px); }
 .cf-svc-modal__card {
-  position: relative; z-index: 1; background: #fff; border-radius: 16px;
+  position: relative; z-index: 1; background: #fff; border-radius: var(--cf-radius, 16px);
   max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto;
   padding: 1.75rem; box-shadow: 0 24px 60px rgba(0,0,0,.35);
   animation: cfSvcIn .22s ease-out;
