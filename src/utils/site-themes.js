@@ -178,7 +178,7 @@ export function listThemes() {
 // Config-gradient/image sections (.hero-centered/.hero-fullscreen/.cta-banner/
 // .stats-numbers) are intentionally NOT listed so they keep the theme palette.
 const DARK_SURFACE_SECTIONS = [
-  '.hero-minimal', '.hero-split', '.hero-split-content',
+  '.hero-minimal', '.hero-split', '.hero-split-content', '.hero-overlap', '.cta-boxed',
   '.about-section', '.about-team', '.about-timeline',
   '.services-cards', '.services-section', '.features-grid',
   '.testimonials-section', '.testimonials-quotes',
@@ -194,7 +194,7 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card',
-  '.footer-minimal-social a',
+  '.footer-minimal-social a', '.hero-overlap-card',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -224,7 +224,7 @@ export function darkModeCss(theme) {
        (review quotes/authors, contact details, form labels, social links.) */
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
-    .footer-minimal-links a, .footer-minimal-brand { color: ${s.text} !important; }
+    .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc { color: ${s.text} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }
     .shop-card-body h3, .shop-product-name { color: ${s.text} !important; }

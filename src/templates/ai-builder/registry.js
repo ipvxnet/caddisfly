@@ -10,6 +10,7 @@ import { heroSplitTemplate } from './heroes/split.js';
 import { heroMinimalTemplate } from './heroes/minimal.js';
 import { heroVideoTemplate } from './heroes/video.js';
 import { heroFullscreenTemplate } from './heroes/fullscreen.js';
+import { heroOverlapTemplate } from './heroes/overlap.js';
 
 // About templates
 import { aboutTextImageTemplate } from './about/text-image.js';
@@ -41,6 +42,7 @@ import { footerMinimalTemplate } from './footer/minimal.js';
 import { pricingTablesTemplate } from './pricing/tables.js';
 import { featuresGridTemplate } from './features/grid.js';
 import { ctaBannerTemplate } from './cta/banner.js';
+import { ctaBoxedTemplate } from './cta/boxed.js';
 import { statsNumbersTemplate } from './stats/numbers.js';
 
 // Blog (rendered from synthetic sections built at deploy/preview time — not
@@ -70,6 +72,7 @@ export const TEMPLATE_REGISTRY = {
     minimal: heroMinimalTemplate,
     video: heroVideoTemplate,
     fullscreen: heroFullscreenTemplate,
+    overlap: heroOverlapTemplate,
     default: heroCenteredTemplate,
   },
   about: {
@@ -114,6 +117,7 @@ export const TEMPLATE_REGISTRY = {
   },
   cta: {
     banner: ctaBannerTemplate,
+    boxed: ctaBoxedTemplate,
     default: ctaBannerTemplate,
   },
   stats: {
