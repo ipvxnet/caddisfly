@@ -23,6 +23,8 @@ const INDUSTRY_KEYWORDS = [
   ['dental', ['dental', 'dentist', 'dentistry', 'orthodontist', 'orthodontics', 'teeth', 'smile makeover']],
   // Veterinary before health so an animal hospital gets a pet-friendly look.
   ['veterinary', ['veterinary', 'veterinarian', 'vet clinic', 'animal hospital', 'animal clinic']],
+  // Men's health before health so a men's clinic gets the premium masculine look.
+  ['menshealth', ["men's health", 'mens health', "men's clinic", 'mens clinic', 'testosterone', 'trt', 'hormone therapy', 'peptides', 'low testosterone']],
   ['health', ['clinic', 'medical', 'doctor', 'health', 'therapy', 'chiropractic', 'pharmacy']],
   // Finance before legal so an accountant gets a finance look, not a law-firm one.
   ['finance', ['finance', 'financial', 'accounting', 'accountant', 'bookkeeping', 'tax', 'taxes', 'wealth', 'investment', 'cpa']],
@@ -38,6 +40,7 @@ const INDUSTRY_KEYWORDS = [
   ['events', ['wedding', 'weddings', 'event planning', 'event planner', 'events', 'party', 'parties', 'celebration', 'banquet', 'venue', 'quinceanera']],
   ['education', ['school', 'academy', 'tutoring', 'tutor', 'tutors', 'courses', 'education', 'e-learning', 'learning center', 'preschool', 'kindergarten', 'university', 'college']],
   ['nonprofit', ['nonprofit', 'non-profit', 'charity', 'charitable', 'foundation', 'ngo', 'donate', 'donation', 'volunteer', 'mission-driven']],
+  ['museum', ['museum', 'exhibit', 'exhibition', 'planetarium', 'science center', 'historical society', 'cultural center', 'heritage', 'aquarium']],
   // Architecture/interior before creative so they don't get caught by 'design'/'studio'.
   ['architecture', ['architecture', 'architect', 'architectural', 'architecture firm', 'architects']],
   ['interior', ['interior design', 'interior designer', 'home staging', 'interior decorator', 'home decor']],
@@ -68,6 +71,7 @@ const PALETTES = {
   beauty: { primary: '#c98ca0', secondary: '#7d5a6b', accent: '#e8c1a0' },
   tattoo: { primary: '#e63946', secondary: '#1a1a1a', accent: '#9b2226' }, // ink red + charcoal
   veterinary: { primary: '#1aa6a0', secondary: '#ff9f43', accent: '#ffd166' }, // friendly teal + orange
+  menshealth: { primary: '#b87333', secondary: '#2b2b2e', accent: '#d9a05b' }, // copper + charcoal
   dental: { primary: '#0aa1dd', secondary: '#16a085', accent: '#4dd0e1' }, // bright clinical cyan/teal
   health: { primary: '#16a085', secondary: '#2980b9', accent: '#1abc9c' },
   finance: { primary: '#1e5631', secondary: '#243b53', accent: '#c9a227' }, // deep green + navy + gold
@@ -86,6 +90,7 @@ const PALETTES = {
   florist: { primary: '#d6336c', secondary: '#5c8a4a', accent: '#f6a5c0' }, // rose + leaf green + blush
   coaching: { primary: '#6c5ce7', secondary: '#00b894', accent: '#fdcb6e' }, // motivating violet + teal
   church: { primary: '#34495e', secondary: '#7f8c8d', accent: '#c9a227' }, // deep slate + warm gold
+  museum: { primary: '#1f3a5f', secondary: '#33415c', accent: '#c9a227' }, // institutional navy + gold
   photography: { primary: '#1a1a1a', secondary: '#4a4a4a', accent: '#e0a96d' }, // mono + warm gold
   creative: { primary: '#8e44ad', secondary: '#e74c3c', accent: '#f1c40f' },
   jeweler: { primary: '#1a1a1a', secondary: '#b8860b', accent: '#d4af37' }, // black + antique gold
@@ -108,6 +113,7 @@ const IMAGE_KEYWORDS = {
   beauty: 'salon beauty hair nails',
   tattoo: 'tattoo studio tattoo artist ink',
   veterinary: 'veterinarian pet care animal hospital',
+  menshealth: 'fit man fitness strong confident',
   dental: 'dentist dental clinic smile',
   health: 'medical clinic healthcare',
   finance: 'finance accounting office professional',
@@ -126,6 +132,7 @@ const IMAGE_KEYWORDS = {
   florist: 'florist flowers bouquet floral arrangement',
   coaching: 'business coaching mentorship speaker',
   church: 'church community worship congregation',
+  museum: 'museum exhibit gallery hall artifact',
   photography: 'photographer camera portrait studio',
   creative: 'creative studio design workspace',
   jeweler: 'fine jewelry diamond ring luxury',

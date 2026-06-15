@@ -561,7 +561,7 @@ export const SITE_THEMES = [
     description: 'Friendly, caring vet clinic — rounded, approachable, lots of reassurance.',
     accent: 'linear-gradient(135deg, #1aa6a0 0%, #ff9f43 100%)',
     industries: ['veterinary'],
-    variants: { hero: 'split', about: 'text-image', services: 'icon-grid', features: 'grid', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
+    variants: { hero: 'split', features: 'actions', about: 'text-image', services: 'icon-grid', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
     fonts: { heading: 'Quicksand', body: 'Open Sans' },
     tokens: 'round',
   },
@@ -627,6 +627,41 @@ export const SITE_THEMES = [
     variants: { hero: 'overlap', about: 'text-image', services: 'cards', features: 'grid', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
     fonts: { heading: 'Space Grotesk', body: 'Inter' },
     tokens: 'modern',
+  },
+
+  // ── Batch from competitor-site research (utility components + new looks) ──
+  {
+    key: 'vigor', label: 'Vigor', style: 'bold',
+    description: 'Premium men’s health — dark, masculine, copper accent, pill feature-tags hero.',
+    mode: 'dark',
+    accent: 'linear-gradient(135deg, #1a1a1a 0%, #b87333 100%)',
+    industries: ['menshealth'],
+    variants: { hero: 'tags', about: 'text-image', services: 'cards', features: 'grid', testimonials: 'spotlight', gallery: 'masonry', contact: 'split', footer: 'minimal', cta: 'boxed' },
+    fonts: { heading: 'Oswald', body: 'Inter' },
+    colors: { primary: '#b87333', secondary: '#d9a05b' },
+    surface: { bg: '#101012', card: '#1b1b1f', text: '#f4f4f5', muted: '#a1a1aa', border: '#2c2c30' },
+    tokens: 'sharp',
+  },
+  {
+    key: 'rotunda', label: 'Rotunda', style: 'classic',
+    description: 'Stately museum & cultural institution — carousel hero, plan-your-visit cards, serif.',
+    accent: 'linear-gradient(135deg, #1f3a5f 0%, #c9a227 100%)',
+    industries: ['museum'],
+    variants: { hero: 'fullscreen', features: 'actions', about: 'text-image', services: 'cards', testimonials: 'quotes', gallery: 'carousel', contact: 'split', footer: 'multi-column', cta: 'banner' },
+    fonts: { heading: 'Playfair Display', body: 'Lato' },
+    tokens: 'editorial',
+  },
+  {
+    key: 'taphouse', label: 'Taphouse', style: 'bold',
+    description: 'Bold sports-bar energy — dark, full-bleed hero, quick-order cards, big CTA.',
+    mode: 'dark',
+    accent: 'linear-gradient(135deg, #1a1a1a 0%, #c0392b 100%)',
+    industries: ['food'],
+    variants: { hero: 'fullscreen', features: 'actions', about: 'text-image', services: 'cards', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'minimal', cta: 'banner' },
+    fonts: { heading: 'Oswald', body: 'Inter' },
+    colors: { primary: '#e74c3c', secondary: '#c0392b' },
+    surface: { bg: '#141416', card: '#1f1f22', text: '#f5f5f5', muted: '#a3a3a3', border: '#2c2c30' },
+    tokens: 'sharp',
   },
 ];
 
@@ -724,6 +759,7 @@ const DARK_SURFACE_SECTIONS = [
   '.gallery-section', '.gallery-carousel',
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
+  '.features-actions',
   '.blog-list-section', '.blog-post-section',
   '.shop-list-section', '.shop-product-section',
 ];
@@ -733,7 +769,7 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card',
-  '.footer-minimal-social a', '.hero-overlap-card',
+  '.footer-minimal-social a', '.hero-overlap-card', '.action-card',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -764,7 +800,8 @@ export function darkModeCss(theme) {
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
     .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
-    .tspot-quote, .tspot-author { color: ${s.text} !important; }
+    .tspot-quote, .tspot-author, .action-title { color: ${s.text} !important; }
+    .action-desc { color: ${s.muted} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }
     .shop-card-body h3, .shop-product-name { color: ${s.text} !important; }

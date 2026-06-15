@@ -11,6 +11,7 @@ import { heroMinimalTemplate } from './heroes/minimal.js';
 import { heroVideoTemplate } from './heroes/video.js';
 import { heroFullscreenTemplate } from './heroes/fullscreen.js';
 import { heroOverlapTemplate } from './heroes/overlap.js';
+import { heroTagsTemplate } from './heroes/tags.js';
 
 // About templates
 import { aboutTextImageTemplate } from './about/text-image.js';
@@ -43,6 +44,7 @@ import { footerMinimalTemplate } from './footer/minimal.js';
 // New section types
 import { pricingTablesTemplate } from './pricing/tables.js';
 import { featuresGridTemplate } from './features/grid.js';
+import { featuresActionsTemplate } from './features/actions.js';
 import { ctaBannerTemplate } from './cta/banner.js';
 import { ctaBoxedTemplate } from './cta/boxed.js';
 import { statsNumbersTemplate } from './stats/numbers.js';
@@ -75,6 +77,7 @@ export const TEMPLATE_REGISTRY = {
     video: heroVideoTemplate,
     fullscreen: heroFullscreenTemplate,
     overlap: heroOverlapTemplate,
+    tags: heroTagsTemplate,
     default: heroCenteredTemplate,
   },
   about: {
@@ -117,6 +120,7 @@ export const TEMPLATE_REGISTRY = {
   },
   features: {
     grid: featuresGridTemplate,
+    actions: featuresActionsTemplate,
     default: featuresGridTemplate,
   },
   cta: {
