@@ -987,7 +987,7 @@ export const pt = {
   },
 
   pick: {
-    tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.',
+    tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.', tpl_recommended: 'Recomendado',
     font_title: '🔤 Fontes', font_hint: 'Troque a tipografia. Os tamanhos e o layout permanecem.',
     fonts_updated: 'Fontes atualizadas! Atualizando a pré-visualização…', fonts_failed: 'Não foi possível atualizar as fontes',
     col_title: '🎨 Cores do site', primary_color: 'Cor primária', secondary_color: 'Cor secundária',
