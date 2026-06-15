@@ -12,6 +12,7 @@
 import { generateSectionContent } from './ai-content-generator.js';
 import { profileToContext, profileToFactSections } from './company-profile.js';
 import { attachServiceImages } from './service-images.js';
+import { selectTemplate } from './site-themes.js';
 import { createSection } from '../db/ai-sections.js';
 import { createPage, updatePage } from '../db/ai-pages.js';
 import { generateSiteSeo, extractContentText } from './seo-generate.js';
@@ -45,6 +46,9 @@ export async function generateAndStore(env, project, profile) {
     src.scrape_sample || ''
   );
   const recipe = getRecipe(industry);
+  // Phase C: curated template for the vertical (composes variants + fonts +
+  // colors + tokens). Recipe still drives the section line-up + content.
+  const template = selectTemplate(industry);
 
   // 1. Image pool: real Google Places photos (→ R2) first, then stock to fill.
   const photoPool = await buildPhotoPool(env, project, profile, industry);
@@ -103,23 +107,30 @@ export async function generateAndStore(env, project, profile) {
       content.social = profile.social;
     }
 
-    const variant = recipeVariant(recipe, type);
+    const variant = template.variants[type] || recipeVariant(recipe, type);
     attachImages(type, content, pickPhoto);
     content._variant = variant;
     sections.push({ type, order: order++, content, variant });
   }
 
-  // 4. Config: industry palette + recipe fonts, but prefer the original site's
-  //    brand color as primary when we recovered a valid one (stronger identity).
+  // 4. Config: the template's design. Dark templates use their own palette; light
+  //    templates prefer the original site's brand color (stronger identity).
   const industryPalette = paletteFor(industry);
-  const primaryColor = isHexColor(profile.brand_color) ? profile.brand_color : industryPalette.primary;
+  let primaryColor, secondaryColor;
+  if (template.colors) {
+    primaryColor = template.colors.primary;
+    secondaryColor = template.colors.secondary;
+  } else {
+    primaryColor = isHexColor(profile.brand_color) ? profile.brand_color : industryPalette.primary;
+    secondaryColor = industryPalette.secondary;
+  }
   const config = await createWebsiteConfig(env.DB, {
     project_id: project.id,
     primary_color: primaryColor,
-    secondary_color: industryPalette.secondary,
-    font_heading: recipe.fonts.heading,
-    font_body: recipe.fonts.body,
-    style_theme: 'modern',
+    secondary_color: secondaryColor,
+    font_heading: template.fonts.heading,
+    font_body: template.fonts.body,
+    style_theme: template.key,
   });
 
   // 5. Multi-page split (deterministic blueprint; thin sites collapse to Home).
