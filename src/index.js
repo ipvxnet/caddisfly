@@ -13,6 +13,7 @@ import { handlePricing } from './routes/public/pricing.js';
 import { handleSpeed } from './routes/public/speed.js';
 import { handleCompare } from './routes/public/compare.js';
 import { handleShowcase } from './routes/public/showcase.js';
+import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
@@ -186,6 +187,8 @@ router.get('/pricing', handlePricing);
 router.get('/speed', handleSpeed);
 router.get('/compare', handleCompare);
 router.get('/showcase', handleShowcase);
+router.get('/templates', handleTemplatesShowcase);
+router.get('/templates/:key', handleTemplateDemo);
 router.get('/terms', handleTerms);
 router.get('/privacy', handlePrivacy);
 

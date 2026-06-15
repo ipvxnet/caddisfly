@@ -6,6 +6,7 @@ export const es = {
 
   nav: {
     how_it_works: 'Cómo funciona',
+    templates: 'Plantillas',
     pricing: 'Precios',
     showcase: 'Ejemplos',
     features: 'Funciones',
@@ -13,6 +14,18 @@ export const es = {
     dashboard: 'Panel',
     build: 'Crear con IA',
     credits: '{n} créditos',
+  },
+
+  tplpage: {
+    meta_title: 'Plantillas de sitios web — Caddisfly',
+    meta_desc: 'Explora plantillas profesionales para cada sector. Elige un estilo y crea tu sitio con IA en minutos.',
+    eyebrow: 'plantillas profesionales',
+    h1: 'Una plantilla para cada tipo de negocio',
+    sub: 'Cada una es un diseño completo y listo para móviles: fuentes, colores y disposición. Previsualiza cualquiera y hazla tuya con IA.',
+    live_preview: 'Vista previa',
+    use_style: 'Usar este estilo',
+    cta_h2: '¿Encontraste una que te gusta?',
+    cta_sub: 'Crea tu sitio con IA en minutos: la plantilla viene lista, solo añade tu contenido.',
   },
 
   footer: {
@@ -987,7 +1000,7 @@ export const es = {
   },
 
   pick: {
-    tpl_title: '🧩 Elige una plantilla', tpl_hint: 'Cambia el estilo de todo el sitio de una vez. Tu texto y colores se conservan.', tpl_recommended: 'Recomendado',
+    tpl_title: '🧩 Elige una plantilla', tpl_hint: 'Cambia el estilo de todo el sitio de una vez. Tu texto y colores se conservan.', tpl_recommended: 'Recomendado', tpl_browse: 'Ver todas las plantillas', tpl_count_suffix: 'plantillas',
     font_title: '🔤 Fuentes', font_hint: 'Cambia la tipografía. Los tamaños y el diseño no cambian.',
     fonts_updated: '¡Fuentes actualizadas! Actualizando vista previa…', fonts_failed: 'No se pudieron actualizar las fuentes',
     col_title: '🎨 Colores del sitio', primary_color: 'Color primario', secondary_color: 'Color secundario',

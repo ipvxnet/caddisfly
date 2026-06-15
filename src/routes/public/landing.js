@@ -5,7 +5,7 @@ import { headTags, langSwitcher } from '../../components/brand.js';
 import { translator } from '../../i18n/index.js';
 
 // Inline brand mark (continuous-wing "C", brand gradient). Reused in header/hero/footer.
-function brandMark(id, cls = '', animated = false) {
+export function brandMark(id, cls = '', animated = false) {
   const anim = animated
     ? `<style>
         @keyframes ${id}-draw{0%{stroke-dashoffset:520}45%{stroke-dashoffset:0}80%{stroke-dashoffset:0}100%{stroke-dashoffset:520}}
@@ -28,7 +28,7 @@ function brandMark(id, cls = '', animated = false) {
   </svg>`;
 }
 
-const FAVICON =
+export const FAVICON =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23667eea'/%3E%3Cstop offset='.55' stop-color='%23764ba2'/%3E%3Cstop offset='1' stop-color='%23f093fb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M88 34 C 58 18, 26 34, 26 64 C 26 92, 56 104, 84 92' fill='none' stroke='url(%23g)' stroke-width='9' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='30' r='6.5' fill='url(%23g)'/%3E%3Cpath d='M92 24 C 96 14, 102 11, 108 11' fill='none' stroke='url(%23g)' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E";
 
 /**
@@ -181,6 +181,7 @@ export async function handleLanding(ctx) {
       <a class="brand" href="/">${brandMark('m-hd')}<span>caddisfly<span class="ai">.ai</span></span></a>
       <nav class="nav-links">
         <a href="#paths">${tr('nav.how_it_works')}</a>
+        <a href="/templates">${tr('nav.templates')}</a>
         <a href="/pricing">${tr('nav.pricing')}</a>
         <a href="#features">${tr('nav.features')}</a>
         <a href="/dashboard">${tr('nav.dashboard')}</a>

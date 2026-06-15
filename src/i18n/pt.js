@@ -6,6 +6,7 @@ export const pt = {
 
   nav: {
     how_it_works: 'Como funciona',
+    templates: 'Modelos',
     pricing: 'Preços',
     showcase: 'Exemplos',
     features: 'Recursos',
@@ -13,6 +14,18 @@ export const pt = {
     dashboard: 'Painel',
     build: 'Criar com IA',
     credits: '{n} créditos',
+  },
+
+  tplpage: {
+    meta_title: 'Modelos de site — Caddisfly',
+    meta_desc: 'Explore modelos profissionais para cada setor. Escolha um estilo e crie seu site com IA em minutos.',
+    eyebrow: 'modelos profissionais',
+    h1: 'Um modelo para cada tipo de negócio',
+    sub: 'Cada um é um design completo e pronto para celular: fontes, cores e layout. Veja qualquer um ao vivo e torne-o seu com IA.',
+    live_preview: 'Ver ao vivo',
+    use_style: 'Usar este estilo',
+    cta_h2: 'Encontrou um que gostou?',
+    cta_sub: 'Crie seu site com IA em minutos: o modelo já vem pronto, basta adicionar seu conteúdo.',
   },
 
   footer: {
@@ -987,7 +1000,7 @@ export const pt = {
   },
 
   pick: {
-    tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.', tpl_recommended: 'Recomendado',
+    tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.', tpl_recommended: 'Recomendado', tpl_browse: 'Ver todos os modelos', tpl_count_suffix: 'modelos',
     font_title: '🔤 Fontes', font_hint: 'Troque a tipografia. Os tamanhos e o layout permanecem.',
     fonts_updated: 'Fontes atualizadas! Atualizando a pré-visualização…', fonts_failed: 'Não foi possível atualizar as fontes',
     col_title: '🎨 Cores do site', primary_color: 'Cor primária', secondary_color: 'Cor secundária',
