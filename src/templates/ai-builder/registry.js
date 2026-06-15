@@ -10,6 +10,7 @@ import { heroSplitTemplate } from './heroes/split.js';
 import { heroMinimalTemplate } from './heroes/minimal.js';
 import { heroVideoTemplate } from './heroes/video.js';
 import { heroFullscreenTemplate } from './heroes/fullscreen.js';
+import { heroOverlapTemplate } from './heroes/overlap.js';
 
 // About templates
 import { aboutTextImageTemplate } from './about/text-image.js';
@@ -20,10 +21,12 @@ import { aboutTeamTemplate } from './about/team.js';
 import { servicesIconGridTemplate } from './services/icon-grid.js';
 import { servicesCardsTemplate } from './services/cards.js';
 import { servicesSpotlightTemplate } from './services/spotlight.js';
+import { servicesNumberedTemplate } from './services/numbered.js';
 
 // Testimonials templates
 import { testimonialsCardsTemplate } from './testimonials/cards.js';
 import { testimonialsQuotesTemplate } from './testimonials/quotes.js';
+import { testimonialsSpotlightTemplate } from './testimonials/spotlight.js';
 
 // Gallery templates
 import { galleryMasonryTemplate } from './gallery/masonry.js';
@@ -41,6 +44,7 @@ import { footerMinimalTemplate } from './footer/minimal.js';
 import { pricingTablesTemplate } from './pricing/tables.js';
 import { featuresGridTemplate } from './features/grid.js';
 import { ctaBannerTemplate } from './cta/banner.js';
+import { ctaBoxedTemplate } from './cta/boxed.js';
 import { statsNumbersTemplate } from './stats/numbers.js';
 
 // Blog (rendered from synthetic sections built at deploy/preview time — not
@@ -70,6 +74,7 @@ export const TEMPLATE_REGISTRY = {
     minimal: heroMinimalTemplate,
     video: heroVideoTemplate,
     fullscreen: heroFullscreenTemplate,
+    overlap: heroOverlapTemplate,
     default: heroCenteredTemplate,
   },
   about: {
@@ -82,11 +87,13 @@ export const TEMPLATE_REGISTRY = {
     'icon-grid': servicesIconGridTemplate,
     cards: servicesCardsTemplate,
     spotlight: servicesSpotlightTemplate,
+    numbered: servicesNumberedTemplate,
     default: servicesIconGridTemplate,
   },
   testimonials: {
     cards: testimonialsCardsTemplate,
     quotes: testimonialsQuotesTemplate,
+    spotlight: testimonialsSpotlightTemplate,
     default: testimonialsCardsTemplate,
   },
   gallery: {
@@ -114,6 +121,7 @@ export const TEMPLATE_REGISTRY = {
   },
   cta: {
     banner: ctaBannerTemplate,
+    boxed: ctaBoxedTemplate,
     default: ctaBannerTemplate,
   },
   stats: {
