@@ -41,15 +41,28 @@ function templateMock(theme) {
  * @returns {string} Template picker HTML (+ scoped styles)
  */
 export function generateTemplatePicker(currentTheme, lang = 'en', recommendedKey = null) {
-  const themes = listThemes();
   const tr = translator(lang);
   const recoLabel = tr('pick.tpl_recommended');
 
+  // Surface the most relevant templates first: recommended, then the one in use,
+  // then the rest — so the user rarely has to scroll to act.
+  const themes = listThemes().slice().sort((a, b) => {
+    const rank = (t) => (t.key === recommendedKey ? 0 : t.key === currentTheme ? 1 : 2);
+    return rank(a) - rank(b);
+  });
+  const count = themes.length;
+
   return `
 <div class="template-picker-panel">
-  <h3 class="picker-title">${tr('pick.tpl_title')}</h3>
-  <p class="template-hint">${tr('pick.tpl_hint')}</p>
+  <div class="picker-head">
+    <div>
+      <h3 class="picker-title">${tr('pick.tpl_title')}</h3>
+      <p class="template-hint">${tr('pick.tpl_hint')}</p>
+    </div>
+    <a class="picker-browse" href="/templates" target="_blank" rel="noopener">${tr('pick.tpl_browse')} ↗</a>
+  </div>
 
+  <div class="template-scroll">
   <div class="template-grid">
     ${themes
       .map(
@@ -61,27 +74,39 @@ export function generateTemplatePicker(currentTheme, lang = 'en', recommendedKey
         title="${theme.description}"
       >
         ${theme.key === recommendedKey ? `<span class="template-reco">★ ${recoLabel}</span>` : ''}
+        ${theme.key === currentTheme ? `<span class="template-current">✓</span>` : ''}
         ${templateMock(theme)}
         <span class="template-name" style="font-family: '${theme.fonts.heading}', serif;">${theme.label}</span>
-        <span class="template-desc">${theme.description}</span>
       </button>
     `
       )
       .join('')}
   </div>
+  </div>
+  <p class="picker-foot">${count} ${tr('pick.tpl_count_suffix')} · <a href="/templates" target="_blank" rel="noopener">${tr('pick.tpl_browse')} ↗</a></p>
 </div>
 
 <style>
 .template-picker-panel { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
-.template-hint { font-size: 0.8125rem; color: #718096; margin: -0.75rem 0 1.25rem 0; }
-.template-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-.template-card { position: relative; background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0.6rem; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; flex-direction: column; gap: 0.4rem; }
+.picker-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.picker-browse { flex-shrink: 0; font-size: 0.8rem; font-weight: 700; color: #667eea; text-decoration: none; white-space: nowrap; }
+.picker-browse:hover { text-decoration: underline; }
+.template-hint { font-size: 0.8125rem; color: #718096; margin: 0.15rem 0 1rem 0; }
+/* Cap the height so 20+ templates don't dominate the panel — scroll inside. */
+.template-scroll { max-height: 430px; overflow-y: auto; margin: 0 -0.25rem; padding: 0.25rem; }
+.template-scroll::-webkit-scrollbar { width: 8px; }
+.template-scroll::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 999px; }
+.template-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.template-card { position: relative; background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0.45rem; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; flex-direction: column; gap: 0.35rem; }
 .template-card:hover { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .template-card.selected { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.2); }
 .template-card.applying { opacity: 0.6; pointer-events: none; }
-.template-reco { position: absolute; top: 6px; right: 6px; z-index: 2; background: #16a34a; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 6px; border-radius: 999px; letter-spacing: 0.02em; }
-.template-name { font-size: 1rem; font-weight: 700; color: #1a202c; }
-.template-desc { font-size: 0.72rem; color: #718096; line-height: 1.35; }
+.template-reco { position: absolute; top: 5px; left: 5px; z-index: 2; background: #16a34a; color: #fff; font-size: 0.56rem; font-weight: 700; padding: 2px 6px; border-radius: 999px; letter-spacing: 0.02em; }
+.template-current { position: absolute; top: 5px; right: 5px; z-index: 2; width: 17px; height: 17px; display: flex; align-items: center; justify-content: center; background: #667eea; color: #fff; font-size: 0.6rem; font-weight: 800; border-radius: 50%; }
+.template-name { font-size: 0.85rem; font-weight: 700; color: #1a202c; line-height: 1.1; }
+.picker-foot { font-size: 0.74rem; color: #94a3b8; margin: 0.85rem 0 0; text-align: center; }
+.picker-foot a { color: #667eea; font-weight: 600; text-decoration: none; }
+@media (max-width: 600px) { .template-grid { grid-template-columns: repeat(2, 1fr); } }
 
 /* Mini mockup */
 .tpl-mock { border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); }

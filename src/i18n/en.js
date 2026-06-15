@@ -6,6 +6,7 @@ export const en = {
 
   nav: {
     how_it_works: 'How it works',
+    templates: 'Templates',
     pricing: 'Pricing',
     showcase: 'Showcase',
     features: 'Features',
@@ -13,6 +14,18 @@ export const en = {
     dashboard: 'Dashboard',
     build: 'Build with AI',
     credits: '{n} credits',
+  },
+
+  tplpage: {
+    meta_title: 'Website Templates — Caddisfly',
+    meta_desc: 'Browse designer-built website templates for every industry. Pick a style, then build your site with AI in minutes.',
+    eyebrow: 'designer-built templates',
+    h1: 'A template for every kind of business',
+    sub: 'Each one is a complete, mobile-ready design — fonts, colors, layout and all. Preview any of them live, then make it yours with AI.',
+    live_preview: 'Live preview',
+    use_style: 'Use this style',
+    cta_h2: 'Found one you like?',
+    cta_sub: 'Build your site with AI in minutes — your template comes ready, just add your content.',
   },
 
   footer: {
@@ -993,7 +1006,7 @@ export const en = {
   },
 
   pick: {
-    tpl_title: '🧩 Choose a Template', tpl_hint: 'Restyle the whole site at once. Your text and colors are kept.', tpl_recommended: 'Recommended',
+    tpl_title: '🧩 Choose a Template', tpl_hint: 'Restyle the whole site at once. Your text and colors are kept.', tpl_recommended: 'Recommended', tpl_browse: 'Browse all templates', tpl_count_suffix: 'templates',
     font_title: '🔤 Fonts', font_hint: 'Swap the typeface. Sizes and layout stay the same.',
     fonts_updated: 'Fonts updated! Preview refreshing…', fonts_failed: 'Failed to update fonts',
     col_title: '🎨 Website Colors', primary_color: 'Primary Color', secondary_color: 'Secondary Color',
