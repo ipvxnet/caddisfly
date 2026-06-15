@@ -8,6 +8,8 @@ import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } 
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generateColorPicker } from '../../components/color-picker.js';
 import { generateTemplatePicker } from '../../components/template-picker.js';
+import { selectTemplate } from '../../utils/site-themes.js';
+import { inferIndustry } from '../../utils/industry-style.js';
 import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
@@ -765,7 +767,7 @@ export async function handleAIBuilderCustomize(ctx) {
         </div>
 
         <div id="pane-design" class="builder-pane" hidden>
-          ${generateTemplatePicker(config.style_theme, lang)}
+          ${generateTemplatePicker(config.style_theme, lang, selectTemplate(inferIndustry(project.project_name || '')).key)}
           ${generateColorPicker(config, project.project_id, lang)}
           ${generateFontPicker(config, project.project_id, lang)}
 

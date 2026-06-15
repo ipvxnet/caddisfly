@@ -40,12 +40,16 @@ export const SITE_THEMES = [
     label: 'Bold',
     description: 'Big full-bleed hero, punchy condensed headings.',
     accent: 'linear-gradient(135deg, #111827 0%, #ef4444 100%)',
+    industries: ['fitness', 'barbershop'],
     variants: {
       hero: 'fullscreen',
       about: 'text-image',
       services: 'cards',
       testimonials: 'cards',
       gallery: 'masonry',
+      contact: 'form',
+      footer: 'multi-column',
+      cta: 'banner',
     },
     fonts: { heading: 'Oswald', body: 'Roboto' },
     tokens: 'sharp',
@@ -55,12 +59,16 @@ export const SITE_THEMES = [
     label: 'Elegant',
     description: 'Refined editorial serif with a split hero and quote testimonials.',
     accent: 'linear-gradient(135deg, #4c1d95 0%, #c084fc 100%)',
+    industries: ['beauty', 'food', 'creative', 'realestate', 'events'],
     variants: {
-      hero: 'split',
+      hero: 'overlap',
       about: 'text-image',
-      services: 'cards',
-      testimonials: 'quotes',
+      services: 'spotlight',
+      testimonials: 'spotlight',
       gallery: 'carousel',
+      contact: 'split',
+      footer: 'minimal',
+      cta: 'boxed',
     },
     fonts: { heading: 'Playfair Display', body: 'Lato' },
     tokens: 'editorial',
@@ -70,12 +78,16 @@ export const SITE_THEMES = [
     label: 'Minimal',
     description: 'Clean, restrained layout with a minimal hero and icon grid.',
     accent: 'linear-gradient(135deg, #f3f4f6 0%, #9ca3af 100%)',
+    industries: ['tech'],
     variants: {
       hero: 'minimal',
       about: 'text-image',
-      services: 'icon-grid',
-      testimonials: 'quotes',
+      services: 'numbered',
+      testimonials: 'spotlight',
       gallery: 'masonry',
+      contact: 'split',
+      footer: 'minimal',
+      cta: 'boxed',
     },
     fonts: { heading: 'Inter', body: 'Inter' },
     tokens: 'round',
@@ -85,12 +97,16 @@ export const SITE_THEMES = [
     label: 'Classic',
     description: 'Traditional centered hero, team intro, and trustworthy serif.',
     accent: 'linear-gradient(135deg, #1e3a8a 0%, #60a5fa 100%)',
+    industries: ['legal', 'health', 'home'],
     variants: {
       hero: 'centered',
       about: 'team',
       services: 'icon-grid',
       testimonials: 'cards',
       gallery: 'masonry',
+      contact: 'form',
+      footer: 'multi-column',
+      cta: 'banner',
     },
     fonts: { heading: 'Merriweather', body: 'Source Sans Pro' },
     tokens: 'classic',
@@ -104,12 +120,16 @@ export const SITE_THEMES = [
     description: 'Sleek near-black surfaces with an electric-blue accent.',
     mode: 'dark',
     accent: 'linear-gradient(135deg, #0d0d0f 0%, #3b82f6 100%)',
+    industries: ['automotive'],
     variants: {
       hero: 'split',
       about: 'text-image',
       services: 'cards',
       testimonials: 'quotes',
       gallery: 'masonry',
+      contact: 'split',
+      footer: 'minimal',
+      cta: 'boxed',
     },
     fonts: { heading: 'Space Grotesk', body: 'Inter' },
     colors: { primary: '#3b82f6', secondary: '#60a5fa' },
@@ -122,12 +142,16 @@ export const SITE_THEMES = [
     description: 'Black and champagne gold — luxe, official, high-contrast serif.',
     mode: 'dark',
     accent: 'linear-gradient(135deg, #000000 0%, #f0c94f 100%)',
+    industries: ['retail'],
     variants: {
       hero: 'fullscreen',
       about: 'text-image',
-      services: 'cards',
-      testimonials: 'quotes',
+      services: 'spotlight',
+      testimonials: 'spotlight',
       gallery: 'carousel',
+      contact: 'split',
+      footer: 'minimal',
+      cta: 'boxed',
     },
     fonts: { heading: 'Instrument Serif', body: 'Instrument Sans' },
     colors: { primary: '#f0c94f', secondary: '#cfae44' },
@@ -172,6 +196,20 @@ export function templateTokensCss(theme) {
  */
 export function listThemes() {
   return SITE_THEMES;
+}
+
+/**
+ * Pick a template for a generated site. An explicit wizard "style" that maps to
+ * a template wins; otherwise the first template whose `industries` includes the
+ * inferred industry; otherwise a safe, universal default.
+ * @param {string} industry - inferIndustry() key
+ * @param {string} [style] - the wizard's style choice (may be a template key)
+ * @returns {object} a theme
+ */
+export function selectTemplate(industry, style) {
+  if (style && getTheme(style)) return getTheme(style);
+  const byIndustry = SITE_THEMES.find((t) => Array.isArray(t.industries) && t.industries.includes(industry));
+  return byIndustry || getTheme('classic') || SITE_THEMES[0];
 }
 
 // Section wrappers that hardcode a light background — flipped to surface.bg.

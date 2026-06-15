@@ -21,6 +21,7 @@ import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { attachImages, makePhotoPicker } from '../../../utils/section-images.js';
 import { parseDetailedProfile } from '../../../utils/detailed-profile.js';
 import { attachServiceImages } from '../../../utils/service-images.js';
+import { selectTemplate } from '../../../utils/site-themes.js';
 import { takeOriginalSnapshot } from '../../../utils/site-snapshot.js';
 
 /**
@@ -116,14 +117,20 @@ export async function handleAIBuilderGenerate(ctx) {
     const industry = inferIndustry(context.industry, context.business_type, context.business_name);
     const recipe = getRecipe(industry);
     const palette = paletteFor(industry);
-    // The user's explicit style choice wins for fonts; else the recipe's pairing.
-    const fonts = context.style ? getFontPairing(context.style) : recipe.fonts;
+    // Phase C: pick a curated TEMPLATE for the vertical — it composes the section
+    // variants + fonts + colors + design tokens. The recipe still drives CONTENT
+    // (section line-up, service hints, tone).
+    const template = selectTemplate(industry, context.style);
+    const fonts = template.fonts || (context.style ? getFontPairing(context.style) : recipe.fonts);
+    // Dark templates carry their own palette; light templates use the industry palette.
+    const primaryColor = (template.colors && template.colors.primary) || palette.primary;
+    const secondaryColor = (template.colors && template.colors.secondary) || palette.secondary;
     config = await updateWebsiteConfig(env.DB, project.id, {
-      primary_color: palette.primary,
-      secondary_color: palette.secondary,
+      primary_color: primaryColor,
+      secondary_color: secondaryColor,
       font_heading: fonts.heading,
       font_body: fonts.body,
-      style_theme: context.style,
+      style_theme: template.key,
     });
 
     // Ground AI copy in the vertical (real services, tone).
@@ -239,7 +246,7 @@ export async function handleAIBuilderGenerate(ctx) {
       // (products/booking aren't in any recipe — pin their registry variants.)
       const variant = sectionType === 'products' ? 'grid'
         : sectionType === 'booking' ? 'panel'
-        : recipeVariant(recipe, sectionType);
+        : (template.variants[sectionType] || recipeVariant(recipe, sectionType));
       attachImages(sectionType, content, pickPhoto);
       content._variant = variant;
 

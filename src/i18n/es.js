@@ -987,7 +987,7 @@ export const es = {
   },
 
   pick: {
-    tpl_title: '🧩 Elige una plantilla', tpl_hint: 'Cambia el estilo de todo el sitio de una vez. Tu texto y colores se conservan.',
+    tpl_title: '🧩 Elige una plantilla', tpl_hint: 'Cambia el estilo de todo el sitio de una vez. Tu texto y colores se conservan.', tpl_recommended: 'Recomendado',
     font_title: '🔤 Fuentes', font_hint: 'Cambia la tipografía. Los tamaños y el diseño no cambian.',
     fonts_updated: '¡Fuentes actualizadas! Actualizando vista previa…', fonts_failed: 'No se pudieron actualizar las fuentes',
     col_title: '🎨 Colores del sitio', primary_color: 'Color primario', secondary_color: 'Color secundario',

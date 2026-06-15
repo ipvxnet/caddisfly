@@ -993,7 +993,7 @@ export const en = {
   },
 
   pick: {
-    tpl_title: '🧩 Choose a Template', tpl_hint: 'Restyle the whole site at once. Your text and colors are kept.',
+    tpl_title: '🧩 Choose a Template', tpl_hint: 'Restyle the whole site at once. Your text and colors are kept.', tpl_recommended: 'Recommended',
     font_title: '🔤 Fonts', font_hint: 'Swap the typeface. Sizes and layout stay the same.',
     fonts_updated: 'Fonts updated! Preview refreshing…', fonts_failed: 'Failed to update fonts',
     col_title: '🎨 Website Colors', primary_color: 'Primary Color', secondary_color: 'Secondary Color',
