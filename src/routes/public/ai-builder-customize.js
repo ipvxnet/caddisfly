@@ -43,6 +43,7 @@ export async function handleAIBuilderCustomize(ctx) {
     // Try to load from ai_projects first, then regular projects
     let project = await getAIProjectByProjectId(env.DB, project_id);
     let config, projectKey, isAIBuilder = true, customerEmail;
+    let industrySignal = ''; // name + description/services → recommended template
 
     let currentSubdomain;
     let siteSubtitle = '';
@@ -51,6 +52,9 @@ export async function handleAIBuilderCustomize(ctx) {
       projectKey = { aiProjectId: project.id };
       customerEmail = project.customer_email;
       currentSubdomain = project.subdomain;
+      let detail = {};
+      try { detail = JSON.parse(project.detailed_profile_json || '{}'); } catch {}
+      industrySignal = [project.project_name, detail.business_name, detail.services, detail.history, detail.demographics].filter(Boolean).join(' ');
     } else {
       // Regular refactoring project
       const regularProject = await getProjectByPreviewId(env.DB, project_id);
@@ -65,12 +69,14 @@ export async function handleAIBuilderCustomize(ctx) {
       // Title = the real business name (from the stored profile); show the
       // original site URL as a subtitle. Fall back to the URL if no name.
       let businessName = regularProject.website_url;
+      let cp = {};
       try {
-        const profile = JSON.parse(regularProject.company_profile_json || '{}');
-        if (profile && profile.name) businessName = profile.name;
+        cp = JSON.parse(regularProject.company_profile_json || '{}');
+        if (cp && cp.name) businessName = cp.name;
       } catch {
         // keep URL fallback
       }
+      industrySignal = [businessName, cp.category, cp.description].filter(Boolean).join(' ');
       siteSubtitle = regularProject.website_url || '';
 
       // Convert regular project to AI project format for rendering
@@ -767,7 +773,7 @@ export async function handleAIBuilderCustomize(ctx) {
         </div>
 
         <div id="pane-design" class="builder-pane" hidden>
-          ${generateTemplatePicker(config.style_theme, lang, selectTemplate(inferIndustry(project.project_name || '')).key)}
+          ${generateTemplatePicker(config.style_theme, lang, selectTemplate(inferIndustry(industrySignal)).key)}
           ${generateColorPicker(config, project.project_id, lang)}
           ${generateFontPicker(config, project.project_id, lang)}
 
