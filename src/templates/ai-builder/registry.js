@@ -21,6 +21,7 @@ import { aboutTeamTemplate } from './about/team.js';
 import { servicesIconGridTemplate } from './services/icon-grid.js';
 import { servicesCardsTemplate } from './services/cards.js';
 import { servicesSpotlightTemplate } from './services/spotlight.js';
+import { servicesNumberedTemplate } from './services/numbered.js';
 
 // Testimonials templates
 import { testimonialsCardsTemplate } from './testimonials/cards.js';
@@ -85,6 +86,7 @@ export const TEMPLATE_REGISTRY = {
     'icon-grid': servicesIconGridTemplate,
     cards: servicesCardsTemplate,
     spotlight: servicesSpotlightTemplate,
+    numbered: servicesNumberedTemplate,
     default: servicesIconGridTemplate,
   },
   testimonials: {
