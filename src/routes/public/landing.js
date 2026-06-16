@@ -3,6 +3,8 @@
 import { htmlResponse } from '../../utils/response.js';
 import { headTags, langSwitcher } from '../../components/brand.js';
 import { translator } from '../../i18n/index.js';
+import { buildLoaderAssets, buildLoaderMarkup } from '../../components/build-loader.js';
+import { cannedJoke } from '../../utils/jokes.js';
 
 // Inline brand mark (continuous-wing "C", brand gradient). Reused in header/hero/footer.
 export function brandMark(id, cls = '', animated = false) {
@@ -390,15 +392,23 @@ export async function handleLanding(ctx) {
       function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
       async function doBuild(previewId, token, prev){
-        var bb = prev.querySelector('.rf-build'); if(bb){ bb.disabled=true; bb.textContent = RF.building; }
         bad.classList.remove('show');
+        var ov = document.getElementById('cf-overlay');
+        if (ov) { ov.style.display = 'flex'; if (window.CFLoader) CFLoader.startSteps(); }
         try {
           var res = await fetch('/api/preview/build/' + previewId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: token }) });
           var d = await res.json();
           if (d.success && d.preview_url) {
-            prev.innerHTML = '<div style="text-align:center;padding:1rem"><strong style="font-size:1.05rem">' + RF.built + '</strong><br><a class="btn btn-primary" style="margin-top:.8rem" href="' + esc(d.preview_url) + '" target="_blank">' + RF.view + '</a></div>';
-          } else { if(bb){bb.disabled=false; bb.textContent=RF.build;} bad.textContent = d.error || RF.err_generic; bad.classList.add('show'); }
-        } catch(e){ if(bb){bb.disabled=false; bb.textContent=RF.build;} bad.textContent = RF.err_network; bad.classList.add('show'); }
+            if (window.CFLoader) CFLoader.complete();
+            setTimeout(function(){ location.href = d.preview_url; }, 1000);
+          } else {
+            if (ov) ov.style.display = 'none';
+            bad.textContent = d.error || RF.err_generic; bad.classList.add('show');
+          }
+        } catch(e){
+          if (ov) ov.style.display = 'none';
+          bad.textContent = RF.err_network; bad.classList.add('show');
+        }
       }
 
       function renderPreview(data){
@@ -471,6 +481,10 @@ export async function handleLanding(ctx) {
       });
     })();
   </script>
+  <div id="cf-overlay" style="display:none;position:fixed;inset:0;z-index:10070;color:#fff;padding:24px;overflow:auto;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 55%,#f093fb 120%)">
+    ${buildLoaderMarkup({ lang, title: tr('loading.building_title'), sub: tr('loading.building_sub'), joke: cannedJoke(0, lang), errHtml: '' })}
+  </div>
+  ${buildLoaderAssets(lang)}
 </body>
 </html>`;
 

@@ -177,6 +177,8 @@ export const pt = {
     building_title: 'Criando o seu site…',
     building_sub: 'Estamos identificando o seu negócio, montando as suas páginas e otimizando tudo para buscadores — a IA escreve os seus títulos, descrições e SEO automaticamente. Aguarde — isto costuma levar menos de um minuto.',
     joke_label: '😄 Uma piada enquanto espera',
+    retry: 'Tentar novamente',
+    err_generation: 'Algo deu errado. Tente novamente.',
   },
 
   convo: {
