@@ -243,6 +243,27 @@ async function buildPhotoPool(env, project, profile, industry) {
     for (const url of profile.user_pictures) pool.push({ url, alt: profile.name });
   }
 
+  // Real photos scraped from the original site (its own imagery) → R2. Crucial
+  // for a business with no Google listing whose site we COULD read (or read at a
+  // content path like /home). Skip fetch failures and tiny/icon responses.
+  const scraped = Array.isArray(profile.scrape_images) ? profile.scrape_images.slice(0, 6) : [];
+  for (let i = 0; i < scraped.length && pool.length < 6; i++) {
+    try {
+      const r = await fetch(scraped[i], { headers: { 'User-Agent': 'Mozilla/5.0', Referer: profile.website || '' } });
+      if (!r.ok) continue;
+      const ct = r.headers.get('content-type') || '';
+      if (!/^image\//i.test(ct)) continue;
+      const bytes = await r.arrayBuffer();
+      if (bytes.byteLength < 8000) continue; // likely an icon/spacer
+      const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
+      const filename = `s${i}.${ext}`;
+      await uploadToR2(env.STORAGE, `assets/${project.preview_id}/${filename}`, bytes, ct);
+      pool.push({ url: `/preview-asset/${project.preview_id}/${filename}`, alt: profile.name });
+    } catch (error) {
+      console.error(`Scrape image ${i} failed:`, error.message);
+    }
+  }
+
   // Real business photos from Google Places → R2 → our served URL.
   const names = Array.isArray(profile.photos) ? profile.photos.slice(0, 6) : [];
   for (let i = 0; i < names.length; i++) {

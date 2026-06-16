@@ -313,6 +313,59 @@ export async function handlePreviewCreate(ctx) {
   }
 }
 
+// Heuristics for "the homepage is just a placeholder/under-construction page",
+// so we should look for the real content at a content path (/home, /inicio…).
+const PLACEHOLDER_RE = /(em desenvolvimento|under construction|coming soon|em breve|em manuten|site em constru|under maintenance|comingsoon|stay tuned)/i;
+
+function looksPlaceholder(sig) {
+  if (!sig) return true;
+  if (PLACEHOLDER_RE.test(`${sig.title || ''} ${sig.sampleText || ''}`)) return true;
+  return (sig.images || []).length < 2 && (sig.headings || []).length < 2;
+}
+
+function scoreSignal(sig) {
+  if (!sig) return -1;
+  return (sig.headings || []).length + Math.min(6, (sig.images || []).length) +
+    ((sig.sampleText || '').length > 300 ? 3 : 0) + (sig.title ? 1 : 0);
+}
+
+/**
+ * Best-effort scrape signal: read the root, and if it's a thin/placeholder page,
+ * probe common content paths and keep the richest. No paid calls.
+ * @param {string} website - Normalized site URL
+ * @returns {Promise<object|null>} scrape signal or null
+ */
+async function scrapeBestSignal(website) {
+  const base = website.replace(/\/$/, '');
+  let best = null;
+  let bestScore = -1;
+  try {
+    const pages = await scrapeWebsite(base, 1);
+    if (pages.length > 0) {
+      best = extractScrapeSignal(pages[0].html, pages[0].url);
+      bestScore = scoreSignal(best);
+    }
+  } catch (e) {
+    console.log(`Root scrape failed for ${base}: ${e.message}`);
+  }
+  if (best && !looksPlaceholder(best)) return best;
+
+  for (const path of ['/home', '/home/', '/inicio', '/inicio/', '/pt', '/pt-br', '/index.html']) {
+    try {
+      const pages = await scrapeWebsite(base + path, 1);
+      if (!pages.length) continue;
+      const sig = extractScrapeSignal(pages[0].html, pages[0].url);
+      const sc = scoreSignal(sig);
+      if (sc > bestScore) {
+        best = sig;
+        bestScore = sc;
+        if (sc >= 8) break; // rich enough, stop probing
+      }
+    } catch { /* try next path */ }
+  }
+  return best;
+}
+
 /**
  * Validates preview request parameters
  * @param {string} email - Email address
@@ -379,12 +432,13 @@ function getBaseUrl(request) {
  */
 async function handleVerificationRequest(env, project, website, email, request, language = 'en', body = {}) {
   // Cheap, best-effort static fetch — bot protection may block it; that's fine.
+  // If the root is an "under construction" placeholder (common when the site is
+  // mid-rebuild — the very reason they're refactoring), try content paths.
   let scrapeSignal = null;
   try {
-    const pages = await scrapeWebsite(website, 1);
-    if (pages.length > 0) {
-      scrapeSignal = extractScrapeSignal(pages[0].html, pages[0].url);
-      console.log(`Captured scrape signal for ${website}: name hint "${scrapeSignal.siteName || scrapeSignal.title || ''}"`);
+    scrapeSignal = await scrapeBestSignal(website);
+    if (scrapeSignal) {
+      console.log(`Captured scrape signal for ${website}: "${scrapeSignal.siteName || scrapeSignal.title || ''}" (${(scrapeSignal.images || []).length} imgs, ${(scrapeSignal.headings || []).length} headings)`);
     }
   } catch (error) {
     console.log(`Pre-verification scrape failed (continuing without signal): ${error.message}`);
