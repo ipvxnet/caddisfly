@@ -19,6 +19,16 @@ import { translator } from '../../i18n/index.js';
 
 const NEXT_COOKIE = 'cf_billing_next';
 
+/**
+ * Is `val` a safe same-origin post-login destination? Restricts to known path
+ * prefixes (no open redirect: rejects absolute URLs and protocol-relative //).
+ * @param {string} val
+ * @returns {boolean}
+ */
+function isSafeNext(val) {
+  return typeof val === 'string' && !val.startsWith('//') && /^\/(billing|dashboard|ai-builder\/)/.test(val);
+}
+
 const TIERS = {
   free_trial: { name: 'Free', blurb: 'caddisfly.app subdomain · 1 site · 50 AI credits/mo' },
   starter: { name: 'Starter', mo: 9, yr: 90 },
@@ -115,7 +125,7 @@ function signInView(query, tr) {
   const interval = query.interval === 'yr' ? 'yr' : 'mo';
   const next = plan
     ? `/billing?plan=${plan}&interval=${interval}`
-    : query.next === '/dashboard' ? '/dashboard' : '/billing';
+    : isSafeNext(query.next) ? query.next : '/billing';
   const intent = plan
     ? `<p class="sub">${tr('bill.intent_plan', { plan: `<strong>${TIERS[plan].name}</strong>` })}</p>`
     : `<p class="sub">${tr('bill.intent_default')}</p>`;
@@ -290,7 +300,7 @@ export async function handleBillingVerify(ctx) {
   const nextCookie = cookies.find((c) => c.startsWith(`${NEXT_COOKIE}=`));
   if (nextCookie) {
     const val = decodeURIComponent(nextCookie.slice(NEXT_COOKIE.length + 1));
-    if (val.startsWith('/billing') || val.startsWith('/dashboard')) dest = val;
+    if (isSafeNext(val)) dest = val;
   }
 
   let res = redirect(dest, 303);
@@ -316,4 +326,4 @@ export async function handleBillingLogout(ctx) {
   return res;
 }
 
-export { NEXT_COOKIE };
+export { NEXT_COOKIE, isSafeNext };

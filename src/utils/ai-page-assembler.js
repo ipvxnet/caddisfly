@@ -5,6 +5,7 @@ import { renderSection } from '../templates/ai-builder/registry.js';
 import { holidayDecorHtml } from './holiday-decor.js';
 import { getTheme, darkModeCss, templateTokensCss } from './site-themes.js';
 import { translator } from '../i18n/index.js';
+import { SECTION_NAV_LABELS, rewriteLocalizedAnchors } from './anchor-normalize.js';
 
 // Google Fonts that ship a single (400) weight only — requesting extra weights in
 // the css2 URL returns HTTP 400 and breaks the whole stylesheet, so omit the axis.
@@ -87,7 +88,11 @@ export function assemblePage(sections, config, project, opts = {}) {
   // Multi-page link fix: a `#contact`-style link whose target section lives on a
   // DIFFERENT page can't resolve in-page — rewrite it to that page's route (same
   // format the navbar uses). Same-page anchors (and bare `#`) are left alone.
-  const body = rewriteCrossPageAnchors(renderedSections, { pages, currentSlug, previewBase, embed, currentTypes });
+  // Route cross-page slug anchors first, THEN normalize remaining in-page
+  // section anchors (e.g. `#Contato` → `#contact`) so localized/mis-cased
+  // button links resolve to the real id="<type>" target.
+  const routed = rewriteCrossPageAnchors(renderedSections, { pages, currentSlug, previewBase, embed, currentTypes });
+  const body = rewriteLocalizedAnchors(routed);
 
   // Build complete HTML document
   const html = buildHTMLDocument({
@@ -100,13 +105,8 @@ export function assemblePage(sections, config, project, opts = {}) {
   return html;
 }
 
-// Localized nav labels for the single-page anchor menu, and the order they
-// appear in. header/footer/cta/stats are intentionally not navigable.
-const SECTION_NAV_LABELS = {
-  en: { hero: 'Home', about: 'About', services: 'Services', features: 'Features', gallery: 'Gallery', testimonials: 'Reviews', pricing: 'Pricing', contact: 'Contact' },
-  es: { hero: 'Inicio', about: 'Acerca de', services: 'Servicios', features: 'Características', gallery: 'Galería', testimonials: 'Opiniones', pricing: 'Precios', contact: 'Contacto' },
-  pt: { hero: 'Início', about: 'Sobre', services: 'Serviços', features: 'Recursos', gallery: 'Galeria', testimonials: 'Avaliações', pricing: 'Preços', contact: 'Contato' },
-};
+// Single-page anchor nav order. Labels come from the shared SECTION_NAV_LABELS
+// (anchor-normalize.js). header/footer/cta/stats are intentionally not navigable.
 const SECTION_NAV_ORDER = ['hero', 'about', 'services', 'features', 'gallery', 'testimonials', 'pricing', 'contact'];
 
 /**

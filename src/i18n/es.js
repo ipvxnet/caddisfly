@@ -472,6 +472,7 @@ export const es = {
     err_order: 'No se pudo actualizar el orden de las secciones: ', err_visibility: 'No se pudo cambiar la visibilidad: ',
     err_load_editor: 'No se pudo cargar el editor: ', err_switch_tpl: 'No se pudo cambiar la plantilla: ',
     err_apply_tpl: 'No se pudo aplicar la plantilla: ', err_deploy: 'La publicación falló: ',
+    verify_title: 'Verifica tu correo para publicar', verify_body: 'Tu sitio está vinculado a un correo. Escríbelo y te enviaremos un enlace de acceso; luego tu sitio se publica.', verify_send: 'Enviarme el enlace',
   },
 
   ana: {

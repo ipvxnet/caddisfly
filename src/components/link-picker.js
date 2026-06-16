@@ -97,11 +97,27 @@ export function linkPickerAssets(lang = 'en') {
     set['#top'] = T.top;
     return set;
   }
+  function strip(s){ return String(s == null ? '' : s).trim().toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,''); }
+  // Build a normalized-alias -> canonical #anchor map from the picker data:
+  // both the english anchor key (#contact -> contact) AND the localized label
+  // (Contato -> #contact) so stored links like "#Contato" resolve correctly.
+  function aliasMap(){
+    var d = data(), m = {};
+    (d.sections||[]).forEach(function(s){ m[strip(s.anchor.slice(1))] = s.anchor; m[strip(s.label)] = s.anchor; });
+    (d.pages||[]).forEach(function(p){ m[strip(p.anchor.slice(1))] = p.anchor; m[strip(p.label)] = p.anchor; });
+    return m;
+  }
+  // Map a localized/mis-cased #anchor back to its canonical form; pass through
+  // #top, external and unknown links unchanged.
+  function canon(href){
+    if (!href || href.charAt(0) !== '#' || href === '#top') return href;
+    return aliasMap()[strip(href.slice(1))] || href;
+  }
   // Resolve a stored href to a friendly label for the search box.
   function labelFor(href){
     if (!href) return '';
-    var k = knownAnchors();
-    if (k[href]) return k[href];
+    var k = knownAnchors(), c = canon(href);
+    if (k[c]) return k[c];
     if (href.indexOf('tel:') === 0) return T.call + ' ' + href.slice(4);
     if (href.indexOf('mailto:') === 0) return T.email + ' ' + href.slice(7);
     return href; // external / custom — show as typed
@@ -134,7 +150,7 @@ export function linkPickerAssets(lang = 'en') {
   function checkWarn(lp){
     var v = lp.querySelector('.lp-value').value || '';
     var warn = lp.querySelector('.lp-warn');
-    if (v && v.charAt(0) === '#' && v !== '#top' && !knownAnchors()[v]) {
+    if (v && v.charAt(0) === '#' && v !== '#top' && !knownAnchors()[canon(v)]) {
       warn.textContent = '⚠ ' + T.missing.replace('{a}', v); warn.hidden = false;
     } else { warn.hidden = true; }
   }

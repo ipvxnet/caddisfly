@@ -12,6 +12,18 @@ export function generateToken(bytes = 32) {
 }
 
 /**
+ * SHA-256 hash a string, returned as lowercase hex. Used to store capability
+ * tokens (e.g. build grants) at rest without keeping the raw token.
+ * @param {string} input
+ * @returns {Promise<string>} hex digest
+ */
+export async function sha256Hex(input) {
+  const data = new TextEncoder().encode(String(input));
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Set a cookie on the response
  * @param {Response} response - Response object to modify
  * @param {string} name - Cookie name

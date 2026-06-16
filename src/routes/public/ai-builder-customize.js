@@ -14,7 +14,7 @@ import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
 import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
-import { canDeploy, canManageDomains } from '../../middleware/project-access.js';
+import { canDeploy, canManageDomains, canRequestDeploy } from '../../middleware/project-access.js';
 import { getCreditState, CREDIT_COSTS } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { isSaaSConfigured } from '../../utils/cloudflare-saas.js';
@@ -32,9 +32,10 @@ export async function handleAIBuilderCustomize(ctx) {
   const tr = translator(lang);
 
   // Role-aware UI: hide actions this viewer can't perform (publish/domains).
-  // projectAccess sets ctx.projectRole ('link' = signed-out, full access).
-  const role = ctx.projectRole || 'link';
-  const showDeploy = canDeploy(role);
+  // projectAccess sets ctx.projectRole ('draft' = signed-out builder, edit-only).
+  const role = ctx.projectRole || 'draft';
+  // Drafters see Publish too, but the click routes through email verification.
+  const showDeploy = canRequestDeploy(role);
   const showDomains = canManageDomains(role);
 
   try {
@@ -1579,6 +1580,9 @@ export async function handleAIBuilderCustomize(ctx) {
           const badge = document.getElementById('pub-badge');
           if (badge) { badge.classList.remove('draft'); badge.classList.add('pub'); badge.textContent = ${JSON.stringify(tr('cust.status_published'))}; }
           showDeploySuccess(data.deployed_url || data.subdomain_url || data.site_url);
+        } else if (response.status === 401 && data.auth_required) {
+          // Signed-out drafter: must verify their email before publishing.
+          showVerifyToPublish();
         } else {
           throw new Error(data.error || 'Deployment failed');
         }
@@ -1587,6 +1591,37 @@ export async function handleAIBuilderCustomize(ctx) {
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = ${JSON.stringify(tr('cust.deploy'))}; }
       }
+    }
+
+    // Verify-to-publish modal: a signed-out drafter must prove they own the
+    // project's email before the site can go live. Reuses the magic-link sign-in
+    // (native form POST → /billing?sent=1 "check your email"); the link returns
+    // here and the retried publish succeeds as the verified owner.
+    function showVerifyToPublish() {
+      if (document.getElementById('verify-publish')) return;
+      var wrap = document.createElement('div');
+      wrap.id = 'verify-publish';
+      wrap.style.cssText = 'position:fixed;inset:0;z-index:10060;display:flex;align-items:center;justify-content:center';
+      var safeNext = String(window.location.pathname);
+      wrap.innerHTML =
+        '<div style="position:absolute;inset:0;background:rgba(15,23,42,.55)" onclick="closeVerifyPublish()"></div>'
+        + '<div style="position:relative;background:#fff;border-radius:16px;padding:1.75rem;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+        + '<div style="font-size:2.25rem">🔒</div>'
+        + '<h2 style="margin:.4rem 0 .25rem;color:#1a202c">' + ${JSON.stringify(tr('cust.verify_title'))} + '</h2>'
+        + '<p style="color:#718096;font-size:.9rem;margin:0 0 1rem">' + ${JSON.stringify(tr('cust.verify_body'))} + '</p>'
+        + '<form method="POST" action="/api/billing/login">'
+        + '<input type="email" name="email" required placeholder="you@example.com" autocomplete="email" '
+        + 'style="width:100%;padding:.65rem .75rem;border:2px solid #e2e8f0;border-radius:9px;font-size:.95rem;box-sizing:border-box;margin-bottom:.6rem">'
+        + '<input type="hidden" name="next" value="' + safeNext.replace(/"/g,'&quot;') + '">'
+        + '<button type="submit" class="btn btn-primary" style="width:100%">' + ${JSON.stringify(tr('cust.verify_send'))} + '</button>'
+        + '</form>'
+        + '<button type="button" class="btn btn-secondary" style="margin-top:.5rem;width:100%" onclick="closeVerifyPublish()">' + ${JSON.stringify(tr('cust.close'))} + '</button>'
+        + '</div>';
+      document.body.appendChild(wrap);
+    }
+    function closeVerifyPublish() {
+      var el = document.getElementById('verify-publish');
+      if (el) el.remove();
     }
 
     // Success modal with a clickable link (no popup — browsers block window.open).

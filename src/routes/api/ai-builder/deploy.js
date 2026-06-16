@@ -33,9 +33,13 @@ function json(body, status = 200) {
 export async function handleAIBuilderDeploy(ctx) {
   const { env, params } = ctx;
 
-  // Role gate: owner, admins, and publishers can publish (members can't).
-  // ctx.projectRole is set by the projectAccess middleware ('link' when signed out).
+  // Role gate: publishing requires a VERIFIED session (owner/admin/publisher).
+  // A signed-out drafter must verify their email first — signal auth_required so
+  // the UI opens the magic-link sign-in; a signed-in member just lacks the role.
   if (ctx.projectRole && !canDeploy(ctx.projectRole)) {
+    if (!ctx.billingEmail) {
+      return json({ success: false, auth_required: true, error: 'Verify your email to publish this site.' }, 401);
+    }
     return json({ success: false, error: 'Only the owner, admins, and publishers can publish this site.' }, 403);
   }
 

@@ -8,6 +8,8 @@ import { getFirstStep, formatStepForResponse } from '../../../utils/ai-conversat
 import { extractAnswerData } from '../../../utils/ai-content-generator.js';
 import { checkProjectCreationLimit, getUserTier, formatRateLimitError, limitsDisabled, unlimited } from '../../../utils/rate-limiter.js';
 import { screenContent, policyError } from '../../../utils/content-policy.js';
+import { generateToken, parseCookies, setCookie } from '../../../utils/crypto.js';
+import { createBuildGrant, BUILD_COOKIE } from '../../../db/build-grants.js';
 
 /**
  * Handle AI builder project creation
@@ -147,7 +149,7 @@ export async function handleAIBuilderCreate(ctx) {
 
     // Return response. The chat UI is driven by project.conversation_step on
     // load, so this next_question is informational (the first chat step, Q1).
-    return new Response(
+    let response = new Response(
       JSON.stringify({
         success: true,
         project_id: project.project_id,
@@ -160,6 +162,28 @@ export async function handleAIBuilderCreate(ctx) {
         headers: { 'Content-Type': 'application/json' },
       }
     );
+
+    // No-account build flow: bind draft-edit access to THIS browser. Reuse an
+    // existing per-browser build token or mint one, record a grant for this
+    // project, and (re)set the first-party cookie. Signed-in owners don't need
+    // a grant — their verified session already proves ownership.
+    if (!ctx.billingEmail) {
+      let buildToken = parseCookies(request)[BUILD_COOKIE];
+      const fresh = !buildToken;
+      if (fresh) buildToken = generateToken(32);
+      await createBuildGrant(env.DB, project.project_id, buildToken);
+      if (fresh) {
+        response = setCookie(response, BUILD_COOKIE, buildToken, {
+          maxAge: 60 * 60 * 24 * 365,
+          secure: env.ENVIRONMENT === 'production',
+          httpOnly: true,
+          sameSite: 'Lax',
+          path: '/',
+        });
+      }
+    }
+
+    return response;
   } catch (error) {
     console.error('Error creating AI project:', error);
 

@@ -472,6 +472,7 @@ export const pt = {
     err_order: 'Falha ao atualizar a ordem das seções: ', err_visibility: 'Falha ao alternar a visibilidade: ',
     err_load_editor: 'Falha ao carregar o editor: ', err_switch_tpl: 'Falha ao trocar o modelo: ',
     err_apply_tpl: 'Falha ao aplicar o modelo: ', err_deploy: 'A publicação falhou: ',
+    verify_title: 'Confirme seu e-mail para publicar', verify_body: 'Seu site está vinculado a um e-mail. Digite-o e enviaremos um link de acesso; depois seu site vai ao ar.', verify_send: 'Enviar o link',
   },
 
   ana: {

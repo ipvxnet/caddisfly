@@ -219,7 +219,7 @@ router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, pr
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
 router.get('/ai-builder/detailed/:project_id', handleAIBuilderDetailed, [billingAuth, projectAccess]);
-router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics);
+router.get('/ai-builder/analytics/:project_id', handleSiteAnalytics, [billingAuth, projectAccess]);
 // Blog/shop preview routes MUST register before the generic :page_slug routes
 // (the router is first-match; "blog"/"shop" would otherwise resolve as page slugs).
 router.get('/ai-preview/:project_id/blog/:post_slug', handleAIPreviewBlog);
