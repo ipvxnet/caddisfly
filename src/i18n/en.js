@@ -17,16 +17,16 @@ export const en = {
   },
 
   tplpage: {
-    meta_title: 'Website Templates — Caddisfly',
-    meta_desc: 'Browse designer-built website templates for every industry. Pick a style, then build your site with AI in minutes.',
-    eyebrow: 'designer-built templates',
-    h1: 'A template for every kind of business',
-    sub: 'Each one is a complete, mobile-ready design — fonts, colors, layout and all. Preview any of them live, then make it yours with AI.',
+    meta_title: 'Free AI Website Templates for Every Industry | Caddisfly',
+    meta_desc: 'Browse free, designer-built website templates for restaurants, salons, gyms and more. Pick a style and let AI build your site in minutes — no code.',
+    eyebrow: 'free, designer-built templates',
+    h1: 'Free website templates for every business',
+    sub: 'Each is a complete, mobile-ready design — fonts, colors and layout done for you. Preview any one live, then build it with AI in minutes. Free to start, no code.',
     live_preview: 'Live preview',
     use_style: 'Use this style',
     all: 'All', all_styles: 'All styles', search_ph: 'Search templates…', no_results: 'No templates match your filters.',
-    cta_h2: 'Found one you like?',
-    cta_sub: 'Build your site with AI in minutes — your template comes ready, just add your content.',
+    cta_h2: 'Found one you love?',
+    cta_sub: 'Build your site with AI in minutes — your template comes ready. Free to start, no code.',
   },
 
   footer: {

@@ -17,16 +17,16 @@ export const pt = {
   },
 
   tplpage: {
-    meta_title: 'Modelos de site — Caddisfly',
-    meta_desc: 'Explore modelos profissionais para cada setor. Escolha um estilo e crie seu site com IA em minutos.',
-    eyebrow: 'modelos profissionais',
-    h1: 'Um modelo para cada tipo de negócio',
-    sub: 'Cada um é um design completo e pronto para celular: fontes, cores e layout. Veja qualquer um ao vivo e torne-o seu com IA.',
+    meta_title: 'Modelos de site grátis com IA para cada setor | Caddisfly',
+    meta_desc: 'Explore modelos de site grátis para restaurantes, salões, academias e mais. Escolha um estilo e deixe a IA criar seu site em minutos, sem código.',
+    eyebrow: 'modelos grátis, criados por designers',
+    h1: 'Modelos de site grátis para cada negócio',
+    sub: 'Cada um é um design completo e pronto para celular: fontes, cores e layout já resolvidos. Veja qualquer um ao vivo e crie com IA em minutos. Grátis e sem código.',
     live_preview: 'Ver ao vivo',
     use_style: 'Usar este estilo',
     all: 'Todos', all_styles: 'Todos os estilos', search_ph: 'Buscar modelos…', no_results: 'Nenhum modelo corresponde aos seus filtros.',
     cta_h2: 'Encontrou um que gostou?',
-    cta_sub: 'Crie seu site com IA em minutos: o modelo já vem pronto, basta adicionar seu conteúdo.',
+    cta_sub: 'Crie seu site com IA em minutos: o modelo já vem pronto. Grátis e sem código.',
   },
 
   footer: {
