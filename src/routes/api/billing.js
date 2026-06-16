@@ -5,7 +5,7 @@ import { redirect } from '../../utils/response.js';
 import { isValidEmail, sanitizeEmail, sendMagicLinkEmail } from '../../utils/email.js';
 import { setCookie } from '../../utils/crypto.js';
 import { createMagicLink, getBillingAccount } from '../../db/billing.js';
-import { NEXT_COOKIE } from '../public/billing.js';
+import { NEXT_COOKIE, isSafeNext } from '../public/billing.js';
 import {
   isStripeConfigured,
   priceIdFor,
@@ -40,7 +40,7 @@ export async function handleBillingLogin(ctx) {
   let res = redirect('/billing?sent=1', 303);
   // Remember intended destination (e.g. a plan checkout) across the email round-trip.
   const next = (body.next || '').toString();
-  if (next.startsWith('/billing')) {
+  if (isSafeNext(next)) {
     res = setCookie(res, NEXT_COOKIE, encodeURIComponent(next), {
       maxAge: 20 * 60,
       secure: env.ENVIRONMENT === 'production',

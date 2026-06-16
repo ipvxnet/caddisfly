@@ -472,6 +472,7 @@ export const en = {
     err_order: 'Failed to update section order: ', err_visibility: 'Failed to toggle visibility: ',
     err_load_editor: 'Failed to load editor: ', err_switch_tpl: 'Failed to switch template: ',
     err_apply_tpl: 'Failed to apply template: ', err_deploy: 'Deployment failed: ',
+    verify_title: 'Verify your email to publish', verify_body: 'Your site is linked to an email. Enter it and we’ll send a sign-in link — then your site goes live.', verify_send: 'Send me the link',
   },
 
   ana: {
