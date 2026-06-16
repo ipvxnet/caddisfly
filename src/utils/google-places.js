@@ -15,7 +15,7 @@ const PLACES_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 const PLACES_DETAILS_BASE = 'https://places.googleapis.com/v1/places/';
 
 // Only request the fields we render. Adding fields here can change billing SKU.
-const SEARCH_FIELD_MASK = 'places.id,places.displayName,places.formattedAddress';
+const SEARCH_FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.websiteUri';
 const DETAILS_FIELD_MASK = [
   'id',
   'displayName',
@@ -70,6 +70,62 @@ export async function findPlace(env, query) {
   const data = await response.json();
   const place = data.places && data.places[0];
   return place ? place.id : null;
+}
+
+/**
+ * Text-search for up to `maxResultCount` candidate places, with enough fields to
+ * pick the right one locally (id, name, address, website) before spending a
+ * Details call. Cheaper + safer than trusting the single top fuzzy match.
+ * @returns {Promise<Array<{id,name,address,website}>>}
+ */
+async function searchPlaces(env, query, maxResultCount = 5) {
+  if (!env.GOOGLE_PLACES_API_KEY) throw new Error('GOOGLE_PLACES_API_KEY not configured');
+  if (!query || !query.trim()) return [];
+  const response = await fetch(PLACES_SEARCH_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
+      'X-Goog-FieldMask': SEARCH_FIELD_MASK,
+      Referer: refererFor(env),
+    },
+    body: JSON.stringify({ textQuery: query.trim(), maxResultCount }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Places searchText failed (${response.status}): ${body.slice(0, 200)}`);
+  }
+  const data = await response.json();
+  return (data.places || [])
+    .map((p) => ({ id: p.id, name: p.displayName?.text || '', address: p.formattedAddress || '', website: p.websiteUri || '' }))
+    .filter((c) => c.id);
+}
+
+// Generic business words that carry no identity — ignored when comparing names.
+const NAME_STOPWORDS = new Set([
+  'clinica', 'clinic', 'odontologia', 'odonto', 'odontologica', 'dental', 'dentista', 'consultorio',
+  'centro', 'center', 'studio', 'estudio', 'salao', 'salon', 'spa', 'ltda', 'me', 'eireli', 'sa',
+  'comercio', 'materiais', 'restaurante', 'restaurant', 'cafe', 'bar', 'loja', 'the', 'and', 'de',
+  'da', 'do', 'dos', 'das', 'e', 'of', 'em', 'no', 'na',
+]);
+
+function normName(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Does a Places listing name plausibly match the name the USER gave us? Requires
+ * every distinctive (non-generic, len>=3) token of the expected name to appear
+ * in the candidate. "Clínica Nouva" matches "Clínica Nouva Odontologia" but NOT
+ * "Nova Dental Center" — so a user-vouched name lets a website-less listing
+ * through without opening the door to unrelated fuzzy matches.
+ */
+function nameMatches(expected, candidate) {
+  const want = normName(expected).split(' ').filter((t) => t.length >= 3 && !NAME_STOPWORDS.has(t));
+  if (!want.length) return false;
+  const have = ' ' + normName(candidate).split(' ').filter(Boolean).join(' ') + ' ';
+  return want.every((t) => have.includes(t));
 }
 
 /**
@@ -132,35 +188,54 @@ export async function enrichBusiness(env, { businessName, website, location, que
     return { found: false, reason: 'no_query' };
   }
 
-  const placeId = await findPlace(env, query);
-  if (!placeId) {
+  // Pull several candidates and choose deliberately. Google Places readily
+  // fuzzy-matches an UNRELATED business (searching "Clinica Nouva dentista
+  // Florianópolis" returned "Nova Dental Center"); blindly trusting the top hit
+  // would stamp a stranger's name/phone/address/photos onto the site.
+  const candidates = await searchPlaces(env, query, 5);
+  if (!candidates.length) {
     return { found: false, reason: 'no_match', query };
   }
 
-  const details = await getPlaceDetails(env, placeId);
-  const profile = normalizeDetails(details, placeId);
-
-  // Verify the match actually corresponds to the input site. Google Places
-  // frequently fuzzy-matches an UNRELATED business (e.g. searching for IPVXNet
-  // returned "Modern Networks LLC" in Florida). Trusting that would stamp a
-  // stranger's name, phone, and address onto the customer's site — useless and
-  // a real liability. Require the matched listing's website domain to equal the
-  // input domain; otherwise reject so the caller falls back to scrape-only.
   const inputDomain = domainFromUrl(website || '');
+  let winner = null;
+  let basis = '';
+
+  // 1) Strongest signal: a candidate whose listing website is the same
+  //    registrable domain as the site we're refactoring.
   if (inputDomain) {
-    const matchDomain = domainFromUrl(profile.website || '');
-    if (!matchDomain || !sameRegistrableDomain(inputDomain, matchDomain)) {
-      return {
-        found: false,
-        reason: 'domain_mismatch',
-        query,
-        place_id: placeId,
-        matched_name: profile.name || null,
-        matched_domain: matchDomain || null,
-      };
-    }
-    profile.verified = true;
+    winner = candidates.find((c) => {
+      const d = domainFromUrl(c.website || '');
+      return d && sameRegistrableDomain(inputDomain, d);
+    }) || null;
+    if (winner) basis = 'domain';
   }
+
+  // 2) The user vouched a business name: accept the candidate whose listing name
+  //    matches it — even with no/different website (common for small businesses
+  //    whose site is exactly the one that's broken). The name check is strict
+  //    enough to keep unrelated fuzzy matches out (see nameMatches).
+  if (!winner && businessName) {
+    winner = candidates.find((c) => nameMatches(businessName, c.name)) || null;
+    if (winner) basis = 'name';
+  }
+
+  if (!winner) {
+    const top = candidates[0];
+    return {
+      found: false,
+      reason: inputDomain ? 'domain_mismatch' : 'no_match',
+      query,
+      place_id: top.id,
+      matched_name: top.name || null,
+      matched_domain: domainFromUrl(top.website || '') || null,
+    };
+  }
+
+  const details = await getPlaceDetails(env, winner.id);
+  const profile = normalizeDetails(details, winner.id);
+  profile.verified = true;
+  profile.match_basis = basis;
   return profile;
 }
 
