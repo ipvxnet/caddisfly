@@ -25,8 +25,14 @@ export async function attachServiceImages(env, _publicId, content, context = {})
   const industry = context.industry || '';
   const used = new Set();
 
+  // Cap stock lookups (one search each) — a long services list (e.g. 15)
+  // shouldn't fire 15 searches. The rest fall back to icons, which also keeps a
+  // dense many-tile grid lighter.
+  const MAX_SERVICE_IMAGES = 8;
+  let attached = 0;
   for (const svc of content.services) {
     if (!svc || svc.image_url || !svc.title) continue;
+    if (attached >= MAX_SERVICE_IMAGES) break;
     try {
       // Lead the query with the service name, backed by industry keywords.
       const results = await searchStockPhotos(env, imageKeywordsFor(industry, svc.title), 5);
@@ -35,6 +41,7 @@ export async function attachServiceImages(env, _publicId, content, context = {})
         svc.image_url = pick.url;
         if (!svc.image_alt) svc.image_alt = pick.alt || svc.title;
         used.add(pick.url);
+        attached++;
       }
     } catch (e) {
       console.error(`Service stock photo failed for "${svc.title}" (non-fatal):`, e.message);

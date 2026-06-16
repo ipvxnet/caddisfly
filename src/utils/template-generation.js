@@ -93,6 +93,12 @@ export async function generateAndStore(env, project, profile, opts = {}) {
       }
     }
 
+    // Owner provided an explicit services list → use ALL of it (overrides the
+    // AI's summarized ~6) so nothing they typed gets dropped.
+    if (type === 'services' || type === 'features') {
+      const explicitSvcs = explicitServiceItems(profile);
+      if (explicitSvcs.length) { content.services = explicitSvcs; content.items = explicitSvcs; }
+    }
     // Features reuse the services {title,description,icon} shape.
     if (type === 'features' && !Array.isArray(content.features)) {
       content.features = content.services || content.items || [];
@@ -350,13 +356,24 @@ function defaultContentForType(type, profile, recipe = {}) {
   }
 }
 
-/** Turn a "A, B, C" service-hint string into [{title, description, icon}] items. */
-function hintsToItems(hints) {
-  if (!hints || typeof hints !== 'string') return [];
-  return hints
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 6)
+/** Turn a service list (newline- or comma-separated) into [{title,...}] items. */
+function listToItems(text, cap = 15) {
+  if (!text || typeof text !== 'string') return [];
+  const seen = new Set();
+  return text
+    .split(/[\n,;]+/)
+    .map((s) => s.replace(/^[-•*\d.)\s]+/, '').trim()) // strip bullets/numbering
+    .filter((s) => s && !seen.has(s.toLowerCase()) && seen.add(s.toLowerCase()))
+    .slice(0, cap)
     .map((title) => ({ title, description: '', icon: '✓' }));
+}
+
+/** Recipe service hints → items (fallback when the user gave no explicit list). */
+function hintsToItems(hints) {
+  return listToItems(hints, 8);
+}
+
+/** The owner's explicit services list (from the onboarding form), if any. */
+function explicitServiceItems(profile) {
+  return listToItems(profile && profile.user_services, 15);
 }
