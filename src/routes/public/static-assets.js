@@ -75,6 +75,7 @@ export async function handleRobots(ctx) {
 const APP_PAGES = [
   { path: '/', priority: '1.0' },
   { path: '/ai-builder', priority: '0.9' },
+  { path: '/templates', priority: '0.9' },
   { path: '/pricing', priority: '0.8' },
   { path: '/showcase', priority: '0.7' },
   { path: '/compare', priority: '0.7' },

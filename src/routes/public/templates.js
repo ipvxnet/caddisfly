@@ -5,7 +5,8 @@
 // always matches the current design system — no screenshots to maintain.
 
 import { renderTemplateDemo, demoTemplates } from '../../utils/template-demo.js';
-import { brandMark, FAVICON } from './landing.js';
+import { brandMark } from './landing.js';
+import { headTags } from '../../components/brand.js';
 import { translator } from '../../i18n/index.js';
 import { escapeHtml } from '../../utils/ai-page-assembler.js';
 
@@ -59,7 +60,23 @@ export function handleTemplateDemo(ctx) {
 export function handleTemplatesShowcase(ctx) {
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
+  const origin = (ctx && ctx.url && ctx.url.origin) || (ctx && ctx.env && ctx.env.APP_URL) || '';
   const templates = demoTemplates();
+
+  // ItemList structured data so search engines understand this is a gallery of
+  // templates (each links to its live demo) — helps rich-result eligibility.
+  const itemList = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: tr('tplpage.meta_title'),
+    numberOfItems: templates.length,
+    itemListElement: templates.map((t, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: t.label,
+      url: `${origin}/templates/${t.key}`,
+    })),
+  };
 
   // Load every heading + body font the showcase labels render in.
   const fams = new Set();
@@ -105,12 +122,7 @@ export function handleTemplatesShowcase(ctx) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${tr('tplpage.meta_title')}</title>
-  <meta name="description" content="${tr('tplpage.meta_desc')}">
-  <link rel="icon" href="${FAVICON}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  ${headTags({ title: tr('tplpage.meta_title'), description: tr('tplpage.meta_desc'), origin, path: '/templates', jsonLd: itemList })}
   <link href="${fontsHref}" rel="stylesheet">
   <style>
     :root{--ink:#0f172a;--body:#475569;--line:#e2e8f0;--bg:#f8fafc;--brand:#667eea}

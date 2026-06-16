@@ -17,16 +17,16 @@ export const es = {
   },
 
   tplpage: {
-    meta_title: 'Plantillas de sitios web — Caddisfly',
-    meta_desc: 'Explora plantillas profesionales para cada sector. Elige un estilo y crea tu sitio con IA en minutos.',
-    eyebrow: 'plantillas profesionales',
-    h1: 'Una plantilla para cada tipo de negocio',
-    sub: 'Cada una es un diseño completo y listo para móviles: fuentes, colores y disposición. Previsualiza cualquiera y hazla tuya con IA.',
+    meta_title: 'Plantillas web gratis con IA para cada sector | Caddisfly',
+    meta_desc: 'Explora plantillas web gratis para restaurantes, salones, gimnasios y más. Elige un estilo y deja que la IA cree tu sitio en minutos, sin código.',
+    eyebrow: 'plantillas gratis, diseñadas por profesionales',
+    h1: 'Plantillas web gratis para cada negocio',
+    sub: 'Cada una es un diseño completo y listo para móviles: fuentes, colores y disposición ya resueltos. Previsualiza cualquiera en vivo y créala con IA en minutos. Gratis y sin código.',
     live_preview: 'Vista previa',
     use_style: 'Usar este estilo',
     all: 'Todas', all_styles: 'Todos los estilos', search_ph: 'Buscar plantillas…', no_results: 'Ninguna plantilla coincide con tus filtros.',
     cta_h2: '¿Encontraste una que te gusta?',
-    cta_sub: 'Crea tu sitio con IA en minutos: la plantilla viene lista, solo añade tu contenido.',
+    cta_sub: 'Crea tu sitio con IA en minutos: la plantilla viene lista. Gratis y sin código.',
   },
 
   footer: {
