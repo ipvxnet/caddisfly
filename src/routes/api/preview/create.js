@@ -8,6 +8,8 @@ import { isValidEmail, sanitizeEmail, sendPreviewEmail, sendVerificationEmail } 
 import { isValidUrl, scrapeWebsite } from '../../../utils/scraper.js';
 import { generateToken } from '../../../utils/crypto.js';
 import { extractScrapeSignal } from '../../../utils/company-profile.js';
+import { coerceDetailedProfile } from '../../../utils/detailed-profile.js';
+import { screenContent, policyError } from '../../../utils/content-policy.js';
 import { scrapeWithBrowser, shouldUseBrowser, isContentThin, getContentWordCount } from '../../../utils/browser-scraper.js';
 import { refactorHtml } from '../../../utils/ai-refactor.js';
 import { uploadToR2, generateR2Path } from '../../../utils/r2-storage.js';
@@ -99,7 +101,7 @@ export async function handlePreviewCreate(ctx) {
     // We do a cheap best-effort static fetch here only to get a business-name
     // hint for a better Places query — no browser rendering, no paid calls.
     if (useTemplates) {
-      return await handleVerificationRequest(env, project, normalizedWebsite, sanitizedEmail, request, language);
+      return await handleVerificationRequest(env, project, normalizedWebsite, sanitizedEmail, request, language, body);
     }
 
     // Step 2: Scrape website (legacy CSS-only path — unchanged)
@@ -375,7 +377,7 @@ function getBaseUrl(request) {
  * @param {Request} request - HTTP request (for base URL)
  * @returns {Response} HTTP response
  */
-async function handleVerificationRequest(env, project, website, email, request, language = 'en') {
+async function handleVerificationRequest(env, project, website, email, request, language = 'en', body = {}) {
   // Cheap, best-effort static fetch — bot protection may block it; that's fine.
   let scrapeSignal = null;
   try {
@@ -388,7 +390,21 @@ async function handleVerificationRequest(env, project, website, email, request, 
     console.log(`Pre-verification scrape failed (continuing without signal): ${error.message}`);
   }
 
-  // Single-use token; store interim scrape signal for use at verify time.
+  // Up-front refactor questions: the user can tell us who they are (name, the
+  // best Google search for them, services, contact, social, logo). This drives
+  // a far better Places match + fills gaps the scrape/Places can't — essential
+  // when the site is unreadable or misconfigured. Screen the free text.
+  const userProfile = coerceDetailedProfile(body);
+  userProfile.website_url = website;
+  const freeText = [userProfile.business_name, userProfile.search_query, userProfile.services]
+    .filter(Boolean).join('\n');
+  if (freeText) {
+    const screen = screenContent(freeText);
+    if (!screen.allowed) return new Response(JSON.stringify(policyError(screen)), { status: 422, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Single-use token; store interim scrape signal + user-provided profile for
+  // use at verify time.
   const token = generateToken(32);
   const nowSeconds = Math.floor(Date.now() / 1000);
 
@@ -399,7 +415,7 @@ async function handleVerificationRequest(env, project, website, email, request, 
     enrichment_status: 'pending',
     verification_token: token,
     verification_sent_at: nowSeconds,
-    company_profile_json: JSON.stringify({ scrapeSignal }),
+    company_profile_json: JSON.stringify({ scrapeSignal, userProfile }),
   });
 
   const baseUrl = getBaseUrl(request);

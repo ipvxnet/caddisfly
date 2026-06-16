@@ -22,7 +22,7 @@ import { getProjectByVerificationToken, updateProject } from '../../db/projects.
 import { getUserTier, checkEnrichmentLimit, formatRateLimitError, limitsDisabled, unlimited } from '../../utils/rate-limiter.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../utils/credits.js';
 import { enrichBusiness } from '../../utils/google-places.js';
-import { buildProfile } from '../../utils/company-profile.js';
+import { buildProfile, applyDetailedOverride } from '../../utils/company-profile.js';
 import { generateAndStore } from '../../utils/template-generation.js';
 import { takeOriginalSnapshot } from '../../utils/site-snapshot.js';
 import { sendPreviewEmail } from '../../utils/email.js';
@@ -109,19 +109,27 @@ export async function handleVerify(ctx) {
  *   running -> complete | no_match | failed
  */
 export async function runBuild(env, project, origin) {
-  // Recover the interim scrape signal stored at create time.
+  // Recover the interim scrape signal + user-provided answers stored at create.
   let scrapeSignal = null;
+  let userProfile = null;
   try {
-    scrapeSignal = JSON.parse(project.company_profile_json || '{}').scrapeSignal || null;
+    const cp = JSON.parse(project.company_profile_json || '{}');
+    scrapeSignal = cp.scrapeSignal || null;
+    userProfile = cp.userProfile || null;
   } catch {
     scrapeSignal = null;
   }
-  const businessName = (scrapeSignal && (scrapeSignal.siteName || scrapeSignal.title)) || '';
+  const businessName =
+    (userProfile && userProfile.business_name) ||
+    (scrapeSignal && (scrapeSignal.siteName || scrapeSignal.title)) ||
+    '';
+  // The user's "how to find us on Google" answer is the strongest Places signal.
+  const userQuery = (userProfile && (userProfile.search_query || userProfile.business_name)) || '';
 
   // PAID: identify the business via Google Places.
   let places;
   try {
-    places = await enrichBusiness(env, { businessName, website: project.website_url });
+    places = await enrichBusiness(env, { businessName, website: project.website_url, query: userQuery });
   } catch (error) {
     console.error('Places enrichment error:', error);
     await updateProject(env.DB, project.id, { enrichment_status: 'failed' });
@@ -140,18 +148,22 @@ export async function runBuild(env, project, origin) {
     (((scrapeSignal.headings || []).length > 0) ||
       (scrapeSignal.sampleText && scrapeSignal.sampleText.length > 80) ||
       (scrapeSignal.title && scrapeSignal.title.length > 0));
+  // The user's own answers can carry a build even when scrape + Places fail.
+  const haveUserProfile = !!(userProfile && (userProfile.business_name || userProfile.services));
 
-  if (!places.found && !haveScrape) {
+  if (!places.found && !haveScrape && !haveUserProfile) {
     await updateProject(env.DB, project.id, { enrichment_status: 'no_match' });
     return;
   }
   if (!places.found) {
-    console.log(`Places unverified (${places.reason}${places.matched_name ? `: matched "${places.matched_name}"` : ''}); building scrape-first for ${project.website_url}`);
+    console.log(`Places unverified (${places.reason}${places.matched_name ? `: matched "${places.matched_name}"` : ''}); building from scrape/user details for ${project.website_url}`);
   }
 
   // Build the site from the merged profile using the shared template pipeline.
-  // When places is unverified, buildProfile uses scrape-only identity.
-  const profile = buildProfile(scrapeSignal, places);
+  // When places is unverified, buildProfile uses scrape-only identity; the user's
+  // confirmed answers then override/fill blanks (name, contact, social, logo…).
+  let profile = buildProfile(scrapeSignal, places);
+  if (userProfile) profile = applyDetailedOverride(profile, userProfile);
   try {
     await generateAndStore(env, project, profile);
   } catch (error) {

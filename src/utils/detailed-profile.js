@@ -22,6 +22,9 @@ export function emptyDetailedProfile() {
     business_name: '',
     prefill_from_website: false,
     website_url: '',
+    // How the user says to find them on Google when their site can't be read —
+    // drives the Places text search (e.g. "Clinica Nouva dentista Florianópolis").
+    search_query: '',
     history: '',
     founder: '',
     services: '',
@@ -50,6 +53,7 @@ export function coerceDetailedProfile(raw = {}) {
   base.business_name = str(raw.business_name);
   base.prefill_from_website = raw.prefill_from_website === true || raw.prefill_from_website === 'true';
   base.website_url = str(raw.website_url);
+  base.search_query = str(raw.search_query);
   base.history = str(raw.history);
   base.founder = str(raw.founder);
   base.services = str(raw.services);

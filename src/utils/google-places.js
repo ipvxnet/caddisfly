@@ -111,16 +111,22 @@ export async function getPlaceDetails(env, placeId) {
  * @param {object} input - { businessName, website, location }
  * @returns {Promise<object>} Normalized profile (see shape below)
  */
-export async function enrichBusiness(env, { businessName, website, location } = {}) {
-  // Build the best text query we can from what we know.
-  const parts = [];
-  if (businessName) parts.push(businessName);
-  if (location) parts.push(location);
-  // Fall back to the bare domain if we have no name.
-  if (!businessName && website) {
-    parts.push(domainFromUrl(website));
+export async function enrichBusiness(env, { businessName, website, location, query: explicitQuery } = {}) {
+  // A user-supplied "how to find us on Google" query wins verbatim — it's the
+  // strongest signal, especially when the site is unreadable/misconfigured and
+  // the domain-derived name is useless (e.g. "clinicanouva" vs "Clinica Nouva").
+  let query = typeof explicitQuery === 'string' ? explicitQuery.trim() : '';
+  if (!query) {
+    // Otherwise build the best text query we can from what we know.
+    const parts = [];
+    if (businessName) parts.push(businessName);
+    if (location) parts.push(location);
+    // Fall back to the bare domain if we have no name.
+    if (!businessName && website) {
+      parts.push(domainFromUrl(website));
+    }
+    query = parts.join(' ').trim();
   }
-  const query = parts.join(' ').trim();
 
   if (!query) {
     return { found: false, reason: 'no_query' };

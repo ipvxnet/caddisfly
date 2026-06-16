@@ -245,6 +245,32 @@ export async function handleLanding(ctx) {
                 <div class="err" id="website-err"></div>
               </div>
               <div class="field">
+                <label for="rf-name">${tr('landing.rf_q_name')}</label>
+                <input type="text" id="rf-name" name="rf-name" placeholder="${tr('landing.rf_q_name_ph')}">
+              </div>
+              <div class="field">
+                <label for="rf-search">${tr('landing.rf_q_search')}</label>
+                <input type="text" id="rf-search" name="rf-search" placeholder="${tr('landing.rf_q_search_ph')}">
+                <p class="form-note" style="margin-top:.35rem;text-align:left">${tr('landing.rf_q_search_help')}</p>
+              </div>
+              <details class="rf-more" style="margin-bottom:.9rem">
+                <summary style="cursor:pointer;font-weight:600;color:var(--p2);font-size:.9rem;margin-bottom:.6rem">${tr('landing.rf_more')}</summary>
+                <div class="field"><label for="rf-services">${tr('landing.rf_q_services')}</label>
+                  <input type="text" id="rf-services" name="rf-services" placeholder="${tr('landing.rf_q_services_ph')}"></div>
+                <div class="field"><label for="rf-area">${tr('landing.rf_q_area')}</label>
+                  <input type="text" id="rf-area" name="rf-area" placeholder="${tr('landing.rf_q_area_ph')}"></div>
+                <div class="field"><label for="rf-phone">${tr('landing.rf_q_phone')}</label>
+                  <input type="text" id="rf-phone" name="rf-phone" placeholder="${tr('landing.rf_q_phone_ph')}"></div>
+                <div class="field"><label for="rf-address">${tr('landing.rf_q_address')}</label>
+                  <input type="text" id="rf-address" name="rf-address" placeholder="${tr('landing.rf_q_address_ph')}"></div>
+                <div class="field"><label for="rf-instagram">Instagram</label>
+                  <input type="text" id="rf-instagram" name="rf-instagram" placeholder="https://instagram.com/…"></div>
+                <div class="field"><label for="rf-facebook">Facebook</label>
+                  <input type="text" id="rf-facebook" name="rf-facebook" placeholder="https://facebook.com/…"></div>
+                <div class="field"><label for="rf-logo">${tr('landing.rf_q_logo')}</label>
+                  <input type="text" id="rf-logo" name="rf-logo" placeholder="https://…/logo.png"></div>
+              </details>
+              <div class="field">
                 <label for="refactor-lang">${tr('builder.lang_label')}</label>
                 <select id="refactor-lang" name="refactor-lang">
                   <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
@@ -369,9 +395,20 @@ export async function handleLanding(ctx) {
 
         btn.disabled = true; label.textContent = RF.sending; spin.classList.add('show');
         try {
+          var v = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; };
           var res = await fetch('/api/preview/create', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true, language: (document.getElementById('refactor-lang') || {}).value || 'en' })
+            body: JSON.stringify({
+              email: email, website: website, use_templates: 1, accepted_terms: true,
+              language: (document.getElementById('refactor-lang') || {}).value || 'en',
+              business_name: v('rf-name'),
+              search_query: v('rf-search'),
+              services: v('rf-services'),
+              service_area: { type: 'city', value: v('rf-area') },
+              contact: { phone: v('rf-phone'), address: v('rf-address') },
+              social: { instagram: v('rf-instagram'), facebook: v('rf-facebook') },
+              logo_url: v('rf-logo')
+            })
           });
           var data = await res.json();
           if (data.success) {
