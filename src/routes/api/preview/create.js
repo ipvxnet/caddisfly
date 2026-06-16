@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { isValidEmail, sanitizeEmail, sendPreviewEmail, sendVerificationEmail } from '../../../utils/email.js';
 import { isValidUrl, scrapeWebsite } from '../../../utils/scraper.js';
 import { generateToken } from '../../../utils/crypto.js';
-import { extractScrapeSignal } from '../../../utils/company-profile.js';
+import { scrapeBestSignal } from '../../../utils/refactor-scrape.js';
 import { coerceDetailedProfile } from '../../../utils/detailed-profile.js';
 import { screenContent, policyError } from '../../../utils/content-policy.js';
 import { scrapeWithBrowser, shouldUseBrowser, isContentThin, getContentWordCount } from '../../../utils/browser-scraper.js';
@@ -311,59 +311,6 @@ export async function handlePreviewCreate(ctx) {
       }
     );
   }
-}
-
-// Heuristics for "the homepage is just a placeholder/under-construction page",
-// so we should look for the real content at a content path (/home, /inicio…).
-const PLACEHOLDER_RE = /(em desenvolvimento|under construction|coming soon|em breve|em manuten|site em constru|under maintenance|comingsoon|stay tuned)/i;
-
-function looksPlaceholder(sig) {
-  if (!sig) return true;
-  if (PLACEHOLDER_RE.test(`${sig.title || ''} ${sig.sampleText || ''}`)) return true;
-  return (sig.images || []).length < 2 && (sig.headings || []).length < 2;
-}
-
-function scoreSignal(sig) {
-  if (!sig) return -1;
-  return (sig.headings || []).length + Math.min(6, (sig.images || []).length) +
-    ((sig.sampleText || '').length > 300 ? 3 : 0) + (sig.title ? 1 : 0);
-}
-
-/**
- * Best-effort scrape signal: read the root, and if it's a thin/placeholder page,
- * probe common content paths and keep the richest. No paid calls.
- * @param {string} website - Normalized site URL
- * @returns {Promise<object|null>} scrape signal or null
- */
-async function scrapeBestSignal(website) {
-  const base = website.replace(/\/$/, '');
-  let best = null;
-  let bestScore = -1;
-  try {
-    const pages = await scrapeWebsite(base, 1);
-    if (pages.length > 0) {
-      best = extractScrapeSignal(pages[0].html, pages[0].url);
-      bestScore = scoreSignal(best);
-    }
-  } catch (e) {
-    console.log(`Root scrape failed for ${base}: ${e.message}`);
-  }
-  if (best && !looksPlaceholder(best)) return best;
-
-  for (const path of ['/home', '/home/', '/inicio', '/inicio/', '/pt', '/pt-br', '/index.html']) {
-    try {
-      const pages = await scrapeWebsite(base + path, 1);
-      if (!pages.length) continue;
-      const sig = extractScrapeSignal(pages[0].html, pages[0].url);
-      const sc = scoreSignal(sig);
-      if (sc > bestScore) {
-        best = sig;
-        bestScore = sc;
-        if (sc >= 8) break; // rich enough, stop probing
-      }
-    } catch { /* try next path */ }
-  }
-  return best;
 }
 
 /**

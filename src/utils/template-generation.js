@@ -34,7 +34,7 @@ import { attachImages, makePhotoPicker } from './section-images.js';
  * @param {object} profile - Canonical profile (see company-profile.buildProfile)
  * @returns {Promise<{sectionsCreated: number, previewPath: string, industry: string, photos: number}>}
  */
-export async function generateAndStore(env, project, profile) {
+export async function generateAndStore(env, project, profile, opts = {}) {
   // Infer the industry from EVERYTHING we know — including the headings/body
   // scraped from the original site — so a scrape-only refactor (no verified
   // Places match) still lands on the right vertical (palette, fonts, imagery).
@@ -51,7 +51,11 @@ export async function generateAndStore(env, project, profile) {
   const template = selectTemplate(industry);
 
   // 1. Image pool: real Google Places photos (→ R2) first, then stock to fill.
-  const photoPool = await buildPhotoPool(env, project, profile, industry);
+  //    A caller (the search-preview step) may pass a pool it already built so we
+  //    don't re-fetch/re-bill the same photos at confirm-build time.
+  const photoPool = Array.isArray(opts.photoPool) && opts.photoPool.length
+    ? opts.photoPool
+    : await buildPhotoPool(env, project, profile, industry);
   const pickPhoto = makePhotoPicker(photoPool);
 
   // 2. Section line-up from the industry recipe, data-gated: drop gallery
@@ -234,7 +238,7 @@ export async function generateAndStore(env, project, profile) {
  * topped up with Pexels stock when we have too few. Returns served URLs.
  * @returns {Promise<Array<{url: string, alt: string}>>}
  */
-async function buildPhotoPool(env, project, profile, industry) {
+export async function buildPhotoPool(env, project, profile, industry) {
   const pool = [];
 
   // User-confirmed photos (from the detailed form, Phase 7) lead the pool so

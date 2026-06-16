@@ -22,6 +22,8 @@ import { handleGoogleCallback } from './routes/api/auth/google-callback.js';
 import { handleLogout } from './routes/admin/logout.js';
 import { handleAdminDashboard } from './routes/admin/dashboard.js';
 import { handlePreviewCreate } from './routes/api/preview/create.js';
+import { handlePreviewSearch } from './routes/api/preview/search.js';
+import { handlePreviewBuildConfirm } from './routes/api/preview/build.js';
 import { handleManualProfile } from './routes/api/preview/manual.js';
 import { handlePreviewStatus } from './routes/api/preview/status.js';
 import { handleRunBuild } from './routes/api/preview/run-build.js';
@@ -272,6 +274,9 @@ router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingA
 
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
+// Refactor preview flow: look up what we found (paid Places, capped) → confirm → build.
+router.post('/api/preview/search', handlePreviewSearch);
+router.post('/api/preview/build/:preview_id', handlePreviewBuildConfirm);
 router.post('/api/preview/manual/:token', handleManualProfile);
 router.get('/api/preview/:preview_id/status', handlePreviewStatus);
 // Build executor for the refactor flow — called by the /verify building page;
