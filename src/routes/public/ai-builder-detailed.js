@@ -70,6 +70,24 @@ function detailedFromCompanyProfile(rp) {
   // A previously-saved detailed override round-trips exactly.
   if (cp._detailed) return coerceDetailedProfile(cp._detailed);
 
+  // New search/build flow: the user's own answers live under `userProfile` — the
+  // best pre-fill (it's literally what they typed) — with the resolved profile
+  // (`profile`) filling any blanks. Falls back to the old top-level shape.
+  if (cp.userProfile || cp.profile) {
+    const up = coerceDetailedProfile(cp.userProfile || {});
+    const prof = cp.profile || {};
+    if (!up.business_name) up.business_name = prof.name || rp.project_name || '';
+    if (!up.website_url) up.website_url = rp.website_url || prof.website || '';
+    if (!up.history) up.history = prof.description || '';
+    if (!up.contact.phone) up.contact.phone = prof.phone || '';
+    if (!up.contact.address) up.contact.address = prof.address || '';
+    if (!up.logo_url) up.logo_url = prof.logo || '';
+    if (Array.isArray(prof.social)) {
+      for (const s of prof.social) { if (s.platform && !up.social[s.platform]) up.social[s.platform] = s.url; }
+    }
+    return up;
+  }
+
   const social = Array.isArray(cp.social)
     ? Object.fromEntries(cp.social.map((s) => [s.platform, s.url]))
     : {};
