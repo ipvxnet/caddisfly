@@ -3,7 +3,7 @@
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
-import { getSectionById, getSiteSections } from '../../../db/ai-sections.js';
+import { getSectionById, getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../../db/ai-sections.js';
 import { getPagesByProject } from '../../../db/ai-pages.js';
 import { generateSectionEditorModal } from '../../../components/section-editor-modal.js';
 import { translator } from '../../../i18n/index.js';
@@ -19,9 +19,14 @@ const SKIP_ANCHOR_TYPES = new Set(['header', 'footer', 'hero']);
 
 /** Build the link-picker destination list (pages, section anchors, phone/email). */
 async function buildLinkData(db, projectKey, tr) {
+  // ALL sections (every type, every page) — not just header/footer — so the
+  // link picker can offer + validate in-page anchors (#about/#services/#contact…).
+  const sectionsP = projectKey.aiProjectId
+    ? getSectionsByAIProjectId(db, projectKey.aiProjectId, true)
+    : getSectionsByRegularProjectId(db, projectKey.projectId, true);
   const [pages, sections] = await Promise.all([
     getPagesByProject(db, projectKey).catch(() => []),
-    getSiteSections(db, projectKey, true).catch(() => []),
+    sectionsP.catch(() => []),
   ]);
   const seen = new Set();
   const secOut = [];
