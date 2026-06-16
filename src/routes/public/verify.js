@@ -22,12 +22,12 @@ import { getProjectByVerificationToken, updateProject } from '../../db/projects.
 import { getUserTier, checkEnrichmentLimit, formatRateLimitError, limitsDisabled, unlimited } from '../../utils/rate-limiter.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../utils/credits.js';
 import { enrichBusiness } from '../../utils/google-places.js';
-import { buildProfile } from '../../utils/company-profile.js';
+import { buildProfile, applyDetailedOverride } from '../../utils/company-profile.js';
+import { buildLoaderAssets, buildLoaderMarkup } from '../../components/build-loader.js';
 import { generateAndStore } from '../../utils/template-generation.js';
 import { takeOriginalSnapshot } from '../../utils/site-snapshot.js';
 import { sendPreviewEmail } from '../../utils/email.js';
 import { htmlResponse, redirect, badRequest } from '../../utils/response.js';
-import { brandMark } from '../../components/brand.js';
 import { cannedJoke } from '../../utils/jokes.js';
 import { translator } from '../../i18n/index.js';
 
@@ -109,19 +109,27 @@ export async function handleVerify(ctx) {
  *   running -> complete | no_match | failed
  */
 export async function runBuild(env, project, origin) {
-  // Recover the interim scrape signal stored at create time.
+  // Recover the interim scrape signal + user-provided answers stored at create.
   let scrapeSignal = null;
+  let userProfile = null;
   try {
-    scrapeSignal = JSON.parse(project.company_profile_json || '{}').scrapeSignal || null;
+    const cp = JSON.parse(project.company_profile_json || '{}');
+    scrapeSignal = cp.scrapeSignal || null;
+    userProfile = cp.userProfile || null;
   } catch {
     scrapeSignal = null;
   }
-  const businessName = (scrapeSignal && (scrapeSignal.siteName || scrapeSignal.title)) || '';
+  const businessName =
+    (userProfile && userProfile.business_name) ||
+    (scrapeSignal && (scrapeSignal.siteName || scrapeSignal.title)) ||
+    '';
+  // The user's "how to find us on Google" answer is the strongest Places signal.
+  const userQuery = (userProfile && (userProfile.search_query || userProfile.business_name)) || '';
 
   // PAID: identify the business via Google Places.
   let places;
   try {
-    places = await enrichBusiness(env, { businessName, website: project.website_url });
+    places = await enrichBusiness(env, { businessName, website: project.website_url, query: userQuery });
   } catch (error) {
     console.error('Places enrichment error:', error);
     await updateProject(env.DB, project.id, { enrichment_status: 'failed' });
@@ -140,18 +148,22 @@ export async function runBuild(env, project, origin) {
     (((scrapeSignal.headings || []).length > 0) ||
       (scrapeSignal.sampleText && scrapeSignal.sampleText.length > 80) ||
       (scrapeSignal.title && scrapeSignal.title.length > 0));
+  // The user's own answers can carry a build even when scrape + Places fail.
+  const haveUserProfile = !!(userProfile && (userProfile.business_name || userProfile.services));
 
-  if (!places.found && !haveScrape) {
+  if (!places.found && !haveScrape && !haveUserProfile) {
     await updateProject(env.DB, project.id, { enrichment_status: 'no_match' });
     return;
   }
   if (!places.found) {
-    console.log(`Places unverified (${places.reason}${places.matched_name ? `: matched "${places.matched_name}"` : ''}); building scrape-first for ${project.website_url}`);
+    console.log(`Places unverified (${places.reason}${places.matched_name ? `: matched "${places.matched_name}"` : ''}); building from scrape/user details for ${project.website_url}`);
   }
 
   // Build the site from the merged profile using the shared template pipeline.
-  // When places is unverified, buildProfile uses scrape-only identity.
-  const profile = buildProfile(scrapeSignal, places);
+  // When places is unverified, buildProfile uses scrape-only identity; the user's
+  // confirmed answers then override/fill blanks (name, contact, social, logo…).
+  let profile = buildProfile(scrapeSignal, places);
+  if (userProfile) profile = applyDetailedOverride(profile, userProfile);
   try {
     await generateAndStore(env, project, profile);
   } catch (error) {
@@ -219,61 +231,33 @@ function buildingPage(previewId, token, joke, lang = 'en') {
   const pid = JSON.stringify(previewId);
   const tok = JSON.stringify(token);
   const tr = translator(lang);
+  const errHtml = `<p>This is taking longer than usual. <a href="/ai-preview/${escapeHtml(previewId)}">Try opening your site</a>, or <a href="/">start over</a>.</p>`;
   return `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Building your site · Caddisfly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;min-height:100vh;
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;min-height:100vh;
        display:flex;align-items:center;justify-content:center;color:#fff;padding:24px;
        background:linear-gradient(135deg,#667eea 0%,#764ba2 55%,#f093fb 120%)}
-  .wrap{text-align:center;max-width:560px;width:100%}
-  .logo{width:128px;height:128px;margin:0 auto 6px;filter:drop-shadow(0 10px 28px rgba(0,0,0,.28))}
-  .logo svg{width:100%;height:100%}
-  h1{font-size:25px;margin:6px 0 8px;font-weight:800;letter-spacing:-.01em}
-  .sub{opacity:.92;margin:0 auto 30px;max-width:420px;line-height:1.55}
-  .joke-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;margin:0 0 10px}
-  .joke-card{background:rgba(255,255,255,.15);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-             border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:24px 26px;min-height:92px;
-             display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1.5;
-             transition:opacity .45s ease}
-  .dots{margin-top:30px;display:flex;gap:8px;justify-content:center}
-  .dots i{width:10px;height:10px;border-radius:50%;background:#fff;opacity:.5;animation:bob 1.2s infinite ease-in-out}
-  .dots i:nth-child(2){animation-delay:.18s}.dots i:nth-child(3){animation-delay:.36s}
-  @keyframes bob{0%,100%{opacity:.35;transform:translateY(0)}50%{opacity:1;transform:translateY(-6px)}}
-  .err{display:none;margin-top:24px;line-height:1.6}
-  .err a{color:#fff;font-weight:700}
-  @media (prefers-reduced-motion:reduce){.dots i{animation:none}}
 </style>
+${buildLoaderAssets(lang)}
 </head>
 <body>
-  <div class="wrap">
-    <div class="logo">${brandMark('build-logo', '', true)}</div>
-    <h1>${tr('loading.building_title')}</h1>
-    <p class="sub">${tr('loading.building_sub')}</p>
-    <p class="joke-label">${tr('loading.joke_label')}</p>
-    <div class="joke-card" id="joke">${escapeHtml(joke)}</div>
-    <div class="dots"><i></i><i></i><i></i></div>
-    <div class="err" id="err">
-      <p>This is taking longer than usual. <a href="/ai-preview/${escapeHtml(previewId)}">Try opening your site</a>, or <a href="/">start over</a>.</p>
-    </div>
-  </div>
+  ${buildLoaderMarkup({ lang, title: tr('loading.building_title'), sub: tr('loading.building_sub'), joke, errHtml })}
   <script>
     var previewId=${pid}, token=${tok};
-    var jokeEl=document.getElementById('joke'), errEl=document.getElementById('err');
-    function rotateJoke(){
-      fetch('/api/fun/joke').then(function(r){return r.json()}).then(function(d){
-        if(d&&d.joke){jokeEl.style.opacity=0;setTimeout(function(){jokeEl.textContent=d.joke;jokeEl.style.opacity=1;},450);}
-      }).catch(function(){});
-    }
-    var jokeTimer=setInterval(rotateJoke,12000);
+    CFLoader.startSteps();
     function done(s){
-      if(s==='complete'){clearInterval(jokeTimer);location.href='/ai-preview/'+encodeURIComponent(previewId);return true;}
-      if(s==='no_match'){clearInterval(jokeTimer);location.href='/verify/'+encodeURIComponent(token);return true;}
-      if(s==='failed'){clearInterval(jokeTimer);errEl.style.display='block';return true;}
+      if(s==='complete'){CFLoader.complete();setTimeout(function(){location.href='/ai-preview/'+encodeURIComponent(previewId);},900);return true;}
+      if(s==='no_match'){CFLoader.stop();location.href='/verify/'+encodeURIComponent(token);return true;}
+      if(s==='failed'){CFLoader.fail();return true;}
       return false;
     }
     // Drive the build: this request stays open for the whole build (the worker
@@ -290,8 +274,8 @@ function buildingPage(previewId, token, joke, lang = 'en') {
       tries++;
       fetch('/api/preview/'+encodeURIComponent(previewId)+'/status').then(function(r){return r.json()}).then(function(d){
         if(done(d&&d.status))return;
-        if(tries===72){errEl.style.display='block';}  // ~3 min: surface the escape hatch, keep polling
-        if(tries>240){return;}                        // ~10 min: give up
+        if(tries===72){var e=document.getElementById('cf-err');if(e)e.style.display='block';}  // ~3 min
+        if(tries>240){return;}                                                                  // ~10 min: give up
         setTimeout(poll,2500);
       }).catch(function(){setTimeout(poll,3000);});
     }

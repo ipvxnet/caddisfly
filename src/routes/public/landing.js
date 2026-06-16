@@ -3,6 +3,8 @@
 import { htmlResponse } from '../../utils/response.js';
 import { headTags, langSwitcher } from '../../components/brand.js';
 import { translator } from '../../i18n/index.js';
+import { buildLoaderAssets, buildLoaderMarkup } from '../../components/build-loader.js';
+import { cannedJoke } from '../../utils/jokes.js';
 
 // Inline brand mark (continuous-wing "C", brand gradient). Reused in header/hero/footer.
 export function brandMark(id, cls = '', animated = false) {
@@ -245,6 +247,32 @@ export async function handleLanding(ctx) {
                 <div class="err" id="website-err"></div>
               </div>
               <div class="field">
+                <label for="rf-name">${tr('landing.rf_q_name')}</label>
+                <input type="text" id="rf-name" name="rf-name" placeholder="${tr('landing.rf_q_name_ph')}">
+              </div>
+              <div class="field">
+                <label for="rf-search">${tr('landing.rf_q_search')}</label>
+                <input type="text" id="rf-search" name="rf-search" placeholder="${tr('landing.rf_q_search_ph')}">
+                <p class="form-note" style="margin-top:.35rem;text-align:left">${tr('landing.rf_q_search_help')}</p>
+              </div>
+              <details class="rf-more" style="margin-bottom:.9rem">
+                <summary style="cursor:pointer;font-weight:600;color:var(--p2);font-size:.9rem;margin-bottom:.6rem">${tr('landing.rf_more')}</summary>
+                <div class="field"><label for="rf-services">${tr('landing.rf_q_services')}</label>
+                  <input type="text" id="rf-services" name="rf-services" placeholder="${tr('landing.rf_q_services_ph')}"></div>
+                <div class="field"><label for="rf-area">${tr('landing.rf_q_area')}</label>
+                  <input type="text" id="rf-area" name="rf-area" placeholder="${tr('landing.rf_q_area_ph')}"></div>
+                <div class="field"><label for="rf-phone">${tr('landing.rf_q_phone')}</label>
+                  <input type="text" id="rf-phone" name="rf-phone" placeholder="${tr('landing.rf_q_phone_ph')}"></div>
+                <div class="field"><label for="rf-address">${tr('landing.rf_q_address')}</label>
+                  <input type="text" id="rf-address" name="rf-address" placeholder="${tr('landing.rf_q_address_ph')}"></div>
+                <div class="field"><label for="rf-instagram">Instagram</label>
+                  <input type="text" id="rf-instagram" name="rf-instagram" placeholder="https://instagram.com/…"></div>
+                <div class="field"><label for="rf-facebook">Facebook</label>
+                  <input type="text" id="rf-facebook" name="rf-facebook" placeholder="https://facebook.com/…"></div>
+                <div class="field"><label for="rf-logo">${tr('landing.rf_q_logo')}</label>
+                  <input type="text" id="rf-logo" name="rf-logo" placeholder="https://…/logo.png"></div>
+              </details>
+              <div class="field">
                 <label for="refactor-lang">${tr('builder.lang_label')}</label>
                 <select id="refactor-lang" name="refactor-lang">
                   <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
@@ -257,13 +285,14 @@ export async function handleLanding(ctx) {
                 <label for="refactor-agree" style="font-weight:500;margin:0;cursor:pointer;font-size:.9rem">${tr('landing.refactor_agree', { terms: `<a href="/terms" target="_blank">${tr('footer.terms')}</a>`, privacy: `<a href="/privacy" target="_blank">${tr('footer.privacy')}</a>` })}</label>
               </div>
               <button type="submit" class="btn btn-primary btn-full" id="refactor-btn">
-                <span id="refactor-label">${tr('landing.refactor_btn')}</span>
+                <span id="refactor-label">${tr('landing.rf_btn_preview')}</span>
                 <span class="spin" id="refactor-spin"></span>
               </button>
               <p class="form-note">${tr('landing.refactor_note')}</p>
             </form>
             <div class="alert ok" id="refactor-ok"></div>
             <div class="alert bad" id="refactor-bad"></div>
+            <div id="rf-preview" hidden></div>
           </div>
         </div>
       </div>
@@ -336,15 +365,22 @@ export async function handleLanding(ctx) {
       var ok = document.getElementById('refactor-ok');
       var bad = document.getElementById('refactor-bad');
       var RF = ${JSON.stringify({
-        btn: tr('landing.refactor_btn'),
-        sending: tr('landing.rf_sending'),
+        btn_preview: tr('landing.rf_btn_preview'),
+        sending: tr('landing.rf_searching'),
         err_email: tr('landing.rf_err_email'),
         err_url: tr('landing.rf_err_url'),
         err_agree: tr('landing.rf_err_agree'),
         err_generic: tr('landing.rf_err_generic'),
         err_network: tr('landing.rf_err_network'),
-        check_fallback: tr('landing.refactor_almost'),
-        view_now: tr('landing.rf_view_now'),
+        card_title: tr('landing.rf_card_title'),
+        build: tr('landing.rf_build'),
+        refine: tr('landing.rf_refine'),
+        remaining: tr('landing.rf_remaining'),
+        limit: tr('landing.rf_limit'),
+        building: tr('landing.rf_building'),
+        built: tr('landing.rf_built'),
+        view: tr('landing.rf_view'),
+        nomatch: tr('landing.rf_nomatch'),
       })};
 
       function isEmail(v){ return v && v.indexOf('@') > 0 && v.length > 3; }
@@ -353,11 +389,62 @@ export async function handleLanding(ctx) {
         catch(e){ return false; }
       }
 
+      function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+      async function doBuild(previewId, token, prev){
+        bad.classList.remove('show');
+        var ov = document.getElementById('cf-overlay');
+        if (ov) { ov.style.display = 'flex'; if (window.CFLoader) CFLoader.startSteps(); }
+        try {
+          var res = await fetch('/api/preview/build/' + previewId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: token }) });
+          var d = await res.json();
+          if (d.success && d.preview_url) {
+            if (window.CFLoader) CFLoader.complete();
+            setTimeout(function(){ location.href = d.preview_url; }, 1000);
+          } else {
+            if (ov) ov.style.display = 'none';
+            bad.textContent = d.error || RF.err_generic; bad.classList.add('show');
+          }
+        } catch(e){
+          if (ov) ov.style.display = 'none';
+          bad.textContent = RF.err_network; bad.classList.add('show');
+        }
+      }
+
+      function renderPreview(data){
+        var prev = document.getElementById('rf-preview');
+        var photos = (data.photos||[]).slice(0,4).map(function(u){ return '<img src="'+esc(u)+'" alt="" loading="lazy" style="width:90px;height:90px;object-fit:cover;border-radius:9px;flex:none">'; }).join('');
+        var revs = (data.reviews||[]).map(function(r){ return '<div style="font-size:.83rem;color:var(--body);margin-top:.4rem">“'+esc(r.text)+'” <span style="color:var(--muted)">— '+esc(r.author||'')+'</span></div>'; }).join('');
+        var meta = [];
+        if (data.address) meta.push(esc(data.address));
+        if (data.phone) meta.push(esc(data.phone));
+        if (data.rating) meta.push('★ '+data.rating+' ('+(data.rating_count||0)+')');
+        var rem = (typeof data.remaining==='number') ? ('<p style="font-size:.75rem;color:var(--muted);margin-top:.7rem;text-align:center">'+esc(RF.remaining).replace('{n}', data.remaining)+'</p>') : '';
+        prev.innerHTML =
+          '<div style="margin-top:1rem;border:1px solid var(--line);border-radius:14px;padding:1.1rem;background:var(--soft)">'
+          + '<div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--p2);margin-bottom:.5rem">'+esc(RF.card_title)+'</div>'
+          + '<div style="font-size:1.15rem;font-weight:800;color:var(--ink)">'+esc(data.name||'')+(data.category?(' <span style="font-weight:500;color:var(--muted);font-size:.9rem">· '+esc(data.category)+'</span>'):'')+'</div>'
+          + (meta.length?('<div style="font-size:.83rem;color:var(--body);margin-top:.25rem">'+meta.join(' · ')+'</div>'):'')
+          + (photos?('<div style="display:flex;gap:.45rem;overflow-x:auto;margin:.8rem 0">'+photos+'</div>'):'')
+          + (data.sample?('<p style="font-size:.85rem;color:var(--body);margin-top:.5rem">'+esc(data.sample)+'…</p>'):'')
+          + revs
+          + (data.found?'':('<p style="font-size:.8rem;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.5rem .7rem;margin-top:.7rem">'+esc(RF.nomatch)+'</p>'))
+          + '<div style="display:flex;gap:.5rem;margin-top:.9rem"><button type="button" class="btn btn-primary rf-build" style="flex:1;justify-content:center">'+esc(RF.build)+'</button>'
+          + '<button type="button" class="btn btn-ghost rf-refine">'+esc(RF.refine)+'</button></div>'
+          + rem
+          + '</div>';
+        prev.hidden = false;
+        prev.querySelector('.rf-build').addEventListener('click', function(){ doBuild(data.preview_id, data.build_token, prev); });
+        prev.querySelector('.rf-refine').addEventListener('click', function(){ prev.hidden = true; var s=document.getElementById('rf-search'); if(s) s.focus(); });
+        prev.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }
+
       form.addEventListener('submit', async function(e){
         e.preventDefault();
         [emailErr, siteErr].forEach(function(el){ el.classList.remove('show'); });
         [emailInput, siteInput].forEach(function(el){ el.classList.remove('error'); });
         ok.classList.remove('show'); bad.classList.remove('show');
+        var pv = document.getElementById('rf-preview'); if (pv) pv.hidden = true;
 
         var email = emailInput.value.trim();
         var website = siteInput.value.trim();
@@ -369,29 +456,35 @@ export async function handleLanding(ctx) {
 
         btn.disabled = true; label.textContent = RF.sending; spin.classList.add('show');
         try {
-          var res = await fetch('/api/preview/create', {
+          var v = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+          var res = await fetch('/api/preview/search', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, website: website, use_templates: 1, accepted_terms: true, language: (document.getElementById('refactor-lang') || {}).value || 'en' })
+            body: JSON.stringify({
+              email: email, website: website, accepted_terms: true,
+              language: (document.getElementById('refactor-lang') || {}).value || 'en',
+              business_name: v('rf-name'), search_query: v('rf-search'), services: v('rf-services'),
+              service_area: { type: 'city', value: v('rf-area') },
+              contact: { phone: v('rf-phone'), address: v('rf-address') },
+              social: { instagram: v('rf-instagram'), facebook: v('rf-facebook') },
+              logo_url: v('rf-logo')
+            })
           });
           var data = await res.json();
-          if (data.success) {
-            var html = data.message || RF.check_fallback;
-            if (data.previewUrl) { html += '<br><br><a href="' + data.previewUrl + '" target="_blank" style="font-weight:700;color:#22543d">' + RF.view_now + '</a>'; }
-            ok.innerHTML = html; ok.classList.add('show');
-            form.reset();
-          } else {
-            bad.textContent = data.error || RF.err_generic;
-            bad.classList.add('show');
-          }
+          if (data.success) { renderPreview(data); }
+          else if (data.limit_reached) { bad.textContent = data.error || RF.limit; bad.classList.add('show'); }
+          else { bad.textContent = data.error || RF.err_generic; bad.classList.add('show'); }
         } catch(err) {
-          bad.textContent = RF.err_network;
-          bad.classList.add('show');
+          bad.textContent = RF.err_network; bad.classList.add('show');
         } finally {
-          btn.disabled = false; label.textContent = RF.btn; spin.classList.remove('show');
+          btn.disabled = false; label.textContent = RF.btn_preview; spin.classList.remove('show');
         }
       });
     })();
   </script>
+  <div id="cf-overlay" style="display:none;position:fixed;inset:0;z-index:10070;color:#fff;padding:24px;overflow:auto;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 55%,#f093fb 120%)">
+    ${buildLoaderMarkup({ lang, title: tr('loading.building_title'), sub: tr('loading.building_sub'), joke: cannedJoke(0, lang), errHtml: '' })}
+  </div>
+  ${buildLoaderAssets(lang)}
 </body>
 </html>`;
 

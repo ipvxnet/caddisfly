@@ -34,7 +34,7 @@ import { attachImages, makePhotoPicker } from './section-images.js';
  * @param {object} profile - Canonical profile (see company-profile.buildProfile)
  * @returns {Promise<{sectionsCreated: number, previewPath: string, industry: string, photos: number}>}
  */
-export async function generateAndStore(env, project, profile) {
+export async function generateAndStore(env, project, profile, opts = {}) {
   // Infer the industry from EVERYTHING we know — including the headings/body
   // scraped from the original site — so a scrape-only refactor (no verified
   // Places match) still lands on the right vertical (palette, fonts, imagery).
@@ -51,7 +51,11 @@ export async function generateAndStore(env, project, profile) {
   const template = selectTemplate(industry);
 
   // 1. Image pool: real Google Places photos (→ R2) first, then stock to fill.
-  const photoPool = await buildPhotoPool(env, project, profile, industry);
+  //    A caller (the search-preview step) may pass a pool it already built so we
+  //    don't re-fetch/re-bill the same photos at confirm-build time.
+  const photoPool = Array.isArray(opts.photoPool) && opts.photoPool.length
+    ? opts.photoPool
+    : await buildPhotoPool(env, project, profile, industry);
   const pickPhoto = makePhotoPicker(photoPool);
 
   // 2. Section line-up from the industry recipe, data-gated: drop gallery
@@ -234,13 +238,34 @@ export async function generateAndStore(env, project, profile) {
  * topped up with Pexels stock when we have too few. Returns served URLs.
  * @returns {Promise<Array<{url: string, alt: string}>>}
  */
-async function buildPhotoPool(env, project, profile, industry) {
+export async function buildPhotoPool(env, project, profile, industry) {
   const pool = [];
 
   // User-confirmed photos (from the detailed form, Phase 7) lead the pool so
   // the owner's real images are used before Places/stock.
   if (Array.isArray(profile.user_pictures)) {
     for (const url of profile.user_pictures) pool.push({ url, alt: profile.name });
+  }
+
+  // Real photos scraped from the original site (its own imagery) → R2. Crucial
+  // for a business with no Google listing whose site we COULD read (or read at a
+  // content path like /home). Skip fetch failures and tiny/icon responses.
+  const scraped = Array.isArray(profile.scrape_images) ? profile.scrape_images.slice(0, 6) : [];
+  for (let i = 0; i < scraped.length && pool.length < 6; i++) {
+    try {
+      const r = await fetch(scraped[i], { headers: { 'User-Agent': 'Mozilla/5.0', Referer: profile.website || '' } });
+      if (!r.ok) continue;
+      const ct = r.headers.get('content-type') || '';
+      if (!/^image\//i.test(ct)) continue;
+      const bytes = await r.arrayBuffer();
+      if (bytes.byteLength < 8000) continue; // likely an icon/spacer
+      const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
+      const filename = `s${i}.${ext}`;
+      await uploadToR2(env.STORAGE, `assets/${project.preview_id}/${filename}`, bytes, ct);
+      pool.push({ url: `/preview-asset/${project.preview_id}/${filename}`, alt: profile.name });
+    } catch (error) {
+      console.error(`Scrape image ${i} failed:`, error.message);
+    }
   }
 
   // Real business photos from Google Places → R2 → our served URL.

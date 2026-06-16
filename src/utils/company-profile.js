@@ -27,6 +27,7 @@ export function extractScrapeSignal(html, url) {
     domain: domainFromUrl(url),
     logo: '',
     brandColor: '',
+    images: [],
   };
 
   if (!html || typeof html !== 'string') {
@@ -60,7 +61,68 @@ export function extractScrapeSignal(html, url) {
   // A small sample of visible body text for additional context.
   signal.sampleText = visibleText(html).slice(0, 1500);
 
+  // Real content photos from the page body (the original site's own imagery) —
+  // used to fill the photo pool when the business has no Google Places listing.
+  signal.images = extractContentImages(html, url);
+
   return signal;
+}
+
+/**
+ * Pull likely *content* images (real photos) from page HTML, skipping logos,
+ * icons, sprites, emoji, screenshots and tiny thumbnails. Returns absolute URLs,
+ * best-first (real-photo formats and larger dimension hints rank higher).
+ * @param {string} html
+ * @param {string} baseUrl
+ * @returns {string[]}
+ */
+function extractContentImages(html, baseUrl) {
+  const JUNK = /(logo|icon|favicon|sprite|smiley|emoji|removebg|avatar|placeholder|loading|spinner|badge|button|screenshot|whatsapp|pixel|1x1|blank|banner)/i;
+  const raw = new Set();
+  const re = /<img\b[^>]*?>/gi;
+  let tag;
+  while ((tag = re.exec(html)) && raw.size < 40) {
+    const t = tag[0];
+    let src = (t.match(/\b(?:data-src|src)=["']([^"']+)["']/i) || [])[1] || '';
+    const ss = (t.match(/\bsrcset=["']([^"']+)["']/i) || [])[1];
+    if (ss) {
+      const cands = ss.split(',').map((s) => s.trim().split(/\s+/)[0]).filter(Boolean);
+      if (cands.length) src = cands[cands.length - 1]; // largest in srcset
+    }
+    if (src) raw.add(src);
+  }
+  const out = [];
+  for (const r of raw) {
+    if (/^data:/i.test(r)) continue;
+    const abs = absoluteUrl(r, baseUrl);
+    if (!abs) continue;
+    const clean = abs.split('?')[0];
+    if (!/\.(jpe?g|webp|png)$/i.test(clean)) continue;
+    if (JUNK.test(clean)) continue;
+    const dim = clean.match(/(\d{2,4})x(\d{2,4})\.(?:jpe?g|webp|png)$/i);
+    if (dim && Math.max(+dim[1], +dim[2]) < 400) continue; // skip thumbnails
+    out.push(clean);
+  }
+  const uniq = [...new Set(out)];
+  // Prefer real people/product photos over banners & ads: square/portrait JPGs
+  // rank highest; very wide images and "featured/banner/hero/slide" names (which
+  // are almost always promo graphics) are pushed to the bottom.
+  const BANNERISH = /(featured|slide|carousel|hero|destaque|capa|promo|banner|cover|background|outdoor|propaganda)/i;
+  const score = (u) => {
+    let s = /\.(jpe?g|webp)$/i.test(u) ? 1000 : 0; // real photos are usually jpg/webp
+    const d = u.match(/(\d{2,4})x(\d{2,4})/);
+    if (d) {
+      const w = +d[1], h = +d[2], mx = Math.max(w, h), mn = Math.min(w, h);
+      s += Math.min(1500, mx);
+      const aspect = mn ? mx / mn : 1;
+      if (aspect <= 1.4) s += 600;        // square/portrait → a person or product
+      else if (aspect >= 1.9) s -= 700;   // very wide → banner/hero strip
+    }
+    if (BANNERISH.test(u)) s -= 1200;     // filename says banner/ad
+    return s;
+  };
+  uniq.sort((a, b) => score(b) - score(a));
+  return uniq.slice(0, 8);
 }
 
 /**
@@ -89,6 +151,9 @@ export function buildProfile(scrapeSignal = {}, placesData = {}) {
     rating_count: places.rating_count || 0,
     reviews: Array.isArray(places.reviews) ? places.reviews : [],
     photos: Array.isArray(places.photos) ? places.photos : [],
+    // Real content images scraped from the original site (used when there are no
+    // Places photos — e.g. a business with no Google listing).
+    scrape_images: Array.isArray(scrapeSignal.images) ? scrapeSignal.images : [],
     // Original-site identity (recovered from the static <head>).
     logo: scrapeSignal.logo || '',
     brand_color: scrapeSignal.brandColor || '',
