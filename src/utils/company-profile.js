@@ -104,10 +104,21 @@ function extractContentImages(html, baseUrl) {
     out.push(clean);
   }
   const uniq = [...new Set(out)];
+  // Prefer real people/product photos over banners & ads: square/portrait JPGs
+  // rank highest; very wide images and "featured/banner/hero/slide" names (which
+  // are almost always promo graphics) are pushed to the bottom.
+  const BANNERISH = /(featured|slide|carousel|hero|destaque|capa|promo|banner|cover|background|outdoor|propaganda)/i;
   const score = (u) => {
     let s = /\.(jpe?g|webp)$/i.test(u) ? 1000 : 0; // real photos are usually jpg/webp
     const d = u.match(/(\d{2,4})x(\d{2,4})/);
-    if (d) s += Math.min(2000, Math.max(+d[1], +d[2]));
+    if (d) {
+      const w = +d[1], h = +d[2], mx = Math.max(w, h), mn = Math.min(w, h);
+      s += Math.min(1500, mx);
+      const aspect = mn ? mx / mn : 1;
+      if (aspect <= 1.4) s += 600;        // square/portrait → a person or product
+      else if (aspect >= 1.9) s -= 700;   // very wide → banner/hero strip
+    }
+    if (BANNERISH.test(u)) s -= 1200;     // filename says banner/ad
     return s;
   };
   uniq.sort((a, b) => score(b) - score(a));

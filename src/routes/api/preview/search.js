@@ -69,7 +69,8 @@ export async function handlePreviewSearch(ctx) {
     await recordLookup(env.DB, ipHash, sanitizedEmail);
 
     // Scrape (placeholder-aware) + paid Places lookup.
-    const scrapeSignal = await scrapeBestSignal(normalizedWebsite);
+    // browser:true → allow the paid Zyte fallback; this path is capped at 5/day.
+    const scrapeSignal = await scrapeBestSignal(normalizedWebsite, env, { browser: true });
     const businessName = userProfile.business_name || (scrapeSignal && (scrapeSignal.siteName || scrapeSignal.title)) || '';
     const userQuery = userProfile.search_query || userProfile.business_name || '';
     let places = { found: false };
