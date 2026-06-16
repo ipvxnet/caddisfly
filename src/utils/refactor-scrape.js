@@ -5,7 +5,7 @@
 
 import { scrapeWebsite } from './scraper.js';
 import { extractScrapeSignal } from './company-profile.js';
-import { zyteEnabled, zyteBrowserHtml } from './zyte-scraper.js';
+import { zyteEnabled, zyteBrowserHtml, zytePrimary } from './zyte-scraper.js';
 
 const PLACEHOLDER_RE = /(em desenvolvimento|under construction|coming soon|em breve|em manuten|site em constru|under maintenance|comingsoon|stay tuned)/i;
 const CONTENT_PATHS = ['/home', '/home/', '/inicio', '/inicio/', '/pt', '/pt-br', '/index.html'];
@@ -41,6 +41,20 @@ export async function scrapeBestSignal(website, env = null, opts = {}) {
     const sc = scoreSignal(sig);
     if (sc > bestScore) { best = sig; bestScore = sc; }
   };
+  const browserOK = opts.browser && zyteEnabled(env);
+  async function tryZyte() {
+    for (const path of ['', '/home', '/inicio']) {
+      const url = base + path;
+      consider(await zyteBrowserHtml(env, url), url);
+      if (bestScore >= 8) break;
+    }
+  }
+
+  // Zyte PRIMARY (preview testing): render first for the cleanest capture.
+  if (browserOK && zytePrimary(env)) {
+    await tryZyte();
+    if (best && !looksPlaceholder(best)) return best;
+  }
 
   // 1) Cheap static fetch of the root.
   try {
@@ -61,14 +75,10 @@ export async function scrapeBestSignal(website, env = null, opts = {}) {
   }
   if (best && !looksPlaceholder(best)) return best;
 
-  // 3) Still thin/blocked → PAID browser render via Zyte (opt-in + configured).
-  if (opts.browser && zyteEnabled(env)) {
-    for (const path of ['', '/home', '/inicio']) {
-      const url = base + path;
-      const html = await zyteBrowserHtml(env, url);
-      consider(html, url);
-      if (bestScore >= 8) break;
-    }
+  // 3) Still thin/blocked → PAID browser render via Zyte (fallback; skipped if
+  //    already tried as primary above).
+  if (browserOK && !zytePrimary(env)) {
+    await tryZyte();
   }
   return best;
 }

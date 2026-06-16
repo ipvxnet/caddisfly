@@ -271,6 +271,19 @@ export async function handleLanding(ctx) {
                   <input type="text" id="rf-facebook" name="rf-facebook" placeholder="https://facebook.com/…"></div>
                 <div class="field"><label for="rf-logo">${tr('landing.rf_q_logo')}</label>
                   <input type="text" id="rf-logo" name="rf-logo" placeholder="https://…/logo.png"></div>
+                <div class="field"><label>${tr('landing.rf_q_colors')}</label>
+                  <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+                    <span style="display:flex;gap:.4rem;align-items:center;flex:1;min-width:160px">
+                      <input type="color" value="#764ba2" aria-label="primary" oninput="document.getElementById('rf-primary').value=this.value" style="width:42px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;flex:none">
+                      <input type="text" id="rf-primary" name="rf-primary" placeholder="${tr('landing.rf_color_primary_ph')}" style="flex:1">
+                    </span>
+                    <span style="display:flex;gap:.4rem;align-items:center;flex:1;min-width:160px">
+                      <input type="color" value="#caa14a" aria-label="accent" oninput="document.getElementById('rf-accent').value=this.value" style="width:42px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;flex:none">
+                      <input type="text" id="rf-accent" name="rf-accent" placeholder="${tr('landing.rf_color_accent_ph')}" style="flex:1">
+                    </span>
+                  </div>
+                  <p class="form-note" style="margin-top:.35rem;text-align:left">${tr('landing.rf_colors_help')}</p>
+                </div>
               </details>
               <div class="field">
                 <label for="refactor-lang">${tr('builder.lang_label')}</label>
@@ -466,7 +479,8 @@ export async function handleLanding(ctx) {
               service_area: { type: 'city', value: v('rf-area') },
               contact: { phone: v('rf-phone'), address: v('rf-address') },
               social: { instagram: v('rf-instagram'), facebook: v('rf-facebook') },
-              logo_url: v('rf-logo')
+              logo_url: v('rf-logo'),
+              brand_color: v('rf-primary'), accent_color: v('rf-accent')
             })
           });
           var data = await res.json();

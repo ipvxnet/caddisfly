@@ -13,6 +13,12 @@ export function zyteEnabled(env) {
   return !!(env && env.ZYTE_API_KEY);
 }
 
+/** Should Zyte render FIRST (primary), not just as a fallback? Env-gated so we
+ *  can test it on preview (ZYTE_PRIMARY="true") while prod stays fallback-only. */
+export function zytePrimary(env) {
+  return !!(env && (env.ZYTE_PRIMARY === 'true' || env.ZYTE_PRIMARY === true));
+}
+
 /**
  * Fetch a page's browser-rendered HTML via Zyte. Returns the HTML string, or
  * null on any failure/misconfiguration (caller falls back to static).

@@ -34,8 +34,14 @@ export function emptyDetailedProfile() {
     contact: { email: '', phone: '', address: '' },
     logo_url: '',
     picture_urls: [],
+    // Owner-specified brand colors (refactor: keep their existing branding).
+    brand_color: '',
+    accent_color: '',
   };
 }
+
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+const hex = (v) => (typeof v === 'string' && HEX_RE.test(v.trim()) ? v.trim().toLowerCase() : '');
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '');
 
@@ -75,6 +81,8 @@ export function coerceDetailedProfile(raw = {}) {
   base.picture_urls = Array.isArray(raw.picture_urls)
     ? raw.picture_urls.map(str).filter(Boolean)
     : [];
+  base.brand_color = hex(raw.brand_color);
+  base.accent_color = hex(raw.accent_color);
 
   return base;
 }
