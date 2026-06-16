@@ -128,6 +128,12 @@ export async function generateAndStore(env, project, profile, opts = {}) {
     primaryColor = isHexColor(profile.brand_color) ? profile.brand_color : industryPalette.primary;
     secondaryColor = industryPalette.secondary;
   }
+  // Owner-specified brand colors win over the template/industry defaults — a
+  // refactor should keep the branding the owner invested in. (Only set when the
+  // user provided them, or a real theme-color was detected; AI-builder generation
+  // never sets brand_color, so it's unaffected.)
+  if (isHexColor(profile.brand_color)) primaryColor = profile.brand_color;
+  if (isHexColor(profile.accent_color)) secondaryColor = profile.accent_color;
   const config = await createWebsiteConfig(env.DB, {
     project_id: project.id,
     primary_color: primaryColor,
