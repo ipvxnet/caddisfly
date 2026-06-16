@@ -14,6 +14,7 @@ import { createProject, updateProject } from '../../../db/projects.js';
 import { scrapeBestSignal } from '../../../utils/refactor-scrape.js';
 import { enrichBusiness } from '../../../utils/google-places.js';
 import { buildProfile, applyDetailedOverride } from '../../../utils/company-profile.js';
+import { extractBrandColors } from '../../../utils/brand-colors.js';
 import { coerceDetailedProfile } from '../../../utils/detailed-profile.js';
 import { buildPhotoPool } from '../../../utils/template-generation.js';
 import { inferIndustry } from '../../../utils/industry-style.js';
@@ -82,6 +83,23 @@ export async function handlePreviewSearch(ctx) {
 
     let profile = buildProfile(scrapeSignal, places);
     profile = applyDetailedOverride(profile, userProfile);
+
+    // Auto-detect the site's real brand colors (render + computed styles) when
+    // the owner didn't supply them — so a novice's refactor keeps their branding.
+    if (!profile.brand_color && env.BROWSER) {
+      try {
+        const renderUrl = (scrapeSignal && scrapeSignal.sourceUrl) || normalizedWebsite;
+        const bc = await extractBrandColors(env, renderUrl);
+        if (bc && bc.primary) {
+          profile.brand_color = bc.primary;
+          if (bc.accent) profile.accent_color = profile.accent_color || bc.accent;
+          profile.detected_dark = !!bc.dark;
+          console.log(`Auto brand colors for ${renderUrl}: primary=${bc.primary} accent=${bc.accent || '-'} dark=${bc.dark}`);
+        }
+      } catch (e) {
+        console.error('Brand color detect error:', e.message);
+      }
+    }
 
     // Host the cached profile + R2 photos on a project so confirm-build reuses
     // them with no second paid call.

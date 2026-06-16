@@ -28,6 +28,7 @@ export function extractScrapeSignal(html, url) {
     logo: '',
     brandColor: '',
     images: [],
+    sourceUrl: url || '',
   };
 
   if (!html || typeof html !== 'string') {
