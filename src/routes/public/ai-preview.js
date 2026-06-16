@@ -120,11 +120,14 @@ export async function handleAIPreview(ctx) {
       }
 
       // Prefer the real business name (from the stored company profile) for the
-      // page <title>; fall back to the URL only if unavailable.
+      // page <title>; fall back to the URL only if unavailable. The verify flow
+      // stores the profile at the top level; the search/build flow nests it
+      // under `.profile` — accept either shape.
       let businessName = regularProject.website_url;
       try {
-        const profile = JSON.parse(regularProject.company_profile_json || '{}');
-        if (profile && profile.name) businessName = profile.name;
+        const cp = JSON.parse(regularProject.company_profile_json || '{}');
+        const name = cp.name || (cp.profile && cp.profile.name);
+        if (name) businessName = name;
       } catch {
         // keep URL fallback
       }
