@@ -61,6 +61,10 @@ export function handleTemplatesShowcase(ctx) {
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
   const origin = (ctx && ctx.url && ctx.url.origin) || (ctx && ctx.env && ctx.env.APP_URL) || '';
+  // When opened from a project's customize page (?apply=<id>), clicking a template
+  // APPLIES it to that site and returns to the editor, instead of starting a new
+  // build. The apply API is access-gated, so a bad id just gets a 403.
+  const applyTo = (ctx && ctx.query && /^[A-Za-z0-9_-]+$/.test(ctx.query.apply || '') ? ctx.query.apply : '');
   const templates = demoTemplates();
 
   // ItemList structured data so search engines understand this is a gallery of
@@ -103,7 +107,9 @@ export function handleTemplatesShowcase(ctx) {
         <p class="desc">${escapeHtml(t.description)}</p>
         <div class="meta-foot">
           <span class="fonts">${escapeHtml(t.fonts.heading)} · ${escapeHtml(t.fonts.body)}</span>
-          <a class="use" href="/ai-builder">${tr('tplpage.use_style')} →</a>
+          ${applyTo
+            ? `<button type="button" class="use use-apply" data-key="${escapeHtml(t.key)}">${tr('tplpage.apply_here')} →</button>`
+            : `<a class="use" href="/ai-builder">${tr('tplpage.use_style')} →</a>`}
         </div>
       </div>
     </article>`;
@@ -188,10 +194,11 @@ export function handleTemplatesShowcase(ctx) {
     </div>
   </header>
   <main>
+    ${applyTo ? `<div style="position:sticky;top:66px;z-index:40;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;gap:1.2rem;flex-wrap:wrap;padding:.65rem 1rem;font-size:.92rem;font-weight:600"><span>${tr('tplpage.apply_banner')}</span><a href="/ai-builder/customize/${escapeHtml(applyTo)}" style="color:#fff;text-decoration:underline">${tr('tplpage.apply_back')}</a></div>` : ''}
     <section class="hero wrap">
       <span class="eyebrow">${templates.length} ${tr('tplpage.eyebrow')}</span>
-      <h1>${tr('tplpage.h1')}</h1>
-      <p>${tr('tplpage.sub')}</p>
+      <h1>${applyTo ? tr('tplpage.apply_h1') : tr('tplpage.h1')}</h1>
+      <p>${applyTo ? tr('tplpage.apply_sub') : tr('tplpage.sub')}</p>
     </section>
     <section class="wrap">
       <div class="filterbar">
@@ -212,6 +219,27 @@ export function handleTemplatesShowcase(ctx) {
   </main>
   <script>
     (function () {
+      // Apply-to-existing-site flow: clicking a template applies it to the project
+      // from ?apply=<id> and returns to that editor (vs. starting a new build).
+      var APPLY_TO = ${JSON.stringify(applyTo)};
+      if (APPLY_TO) {
+        var APPLYING = ${JSON.stringify(tr('tplpage.applying'))};
+        var APPLY_ERR = ${JSON.stringify(tr('tplpage.apply_err'))};
+        document.addEventListener('click', function (e) {
+          var btn = e.target.closest && e.target.closest('.use-apply');
+          if (!btn) return;
+          e.preventDefault();
+          var key = btn.getAttribute('data-key');
+          btn.disabled = true; btn.textContent = APPLYING;
+          fetch('/api/ai-builder/' + encodeURIComponent(APPLY_TO) + '/template', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme: key })
+          }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.success) { window.location.href = '/ai-builder/customize/' + encodeURIComponent(APPLY_TO); }
+            else { btn.disabled = false; btn.textContent = '↻'; alert((d && d.error) || APPLY_ERR); }
+          }).catch(function () { btn.disabled = false; btn.textContent = '↻'; alert(APPLY_ERR); });
+        });
+      }
       var BASE = 1280;
       // Scale each preview iframe to exactly fill its card width (rendered at a
       // fixed 1280px, then scaled) — no horizontal clipping at any viewport.

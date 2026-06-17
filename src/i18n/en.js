@@ -27,6 +27,13 @@ export const en = {
     all: 'All', all_styles: 'All styles', search_ph: 'Search templates…', no_results: 'No templates match your filters.',
     cta_h2: 'Found one you love?',
     cta_sub: 'Build your site with AI in minutes — your template comes ready. Free to start, no code.',
+    apply_here: 'Use this template',
+    apply_banner: 'Pick a template to apply to your site',
+    apply_back: '← Back to editor',
+    apply_h1: 'Choose a template for your site',
+    apply_sub: 'Click any template to apply it to the site you’re editing — your content and colors are kept.',
+    applying: 'Applying…',
+    apply_err: 'Could not apply this template. Please try again.',
   },
 
   footer: {
