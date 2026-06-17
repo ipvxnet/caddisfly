@@ -774,7 +774,7 @@ export async function handleAIBuilderCustomize(ctx) {
         </div>
 
         <div id="pane-design" class="builder-pane" hidden>
-          ${generateTemplatePicker(config.style_theme, lang, selectTemplate(inferIndustry(industrySignal)).key)}
+          ${generateTemplatePicker(config.style_theme, lang, selectTemplate(inferIndustry(industrySignal)).key, params.project_id)}
           ${generateColorPicker(config, project.project_id, lang)}
           ${generateFontPicker(config, project.project_id, lang)}
 

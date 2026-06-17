@@ -27,6 +27,13 @@ export const es = {
     all: 'Todas', all_styles: 'Todos los estilos', search_ph: 'Buscar plantillas…', no_results: 'Ninguna plantilla coincide con tus filtros.',
     cta_h2: '¿Encontraste una que te gusta?',
     cta_sub: 'Crea tu sitio con IA en minutos: la plantilla viene lista. Gratis y sin código.',
+    apply_here: 'Usar esta plantilla',
+    apply_banner: 'Elige una plantilla para aplicar a tu sitio',
+    apply_back: '← Volver al editor',
+    apply_h1: 'Elige una plantilla para tu sitio',
+    apply_sub: 'Haz clic en cualquier plantilla para aplicarla al sitio que estás editando: tu contenido y colores se conservan.',
+    applying: 'Aplicando…',
+    apply_err: 'No se pudo aplicar la plantilla. Inténtalo de nuevo.',
   },
 
   footer: {

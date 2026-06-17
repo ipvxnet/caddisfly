@@ -27,6 +27,13 @@ export const pt = {
     all: 'Todos', all_styles: 'Todos os estilos', search_ph: 'Buscar modelos…', no_results: 'Nenhum modelo corresponde aos seus filtros.',
     cta_h2: 'Encontrou um que gostou?',
     cta_sub: 'Crie seu site com IA em minutos: o modelo já vem pronto. Grátis e sem código.',
+    apply_here: 'Usar este modelo',
+    apply_banner: 'Escolha um modelo para aplicar ao seu site',
+    apply_back: '← Voltar ao editor',
+    apply_h1: 'Escolha um modelo para o seu site',
+    apply_sub: 'Clique em qualquer modelo para aplicá-lo ao site que você está editando — seu conteúdo e cores são mantidos.',
+    applying: 'Aplicando…',
+    apply_err: 'Não foi possível aplicar o modelo. Tente novamente.',
   },
 
   footer: {

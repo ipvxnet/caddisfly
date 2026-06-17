@@ -40,9 +40,12 @@ function templateMock(theme) {
  * @param {string} [recommendedKey] - template key recommended for this business
  * @returns {string} Template picker HTML (+ scoped styles)
  */
-export function generateTemplatePicker(currentTheme, lang = 'en', recommendedKey = null) {
+export function generateTemplatePicker(currentTheme, lang = 'en', recommendedKey = null, projectId = '') {
   const tr = translator(lang);
   const recoLabel = tr('pick.tpl_recommended');
+  // Carry the project id so the showcase can APPLY a chosen template back to this
+  // site (instead of its default "start a new site" action).
+  const browseHref = '/templates' + (projectId ? `?apply=${encodeURIComponent(projectId)}` : '');
 
   // Surface the most relevant templates first: recommended, then the one in use,
   // then the rest — so the user rarely has to scroll to act.
@@ -59,7 +62,7 @@ export function generateTemplatePicker(currentTheme, lang = 'en', recommendedKey
       <h3 class="picker-title">${tr('pick.tpl_title')}</h3>
       <p class="template-hint">${tr('pick.tpl_hint')}</p>
     </div>
-    <a class="picker-browse" href="/templates" target="_blank" rel="noopener">${tr('pick.tpl_browse')} ↗</a>
+    <a class="picker-browse" href="${browseHref}" target="_blank" rel="noopener">${tr('pick.tpl_browse')} ↗</a>
   </div>
 
   <div class="template-scroll">
@@ -83,7 +86,7 @@ export function generateTemplatePicker(currentTheme, lang = 'en', recommendedKey
       .join('')}
   </div>
   </div>
-  <p class="picker-foot">${count} ${tr('pick.tpl_count_suffix')} · <a href="/templates" target="_blank" rel="noopener">${tr('pick.tpl_browse')} ↗</a></p>
+  <p class="picker-foot">${count} ${tr('pick.tpl_count_suffix')} · <a href="${browseHref}" target="_blank" rel="noopener">${tr('pick.tpl_browse')} ↗</a></p>
 </div>
 
 <style>
