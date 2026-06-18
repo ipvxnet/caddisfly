@@ -331,6 +331,7 @@ export async function handleLanding(ctx) {
             ['🛍', 'store', '/help#store'],
             ['📝', 'blog', '/help#blog'],
             ['🔎', 'seo', '/help#seo'],
+            ['⚡', 'fast', '/help#performance'],
             ['✨', 'aiedit', '/help#customizing'],
             ['🎨', 'themes', '/help#customizing'],
             ['🖼️', 'photos', '/help#customizing'],

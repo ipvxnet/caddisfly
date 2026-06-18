@@ -342,8 +342,9 @@ ${hideBadge ? '' : `<div style="text-align: center; padding: 1rem; background: #
 </div>`}
 
 ${holidayDecorHtml(config.holiday)}
-${trackId ? `<!-- Caddisfly analytics (cookieless) -->
-<script>(function(){try{fetch('${appOrigin}/api/track',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({s:'${trackId}',p:location.pathname,r:document.referrer})});}catch(e){}})();</script>` : ''}
+${trackId ? `<!-- Caddisfly analytics (cookieless; fired after load via sendBeacon so it
+     never sits in the critical request chain or triggers a CORS preflight) -->
+<script>(function(){function t(){try{var u='${appOrigin}/api/track',d=JSON.stringify({s:'${trackId}',p:location.pathname,r:document.referrer});if(navigator.sendBeacon){navigator.sendBeacon(u,new Blob([d],{type:'text/plain'}));}else{fetch(u,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain'},body:d});}}catch(e){}}if(document.readyState==='complete'){t();}else{addEventListener('load',t);}})();</script>` : ''}
 
 <!-- Simple smooth scroll script -->
 <script>
