@@ -47,11 +47,11 @@ const CATEGORY_ORDER = ['Food & Drink', 'Health & Wellness', 'Personal Services'
 const STYLE_LABEL = { modern: 'Modern', classic: 'Classic', minimal: 'Minimal', bold: 'Bold', elegant: 'Elegant', luxe: 'Luxe', playful: 'Playful' };
 
 /** GET /templates/:key — full live demo. */
-export function handleTemplateDemo(ctx) {
-  const { params, query, url } = ctx;
+export async function handleTemplateDemo(ctx) {
+  const { params, query, url, env } = ctx;
   const key = params.key;
   const appOrigin = (url && url.origin) || '';
-  const html = renderTemplateDemo(key, { lang: (ctx && ctx.lang) || 'en', embed: query && query.embed === '1', appOrigin });
+  const html = await renderTemplateDemo(key, { lang: (ctx && ctx.lang) || 'en', embed: query && query.embed === '1', appOrigin, env });
   if (!html) return new Response('Template not found', { status: 404 });
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
 }
