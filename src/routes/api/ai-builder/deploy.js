@@ -132,6 +132,14 @@ export async function handleAIBuilderDeploy(ctx) {
     const header = siteSections.filter((s) => s.section_type === 'header');
     const footer = siteSections.filter((s) => s.section_type === 'footer');
 
+    // Home page's body sections drive a CONSISTENT section-anchor nav on every
+    // page (sub-pages prefix the anchors with the home route so the primary
+    // menu doesn't collapse to just that page's own sections).
+    const homePageRow = pages.find((p) => p.is_home) || pages.find((p) => p.slug === 'home') || null;
+    const homeSections = homePageRow
+      ? await getHomeBodySections(env.DB, projectKey, homePageRow.id, true)
+      : [];
+
     // Assign a unique subdomain for *.caddisfly.app hosting (idempotent).
     const existingSub = aiProject ? aiProject.subdomain : regularProjectRow && regularProjectRow.subdomain;
     const subdomain = await ensureUniqueSubdomain(env.DB, projectKey, projectView.project_name, existingSub);
@@ -186,6 +194,7 @@ export async function handleAIBuilderDeploy(ctx) {
       const common = {
         pages: navPages,
         currentSlug: page.slug,
+        homeSections, // consistent section-anchor nav across all pages
         preordered: true,
         hideBadge: tier !== 'free_trial', // paid plans remove "Built with Caddisfly"
         trackId: publicId, // cookieless analytics beacon on published pages
@@ -227,6 +236,7 @@ export async function handleAIBuilderDeploy(ctx) {
       const blogCommon = {
         pages: navPages,
         currentSlug: 'blog',
+        homeSections,
         preordered: true,
         hideBadge: tier !== 'free_trial',
         trackId: publicId,
@@ -277,6 +287,7 @@ export async function handleAIBuilderDeploy(ctx) {
       const shopCommon = {
         pages: navPages,
         currentSlug: 'shop',
+        homeSections,
         preordered: true,
         hideBadge: tier !== 'free_trial',
         trackId: publicId,

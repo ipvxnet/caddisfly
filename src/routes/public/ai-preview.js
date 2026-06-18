@@ -181,6 +181,13 @@ export async function handleAIPreview(ctx) {
       : await getBodySectionsForPage(env.DB, page ? page.id : -1, true);
     const combined = [...header, ...body, ...footer];
 
+    // Home page's body sections → consistent section-anchor nav across all pages
+    // (reuse `body` when already on home to avoid a second query).
+    const homePageRow = navPages.find((p) => p.is_home) || navPages.find((p) => p.slug === 'home') || null;
+    const homeSections = (page && page.is_home)
+      ? body
+      : (homePageRow ? await getHomeBodySections(env.DB, projectKey, homePageRow.id, true) : []);
+
     if (combined.length === 0) {
       return new Response('Preview not ready yet', {
         status: 400,
@@ -195,6 +202,7 @@ export async function handleAIPreview(ctx) {
     const opts = {
       pages: navPages,
       currentSlug: page ? page.slug : 'home',
+      homeSections,
       previewBase: `/ai-preview/${project.project_id}`,
       embed,
       editOverlay: embed, // hover "✎ Edit" affordance — only in the customize iframe
