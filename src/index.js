@@ -55,6 +55,7 @@ import { handleGetSectionEditor } from './routes/api/ai-builder/section-editor.j
 import { handleAddSection, handleDeleteSection } from './routes/api/ai-builder/section-create.js';
 import { handleUpdateColors } from './routes/api/ai-builder/config-colors.js';
 import { handleApplyTemplate } from './routes/api/ai-builder/apply-template.js';
+import { handleStockPhoto, handleGenerateImage } from './routes/api/ai-builder/service-image.js';
 import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
 import { handleAIEditPropose, handleAIEditApply } from './routes/api/ai-builder/ai-edit.js';
 import { handleListPages, handleCreatePage, handleReorderPages, handleUpdatePage, handleDeletePage } from './routes/api/ai-builder/pages.js';
@@ -328,6 +329,8 @@ router.delete('/api/ai-builder/:project_id/sections/:section_id', autoSnap(handl
 router.put('/api/ai-builder/:project_id/config/colors', autoSnap(handleUpdateColors), PROJ);
 router.put('/api/ai-builder/:project_id/config/fonts', autoSnap(handleUpdateFonts), PROJ);
 router.post('/api/ai-builder/:project_id/template', autoSnap(handleApplyTemplate), PROJ);
+router.post('/api/ai-builder/:project_id/stock-photo', handleStockPhoto, PROJ);
+router.post('/api/ai-builder/:project_id/generate-image', handleGenerateImage, PROJ);
 router.get('/api/ai-builder/:project_id/pages', handleListPages, PROJ);
 router.post('/api/ai-builder/:project_id/pages', autoSnap(handleCreatePage), PROJ);
 router.put('/api/ai-builder/:project_id/pages/reorder', autoSnap(handleReorderPages), PROJ);

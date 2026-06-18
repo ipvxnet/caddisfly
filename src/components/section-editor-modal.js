@@ -563,12 +563,57 @@ function galleryRender() {
       + '<input class="gallery-alt" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_alt_ph'))} + '" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
       + '<div class="gallery-row-actions">'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.g_replace_t'))} + '" onclick="galleryReplace(' + i + ')">' + ${JSON.stringify(tr('sed.g_replace'))} + '</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_url'))} + '" onclick="galleryUrl(' + i + ')">🔗</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_photo'))} + '" onclick="galleryStock(' + i + ', this)">📷</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_ai'))} + '" onclick="galleryAI(' + i + ', this)">✨</button>'
       + '<button type="button" class="gallery-del" title="' + ${JSON.stringify(tr('sed.g_remove_t'))} + '" onclick="galleryRemove(' + i + ')">🗑</button>'
       + '</div></div>';
   }).join('');
 }
 function gallerySetAlt(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].alt = val; galleryWrite(imgs); } }
 function galleryRemove(i) { const imgs = galleryRead(); imgs.splice(i, 1); galleryWrite(imgs); galleryRender(); }
+// Grounding query for a photo: its alt text, else the section heading.
+function galleryQuery(i) {
+  const imgs = galleryRead();
+  const alt = (imgs[i] && imgs[i].alt) || '';
+  const h = (document.getElementById('heading') || {}).value || '';
+  return alt || h || 'business';
+}
+function galleryUrl(i) {
+  const u = prompt(${JSON.stringify(tr('sed.img_url_prompt'))});
+  if (u && u.trim()) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].url = u.trim(); galleryWrite(imgs); galleryRender(); } }
+}
+async function galleryStock(i, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/stock-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: galleryQuery(i) }) });
+    const d = await r.json();
+    if (d.success) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].url = d.url; if (!imgs[i].alt && d.alt) imgs[i].alt = d.alt; } galleryWrite(imgs); }
+    else alert(d.error || ${JSON.stringify(tr('sed.img_fail'))});
+  } catch (e) { alert(${JSON.stringify(tr('sed.img_fail'))}); }
+  finally { galleryRender(); }
+}
+async function galleryAI(i, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/generate-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: galleryQuery(i) }) });
+    const d = await r.json();
+    if (d.success) { const imgs = galleryRead(); if (imgs[i]) imgs[i].url = d.url; galleryWrite(imgs); }
+    else alert(d.error || ${JSON.stringify(tr('sed.img_fail'))});
+  } catch (e) { alert(${JSON.stringify(tr('sed.img_fail'))}); }
+  finally { galleryRender(); }
+}
+async function gallerySwapAll() {
+  const n = galleryRead().length;
+  for (let i = 0; i < n; i++) {
+    try {
+      const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/stock-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: galleryQuery(i), skip: i % 6 }) });
+      const d = await r.json();
+      if (d.success) { const cur = galleryRead(); if (cur[i]) { cur[i].url = d.url; if (!cur[i].alt && d.alt) cur[i].alt = d.alt; } galleryWrite(cur); }
+    } catch (e) { /* skip */ }
+  }
+  galleryRender();
+}
 
 // Drag-to-reorder gallery photos.
 window.__galleryDragIndex = -1;
@@ -952,10 +997,29 @@ function generateAboutFields(content, tr) {
 // CARD ("Testimonial 1", with Name/Role/Quote/… fields) so per-item editing is
 // obvious. Backed by a hidden <key>_json blob the save handler expands into
 // content[key]. fields: [{ key, label, kind?: 'short'|'textarea', num?, ph? }]
-function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabel }) {
+function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabel, imgT = {} }) {
   const field = (f, it) => {
     const v = it && it[f.key] != null ? String(it[f.key]) : '';
     const num = f.num ? ' data-num="1"' : '';
+    if (f.kind === 'image') {
+      const l = f.img || {};
+      return `<div class="rep-field rep-imgfield">
+        <label>${escapeHtml(f.label || f.key)}</label>
+        <input type="hidden" class="rep-input rep-img-val" data-k="${f.key}" value="${escapeHtml(v)}">
+        <div class="rep-img-row">
+          <img class="rep-img-thumb" src="${escapeHtml(v)}" alt=""${v ? '' : ' style="display:none"'}>
+          <div class="rep-img-btns">
+            <button type="button" onclick="repImgUpload(this)">⬆ ${escapeHtml(l.upload || 'Upload')}</button>
+            <button type="button" onclick="repImgUrl(this)">🔗 ${escapeHtml(l.url || 'URL')}</button>
+            <button type="button" onclick="repImgStock(this)">🖼 ${escapeHtml(l.photo || 'Photo')}</button>
+            <button type="button" onclick="repImgAI(this)">✨ ${escapeHtml(l.ai || 'AI')}</button>
+            <button type="button" class="rep-img-x" onclick="repImgClear(this)" title="${escapeHtml(l.remove || 'Remove')}">🗑</button>
+          </div>
+          <input type="file" accept="image/*" class="rep-img-file" style="display:none" onchange="repImgFile(this)">
+          <div class="rep-img-status"></div>
+        </div>
+      </div>`;
+    }
     const input = f.kind === 'textarea'
       ? `<textarea class="rep-input" data-k="${f.key}"${num} rows="2" placeholder="${escapeHtml(f.ph || '')}">${escapeHtml(v)}</textarea>`
       : `<input type="text" class="rep-input${f.kind === 'short' ? ' rep-short' : ''}" data-k="${f.key}"${num} placeholder="${escapeHtml(f.ph || '')}" value="${escapeHtml(v)}">`;
@@ -986,8 +1050,56 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
       #rep-${jsonKey} .rep-field label{display:block;font-size:.72rem;font-weight:600;color:#718096;margin-bottom:.2rem}
       #rep-${jsonKey} .rep-input{width:100%;padding:.5rem .6rem;border:2px solid #e2e8f0;border-radius:8px;font:inherit;font-size:.88rem}
       #rep-${jsonKey} .rep-input.rep-short{width:80px;text-align:center}
+      #rep-${jsonKey} .rep-img-row{display:flex;flex-direction:column;gap:.4rem}
+      #rep-${jsonKey} .rep-img-thumb{width:160px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0}
+      #rep-${jsonKey} .rep-img-btns{display:flex;flex-wrap:wrap;gap:.3rem}
+      #rep-${jsonKey} .rep-img-btns button{font:inherit;font-size:.72rem;padding:.3rem .5rem;border:1px solid #e2e8f0;border-radius:7px;background:#fff;cursor:pointer}
+      #rep-${jsonKey} .rep-img-btns button:hover{border-color:#7c3aed;background:#faf5ff}
+      #rep-${jsonKey} .rep-img-btns .rep-img-x{color:#b91c1c}
+      #rep-${jsonKey} .rep-img-status{font-size:.72rem;color:#718096;min-height:1em}
     </style>
     <script>
+      window.REP_IMG_T = ${JSON.stringify(imgT)};
+      function repItemOf(b){ return b.closest('.rep-item'); }
+      function repImgApply(item, url){
+        var val = item.querySelector('.rep-img-val'); var th = item.querySelector('.rep-img-thumb');
+        if (val) val.value = url || '';
+        if (th){ if (url){ th.src = url; th.style.display=''; } else { th.removeAttribute('src'); th.style.display='none'; } }
+        var rep = item.closest('.rep'); if (rep && rep.__sync) rep.__sync();
+      }
+      function repImgClear(b){ repImgApply(repItemOf(b), ''); }
+      function repImgUrl(b){ var u = prompt(REP_IMG_T.urlPrompt || 'Image URL'); if (u && u.trim()) repImgApply(repItemOf(b), u.trim()); }
+      function repImgUpload(b){ var i = repItemOf(b).querySelector('.rep-img-file'); if (i) i.click(); }
+      function repImgTitle(item){ var t = item.querySelector('[data-k="title"]'); return (t && t.value.trim()) || ''; }
+      function repImgStatus(item, msg){ var s = item.querySelector('.rep-img-status'); if (s) s.textContent = msg || ''; }
+      async function repImgFile(input){
+        var item = input.closest('.rep-item'); var f = input.files[0]; if (!f) return; input.value = '';
+        repImgStatus(item, REP_IMG_T.uploading || 'Uploading…');
+        try { var fd = new FormData(); fd.append('file', f); fd.append('asset_type', 'service');
+          var r = await fetch('/api/ai-builder/' + window.currentProjectId + '/upload', { method:'POST', body: fd });
+          var d = await r.json(); if (d.success){ repImgApply(item, d.url); repImgStatus(item, ''); } else repImgStatus(item, d.error || REP_IMG_T.fail || 'Failed');
+        } catch (e){ repImgStatus(item, REP_IMG_T.fail || 'Failed'); }
+      }
+      async function repImgStock(b){
+        var item = repItemOf(b); repImgStatus(item, REP_IMG_T.finding || 'Finding a photo…');
+        try { var r = await fetch('/api/ai-builder/' + window.currentProjectId + '/stock-photo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ query: repImgTitle(item) || 'business' }) });
+          var d = await r.json(); if (d.success){ repImgApply(item, d.url); repImgStatus(item, ''); } else repImgStatus(item, d.error || REP_IMG_T.fail || 'Failed');
+        } catch (e){ repImgStatus(item, REP_IMG_T.fail || 'Failed'); }
+      }
+      async function repImgAI(b){
+        var item = repItemOf(b); repImgStatus(item, REP_IMG_T.generating || 'Generating…'); b.disabled = true;
+        try { var r = await fetch('/api/ai-builder/' + window.currentProjectId + '/generate-image', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: repImgTitle(item) || 'business' }) });
+          var d = await r.json(); if (d.success){ repImgApply(item, d.url); repImgStatus(item, ''); } else repImgStatus(item, d.error || REP_IMG_T.fail || 'Failed');
+        } catch (e){ repImgStatus(item, REP_IMG_T.fail || 'Failed'); } finally { b.disabled = false; }
+      }
+      async function repImgSwapAll(jsonKey){
+        var rep = document.getElementById('rep-' + jsonKey); if (!rep) return;
+        var items = rep.querySelectorAll('.rep-item');
+        for (var i = 0; i < items.length; i++){ var item = items[i]; repImgStatus(item, REP_IMG_T.finding || 'Finding…');
+          try { var r = await fetch('/api/ai-builder/' + window.currentProjectId + '/stock-photo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ query: repImgTitle(item) || 'business', skip: i % 6 }) });
+            var d = await r.json(); if (d.success) repImgApply(item, d.url); repImgStatus(item, ''); } catch (e){ repImgStatus(item, ''); }
+        }
+      }
       (function(){
         var rep = document.getElementById('rep-${jsonKey}');
         if (!rep || rep.__ready) return; rep.__ready = true;
@@ -1032,16 +1144,23 @@ function generateServicesFields(content, tr) {
 
     <div class="form-group">
       <label>${tr('sed.services')}</label>
+      <button type="button" class="btn-secondary" style="margin-bottom:.6rem" onclick="repImgSwapAll('services')">🖼 ${tr('sed.swap_all')}</button>
       ${buildRepeater({
         jsonKey: 'services', items: (Array.isArray(content.services) && content.services.length) ? content.services : [
           { icon: '🚀', title: `${tr('sed.seed_service')} 1`, description: `${tr('sed.seed_service_desc')} 1` },
           { icon: '💡', title: `${tr('sed.seed_service')} 2`, description: `${tr('sed.seed_service_desc')} 2` },
           { icon: '⭐', title: `${tr('sed.seed_service')} 3`, description: `${tr('sed.seed_service_desc')} 3` },
         ], addLabel: tr('sed.add_service'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_service'),
+        imgT: {
+          urlPrompt: tr('sed.img_url_prompt'), uploading: tr('sed.uploading'),
+          finding: tr('sed.img_finding'), generating: tr('sed.img_generating'), fail: tr('sed.img_fail'),
+        },
         fields: [
           { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
           { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
           { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.svc_desc_ph') },
+          { key: 'image_url', label: tr('sed.f_image'), kind: 'image',
+            img: { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
         ],
       })}
     </div>
@@ -1116,6 +1235,7 @@ function generateGalleryFields(content, tr) {
       <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
       <div id="gallery-manager" class="gallery-manager"></div>
       <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">${tr('sed.add_photo')}</button>
+      <button type="button" class="gallery-add-btn" onclick="gallerySwapAll()">🖼 ${tr('sed.swap_all')}</button>
       <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
       <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
     </div>

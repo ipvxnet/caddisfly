@@ -73,11 +73,14 @@ export async function handleAIBuilderCustomize(ctx) {
       let cp = {};
       try {
         cp = JSON.parse(regularProject.company_profile_json || '{}');
-        if (cp && cp.name) businessName = cp.name;
+        // verify flow stores the profile at top level; search/build nests it.
+        const name = cp.name || (cp.profile && cp.profile.name);
+        if (name) businessName = name;
       } catch {
         // keep URL fallback
       }
-      industrySignal = [businessName, cp.category, cp.description].filter(Boolean).join(' ');
+      const prof = cp.profile || cp;
+      industrySignal = [businessName, prof.category, prof.description].filter(Boolean).join(' ');
       siteSubtitle = regularProject.website_url || '';
 
       // Convert regular project to AI project format for rendering

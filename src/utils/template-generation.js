@@ -60,7 +60,7 @@ export async function generateAndStore(env, project, profile, opts = {}) {
 
   // 2. Section line-up from the industry recipe, data-gated: drop gallery
   //    without enough imagery and testimonials without real reviews.
-  const factSections = profileToFactSections(profile);
+  const factSections = profileToFactSections(profile, (project && project.language) || 'en');
   const types = recipe.sections.filter(
     (t) => (t !== 'gallery' || photoPool.length >= 3) && (t !== 'testimonials' || !!factSections.testimonials)
   );
