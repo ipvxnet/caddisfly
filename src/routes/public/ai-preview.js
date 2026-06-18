@@ -188,6 +188,15 @@ export async function handleAIPreview(ctx) {
       ? body
       : (homePageRow ? await getHomeBodySections(env.DB, projectKey, homePageRow.id, true) : []);
 
+    // Pages opted into "sections as submenu" → collect their sections for the nav.
+    const pageSections = {};
+    for (const p of navPages) {
+      if (!p.show_sections_in_nav) continue;
+      pageSections[p.id] = (page && p.id === page.id)
+        ? body
+        : (p.is_home && homePageRow ? homeSections : await getBodySectionsForPage(env.DB, p.id, true));
+    }
+
     if (combined.length === 0) {
       return new Response('Preview not ready yet', {
         status: 400,
@@ -203,6 +212,7 @@ export async function handleAIPreview(ctx) {
       pages: navPages,
       currentSlug: page ? page.slug : 'home',
       homeSections,
+      pageSections,
       previewBase: `/ai-preview/${project.project_id}`,
       embed,
       editOverlay: embed, // hover "✎ Edit" affordance — only in the customize iframe

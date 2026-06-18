@@ -485,6 +485,7 @@ export const en = {
     toast_snapshot_restored: 'Version restored', toast_seo_saved: 'SEO saved',
     toast_logo_updated: 'Logo updated', toast_logo_removed: 'Logo removed',
     pages: 'Pages', add_page: '+ Page', add_page_title: 'Add a page',
+    add_group: '+ Menu group', menu_parent: 'Menu parent', menu_top_level: 'Top level', menu_has_children: 'has submenu items', menu_show: 'Show in menu', menu_sections_sub: 'Sections as submenu',
     rename: 'Rename', delete_page: 'Delete page', home_page: 'Home page',
     sitewide: 'Site-wide', sitewide_note: '· shown on every page',
     sections_of: '{page} sections',
