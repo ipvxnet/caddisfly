@@ -26,7 +26,7 @@ export function heroSplitTemplate(data, config) {
       <a href="${cta_link}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''} class="hero-split-cta">${cta_text}</a>
     </div>
     <div class="hero-split-image">
-      <img src="${image_url}" alt="${heading}" />
+      <img src="${image_url}" alt="${heading}" width="1200" height="800" fetchpriority="high" />
     </div>
   </div>
 </section>

@@ -20,7 +20,7 @@ export function aboutTextImageTemplate(data, config) {
 <section id="about" class="about-section">
   <div class="about-container">
     <div class="about-image">
-      <img src="${image_url}" alt="${heading}" />
+      <img src="${image_url}" alt="${heading}" width="1200" height="800" loading="lazy" />
     </div>
     <div class="about-content">
       <h2 class="about-heading">${heading}</h2>
@@ -50,7 +50,8 @@ export function aboutTextImageTemplate(data, config) {
 
 .about-image img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
   border-radius: var(--cf-img-radius, 12px);
   box-shadow: var(--cf-shadow, 0 10px 40px rgba(0,0,0,0.1));
 }
