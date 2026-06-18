@@ -7,7 +7,8 @@
 
 import { assemblePage } from './ai-page-assembler.js';
 import { getTheme, listThemes } from './site-themes.js';
-import { paletteFor } from './industry-style.js';
+import { paletteFor, imageKeywordsFor } from './industry-style.js';
+import { searchStockPhotos } from './stock-photos.js';
 
 // Known-good stock photos (these ship as template defaults in prod, so they're
 // guaranteed to load). Used as a small rotating pool for hero/about/gallery.
@@ -113,6 +114,24 @@ function profileFor(theme) {
   return { industry, ...(PROFILES[industry] || PROFILES.general) };
 }
 
+// Vertical-specific demo photos: pull real stock for the industry (the same
+// pipeline real sites use) so a dental demo doesn't show the same office shots
+// as a restaurant. Cached per industry per isolate; falls back to the generic
+// PHOTOS set when Pexels is unavailable so the public showcase never breaks.
+const _photoCache = new Map();
+async function industryPhotos(env, industry) {
+  if (_photoCache.has(industry)) return _photoCache.get(industry);
+  if (!env || !env.PEXELS_API_KEY) return PHOTOS;
+  try {
+    const results = await searchStockPhotos(env, imageKeywordsFor(industry, ''), 10);
+    const urls = (results || []).map((r) => r && r.url).filter(Boolean);
+    if (urls.length >= 4) { _photoCache.set(industry, urls); return urls; }
+  } catch (e) {
+    console.error(`demo photos failed for ${industry}: ${e.message}`);
+  }
+  return PHOTOS; // don't cache the fallback — retry next render
+}
+
 let _sid = 0;
 function section(type, html_template, content, order) {
   return {
@@ -126,10 +145,11 @@ function section(type, html_template, content, order) {
 }
 
 /** Build the canned section list for a template (variants pulled from the theme). */
-function demoSections(theme) {
+function demoSections(theme, photos) {
   const p = profileFor(theme);
   const v = theme.variants || {};
-  const photo = (i) => PHOTOS[i % PHOTOS.length];
+  const pool = (Array.isArray(photos) && photos.length) ? photos : PHOTOS;
+  const photo = (i) => pool[i % pool.length];
   const services = (p.services || []).map(([title, description, icon]) => ({ title, name: title, description, icon }));
   const out = [];
   let order = 0;
@@ -207,11 +227,13 @@ function demoConfig(theme) {
  * @param {object} [opts] - { lang, embed, appOrigin }
  * @returns {string|null} Full HTML document, or null if the key is unknown.
  */
-export function renderTemplateDemo(themeKey, opts = {}) {
+export async function renderTemplateDemo(themeKey, opts = {}) {
   const theme = getTheme(themeKey);
   if (!theme || theme.key !== themeKey) return null; // getTheme falls back; reject unknown keys
   _sid = 0;
-  const sections = demoSections(theme);
+  const industry = (theme.industries && theme.industries[0]) || 'general';
+  const photos = await industryPhotos(opts.env, industry);
+  const sections = demoSections(theme, photos);
   const config = demoConfig(theme);
   const project = { project_id: `demo-${theme.key}`, project_name: profileFor(theme).brand };
   return assemblePage(sections, config, project, {
