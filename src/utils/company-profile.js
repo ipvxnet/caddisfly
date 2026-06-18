@@ -224,14 +224,21 @@ function buildSourceMaterial(profile) {
  * @param {object} profile - Canonical profile
  * @returns {object} { contact?, testimonials? }
  */
-export function profileToFactSections(profile) {
+const FACT_HEADINGS = {
+  en: { contact: 'Get In Touch', testimonials: 'What Our Customers Say', verified: 'Verified customer', review: 'Google review' },
+  es: { contact: 'Ponte en contacto', testimonials: 'Lo que dicen nuestros clientes', verified: 'Cliente verificado', review: 'Reseña de Google' },
+  pt: { contact: 'Entre em contato', testimonials: 'O que dizem nossos clientes', verified: 'Cliente verificado', review: 'Avaliação do Google' },
+};
+
+export function profileToFactSections(profile, lang = 'en') {
+  const t = FACT_HEADINGS[lang] || FACT_HEADINGS.en;
   const sections = {};
 
   const socialLinks = Array.isArray(profile.social) ? profile.social.filter((s) => s && s.url) : [];
 
   if (profile.phone || profile.address || profile.website || profile.email || socialLinks.length) {
     sections.contact = {
-      heading: 'Get In Touch',
+      heading: t.contact,
       phone: profile.phone || '',
       address: profile.address || '',
       email: profile.email || '',
@@ -247,11 +254,11 @@ export function profileToFactSections(profile) {
   );
   if (realReviews.length > 0) {
     sections.testimonials = {
-      heading: 'What Our Customers Say',
+      heading: t.testimonials,
       testimonials: realReviews.map((r) => ({
         quote: r.text,
-        author: r.author || 'Verified customer',
-        role: r.rating ? `${r.rating}★ Google review` : 'Google review',
+        author: r.author || t.verified,
+        role: r.rating ? `${r.rating}★ ${t.review}` : t.review,
       })),
     };
   }
