@@ -74,11 +74,16 @@ async function serveAsset(env, pathname, request) {
 
   if (request && !isResizerHit && RESIZABLE_EXT.has(ext)) {
     try {
+      // `format: 'auto'` is a no-op inside a Worker (Cloudflare warns: "You must
+      // select exact format in your Worker first"), so pick explicitly from the
+      // client's Accept. CF sets `Vary: Accept` so the variants cache separately.
+      const accept = request.headers.get('Accept') || '';
+      const format = /image\/avif/.test(accept) ? 'avif' : /image\/webp/.test(accept) ? 'webp' : 'jpeg';
       const sub = new Request(request.url, {
-        headers: { 'x-cf-resized': '1', Accept: request.headers.get('Accept') || '' },
+        headers: { 'x-cf-resized': '1', Accept: accept },
       });
       const resized = await fetch(sub, {
-        cf: { image: { width: 1600, fit: 'scale-down', quality: 82, format: 'auto' } },
+        cf: { image: { width: 1600, fit: 'scale-down', quality: 82, format } },
       });
       if (resized.ok) {
         const headers = new Headers(resized.headers);
