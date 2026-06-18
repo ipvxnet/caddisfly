@@ -1,8 +1,11 @@
 // Gallery Carousel Template
 // Image carousel/slider with navigation
 
+import { sectionDefault } from '../section-defaults.js';
+
 export function galleryCarouselTemplate(data, config) {
-  const { heading = 'Gallery', description = '', images } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'gallery', 0), description = '', images } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Default images if not provided
