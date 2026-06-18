@@ -45,12 +45,51 @@ function safeLabel(s) {
   return typeof s === 'string' && /^[a-z0-9-]{1,63}$/.test(s) ? s : null;
 }
 
-async function serveAsset(env, pathname) {
+// Photo formats we resize on delivery. SVG (vector) and GIF (animation) are
+// passed through untouched.
+const RESIZABLE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
+
+async function serveAsset(env, pathname, request) {
   // /preview-asset/<id>/<file> -> R2 assets/<id>/<file>
   const m = pathname.match(/^\/preview-asset\/([^/]+)\/([^/]+)$/);
   if (!m) return null;
   const [, id, file] = m;
   if (file.includes('..')) return notFound();
+
+  // Resize-on-delivery: serve large photos (AI-generated heroes, scraped
+  // originals, Places) downscaled to display size + WebP/AVIF via Cloudflare
+  // image transformations — without re-storing anything. This fixes legacy
+  // sites too, since it happens at serve time.
+  //
+  // Loop-safe both ways: the resizer's own origin fetch carries
+  // `via: …image-resizing`; our fallback subrequest carries `x-cf-resized`.
+  // Either marker means "serve the raw bytes" — so we never recurse, whether
+  // Transformations is enabled (resizer hits us) or disabled (cf.image is
+  // ignored and our own fetch hits us directly).
+  const via = request && request.headers.get('via');
+  const isResizerHit =
+    (via && /image-resizing/i.test(via)) ||
+    (request && request.headers.get('x-cf-resized') === '1');
+  const ext = (file.split('.').pop() || '').toLowerCase();
+
+  if (request && !isResizerHit && RESIZABLE_EXT.has(ext)) {
+    try {
+      const sub = new Request(request.url, {
+        headers: { 'x-cf-resized': '1', Accept: request.headers.get('Accept') || '' },
+      });
+      const resized = await fetch(sub, {
+        cf: { image: { width: 1600, fit: 'scale-down', quality: 82, format: 'auto' } },
+      });
+      if (resized.ok) {
+        const headers = new Headers(resized.headers);
+        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        return new Response(resized.body, { status: resized.status, headers });
+      }
+    } catch {
+      // fall through to raw R2 on any transform error
+    }
+  }
+
   const obj = await env.STORAGE.get(`assets/${id}/${file}`);
   if (!obj) return notFound();
   return new Response(obj.body, {
@@ -114,7 +153,7 @@ export default {
 
     // Assets first (images referenced by published pages).
     if (url.pathname.startsWith('/preview-asset/')) {
-      const asset = await serveAsset(env, url.pathname);
+      const asset = await serveAsset(env, url.pathname, request);
       if (asset) return asset;
     }
 
