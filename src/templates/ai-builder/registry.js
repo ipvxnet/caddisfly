@@ -12,11 +12,13 @@ import { heroVideoTemplate } from './heroes/video.js';
 import { heroFullscreenTemplate } from './heroes/fullscreen.js';
 import { heroOverlapTemplate } from './heroes/overlap.js';
 import { heroTagsTemplate } from './heroes/tags.js';
+import { heroShowcaseTemplate } from './heroes/showcase.js';
 
 // About templates
 import { aboutTextImageTemplate } from './about/text-image.js';
 import { aboutTimelineTemplate } from './about/timeline.js';
 import { aboutTeamTemplate } from './about/team.js';
+import { aboutFounderQuoteTemplate } from './about/founder-quote.js';
 
 // Service templates
 import { servicesIconGridTemplate } from './services/icon-grid.js';
@@ -47,6 +49,7 @@ import { featuresGridTemplate } from './features/grid.js';
 import { featuresActionsTemplate } from './features/actions.js';
 import { ctaBannerTemplate } from './cta/banner.js';
 import { ctaBoxedTemplate } from './cta/boxed.js';
+import { ctaSplitImageTemplate } from './cta/split-image.js';
 import { statsNumbersTemplate } from './stats/numbers.js';
 
 // Blog (rendered from synthetic sections built at deploy/preview time — not
@@ -78,12 +81,14 @@ export const TEMPLATE_REGISTRY = {
     fullscreen: heroFullscreenTemplate,
     overlap: heroOverlapTemplate,
     tags: heroTagsTemplate,
+    showcase: heroShowcaseTemplate,
     default: heroCenteredTemplate,
   },
   about: {
     'text-image': aboutTextImageTemplate,
     timeline: aboutTimelineTemplate,
     team: aboutTeamTemplate,
+    'founder-quote': aboutFounderQuoteTemplate,
     default: aboutTextImageTemplate,
   },
   services: {
@@ -126,6 +131,7 @@ export const TEMPLATE_REGISTRY = {
   cta: {
     banner: ctaBannerTemplate,
     boxed: ctaBoxedTemplate,
+    'split-image': ctaSplitImageTemplate,
     default: ctaBannerTemplate,
   },
   stats: {

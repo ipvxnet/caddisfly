@@ -56,6 +56,12 @@ const PROFILES = {
     services: [['Custom Itineraries', 'Tailored to your dreams', '🗺️'], ['Guided Tours', 'Local experts, real experiences', '🧭'], ['Getaways', 'Escape, refresh, return', '🏝️']] },
   events: { brand: 'Eternal Vows Events', hero: ['Moments Worth Celebrating', 'Weddings and events, beautifully planned'],
     services: [['Wedding Planning', 'Your perfect day, handled', '💍'], ['Corporate Events', 'Polished and memorable', '🥂'], ['Venue Styling', 'Spaces that wow', '🎀']] },
+  wedding: { brand: 'Willowbrook Estate', hero: ['Say “I Do” in Style', 'A timeless venue for unforgettable celebrations'],
+    services: [['The Venue', 'Garden ceremony & grand ballroom', '💐'], ['Full Planning', 'Every detail, beautifully handled', '💍'], ['Catering & Bar', 'Seasonal menus and signature pours', '🥂']] },
+  music: { brand: 'Neon Avenue', hero: ['Turn It Up', 'Live shows, new releases, and the full story'],
+    services: [['Live Shows', 'Catch us on tour this season', '🎤'], ['New Album', 'Stream the latest record now', '🎶'], ['Book the Band', 'Weddings, festivals & private events', '🎸']] },
+  brewery: { brand: 'Ironwood Brewing Co.', hero: ['Brewed With Grit', 'Small-batch craft beer poured fresh in our taproom'],
+    services: [['Our Taproom', 'Sixteen taps, rotating seasonals', '🍺'], ['Flagship Brews', 'IPAs, stouts, lagers & sours', '🌾'], ['Tours & Events', 'Go behind the barrels with us', '🛢️']] },
   education: { brand: 'Bright Minds Academy', hero: ['Where Curiosity Grows', 'Tutoring and courses that build confidence'],
     services: [['Tutoring', 'Personalized one-on-one help', '📚'], ['Courses', 'Structured learning paths', '🎓'], ['Test Prep', 'Ready for the big day', '✏️']] },
   nonprofit: { brand: 'Hope Forward Foundation', hero: ['Together, We Do More', 'Join us in making a real difference'],
@@ -171,6 +177,9 @@ function demoSections(theme, photos) {
   out.push(section('about', v.about, {
     heading: 'About Us', subheading: `Why ${p.brand}`,
     content: `At ${p.brand}, we combine craft, care, and consistency to deliver an experience our customers come back for. Get to know what makes us different.`,
+    // `story` feeds text-image & founder-quote; founder_name/role sign the quote.
+    story: `At ${p.brand}, we combine craft, care, and consistency to deliver an experience our customers come back for. Get to know what makes us different.`,
+    founder_name: p.brand, founder_role: 'Founder & Owner',
     image_url: photo(2),
     features: ['Trusted by the community', 'Experienced, friendly team', 'Quality you can feel'],
   }, order++));
@@ -195,6 +204,7 @@ function demoSections(theme, photos) {
   if (v.cta) {
     out.push(section('cta', v.cta, {
       heading: 'Ready to get started?', description: `Reach out to ${p.brand} today — we’d love to help.`, cta_text: 'Contact Us', cta_url: '#contact',
+      image_url: photo(6), // split-image CTA shows a photo; others ignore it
     }, order++));
   }
   out.push(section('contact', v.contact, {

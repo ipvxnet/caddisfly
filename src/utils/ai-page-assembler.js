@@ -9,7 +9,7 @@ import { SECTION_NAV_LABELS, rewriteLocalizedAnchors } from './anchor-normalize.
 
 // Google Fonts that ship a single (400) weight only — requesting extra weights in
 // the css2 URL returns HTTP 400 and breaks the whole stylesheet, so omit the axis.
-const SINGLE_WEIGHT_FONTS = new Set(['Instrument Serif']);
+const SINGLE_WEIGHT_FONTS = new Set(['Instrument Serif', 'Bebas Neue']);
 
 /**
  * Build one css2 `family=` token for a font, picking a safe weight axis.
