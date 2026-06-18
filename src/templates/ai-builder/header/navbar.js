@@ -1,5 +1,7 @@
 // Header / navigation bar — carries brand identity (logo + name)
 
+import { SECTION_NAV_LABELS } from '../../../utils/anchor-normalize.js';
+
 /**
  * Sticky top navigation bar with the business logo and name.
  * Restores brand identity to generated sites (logo recovered from the original
@@ -80,13 +82,39 @@ export function navbarTemplate(data, config) {
     const active = p.slug === currentSlug ? ' nav-link-active' : '';
     return `<a class="nav-sublink${active}" role="menuitem" href="${escapeAttr(pageHref(p))}">${escapeHtml(p.nav_label || p.title || p.slug)}</a>`;
   };
-  // A top-level page/group, rendered as a plain link or (if it has children) a
-  // dropdown. Groups are non-link buttons; pages keep their link plus a caret.
+  // A page's in-page sections, exposed as submenu items when the page opts in
+  // (`show_sections_in_nav`). config.pageSections maps pageId -> raw sections.
+  const navLabels = SECTION_NAV_LABELS[config.lang] || SECTION_NAV_LABELS.en || {};
+  const pageSections = (config.pageSections && typeof config.pageSections === 'object') ? config.pageSections : {};
+  const sectionSubLinks = (p) => {
+    if (!p.show_sections_in_nav) return [];
+    const secs = pageSections[p.id] || [];
+    const seen = new Set();
+    const out = [];
+    for (const s of secs) {
+      if (s.is_visible === 0) continue;
+      let meta = {};
+      try { meta = s.content_json ? JSON.parse(s.content_json) : {}; } catch { meta = {}; }
+      if (meta._nav_hidden) continue;
+      const type = s.section_type;
+      const label = meta._nav_label || meta.heading || navLabels[type];
+      if (!label) continue;                 // only navigable, titled sections
+      if (seen.has(type)) continue;         // first of each type
+      seen.add(type);
+      const href = p.slug === currentSlug ? `#${type}` : `${pageHref(p).replace(embedSuffix, '')}${embedSuffix}#${type}`;
+      out.push(`<a class="nav-sublink" role="menuitem" href="${escapeAttr(href)}">${escapeHtml(String(label).slice(0, 40))}</a>`);
+    }
+    return out;
+  };
+  // A top-level page/group, rendered as a plain link or (if it has children or
+  // opted-in sections) a dropdown. Groups are non-link buttons; pages keep their
+  // link plus a caret. Submenu = child pages first, then the page's own sections.
   const navItem = (p) => {
     const kids = childrenOf(p.id);
-    if (!kids.length && !p.is_group) return pageLink(p);
+    const secLinks = sectionSubLinks(p);
+    if (!kids.length && !secLinks.length && !p.is_group) return pageLink(p);
     const label = escapeHtml(p.nav_label || p.title || p.slug);
-    const submenu = `<div class="nav-submenu" role="menu">${kids.map(subLink).join('')}</div>`;
+    const submenu = `<div class="nav-submenu" role="menu">${kids.map(subLink).join('')}${secLinks.join('')}</div>`;
     const caret = `<button type="button" class="nav-caret" aria-haspopup="true" aria-expanded="false" aria-label="${label}"
         onclick="var i=this.closest('.nav-item');var o=i.classList.toggle('open');this.setAttribute('aria-expanded',o)">▾</button>`;
     const trigger = p.is_group

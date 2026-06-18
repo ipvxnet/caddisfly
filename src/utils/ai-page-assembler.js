@@ -34,12 +34,14 @@ export function assemblePage(sections, config, project, opts = {}) {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
     hideBadge = false, trackId = null, appOrigin = '', editOverlay = false,
     seoTitle = null, seoDescription = null, socialImage = null, heroImage = null, canonicalUrl = null, pageTitle = null, business = null,
-    lang = 'en', products = null, bookingServices = null, holiday = null, homeSections = null,
+    lang = 'en', products = null, bookingServices = null, holiday = null, homeSections = null, pageSections = null,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
   // ignore it). `products` feeds the 🛍 featured-products section live data.
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, booking_services: bookingServices, holiday, editOverlay };
+  // `pageSections` (pageId -> raw sections) lets the navbar expose a page's
+  // sections as its submenu when the page opts in (show_sections_in_nav).
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, booking_services: bookingServices, holiday, editOverlay, pageSections };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.

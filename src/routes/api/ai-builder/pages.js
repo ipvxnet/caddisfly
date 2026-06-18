@@ -115,6 +115,7 @@ export async function handleUpdatePage(ctx) {
     if (body.title !== undefined) updates.title = String(body.title).slice(0, 80);
     if (body.is_visible !== undefined) updates.is_visible = body.is_visible ? 1 : 0;
     if (body.is_group !== undefined) updates.is_group = body.is_group ? 1 : 0;
+    if (body.show_sections_in_nav !== undefined) updates.show_sections_in_nav = body.show_sections_in_nav ? 1 : 0;
     // Menu nesting (one level deep). Validate the parent: same project, not the
     // page itself, must be top-level, and the page being nested can't already
     // have its own children (that would create a 3rd level).

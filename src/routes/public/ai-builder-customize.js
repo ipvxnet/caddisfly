@@ -735,6 +735,7 @@ export async function handleAIBuilderCustomize(ctx) {
                 </select>`}
           </label>
           <label class="menu-org-row"><input type="checkbox" ${currentPage.is_visible ? 'checked' : ''} onchange="setPageVisible(${currentPage.id}, this.checked)"> ${tr('cust.menu_show') || 'Show in menu'}</label>
+          <label class="menu-org-row"><input type="checkbox" ${currentPage.show_sections_in_nav ? 'checked' : ''} onchange="setShowSections(${currentPage.id}, this.checked)"> ${tr('cust.menu_sections_sub') || 'Sections as submenu'}</label>
         </div>`;
             })()
           : ''}
@@ -1171,6 +1172,16 @@ export async function handleAIBuilderCustomize(ctx) {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ is_visible: vis ? 1 : 0 })
+        });
+        const d = await r.json();
+        if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
+      } catch (e) { alert('Could not update menu: ' + e.message); }
+    }
+    async function setShowSections(id, val) {
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ show_sections_in_nav: val ? 1 : 0 })
         });
         const d = await r.json();
         if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');

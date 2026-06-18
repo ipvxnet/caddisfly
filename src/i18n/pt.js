@@ -485,7 +485,7 @@ export const pt = {
     toast_snapshot_restored: 'Versão restaurada', toast_seo_saved: 'SEO salvo',
     toast_logo_updated: 'Logo atualizado', toast_logo_removed: 'Logo removido',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Adicionar uma página',
-    add_group: '+ Grupo de menu', menu_parent: 'Menu pai', menu_top_level: 'Nível principal', menu_has_children: 'tem itens de submenu', menu_show: 'Mostrar no menu',
+    add_group: '+ Grupo de menu', menu_parent: 'Menu pai', menu_top_level: 'Nível principal', menu_has_children: 'tem itens de submenu', menu_show: 'Mostrar no menu', menu_sections_sub: 'Seções como submenu',
     rename: 'Renomear', delete_page: 'Excluir página', home_page: 'Página inicial',
     sitewide: 'Todo o site', sitewide_note: '· aparece em todas as páginas',
     sections_of: 'Seções de {page}',
