@@ -455,6 +455,19 @@ export async function handleAIBuilderCustomize(ctx) {
     }
     .menu-org-row { display: inline-flex; align-items: center; gap: 0.4rem; }
     .menu-org select { font-size: 0.85rem; padding: 0.25rem 0.4rem; border: 1px solid #d6d3e8; border-radius: 6px; background: #fff; }
+    .page-tab-ai { color: #7c3aed; border-style: dashed; font-weight: 600; }
+    #mnu-overlay { position: fixed; inset: 0; background: rgba(15,18,34,0.45); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 1rem; }
+    .mnu-card { background: #fff; border-radius: 14px; max-width: 480px; width: 100%; max-height: 80vh; overflow: auto; padding: 1.5rem; box-shadow: 0 24px 60px rgba(0,0,0,0.28); }
+    .mnu-card h3 { margin: 0 0 0.3rem; font-size: 1.25rem; }
+    .mnu-sub { color: #4a5568; font-size: 0.9rem; margin: 0 0 1rem; }
+    .mnu-tree { list-style: none; margin: 0; padding-left: 0.5rem; }
+    .mnu-tree .mnu-tree { padding-left: 1.25rem; border-left: 2px solid #ece9fb; margin: 0.25rem 0; }
+    .mnu-tree li { padding: 0.3rem 0; font-size: 0.95rem; color: #1a202c; }
+    .mnu-badge { font-size: 0.7rem; background: #f0ecff; color: #7c3aed; border-radius: 999px; padding: 0.05rem 0.5rem; margin-left: 0.3rem; }
+    .mnu-badge.mnu-hide { background: #fde8e8; color: #c53030; }
+    .mnu-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+    .mnu-cancel { background: none; border: 1px solid #d6d3e8; border-radius: 8px; padding: 0.55rem 1.1rem; cursor: pointer; }
+    .mnu-apply { background: #7c3aed; color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.3rem; font-weight: 600; cursor: pointer; }
     .link-btn {
       background: none;
       border: none;
@@ -714,6 +727,7 @@ export async function handleAIBuilderCustomize(ctx) {
             .join('')}
           <button class="page-tab page-tab-add" onclick="addPage()" title="${tr('cust.add_page_title')}">${tr('cust.add_page')}</button>
           <button class="page-tab page-tab-add" onclick="addGroup()" title="A dropdown menu header with no page of its own — nest pages under it">${tr('cust.add_group') || '+ Menu group'}</button>
+          <button class="page-tab page-tab-ai" onclick="organizeMenu()" title="${tr('cust.menu_ai_title') || 'Let AI tidy your menu into groups & submenus — preview before applying'}">${tr('cust.menu_ai') || '✨ Organize menu'}</button>
         </div>
         <div class="page-toolbar">
           ${currentPage && !currentPage.is_home
@@ -1186,6 +1200,50 @@ export async function handleAIBuilderCustomize(ctx) {
         const d = await r.json();
         if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
       } catch (e) { alert('Could not update menu: ' + e.message); }
+    }
+
+    // ---- AI Smart Menu (suggest → preview → apply) ----
+    function escMenu(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+    function renderMenuTree(items){
+      var html = '<ul class="mnu-tree">';
+      (items||[]).forEach(function(it){
+        if(!it) return;
+        var badge = it.kind==='group' ? ' <span class="mnu-badge">group</span>' : (it.sectionsAsSubmenu ? ' <span class="mnu-badge">+ sections</span>' : '') + (it.hide ? ' <span class="mnu-badge mnu-hide">hidden</span>' : '');
+        html += '<li>'+ (it.kind==='group'?'▾ ':'') + escMenu(it.label || ('Page '+it.id)) + badge;
+        if(Array.isArray(it.children) && it.children.length) html += renderMenuTree(it.children);
+        html += '</li>';
+      });
+      return html + '</ul>';
+    }
+    var _menuSuggestion = null;
+    async function organizeMenu(){
+      flashToast('Asking AI to organize your menu…');
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/menu/suggest\`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const d = await r.json();
+        if(!d.success){ alert(d.error || 'Could not suggest a menu'); return; }
+        _menuSuggestion = d.suggestion;
+        const host = document.createElement('div');
+        host.id = 'mnu-overlay';
+        host.innerHTML =
+          '<div class="mnu-card">'
+          + '<h3>✨ Suggested menu</h3>'
+          + '<p class="mnu-sub">Here\\'s how AI would organize your navigation. Review, then apply.</p>'
+          + renderMenuTree(d.suggestion.items)
+          + '<div class="mnu-actions"><button class="mnu-cancel" onclick="closeMenuPreview()">Cancel</button>'
+          + '<button class="mnu-apply" onclick="applyMenuSuggestion()">Apply menu</button></div>'
+          + '</div>';
+        document.body.appendChild(host);
+      } catch (e) { alert('Could not suggest a menu: ' + e.message); }
+    }
+    function closeMenuPreview(){ var o=document.getElementById('mnu-overlay'); if(o) o.remove(); }
+    async function applyMenuSuggestion(){
+      if(!_menuSuggestion) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/menu/apply\`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: _menuSuggestion.items }) });
+        const d = await r.json();
+        if(d.success){ flashToast('Menu organized'); location.reload(); } else alert(d.error || 'Failed to apply menu');
+      } catch (e) { alert('Could not apply menu: ' + e.message); }
     }
 
     // ---- Add / remove sections ----

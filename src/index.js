@@ -59,6 +59,7 @@ import { handleStockPhoto, handleGenerateImage } from './routes/api/ai-builder/s
 import { handleUpdateFonts } from './routes/api/ai-builder/config-fonts.js';
 import { handleAIEditPropose, handleAIEditApply } from './routes/api/ai-builder/ai-edit.js';
 import { handleListPages, handleCreatePage, handleReorderPages, handleUpdatePage, handleDeletePage } from './routes/api/ai-builder/pages.js';
+import { handleSuggestMenu, handleApplyMenu } from './routes/api/ai-builder/menu.js';
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
 import { handleUpdateSeo, handleSeoAiReview } from './routes/api/ai-builder/seo.js';
 import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './routes/api/ai-builder/domains.js';
@@ -336,6 +337,8 @@ router.post('/api/ai-builder/:project_id/pages', autoSnap(handleCreatePage), PRO
 router.put('/api/ai-builder/:project_id/pages/reorder', autoSnap(handleReorderPages), PROJ);
 router.put('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleUpdatePage), PROJ);
 router.delete('/api/ai-builder/:project_id/pages/:page_id', autoSnap(handleDeletePage), PROJ);
+router.post('/api/ai-builder/:project_id/menu/suggest', handleSuggestMenu, PROJ);
+router.post('/api/ai-builder/:project_id/menu/apply', autoSnap(handleApplyMenu), PROJ);
 router.put('/api/ai-builder/:project_id/seo', autoSnap(handleUpdateSeo), PROJ);
 router.post('/api/ai-builder/:project_id/seo/ai-review', handleSeoAiReview, PROJ);
 router.post('/api/ai-builder/:project_id/logo/generate', handleLogoGenerate, PROJ);
