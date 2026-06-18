@@ -41,7 +41,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
     <button type="button" class="ai-edit-send" id="ai-edit-send-btn" onclick="aiEditSend()">${tr('aip.send')}</button>
   </div>
 
-  ${canImage ? `<details class="ai-edit-own">
+  ${canRemove ? `<details class="ai-edit-own">
     <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
       ${isHero ? `<div class="ai-edit-genvid">

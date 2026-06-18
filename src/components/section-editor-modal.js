@@ -563,12 +563,57 @@ function galleryRender() {
       + '<input class="gallery-alt" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_alt_ph'))} + '" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
       + '<div class="gallery-row-actions">'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.g_replace_t'))} + '" onclick="galleryReplace(' + i + ')">' + ${JSON.stringify(tr('sed.g_replace'))} + '</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_url'))} + '" onclick="galleryUrl(' + i + ')">🔗</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_photo'))} + '" onclick="galleryStock(' + i + ', this)">📷</button>'
+      + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_ai'))} + '" onclick="galleryAI(' + i + ', this)">✨</button>'
       + '<button type="button" class="gallery-del" title="' + ${JSON.stringify(tr('sed.g_remove_t'))} + '" onclick="galleryRemove(' + i + ')">🗑</button>'
       + '</div></div>';
   }).join('');
 }
 function gallerySetAlt(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].alt = val; galleryWrite(imgs); } }
 function galleryRemove(i) { const imgs = galleryRead(); imgs.splice(i, 1); galleryWrite(imgs); galleryRender(); }
+// Grounding query for a photo: its alt text, else the section heading.
+function galleryQuery(i) {
+  const imgs = galleryRead();
+  const alt = (imgs[i] && imgs[i].alt) || '';
+  const h = (document.getElementById('heading') || {}).value || '';
+  return alt || h || 'business';
+}
+function galleryUrl(i) {
+  const u = prompt(${JSON.stringify(tr('sed.img_url_prompt'))});
+  if (u && u.trim()) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].url = u.trim(); galleryWrite(imgs); galleryRender(); } }
+}
+async function galleryStock(i, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/stock-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: galleryQuery(i) }) });
+    const d = await r.json();
+    if (d.success) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].url = d.url; if (!imgs[i].alt && d.alt) imgs[i].alt = d.alt; } galleryWrite(imgs); }
+    else alert(d.error || ${JSON.stringify(tr('sed.img_fail'))});
+  } catch (e) { alert(${JSON.stringify(tr('sed.img_fail'))}); }
+  finally { galleryRender(); }
+}
+async function galleryAI(i, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/generate-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: galleryQuery(i) }) });
+    const d = await r.json();
+    if (d.success) { const imgs = galleryRead(); if (imgs[i]) imgs[i].url = d.url; galleryWrite(imgs); }
+    else alert(d.error || ${JSON.stringify(tr('sed.img_fail'))});
+  } catch (e) { alert(${JSON.stringify(tr('sed.img_fail'))}); }
+  finally { galleryRender(); }
+}
+async function gallerySwapAll() {
+  const n = galleryRead().length;
+  for (let i = 0; i < n; i++) {
+    try {
+      const r = await fetch('/api/ai-builder/' + window.currentProjectId + '/stock-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: galleryQuery(i), skip: i % 6 }) });
+      const d = await r.json();
+      if (d.success) { const cur = galleryRead(); if (cur[i]) { cur[i].url = d.url; if (!cur[i].alt && d.alt) cur[i].alt = d.alt; } galleryWrite(cur); }
+    } catch (e) { /* skip */ }
+  }
+  galleryRender();
+}
 
 // Drag-to-reorder gallery photos.
 window.__galleryDragIndex = -1;
@@ -1190,6 +1235,7 @@ function generateGalleryFields(content, tr) {
       <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
       <div id="gallery-manager" class="gallery-manager"></div>
       <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">${tr('sed.add_photo')}</button>
+      <button type="button" class="gallery-add-btn" onclick="gallerySwapAll()">🖼 ${tr('sed.swap_all')}</button>
       <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
       <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
     </div>
