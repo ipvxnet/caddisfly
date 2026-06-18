@@ -316,19 +316,10 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
       scroll-margin-top: 20px;
     }
 
-    /* Loading animation */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    body {
-      animation: fadeIn 0.5s ease-in;
-    }
+    /* NOTE: no body-level opacity fade-in. Starting <body> at opacity:0 made
+       the first paint invisible, so Lighthouse (esp. throttled mobile) reported
+       NO_FCP — "the page did not paint any content" — and it delayed real first
+       paint too. Section entrance animations (fadeInUp etc.) live per-template. */
 
     /* Dark theme override layer (only present for dark themes) */
     ${darkLayer}
