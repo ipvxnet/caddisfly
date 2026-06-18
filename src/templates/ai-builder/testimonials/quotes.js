@@ -31,7 +31,7 @@ export function testimonialsQuotesTemplate(data, config) {
           const author = testimonial.author || testimonial.name || 'Anonymous';
           const position = testimonial.position || testimonial.role || '';
           const avatarHtml = testimonial.avatar
-            ? `<img src="${testimonial.avatar}" alt="${author}" class="author-avatar">`
+            ? `<img src="${testimonial.avatar}" alt="${author}" class="author-avatar" width="60" height="60" loading="lazy">`
             : `<div class="author-avatar" style="background:${primaryColor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.4rem;">${(author || 'A').charAt(0)}</div>`;
           return `
         <div class="quote-card" data-index="${index}">

@@ -56,7 +56,7 @@ export function assemblePage(sections, config, project, opts = {}) {
   // page (the navbar ignores this when the site is multi-page).
   renderConfig.sectionNav = buildSectionNav(visibleSections, lang);
 
-  const renderedSections = visibleSections
+  const renderedParts = visibleSections
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
       // Use html_template field if available, otherwise check contentData._variant
@@ -79,11 +79,26 @@ export function assemblePage(sections, config, project, opts = {}) {
       // section by its DB id (matches the left-panel section list's data-section-id).
       const anchorId = section.id != null ? `ai-sec-${section.id}` : '';
       const inner = `${semanticAnchor}${rendered}`;
-      return anchorId
+      const html = anchorId
         ? `<div id="${anchorId}" style="scroll-margin-top: 70px;">${inner}</div>`
         : inner;
-    })
-    .join('\n\n');
+      return { type, html };
+    });
+
+  // Wrap the content sections in a single <main> landmark (accessibility:
+  // Lighthouse "document has a main landmark"). The header (<header>/banner) and
+  // footer (<footer>/contentinfo) stay OUTSIDE <main> so we don't create nested
+  // top-level-landmark violations.
+  let renderedSections = '';
+  let mainOpen = false;
+  for (const part of renderedParts) {
+    const isChrome = part.type === 'header' || part.type === 'footer';
+    if (!isChrome && !mainOpen) { renderedSections += '<main>\n'; mainOpen = true; }
+    if (isChrome && mainOpen) { renderedSections += '</main>\n'; mainOpen = false; }
+    renderedSections += part.html + '\n\n';
+  }
+  if (mainOpen) renderedSections += '</main>\n';
+  renderedSections = renderedSections.trim();
 
   // Multi-page link fix: a `#contact`-style link whose target section lives on a
   // DIFFERENT page can't resolve in-page — rewrite it to that page's route (same
@@ -231,6 +246,13 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
 
   const fontsHref = `https://fonts.googleapis.com/css2?${fontFamilyParam(font_heading, '400;600;700')}&${fontFamilyParam(font_body, '400;500;600')}&display=swap`;
 
+  // Preload the hero (LCP) image so the browser discovers it before parsing the
+  // body — cuts "LCP request discovery" latency. Only for absolute/asset URLs.
+  const heroImg = (seo && seo.heroImage) || '';
+  const heroPreload = heroImg && /^(https?:|\/)/.test(heroImg)
+    ? `\n  <link rel="preload" as="image" href="${escapeHtml(heroImg)}" fetchpriority="high">`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(lang)}">
 <head>
@@ -240,10 +262,12 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
   ${seoHead(seo, title, logoUrl)}
   ${faviconTags}
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts (loaded non-blocking: preload as style, swap to stylesheet
+       on load so the font CSS never blocks first render) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="${fontsHref}" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${heroPreload}
+  <link rel="preload" as="style" href="${fontsHref}" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="${fontsHref}" rel="stylesheet"></noscript>
 
   <style>
     /* Global Reset & Base Styles */
@@ -255,6 +279,10 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
 
     html {
       scroll-behavior: smooth;
+    }
+
+    main {
+      display: block;
     }
 
     body {

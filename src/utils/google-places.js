@@ -300,7 +300,9 @@ export async function fetchPlacePhotoBytes(env, photoName) {
   if (!env.GOOGLE_PLACES_API_KEY) {
     throw new Error('GOOGLE_PLACES_API_KEY not configured');
   }
-  const url = `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=1200&maxWidthPx=1600`;
+  // Cap at web-display size (≈1280w) — 1600×1200 originals were ~2× the bytes a
+  // hero/card ever shows on screen. Smaller fetch ⇒ smaller R2 object ⇒ faster LCP.
+  const url = `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=960&maxWidthPx=1280`;
   const response = await fetch(url, {
     headers: {
       'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,

@@ -20,7 +20,7 @@ export function servicesSpotlightTemplate(data, config) {
   const rows = list
     .map((s) => {
       const media = s.image_url
-        ? `<div class="svc-spot-media"><img src="${escAttr(s.image_url)}" alt="${escAttr(s.title || '')}" loading="lazy"></div>`
+        ? `<div class="svc-spot-media"><img src="${escAttr(s.image_url)}" alt="${escAttr(s.title || '')}" width="1200" height="750" loading="lazy"></div>`
         : `<div class="svc-spot-media svc-spot-media--icon" style="background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});">${s.icon || '✨'}</div>`;
       return `
       <button type="button" class="svc-spot-row" ${serviceCardAttrs(s)}>

@@ -265,7 +265,15 @@ export async function buildPhotoPool(env, project, profile, industry) {
   const scraped = Array.isArray(profile.scrape_images) ? profile.scrape_images.slice(0, 6) : [];
   for (let i = 0; i < scraped.length && pool.length < 6; i++) {
     try {
-      const r = await fetch(scraped[i], { headers: { 'User-Agent': 'Mozilla/5.0', Referer: profile.website || '' } });
+      // Downscale + WebP at ingest via Cloudflare image transformations. Scraped
+      // originals are often 2000px+ hero JPEGs — far bigger than we ever display.
+      // `cf.image` is a graceful no-op if Transformations aren't enabled on the
+      // account (returns the original), so this never regresses; it just kicks in
+      // automatically once Transformations is on for caddisfly.app.
+      const r = await fetch(scraped[i], {
+        headers: { 'User-Agent': 'Mozilla/5.0', Referer: profile.website || '' },
+        cf: { image: { width: 1280, fit: 'scale-down', quality: 82, format: 'webp' } },
+      });
       if (!r.ok) continue;
       const ct = r.headers.get('content-type') || '';
       if (!/^image\//i.test(ct)) continue;

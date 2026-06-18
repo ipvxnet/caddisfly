@@ -47,7 +47,7 @@ export function aboutTeamTemplate(data, config) {
           (member, index) => `
         <div class="team-card" data-index="${index}">
           <div class="team-image-wrapper">
-            <img src="${member.image}" alt="${member.name}" class="team-image">
+            <img src="${member.image}" alt="${member.name}" class="team-image" width="400" height="400" loading="lazy">
             <div class="team-overlay" style="background: linear-gradient(135deg, ${primaryColor}ee, ${primaryColor}99);"></div>
           </div>
           <div class="team-info">
