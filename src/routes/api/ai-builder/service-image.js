@@ -11,7 +11,9 @@ import { searchStockPhotos } from '../../../utils/stock-photos.js';
 import { inferIndustry, imageKeywordsFor } from '../../../utils/industry-style.js';
 import { generateImageToR2 } from './ai-edit.js';
 import { screenContent, policyError } from '../../../utils/content-policy.js';
-import { getUserTier } from '../../../utils/rate-limiter.js';
+import { getUserTier, checkAIGenerationLimit, limitsDisabled, formatRateLimitError } from '../../../utils/rate-limiter.js';
+import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
+import { audit } from '../../../utils/audit.js';
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
@@ -57,18 +59,24 @@ export async function handleGenerateImage(ctx) {
     const screen = screenContent(subject);
     if (!screen.allowed) return json(policyError(screen), 422);
 
-    // Paid feature in production (mirrors logo generation); preview is open.
-    if (env.ENVIRONMENT === 'production') {
-      const tier = await getUserTier(env.DB, r.email);
-      if (tier === 'free_trial') {
-        return json({
-          success: false,
-          error: 'AI image generation is available on paid plans.',
-          upgrade_message: 'Upgrade to Starter or higher to generate images.',
-          billing_url: '/billing',
-        }, 402);
-      }
+    // Cost controls (mirror logo generation): paid-plan in prod + daily rate
+    // limit + per-image credit charge, so the AI button can't be abused.
+    const tier = await getUserTier(env.DB, r.email);
+    if (env.ENVIRONMENT === 'production' && tier === 'free_trial') {
+      return json({
+        success: false,
+        error: 'AI image generation is available on paid plans.',
+        upgrade_message: 'Upgrade to Starter or higher to generate images.',
+        billing_url: '/billing',
+      }, 402);
     }
+    if (!limitsDisabled(env)) {
+      const check = await checkAIGenerationLimit(env.DB, r.email, tier);
+      if (!check.allowed) return json(formatRateLimitError(check, 'generations'), 429);
+    }
+    const cost = CREDIT_COSTS.image;
+    const afford = await canAfford(env, env.DB, r.email, cost);
+    if (!afford.ok) return json(formatCreditError(afford.state, 'image generation'), 402);
 
     // Ground the prompt in the vertical so the model doesn't free-associate on a
     // bare (often Portuguese/Spanish) service word.
@@ -78,6 +86,11 @@ export async function handleGenerateImage(ctx) {
     const styled = `Professional, realistic editorial photograph for a ${vertical} business, depicting: ${subject}. Setting/context: ${ground}. Natural lighting, true-to-life, high detail, NO text, NO words, NO logos, not an extreme close-up.`;
 
     const url = await generateImageToR2(env, params.project_id, styled);
+
+    // Charge only after a successful generation.
+    await chargeCredits(env, env.DB, r.email, cost);
+    audit(ctx, 'credit.image', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, resourceName: r.businessName, metadata: { credits: cost } });
+
     return json({ success: true, url });
   } catch (error) {
     console.error('generate-image error:', error);
