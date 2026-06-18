@@ -862,7 +862,7 @@ export function darkModeCss(theme) {
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
     .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
-    .tspot-quote, .tspot-author, .action-title { color: ${s.text} !important; }
+    .tspot-quote, .tspot-author, .action-title, .value-item { color: ${s.text} !important; }
     .action-desc { color: ${s.muted} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }

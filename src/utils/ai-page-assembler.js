@@ -307,7 +307,8 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
     /* CSS Variables */
     :root {
       --primary-color: ${primary_color};
-      --primary-color-rgb: ${hexToRgb(primary_color)};${tokenVars}
+      --primary-color-rgb: ${hexToRgb(primary_color)};
+      --on-primary: ${readableOn(primary_color)};${tokenVars}
     }
 
     /* Smooth scroll offset for anchor links */
@@ -476,6 +477,25 @@ export function hexToRgb(hex) {
   const b = parseInt(hex.substring(4, 6), 16);
 
   return `${r}, ${g}, ${b}`;
+}
+
+/**
+ * Pick a readable foreground (white or near-black) for text/icons placed ON a
+ * solid brand color — so an auto-detected mid-tone (e.g. copper #b87333, where
+ * white is only 3.79:1) flips to dark text and clears WCAG AA. Exposed as the
+ * `--on-primary` CSS var; buttons use `color: var(--on-primary, #fff)`.
+ */
+export function readableOn(hex) {
+  const h = String(hex || '').replace(/^#/, '');
+  if (!/^[0-9a-f]{6}$/i.test(h)) return '#ffffff';
+  const lin = (c) => {
+    c = parseInt(c, 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const L = 0.2126 * lin(h.substring(0, 2)) + 0.7152 * lin(h.substring(2, 4)) + 0.0722 * lin(h.substring(4, 6));
+  const onWhite = (1.05) / (L + 0.05); // contrast vs #fff
+  const onBlack = (L + 0.05) / 0.05; // contrast vs #000
+  return onWhite >= onBlack ? '#ffffff' : '#1a202c';
 }
 
 /**
