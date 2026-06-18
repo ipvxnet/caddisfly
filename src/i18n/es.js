@@ -485,6 +485,7 @@ export const es = {
     toast_snapshot_restored: 'Versión restaurada', toast_seo_saved: 'SEO guardado',
     toast_logo_updated: 'Logo actualizado', toast_logo_removed: 'Logo eliminado',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Añadir una página',
+    add_group: '+ Grupo de menú', menu_parent: 'Menú superior', menu_top_level: 'Nivel superior', menu_has_children: 'tiene elementos de submenú', menu_show: 'Mostrar en el menú',
     rename: 'Renombrar', delete_page: 'Eliminar página', home_page: 'Página de inicio',
     sitewide: 'Todo el sitio', sitewide_note: '· se muestra en cada página',
     sections_of: 'Secciones de {page}',

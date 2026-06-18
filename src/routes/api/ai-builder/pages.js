@@ -74,6 +74,7 @@ export async function handleCreatePage(ctx) {
       page_order: existing.length,
       is_home: 0,
       is_visible: 1,
+      is_group: body.is_group ? 1 : 0, // label-only dropdown header
     });
     return json({ success: true, page });
   } catch (e) {
@@ -113,6 +114,24 @@ export async function handleUpdatePage(ctx) {
     if (body.nav_label !== undefined) updates.nav_label = String(body.nav_label).slice(0, 60);
     if (body.title !== undefined) updates.title = String(body.title).slice(0, 80);
     if (body.is_visible !== undefined) updates.is_visible = body.is_visible ? 1 : 0;
+    if (body.is_group !== undefined) updates.is_group = body.is_group ? 1 : 0;
+    // Menu nesting (one level deep). Validate the parent: same project, not the
+    // page itself, must be top-level, and the page being nested can't already
+    // have its own children (that would create a 3rd level).
+    if (body.parent_id !== undefined) {
+      const pid = body.parent_id === null || body.parent_id === '' ? null : parseInt(body.parent_id, 10);
+      if (pid === null) {
+        updates.parent_id = null;
+      } else {
+        if (pid === page.id) return json({ success: false, error: 'A page cannot be its own parent' }, 400);
+        const all = await getPagesByProject(env.DB, projectKey);
+        const parent = all.find((p) => p.id === pid);
+        if (!parent) return json({ success: false, error: 'Parent page not found' }, 400);
+        if (parent.parent_id) return json({ success: false, error: 'Menus can only nest one level deep' }, 400);
+        if (all.some((c) => c.parent_id === page.id)) return json({ success: false, error: 'This page already has submenu items — move those out first' }, 400);
+        updates.parent_id = pid;
+      }
+    }
     if (Object.keys(updates).length === 0) return json({ success: false, error: 'Nothing to update' }, 400);
 
     const updated = await updatePage(env.DB, page.id, updates);

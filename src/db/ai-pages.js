@@ -83,21 +83,23 @@ export async function createPage(db, data) {
     page_order = 0,
     is_home = 0,
     is_visible = 1,
+    parent_id = null,
+    is_group = 0,
   } = data;
 
   return db
     .prepare(
-      `INSERT INTO ai_pages (ai_project_id, project_id, slug, title, nav_label, page_order, is_home, is_visible)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO ai_pages (ai_project_id, project_id, slug, title, nav_label, page_order, is_home, is_visible, parent_id, is_group)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(ai_project_id, project_id, slug, title, nav_label, page_order, is_home ? 1 : 0, is_visible ? 1 : 0)
+    .bind(ai_project_id, project_id, slug, title, nav_label, page_order, is_home ? 1 : 0, is_visible ? 1 : 0, parent_id, is_group ? 1 : 0)
     .first();
 }
 
 /** Update editable page fields. */
 export async function updatePage(db, id, data) {
-  const allowed = ['slug', 'title', 'nav_label', 'page_order', 'is_visible', 'seo_title', 'seo_description'];
+  const allowed = ['slug', 'title', 'nav_label', 'page_order', 'is_visible', 'seo_title', 'seo_description', 'parent_id', 'is_group'];
   const updates = [];
   const values = [];
   Object.keys(data).forEach((k) => {
@@ -138,6 +140,9 @@ export async function deletePage(db, projectKey, id) {
       .bind(home.id, id)
       .run();
   }
+  // Re-parent any children to top-level so they aren't orphaned (hidden) when
+  // their parent/group is deleted.
+  await db.prepare('UPDATE ai_pages SET parent_id = NULL, updated_at = unixepoch() WHERE parent_id = ?').bind(id).run();
   await db.prepare('DELETE FROM ai_pages WHERE id = ?').bind(id).run();
   return { ok: true };
 }

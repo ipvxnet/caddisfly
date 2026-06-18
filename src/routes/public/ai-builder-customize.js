@@ -447,6 +447,14 @@ export async function handleAIBuilderCustomize(ctx) {
       margin-bottom: 1.25rem;
       min-height: 1.4rem;
     }
+    .menu-org {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center;
+      margin: -0.5rem 0 1.25rem; padding: 0.6rem 0.8rem;
+      background: #faf9ff; border: 1px solid #ece9fb; border-radius: 10px;
+      font-size: 0.85rem; color: #4a5568;
+    }
+    .menu-org-row { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .menu-org select { font-size: 0.85rem; padding: 0.25rem 0.4rem; border: 1px solid #d6d3e8; border-radius: 6px; background: #fff; }
     .link-btn {
       background: none;
       border: none;
@@ -705,6 +713,7 @@ export async function handleAIBuilderCustomize(ctx) {
             .map((p) => `<button class="page-tab ${p.slug === currentSlug ? 'active' : ''}" onclick="switchPage('${p.slug}')">${p.is_home ? '🏠 ' : ''}${esc(p.nav_label || p.slug)}</button>`)
             .join('')}
           <button class="page-tab page-tab-add" onclick="addPage()" title="${tr('cust.add_page_title')}">${tr('cust.add_page')}</button>
+          <button class="page-tab page-tab-add" onclick="addGroup()" title="A dropdown menu header with no page of its own — nest pages under it">${tr('cust.add_group') || '+ Menu group'}</button>
         </div>
         <div class="page-toolbar">
           ${currentPage && !currentPage.is_home
@@ -712,6 +721,23 @@ export async function handleAIBuilderCustomize(ctx) {
                <button class="link-btn danger" onclick="deletePage(${currentPage.id})">${tr('cust.delete_page')}</button>`
             : `<span class="muted">${tr('cust.home_page')}</span>`}
         </div>
+        ${currentPage && !currentPage.is_home
+          ? (() => {
+              const hasChildren = pages.some((p) => p.parent_id === currentPage.id);
+              const candidates = pages.filter((p) => !p.parent_id && p.id !== currentPage.id && !pages.some((c) => c.parent_id === p.id && c.id !== currentPage.id));
+              return `<div class="menu-org">
+          <label class="menu-org-row">${tr('cust.menu_parent') || 'Menu parent'}:
+            ${hasChildren
+              ? `<span class="muted">${tr('cust.menu_has_children') || 'has submenu items'}</span>`
+              : `<select onchange="setPageParent(${currentPage.id}, this.value)">
+                  <option value="">${tr('cust.menu_top_level') || 'Top level'}</option>
+                  ${candidates.map((p) => `<option value="${p.id}" ${currentPage.parent_id === p.id ? 'selected' : ''}>${p.is_group ? '▾ ' : ''}${esc(p.nav_label || p.slug)}</option>`).join('')}
+                </select>`}
+          </label>
+          <label class="menu-org-row"><input type="checkbox" ${currentPage.is_visible ? 'checked' : ''} onchange="setPageVisible(${currentPage.id}, this.checked)"> ${tr('cust.menu_show') || 'Show in menu'}</label>
+        </div>`;
+            })()
+          : ''}
 
         ${siteSections.length
           ? `<h3 class="group-title">${tr('cust.sitewide')} <span class="muted">${tr('cust.sitewide_note')}</span></h3>
@@ -1115,6 +1141,40 @@ export async function handleAIBuilderCustomize(ctx) {
         const d = await r.json();
         if (d.success) { flashToast(${JSON.stringify(tr('cust.toast_page_added'))}); gotoPage(d.page.slug); } else alert(d.error || 'Failed to add page');
       } catch (e) { alert(${JSON.stringify(tr('cust.err_add_page'))} + e.message); }
+    }
+
+    // ---- Menu organization (nesting / groups) ----
+    async function addGroup() {
+      const label = prompt('Menu group name (a dropdown header — nest pages under it):');
+      if (!label) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages\`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nav_label: label, is_group: 1 })
+        });
+        const d = await r.json();
+        if (d.success) { flashToast('Menu group added'); location.reload(); } else alert(d.error || 'Failed to add group');
+      } catch (e) { alert('Could not add group: ' + e.message); }
+    }
+    async function setPageParent(id, parentId) {
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parent_id: parentId ? Number(parentId) : null })
+        });
+        const d = await r.json();
+        if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
+      } catch (e) { alert('Could not update menu: ' + e.message); }
+    }
+    async function setPageVisible(id, vis) {
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_visible: vis ? 1 : 0 })
+        });
+        const d = await r.json();
+        if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
+      } catch (e) { alert('Could not update menu: ' + e.message); }
     }
 
     // ---- Add / remove sections ----
