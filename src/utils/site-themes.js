@@ -725,6 +725,68 @@ export const SITE_THEMES = [
     fonts: { heading: 'Cormorant Garamond', body: 'Lato' },
     tokens: 'editorial',
   },
+  // --- 2026-06-18 batch: 6 templates filling light/dark gaps + new verticals,
+  // built on the new showcase / founder-quote / split-image layouts. ---
+  {
+    key: 'aperture', label: 'Aperture', style: 'editorial',
+    description: 'A bright, editorial counterpart to Lens — oversized type, gallery-forward, monochrome with a warm accent for photographers.',
+    accent: 'linear-gradient(135deg, #1a1a1a 0%, #e0a96d 100%)',
+    industries: ['photography'],
+    variants: { hero: 'showcase', about: 'founder-quote', services: 'cards', testimonials: 'quotes', gallery: 'masonry', contact: 'split', footer: 'minimal', cta: 'split-image' },
+    fonts: { heading: 'Fraunces', body: 'Inter' },
+    tokens: 'editorial',
+  },
+  {
+    key: 'velocity', label: 'Velocity', style: 'modern',
+    description: 'A bright, high-energy look for auto shops & dealers — sporty navy/red, technical type, strong service grid (a light alternative to Midnight).',
+    accent: 'linear-gradient(135deg, #2c3e50 0%, #c0392b 100%)',
+    industries: ['automotive'],
+    variants: { hero: 'split', about: 'text-image', services: 'cards', features: 'grid', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'split-image' },
+    fonts: { heading: 'Rajdhani', body: 'Roboto' },
+    tokens: 'sharp',
+  },
+  {
+    key: 'fade', label: 'Fade', style: 'classic', mode: 'dark',
+    description: 'A dedicated dark barbershop look — leather-and-brass, condensed caps, founder quote and spotlight services.',
+    accent: 'linear-gradient(135deg, #141210 0%, #c9a86a 100%)',
+    industries: ['barbershop'],
+    variants: { hero: 'showcase', about: 'founder-quote', services: 'spotlight', testimonials: 'quotes', gallery: 'masonry', contact: 'split', footer: 'minimal', cta: 'banner' },
+    fonts: { heading: 'Oswald', body: 'Inter' },
+    colors: { primary: '#c9a86a', secondary: '#9b2226' },
+    surface: { bg: '#141210', card: '#1f1b16', text: '#f2ece1', muted: '#b6a78f', border: '#332c22' },
+    tokens: 'sharp',
+  },
+  {
+    key: 'vows', label: 'Vows', style: 'elegant',
+    description: 'Soft, romantic and photo-led for wedding venues & planners — dusty rose and sage, airy serif, gallery and founder story.',
+    accent: 'linear-gradient(135deg, #a8746f 0%, #c9a35c 100%)',
+    industries: ['wedding'],
+    variants: { hero: 'showcase', about: 'founder-quote', services: 'cards', testimonials: 'quotes', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'split-image' },
+    fonts: { heading: 'Cormorant Garamond', body: 'Lato' },
+    tokens: 'editorial',
+  },
+  {
+    key: 'encore', label: 'Encore', style: 'bold', mode: 'dark',
+    description: 'Stage-lit and loud for musicians, bands & venues — near-black with electric magenta/cyan, poster display type, tour-ready.',
+    accent: 'linear-gradient(135deg, #0c0c12 0%, #ff2d75 100%)',
+    industries: ['music'],
+    variants: { hero: 'showcase', about: 'text-image', services: 'cards', testimonials: 'quotes', gallery: 'carousel', contact: 'split', footer: 'minimal', cta: 'banner' },
+    fonts: { heading: 'Bebas Neue', body: 'Inter' },
+    colors: { primary: '#ff2d75', secondary: '#00cec9' },
+    surface: { bg: '#0c0c12', card: '#16161f', text: '#f4f4f8', muted: '#a0a0b2', border: '#262630' },
+    tokens: 'sharp',
+  },
+  {
+    key: 'barrel', label: 'Barrel', style: 'classic', mode: 'dark',
+    description: 'Craft and industrial for breweries & taprooms — espresso and amber, slab serif, spotlight beers and gallery.',
+    accent: 'linear-gradient(135deg, #171109 0%, #e0a04a 100%)',
+    industries: ['brewery'],
+    variants: { hero: 'showcase', about: 'founder-quote', services: 'spotlight', testimonials: 'quotes', gallery: 'masonry', contact: 'split', footer: 'minimal', cta: 'split-image' },
+    fonts: { heading: 'Bitter', body: 'Inter' },
+    colors: { primary: '#e0a04a', secondary: '#c2682a' },
+    surface: { bg: '#171109', card: '#22190f', text: '#f5ecdc', muted: '#bda988', border: '#352812' },
+    tokens: 'sharp',
+  },
 ];
 
 // Style tag per template (modern/classic/minimal/bold/elegant/luxe/playful) — used
@@ -822,6 +884,7 @@ const DARK_SURFACE_SECTIONS = [
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
   '.features-actions',
+  '.hero-showcase', '.about-founder', '.cta-split',
   '.blog-list-section', '.blog-post-section',
   '.shop-list-section', '.shop-product-section',
 ];
@@ -831,7 +894,7 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card',
-  '.footer-minimal-social a', '.hero-overlap-card', '.action-card',
+  '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.cta-split-copy',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -856,13 +919,15 @@ export function darkModeCss(theme) {
     ${DARK_SURFACE_SECTIONS.join(', ')} { background: ${s.bg} !important; }
     ${DARK_CARD_SURFACES.join(', ')} { background: ${s.card} !important; border-color: ${s.border} !important; }
     section h1, section h2, section h3, section h4, section h5, section h6 { color: ${s.text} !important; }
-    section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p, .svc-num-desc { color: ${s.muted} !important; }
+    section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p, .svc-num-desc,
+    .hero-showcase-sub, .about-founder-role, .cta-split-desc { color: ${s.muted} !important; }
     /* Key content text that isn't a p/li/heading — keep it bright, not dark-on-dark.
        (review quotes/authors, contact details, form labels, social links.) */
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
     .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
-    .tspot-quote, .tspot-author, .action-title { color: ${s.text} !important; }
+    .tspot-quote, .tspot-author, .action-title, .value-item,
+    .about-founder-quote, .about-founder-name { color: ${s.text} !important; }
     .action-desc { color: ${s.muted} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }

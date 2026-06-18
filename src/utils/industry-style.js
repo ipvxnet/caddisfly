@@ -13,7 +13,10 @@ const INDUSTRY_KEYWORDS = [
   ['bakery', ['bakery', 'bakeshop', 'pastry', 'patisserie', 'baked goods', 'cupcake', 'donut']],
   // Winery before food so a vineyard gets an elegant estate look, not a bar/grill one.
   ['winery', ['winery', 'vineyard', 'wine tasting', 'tasting room', 'wine cellar', 'wines', 'wine estate']],
-  ['food', ['restaurant', 'food', 'burrito', 'taco', 'pizza', 'sushi', 'grill', 'diner', 'bar', 'bistro', 'catering', 'kitchen', 'eatery', 'brewery', 'mexican', 'italian', 'cuisine', 'steakhouse']],
+  // Brewery before food so a craft brewery/taproom gets its own craft look
+  // (the generic 'bar' keyword stays on food for sports bars/grills).
+  ['brewery', ['brewery', 'brewpub', 'craft brewery', 'craft beer', 'taproom', 'tap room', 'microbrewery', 'beer garden', 'brewing company', 'brewing co']],
+  ['food', ['restaurant', 'food', 'burrito', 'taco', 'pizza', 'sushi', 'grill', 'diner', 'bar', 'bistro', 'catering', 'kitchen', 'eatery', 'mexican', 'italian', 'cuisine', 'steakhouse']],
   ['fitness', ['gym', 'fitness', 'yoga', 'crossfit', 'pilates', 'training', 'workout', 'wellness studio']],
   // Barbershop before beauty so "barber" gets a masculine look, not a salon one.
   ['barbershop', ['barbershop', 'barber shop', 'barber', 'barbers', 'fade', 'mens grooming', "men's grooming"]],
@@ -43,7 +46,10 @@ const INDUSTRY_KEYWORDS = [
   ['automotive', ['auto', 'car', 'mechanic', 'automotive', 'repair', 'tire', 'dealership']],
   ['pet', ['pet', 'pets', 'dog', 'dogs', 'cat', 'cats', 'puppy', 'kennel', 'pet grooming', 'pet store', 'doggy daycare', 'animal shelter']],
   ['travel', ['travel', 'tour', 'tours', 'tourism', 'hotel', 'resort', 'vacation', 'hostel', 'getaway', 'itinerary', 'destination', 'safari']],
-  ['events', ['wedding', 'weddings', 'event planning', 'event planner', 'events', 'party', 'parties', 'celebration', 'banquet', 'venue', 'quinceanera']],
+  // Wedding (venue/planning) before events so it gets the romantic, photo-forward
+  // look; generic corporate/party events keep the 'events' template.
+  ['wedding', ['wedding venue', 'wedding planner', 'wedding planning', 'wedding', 'bridal', 'reception venue', 'elopement']],
+  ['events', ['event planning', 'event planner', 'events', 'party', 'parties', 'celebration', 'banquet', 'venue', 'quinceanera']],
   // Childcare before education so a daycare gets the playful look, not an academic one.
   ['childcare', ['childcare', 'child care', 'daycare', 'day care', 'preschool', 'pre-school', 'nursery', 'montessori', 'early learning', 'kindergarten', 'after school']],
   ['education', ['school', 'academy', 'tutoring', 'tutor', 'tutors', 'courses', 'education', 'e-learning', 'learning center', 'university', 'college']],
@@ -57,6 +63,9 @@ const INDUSTRY_KEYWORDS = [
   ['church', ['church', 'ministry', 'worship', 'congregation', 'parish', 'gospel', 'faith community']],
   // Photography before creative so a photographer gets the dark gallery look.
   ['photography', ['photography', 'photographer', 'photo studio', 'portrait', 'headshot', 'headshots', 'videography']],
+  // Music before creative so a recording studio / band gets the stage look,
+  // not the generic 'studio'/'media' creative one.
+  ['music', ['recording studio', 'music studio', 'live music', 'music venue', 'record label', 'music producer', 'musician', 'songwriter', 'concert', 'band']],
   ['creative', ['design', 'studio', 'agency', 'art', 'creative', 'media', 'marketing', 'branding']],
   // Jeweler before retail so fine jewelry gets a luxe look, not a generic boutique one.
   ['jeweler', ['jeweler', 'jewelry', 'jewellery', 'fine jewelry', 'diamonds', 'engagement rings', 'watchmaker']],
@@ -70,6 +79,9 @@ const INDUSTRY_KEYWORDS = [
 // Palette per industry: { primary, secondary, accent }
 const PALETTES = {
   winery: { primary: '#6e2639', secondary: '#3d2b24', accent: '#c9a227' }, // burgundy + earth + gold
+  brewery: { primary: '#b5651d', secondary: '#3a2a1a', accent: '#e0a96d' }, // amber + espresso + tan
+  wedding: { primary: '#a8746f', secondary: '#6b7d62', accent: '#c9a35c' }, // dusty rose + sage + gold
+  music: { primary: '#d6336c', secondary: '#1a1a2e', accent: '#00cec9' }, // magenta + near-black + cyan
   childcare: { primary: '#ff8fab', secondary: '#56c2e6', accent: '#ffcf56' }, // coral + sky + sunny yellow
   landscaping: { primary: '#3a7d3a', secondary: '#1f5130', accent: '#a3d62b' }, // forest + lime green
   cafe: { primary: '#6f4e37', secondary: '#c8a27c', accent: '#e8b04b' }, // espresso brown + cream + honey
@@ -117,6 +129,9 @@ const PALETTES = {
 // Base stock-photo keywords per industry (appended to business hints).
 const IMAGE_KEYWORDS = {
   winery: 'vineyard winery wine grapes landscape',
+  brewery: 'craft brewery beer taproom barrels',
+  wedding: 'wedding venue ceremony reception flowers elegant',
+  music: 'live music concert stage band performance',
   childcare: 'happy children daycare preschool play',
   landscaping: 'landscaping lush garden lawn green',
   medspa: 'medical spa aesthetics skincare treatment',

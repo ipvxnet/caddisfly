@@ -64,7 +64,7 @@ export function heroTagsTemplate(data, config) {
 .hero-tags-cta {
   display: inline-block;
   padding: 1.05rem 2.75rem;
-  color: #fff;
+  color: var(--on-primary, #fff);
   text-decoration: none;
   border-radius: var(--cf-btn-radius, 999px);
   font-weight: 700;

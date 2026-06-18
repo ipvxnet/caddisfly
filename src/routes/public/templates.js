@@ -23,17 +23,19 @@ const INDUSTRY_LABEL = {
   interior: 'Interior Design', coaching: 'Coaching', church: 'Faith & Community',
   photography: 'Photography', creative: 'Creative & Agencies', jeweler: 'Jewelry',
   retail: 'Retail & Boutiques', dispensary: 'Dispensaries', tech: 'Tech & SaaS',
+  wedding: 'Wedding Venues', music: 'Music & Bands', brewery: 'Breweries & Taprooms',
   general: 'Any Business',
 };
 
 // Coarse categories for the filter bar (keeps the chip row short at 100 templates).
 const CATEGORY = {
-  food: 'Food & Drink', cafe: 'Food & Drink', bakery: 'Food & Drink', winery: 'Food & Drink',
+  food: 'Food & Drink', cafe: 'Food & Drink', bakery: 'Food & Drink', winery: 'Food & Drink', brewery: 'Food & Drink',
   fitness: 'Health & Wellness', beauty: 'Health & Wellness', spa: 'Health & Wellness', medspa: 'Health & Wellness',
   dental: 'Health & Wellness', health: 'Health & Wellness', veterinary: 'Health & Wellness',
   menshealth: 'Health & Wellness', pet: 'Health & Wellness',
   barbershop: 'Personal Services', tattoo: 'Personal Services',
-  events: 'Personal Services', florist: 'Personal Services', photography: 'Creative',
+  events: 'Personal Services', florist: 'Personal Services', wedding: 'Personal Services',
+  photography: 'Creative', music: 'Creative',
   creative: 'Creative', architecture: 'Creative', interior: 'Creative',
   tech: 'Tech & Startups', finance: 'Professional', legal: 'Professional',
   realestate: 'Professional', education: 'Professional', nonprofit: 'Professional',
