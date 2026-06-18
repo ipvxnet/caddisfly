@@ -35,7 +35,10 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config wrangler.sites.toml --env production
+          # Production sites worker is the TOP-LEVEL wrangler.sites.toml config
+          # (no [env.production] section) — deploy with no --env. Preview uses
+          # [env.preview] above.
+          command: deploy --config wrangler.sites.toml
 
       - name: Deployment summary
         run: |
