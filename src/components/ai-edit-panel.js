@@ -41,7 +41,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
     <button type="button" class="ai-edit-send" id="ai-edit-send-btn" onclick="aiEditSend()">${tr('aip.send')}</button>
   </div>
 
-  <details class="ai-edit-own">
+  ${canImage ? `<details class="ai-edit-own">
     <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
       ${isHero ? `<div class="ai-edit-genvid">
@@ -59,7 +59,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
       ${canRemove ? `<button type="button" class="ai-edit-remove" onclick="aiEditRemoveMedia()">${isHero ? tr('aip.remove_media_video') : tr('aip.remove_media')}</button>` : ''}
       <div id="ai-edit-own-status" class="ai-edit-own-status"></div>
     </div>
-  </details>
+  </details>` : ''}
 </div>
 
 <style>
