@@ -136,6 +136,8 @@ export const en = {
     feat_multipage_d: 'Home, About, Services, Contact & more — with real navigation.',
     feat_seo_t: 'Auto-SEO',
     feat_seo_d: 'Every site ships search-ready — page titles, meta descriptions, social cards, sitemaps & Google business markup, generated automatically. Tweak any page, or let it run on autopilot.',
+    feat_fast_t: 'Lightning fast',
+    feat_fast_d: 'Every site scores 90+ on Google PageSpeed (mobile) automatically — next-gen AVIF/WebP images sized on the fly, non-blocking fonts, and zero layout shift. Fast for visitors, loved by Google.',
     feat_aiedit_t: 'AI section editing',
     feat_aiedit_d: 'Chat to rewrite copy or generate new images, right in the editor.',
     feat_themes_t: 'Themes & fonts',
@@ -1116,6 +1118,7 @@ export const en = {
       ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'], ['bookings', 'Bookings'],
       ['blog', 'Blog, email & social'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
+      ['performance', 'Speed & performance'],
       ['buy-domain', 'Buying a domain'],
       ['custom-domains', 'Custom domains & DNS'], ['plans', 'Plans, credits & billing'],
       ['team', 'Team members'], ['faq', 'FAQ'],
@@ -1207,6 +1210,16 @@ export const en = {
         </ul>
         <p><strong>Fine-tune any page:</strong> open <strong>Customize</strong> → the <strong>🔎 SEO</strong> panel. Edit the page title and meta description (with a live Google-result preview), and set a site-wide social share image. Leave anything blank and we use the smart auto values. Changes apply the next time you publish.</p>
         <p>After publishing, submit your <code>sitemap.xml</code> in <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a> to get indexed faster.</p>`],
+      ['performance', 'Speed & performance', `
+        <p>Every Caddisfly site is built to be <strong>fast automatically</strong> — there's nothing to configure. Published sites score <strong>90+ on Google PageSpeed Insights</strong> (mobile), which means a quicker experience for your visitors and a ranking signal Google rewards. Under the hood:</p>
+        <ul>
+          <li><strong>Next-gen images</strong> — every photo is resized to the size it's actually shown and served as <strong>AVIF/WebP</strong>, typically <strong>85–90% smaller</strong> than the original — no work on your part.</li>
+          <li><strong>No layout shift</strong> — images reserve their space so the page never jumps while it loads (a perfect CLS of 0).</li>
+          <li><strong>Instant text</strong> — fonts load without blocking the page, so your words appear right away.</li>
+          <li><strong>Smart loading</strong> — the main hero image is prioritized while below-the-fold images load only as needed.</li>
+          <li><strong>Clean, accessible structure</strong> — proper landmarks and headings that pair with the <a href="#seo">Auto-SEO</a> above.</li>
+        </ul>
+        <p>You get all of this on every plan, on the free <code>caddisfly.app</code> address and on custom domains alike.</p>`],
       ['buy-domain', 'Buying a domain', `
         <p>Don’t have a domain yet? Buy one right inside Caddisfly and we connect it to your site automatically — no DNS setup. Open <strong>🌐 Buy a domain</strong> from your <a href="/dashboard">Dashboard</a>.</p>
         <ol>

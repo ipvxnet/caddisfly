@@ -136,6 +136,8 @@ export const es = {
     feat_multipage_d: 'Inicio, Acerca de, Servicios, Contacto y más — con navegación real.',
     feat_seo_t: 'SEO automático',
     feat_seo_d: 'Cada sitio sale listo para buscadores — títulos, descripciones, tarjetas sociales, sitemaps y datos de negocio de Google, generados automáticamente. Ajusta cualquier página o déjalo en piloto automático.',
+    feat_fast_t: 'Ultrarrápido',
+    feat_fast_d: 'Cada sitio obtiene 90+ en Google PageSpeed (móvil) de forma automática — imágenes AVIF/WebP de nueva generación redimensionadas al vuelo, fuentes que no bloquean y cero saltos de diseño. Rápido para tus visitantes y querido por Google.',
     feat_aiedit_t: 'Edición de secciones con IA',
     feat_aiedit_d: 'Chatea para reescribir textos o generar imágenes nuevas, dentro del editor.',
     feat_themes_t: 'Temas y fuentes',
@@ -1109,6 +1111,7 @@ export const es = {
       ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Tienda online'], ['bookings', 'Reservas'],
       ['blog', 'Blog, email y redes'], ['messages', 'Formulario de contacto y bandeja'],
       ['versions', 'Versiones, copias y exportación'], ['seo', 'SEO y aparecer en Google'],
+      ['performance', 'Velocidad y rendimiento'],
       ['buy-domain', 'Comprar un dominio'],
       ['custom-domains', 'Dominios propios y DNS'], ['plans', 'Planes, créditos y facturación'],
       ['team', 'Miembros del equipo'], ['faq', 'Preguntas frecuentes'],
@@ -1200,6 +1203,16 @@ export const es = {
         </ul>
         <p><strong>Ajusta cualquier página:</strong> abre <strong>Personalizar</strong> → el panel <strong>🔎 SEO</strong>. Edita el título y la meta descripción (con una vista previa del resultado de Google) y define una imagen para compartir de todo el sitio. Deja algo en blanco y usamos los valores automáticos. Los cambios se aplican la próxima vez que publiques.</p>
         <p>Tras publicar, envía tu <code>sitemap.xml</code> en <a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a> para indexarte más rápido.</p>`],
+      ['performance', 'Velocidad y rendimiento', `
+        <p>Cada sitio de Caddisfly está hecho para ser <strong>rápido automáticamente</strong> — no hay nada que configurar. Los sitios publicados obtienen <strong>90+ en Google PageSpeed Insights</strong> (móvil), lo que significa una mejor experiencia para tus visitantes y una señal de posicionamiento que Google premia. Por dentro:</p>
+        <ul>
+          <li><strong>Imágenes de nueva generación</strong> — cada foto se redimensiona al tamaño en que realmente se muestra y se sirve en <strong>AVIF/WebP</strong>, normalmente <strong>85–90% más ligera</strong> que el original — sin que tengas que hacer nada.</li>
+          <li><strong>Sin saltos de diseño</strong> — las imágenes reservan su espacio para que la página nunca salte mientras carga (un CLS perfecto de 0).</li>
+          <li><strong>Texto instantáneo</strong> — las fuentes cargan sin bloquear la página, así tus palabras aparecen de inmediato.</li>
+          <li><strong>Carga inteligente</strong> — la imagen principal se prioriza mientras las imágenes de más abajo cargan solo cuando hacen falta.</li>
+          <li><strong>Estructura limpia y accesible</strong> — puntos de referencia y encabezados correctos que se combinan con el <a href="#seo">SEO automático</a> de arriba.</li>
+        </ul>
+        <p>Todo esto lo tienes en cualquier plan, tanto en la dirección gratuita <code>caddisfly.app</code> como en dominios propios.</p>`],
       ['buy-domain', 'Comprar un dominio', `
         <p>¿Aún no tienes dominio? Cómpralo dentro de Caddisfly y lo conectamos a tu sitio automáticamente — sin configurar DNS. Abre <strong>🌐 Compra un dominio</strong> desde tu <a href="/dashboard">Panel</a>.</p>
         <ol>
