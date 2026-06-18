@@ -34,7 +34,7 @@ export function assemblePage(sections, config, project, opts = {}) {
     pages = null, currentSlug = null, previewBase = null, embed = false, preordered = false,
     hideBadge = false, trackId = null, appOrigin = '', editOverlay = false,
     seoTitle = null, seoDescription = null, socialImage = null, heroImage = null, canonicalUrl = null, pageTitle = null, business = null,
-    lang = 'en', products = null, bookingServices = null, holiday = null,
+    lang = 'en', products = null, bookingServices = null, holiday = null, homeSections = null,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
@@ -51,10 +51,16 @@ export function assemblePage(sections, config, project, opts = {}) {
   const currentTypes = new Set(visibleSections.map((s) => s.section_type));
   const seenTypes = new Set();
 
-  // Single-page anchor nav: give the navbar a list of {anchor,label} for the
-  // sections actually present, so the top menu scrolls to each section on the
-  // page (the navbar ignores this when the site is multi-page).
-  renderConfig.sectionNav = buildSectionNav(visibleSections, lang);
+  // Section-anchor nav: build it from the HOME page's sections (passed in by the
+  // multi-page assembler) so the primary menu is identical on every page — on a
+  // sub-page the navbar prefixes these anchors with the home route so they still
+  // resolve. Falls back to this page's own sections when no home list is given
+  // (single-page sites / standalone previews). Navbar ignores this for true
+  // multi-page (page-link) sites.
+  const navSource = (Array.isArray(homeSections) && homeSections.length)
+    ? homeSections.filter((s) => s.is_visible !== 0)
+    : visibleSections;
+  renderConfig.sectionNav = buildSectionNav(navSource, lang);
 
   const renderedParts = visibleSections
     .map((section) => {

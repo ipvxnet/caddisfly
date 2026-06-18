@@ -1,5 +1,7 @@
 // Gallery Section with Masonry Layout
 
+import { sectionDefault } from '../section-defaults.js';
+
 /**
  * Generates a gallery section with masonry layout
  * @param {object} data - Content data
@@ -7,9 +9,10 @@
  * @returns {string} HTML template
  */
 export function galleryMasonryTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
-    heading = 'Gallery',
-    subheading = 'Our Work',
+    heading = sectionDefault(lang, 'gallery', 0),
+    subheading = sectionDefault(lang, 'gallery', 1),
     images = [
       { alt: 'Gallery image 1', caption: '', url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600' },
       { alt: 'Gallery image 2', caption: '', url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600' },

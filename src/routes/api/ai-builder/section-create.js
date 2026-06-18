@@ -22,6 +22,7 @@ import {
   getHomeBodySections,
 } from '../../../db/ai-sections.js';
 import { isSectionTypeValid, getAvailableVariants } from '../../../templates/ai-builder/registry.js';
+import { sectionDefault } from '../../../templates/ai-builder/section-defaults.js';
 
 // Body section types a user can add (header/footer are site-level singletons).
 export const ADDABLE_SECTIONS = [
@@ -48,10 +49,23 @@ function json(body, status = 200) {
 // a createSection key ({ai_project_id}|{project_id}).
 async function resolveProject(env, publicId) {
   const ai = await getAIProjectByProjectId(env.DB, publicId);
-  if (ai) return { projectKey: { aiProjectId: ai.id }, createKey: { ai_project_id: ai.id }, ownerId: { col: 'ai_project_id', id: ai.id } };
+  if (ai) return { projectKey: { aiProjectId: ai.id }, createKey: { ai_project_id: ai.id }, ownerId: { col: 'ai_project_id', id: ai.id }, lang: ai.language || 'en' };
   const rp = await getProjectByPreviewId(env.DB, publicId);
-  if (rp) return { projectKey: { projectId: rp.id }, createKey: { project_id: rp.id }, ownerId: { col: 'project_id', id: rp.id } };
+  if (rp) return { projectKey: { projectId: rp.id }, createKey: { project_id: rp.id }, ownerId: { col: 'project_id', id: rp.id }, lang: rp.language || 'en' };
   return null;
+}
+
+// Seed a new section's content with a localized title so it doesn't fall back to
+// the template's English defaults on a non-English site (the rest is filled in
+// via ✨ Edit). Sections that render only live data (products/booking) or have
+// no titled default get '{}'.
+function seededContent(type, lang) {
+  const heading = sectionDefault(lang, type, 0);
+  if (!heading) return '{}';
+  const content = { heading };
+  const sub = sectionDefault(lang, type, 1);
+  if (sub) { content.subheading = sub; content.description = sub; }
+  return JSON.stringify(content);
 }
 
 /** POST … /sections — add a new section to a page. */
@@ -90,7 +104,7 @@ export async function handleAddSection(ctx) {
     section_type: type,
     section_order: order,
     html_template: variant,
-    content_json: '{}',
+    content_json: seededContent(type, proj.lang),
     is_visible: 1,
   });
 

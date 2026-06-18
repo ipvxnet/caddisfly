@@ -56,7 +56,18 @@ export function navbarTemplate(data, config) {
     const aria = p.slug === currentSlug ? ' aria-current="page"' : '';
     return `<a class="nav-link${active}"${aria} href="${escapeAttr(`${previewBase}/${p.slug}${embedSuffix}`)}">${escapeHtml(p.nav_label || p.title || p.slug)}</a>`;
   };
-  const anchorLink = (s) => `<a class="nav-link" href="${escapeAttr(s.anchor)}">${escapeHtml(s.label)}</a>`;
+  // Section anchors (e.g. #about) live on the HOME page. On a sub-page (a custom
+  // page like /antes-e-depois) those anchors can't resolve in-page, so prefix
+  // them with the home route — `/#about` on a subdomain, `/site/:id/home#about`
+  // on the app copy — so the primary menu stays consistent and clickable across
+  // every page instead of collapsing to just the current page's sections.
+  const homePage = pages.find((p) => p.is_home) || pages.find((p) => p.slug === 'home');
+  const onHome = !homePage || !currentSlug || currentSlug === homePage.slug;
+  const homeAnchorBase = previewBase ? `${previewBase}/home` : '/';
+  const anchorLink = (s) => {
+    const href = onHome ? s.anchor : `${homeAnchorBase}${embedSuffix}${s.anchor}`;
+    return `<a class="nav-link" href="${escapeAttr(href)}">${escapeHtml(s.label)}</a>`;
+  };
 
   // Multi-page → page links. Single-page → in-page section anchors, plus any
   // standalone pages (blog/shop) that live outside the scrolling home.
