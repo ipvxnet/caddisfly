@@ -911,7 +911,7 @@ export const pt = {
     f_image: 'Foto', img_upload: 'Enviar', img_url: 'URL', img_photo: 'Sugerir', img_ai: 'IA', img_remove: 'Remover',
     swap_all: 'Trocar todas as fotos com IA', img_url_prompt: 'Cole uma URL de imagem',
     img_finding: 'Buscando uma foto…', img_generating: 'Gerando…', img_fail: 'Falhou — tente novamente',
-    f_name: 'Nome', f_role: 'Cargo / empresa', f_quote: 'Citação', f_rating: 'Nota (1–5)',
+    f_name: 'Nome', f_role: 'Cargo / empresa', f_quote: 'Citação', f_rating: 'Nota (1–5)', f_video: 'Vídeo (opcional)', video_ph: 'Link do YouTube, Vimeo ou Loom',
     photos: 'Fotos', photos_hint: '· reordene, substitua ou remova — sem novas imagens de IA', add_photo: '＋ Adicionar foto',
     business_name: 'Nome do negócio', tagline: 'Slogan', copyright: 'Texto de copyright',
     phone: 'Telefone', description: 'Descrição',

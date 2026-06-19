@@ -1020,6 +1020,18 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
         </div>
       </div>`;
     }
+    if (f.kind === 'video') {
+      const l = f.vid || {};
+      return `<div class="rep-field rep-vidfield">
+        <label>${escapeHtml(f.label || f.key)}</label>
+        <input type="text" class="rep-input rep-vid-val" data-k="${f.key}" placeholder="${escapeHtml(f.ph || 'YouTube, Vimeo or Loom link')}" value="${escapeHtml(v)}">
+        <div class="rep-vid-row">
+          <button type="button" onclick="repVidUpload(this)">⬆ ${escapeHtml(l.upload || 'Upload')}</button>
+          <span class="rep-vid-status"></span>
+        </div>
+        <input type="file" accept="video/mp4,video/webm" class="rep-vid-file" style="display:none" onchange="repVidFile(this)">
+      </div>`;
+    }
     const input = f.kind === 'textarea'
       ? `<textarea class="rep-input" data-k="${f.key}"${num} rows="2" placeholder="${escapeHtml(f.ph || '')}">${escapeHtml(v)}</textarea>`
       : `<input type="text" class="rep-input${f.kind === 'short' ? ' rep-short' : ''}" data-k="${f.key}"${num} placeholder="${escapeHtml(f.ph || '')}" value="${escapeHtml(v)}">`;
@@ -1057,6 +1069,10 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
       #rep-${jsonKey} .rep-img-btns button:hover{border-color:#7c3aed;background:#faf5ff}
       #rep-${jsonKey} .rep-img-btns .rep-img-x{color:#b91c1c}
       #rep-${jsonKey} .rep-img-status{font-size:.72rem;color:#718096;min-height:1em}
+      #rep-${jsonKey} .rep-vid-row{display:flex;align-items:center;gap:.5rem;margin-top:.35rem}
+      #rep-${jsonKey} .rep-vid-row button{font:inherit;font-size:.72rem;padding:.3rem .5rem;border:1px solid #e2e8f0;border-radius:7px;background:#fff;cursor:pointer}
+      #rep-${jsonKey} .rep-vid-row button:hover{border-color:#7c3aed;background:#faf5ff}
+      #rep-${jsonKey} .rep-vid-status{font-size:.72rem;color:#718096}
     </style>
     <script>
       window.REP_IMG_T = ${JSON.stringify(imgT)};
@@ -1091,6 +1107,18 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
         try { var r = await fetch('/api/ai-builder/' + window.currentProjectId + '/generate-image', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: repImgTitle(item) || 'business' }) });
           var d = await r.json(); if (d.success){ repImgApply(item, d.url); repImgStatus(item, ''); } else repImgStatus(item, d.error || REP_IMG_T.fail || 'Failed');
         } catch (e){ repImgStatus(item, REP_IMG_T.fail || 'Failed'); } finally { b.disabled = false; }
+      }
+      function repVidUpload(b){ var i = repItemOf(b).querySelector('.rep-vid-file'); if (i) i.click(); }
+      async function repVidFile(input){
+        var item = input.closest('.rep-item'); var f = input.files[0]; if (!f) return; input.value = '';
+        var st = item.querySelector('.rep-vid-status'); var val = item.querySelector('.rep-vid-val');
+        if (st) st.textContent = REP_IMG_T.uploading || 'Uploading…';
+        try { var fd = new FormData(); fd.append('file', f); fd.append('asset_type', 'video');
+          var r = await fetch('/api/ai-builder/' + window.currentProjectId + '/upload', { method:'POST', body: fd });
+          var d = await r.json();
+          if (d.success){ if (val) val.value = d.url; if (st) st.textContent = ''; var rep = item.closest('.rep'); if (rep && rep.__sync) rep.__sync(); }
+          else if (st) st.textContent = d.error || REP_IMG_T.fail || 'Failed';
+        } catch (e){ if (st) st.textContent = REP_IMG_T.fail || 'Failed'; }
       }
       async function repImgSwapAll(jsonKey){
         var rep = document.getElementById('rep-' + jsonKey); if (!rep) return;
@@ -1192,6 +1220,7 @@ function generateTestimonialsFields(content, tr) {
           { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
           { key: 'text', label: tr('sed.f_quote'), kind: 'textarea', ph: tr('sed.tst_text_ph') },
           { key: 'rating', label: tr('sed.f_rating'), kind: 'short', num: true, ph: '5' },
+          { key: 'video_url', label: tr('sed.f_video') || 'Video (optional)', kind: 'video', ph: tr('sed.video_ph') || 'YouTube, Vimeo or Loom link', vid: { upload: tr('sed.img_upload') || 'Upload' } },
         ],
       })}
     </div>

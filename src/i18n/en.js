@@ -917,7 +917,7 @@ export const en = {
     f_image: 'Photo', img_upload: 'Upload', img_url: 'URL', img_photo: 'Suggest', img_ai: 'AI', img_remove: 'Remove',
     swap_all: 'Swap all photos with AI', img_url_prompt: 'Paste an image URL',
     img_finding: 'Finding a photo…', img_generating: 'Generating…', img_fail: 'Failed — try again',
-    f_name: 'Name', f_role: 'Role / company', f_quote: 'Quote', f_rating: 'Rating (1–5)',
+    f_name: 'Name', f_role: 'Role / company', f_quote: 'Quote', f_rating: 'Rating (1–5)', f_video: 'Video (optional)', video_ph: 'YouTube, Vimeo or Loom link',
     photos: 'Photos', photos_hint: '· drag-free reorder, replace, or remove — no new AI images', add_photo: '＋ Add photo',
     business_name: 'Business Name', tagline: 'Tagline', copyright: 'Copyright Text',
     phone: 'Phone', description: 'Description',
