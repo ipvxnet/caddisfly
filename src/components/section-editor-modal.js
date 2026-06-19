@@ -1218,6 +1218,7 @@ function generateTestimonialsFields(content, tr) {
         fields: [
           { key: 'name', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
           { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
+          { key: 'avatar', label: tr('sed.f_image'), kind: 'image', img: { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
           { key: 'text', label: tr('sed.f_quote'), kind: 'textarea', ph: tr('sed.tst_text_ph') },
           { key: 'rating', label: tr('sed.f_rating'), kind: 'short', num: true, ph: '5' },
           { key: 'video_url', label: tr('sed.f_video') || 'Video (optional)', kind: 'video', ph: tr('sed.video_ph') || 'YouTube, Vimeo or Loom link', vid: { upload: tr('sed.img_upload') || 'Upload' } },
