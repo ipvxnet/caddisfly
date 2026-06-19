@@ -2,13 +2,17 @@
 // quotation marks (distinct from the cards/quotes grids). Token- and dark-aware.
 // Accepts both schemas: {quote,author,position} and {text,name,role}.
 
+import { TESTIMONIAL_DEFAULTS } from './cards.js';
+
 export function testimonialsSpotlightTemplate(data, config) {
-  const { heading = 'What Our Customers Say', testimonials } = data;
+  const lang = config.lang || 'en';
+  const tx = TESTIMONIAL_DEFAULTS[lang] || TESTIMONIAL_DEFAULTS.en;
+  const { heading = tx.heading, testimonials } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   const list = Array.isArray(testimonials) && testimonials.length
     ? testimonials
-    : [{ quote: 'A wonderful experience!', author: 'Happy Customer', position: '' }];
+    : tx.items;
 
   const items = list
     .map((tm) => {

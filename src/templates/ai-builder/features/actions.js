@@ -3,17 +3,16 @@
 // sites (vets, clinics, salons). Token- and dark-aware. Uses the `features` array
 // shape: { icon, title, description, link }.
 
+import { defaultItems } from '../section-defaults.js';
+
 export function featuresActionsTemplate(data, config) {
   const { heading = '', description = '', features } = data;
+  const lang = config.lang || 'en';
   const primaryColor = config.primary_color || config.primaryColor || '#667eea';
   const fontHeading = config.font_heading || config.fontHeading || 'Inter';
   const fontBody = config.font_body || config.fontBody || 'Inter';
 
-  const actions = (Array.isArray(features) && features.length ? features : [
-    { icon: '📅', title: 'Book Appointment', description: 'Schedule online in seconds', link: '#contact' },
-    { icon: '📞', title: 'Call Us', description: 'We’re happy to help', link: '#contact' },
-    { icon: '📍', title: 'Find Us', description: 'Get directions', link: '#contact' },
-  ]).slice(0, 4);
+  const actions = (Array.isArray(features) && features.length ? features : defaultItems(lang, 'features-actions')).slice(0, 4);
 
   return `
 <section class="features-actions">

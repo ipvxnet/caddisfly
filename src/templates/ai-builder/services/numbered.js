@@ -3,13 +3,15 @@
 // icon-grid/spotlight. Token- and dark-aware.
 
 import { serviceCardAttrs, serviceModalAssets, serviceLabels } from './service-modal.js';
+import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 export function servicesNumberedTemplate(data, config) {
-  const { heading = 'Our Services', description = '', services } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'services', 0), description = '', services } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter' } = config;
-  const labels = serviceLabels(config.lang || 'en');
+  const labels = serviceLabels(lang);
 
-  const list = Array.isArray(services) && services.length ? services : [{ title: 'Service', description: '' }];
+  const list = Array.isArray(services) && services.length ? services : defaultItems(lang, 'services-placeholder');
 
   const rows = list
     .map((s, i) => `

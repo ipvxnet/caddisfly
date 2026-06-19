@@ -121,6 +121,20 @@ const RECIPES = {
     tone: 'reliable, friendly, get-it-done',
     serviceHints: 'Installation, Repairs, Maintenance, Emergency service, Free estimates, Inspections',
   },
+  roofing: {
+    sections: ['header', 'hero', 'features', 'services', 'about', 'gallery', 'testimonials', 'contact', 'footer'],
+    variants: { hero: 'quote', features: 'actions', services: 'cards', gallery: 'masonry' },
+    fonts: { heading: 'Archivo', body: 'Inter' },
+    tone: 'trustworthy, local, no-nonsense, reassuring',
+    serviceHints: 'Roof repair, Roof replacement, New roof installation, Gutters, Siding, HVAC repair, AC & heating installation, Emergency service, Free estimates, Inspections, Financing',
+  },
+  therapy: {
+    sections: ['header', 'hero', 'about', 'features', 'services', 'testimonials', 'contact', 'footer'],
+    variants: { hero: 'minimal', features: 'steps', about: 'founder-quote', services: 'cards', testimonials: 'quotes' },
+    fonts: { heading: 'Lora', body: 'Inter' },
+    tone: 'warm, calm, compassionate, reassuring, non-judgmental',
+    serviceHints: 'Individual therapy, Couples counseling, Family therapy, Anxiety & depression, Trauma & EMDR, Teletherapy, Free consultation',
+  },
   tech: {
     sections: ['header', 'hero', 'features', 'services', 'about', 'testimonials', 'contact', 'footer'],
     variants: { hero: 'split' },

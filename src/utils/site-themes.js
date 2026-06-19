@@ -787,6 +787,24 @@ export const SITE_THEMES = [
     surface: { bg: '#171109', card: '#22190f', text: '#f5ecdc', muted: '#bda988', border: '#352812' },
     tokens: 'sharp',
   },
+  {
+    key: 'ridgeline', label: 'Ridgeline', style: 'bold',
+    description: 'Sturdy and trustworthy for roofing & HVAC — a quote-first hero, trust badges, and a clear get-an-estimate path.',
+    accent: 'linear-gradient(135deg, #1d4e6f 0%, #e09f3e 100%)',
+    industries: ['roofing'],
+    variants: { hero: 'quote', features: 'actions', about: 'text-image', services: 'cards', testimonials: 'cards', gallery: 'masonry', contact: 'split', footer: 'multi-column', cta: 'banner' },
+    fonts: { heading: 'Archivo', body: 'Inter' },
+    tokens: 'sharp',
+  },
+  {
+    key: 'solace', label: 'Solace', style: 'minimal',
+    description: 'Calm and reassuring for therapy & counseling — an airy hero, a gentle “how it works”, and a personal founder note.',
+    accent: 'linear-gradient(135deg, #6b8cae 0%, #cbb89d 100%)',
+    industries: ['therapy'],
+    variants: { hero: 'minimal', features: 'steps', about: 'founder-quote', services: 'cards', testimonials: 'quotes', gallery: 'masonry', contact: 'split', footer: 'minimal', cta: 'boxed' },
+    fonts: { heading: 'Lora', body: 'Inter' },
+    tokens: 'round',
+  },
 ];
 
 // Style tag per template (modern/classic/minimal/bold/elegant/luxe/playful) — used
@@ -896,8 +914,8 @@ const DARK_SURFACE_SECTIONS = [
   '.gallery-section', '.gallery-carousel',
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
-  '.features-actions',
-  '.hero-showcase', '.about-founder', '.cta-split', '.testimonials-video', '.testimonials-portrait',
+  '.features-actions', '.features-steps',
+  '.hero-showcase', '.hero-quote', '.about-founder', '.cta-split', '.testimonials-video', '.testimonials-portrait',
   '.blog-list-section', '.blog-post-section',
   '.shop-list-section', '.shop-product-section', '.shop-feat-section',
   '.bkg-section',
@@ -908,7 +926,7 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card', '.shop-feat-card',
-  '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.cta-split-copy', '.vt-card', '.tp-card',
+  '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.step-card', '.hq-card', '.cta-split-copy', '.vt-card', '.tp-card',
   '.bkg-card', '.bkg-panel',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible

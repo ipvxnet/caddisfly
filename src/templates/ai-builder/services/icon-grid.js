@@ -1,6 +1,7 @@
 // Services Section with Icon Grid
 
 import { serviceMediaTile, serviceCardAttrs, serviceModalAssets, serviceLabels } from './service-modal.js';
+import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 /**
  * Generates a services section with an image/icon grid; cards open a modal with
@@ -10,17 +11,14 @@ import { serviceMediaTile, serviceCardAttrs, serviceModalAssets, serviceLabels }
  * @returns {string} HTML template
  */
 export function servicesIconGridTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
-    heading = 'Our Services',
-    subheading = 'What We Offer',
-    services = [
-      { title: 'Service 1', description: 'Description of service 1', icon: '🚀' },
-      { title: 'Service 2', description: 'Description of service 2', icon: '💡' },
-      { title: 'Service 3', description: 'Description of service 3', icon: '⭐' },
-    ],
+    heading = sectionDefault(lang, 'services', 0),
+    subheading = sectionDefault(lang, 'services', 1),
+    services = defaultItems(lang, 'services-placeholder'),
   } = data;
   const { primary_color = '#667eea', secondary_color = '#764ba2', font_heading = 'Inter' } = config;
-  const labels = serviceLabels(config.lang || 'en');
+  const labels = serviceLabels(lang);
 
   return `
 <section class="services-section">

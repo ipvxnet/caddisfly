@@ -3,11 +3,14 @@
 // text-on-image, and fullscreen's overlay). Token- and dark-aware; the image
 // is the LCP element so it stays eager with explicit dimensions.
 
+import { uiText } from '../section-defaults.js';
+
 export function heroShowcaseTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
     heading = 'Welcome',
     subheading = 'Your business tagline',
-    cta_text = 'Get Started',
+    cta_text = uiText(lang, 'cta'),
     cta_link = '#contact',
     cta_link_new_tab = false,
     secondary_cta_text = '',

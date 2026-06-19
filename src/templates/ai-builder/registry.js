@@ -13,6 +13,7 @@ import { heroFullscreenTemplate } from './heroes/fullscreen.js';
 import { heroOverlapTemplate } from './heroes/overlap.js';
 import { heroTagsTemplate } from './heroes/tags.js';
 import { heroShowcaseTemplate } from './heroes/showcase.js';
+import { heroQuoteTemplate } from './heroes/quote.js';
 
 // About templates
 import { aboutTextImageTemplate } from './about/text-image.js';
@@ -49,6 +50,7 @@ import { footerMinimalTemplate } from './footer/minimal.js';
 import { pricingTablesTemplate } from './pricing/tables.js';
 import { featuresGridTemplate } from './features/grid.js';
 import { featuresActionsTemplate } from './features/actions.js';
+import { featuresStepsTemplate } from './features/steps.js';
 import { ctaBannerTemplate } from './cta/banner.js';
 import { ctaBoxedTemplate } from './cta/boxed.js';
 import { ctaSplitImageTemplate } from './cta/split-image.js';
@@ -84,6 +86,7 @@ export const TEMPLATE_REGISTRY = {
     overlap: heroOverlapTemplate,
     tags: heroTagsTemplate,
     showcase: heroShowcaseTemplate,
+    quote: heroQuoteTemplate,
     default: heroCenteredTemplate,
   },
   about: {
@@ -130,6 +133,7 @@ export const TEMPLATE_REGISTRY = {
   features: {
     grid: featuresGridTemplate,
     actions: featuresActionsTemplate,
+    steps: featuresStepsTemplate,
     default: featuresGridTemplate,
   },
   cta: {

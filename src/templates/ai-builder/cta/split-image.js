@@ -3,8 +3,11 @@
 // set, so it always looks intentional). Distinct from the full-bleed banner and
 // the centered boxed card. Token- and dark-aware.
 
+import { sectionDefault, uiText } from '../section-defaults.js';
+
 export function ctaSplitImageTemplate(data, config) {
-  const { heading = 'Ready to get started?', description = '', cta_text = 'Get Started', cta_url, cta_url_new_tab = false, image_url = '' } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'cta', 0), description = '', cta_text = uiText(lang, 'cta'), cta_url, cta_url_new_tab = false, image_url = '' } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
   const newTab = cta_url_new_tab ? ' target="_blank" rel="noopener"' : '';
 

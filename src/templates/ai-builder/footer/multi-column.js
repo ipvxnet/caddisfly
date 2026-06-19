@@ -1,5 +1,7 @@
 // Footer Section with Multiple Columns
 
+import { uiText } from '../section-defaults.js';
+
 /**
  * Generates a footer section with multiple columns
  * @param {object} data - Content data
@@ -7,14 +9,15 @@
  * @returns {string} HTML template
  */
 export function footerMultiColumnTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
-    business_name = 'Your Business',
-    tagline = 'Making a difference',
-    copyright = `${new Date().getFullYear()} Your Business. All rights reserved.`,
+    business_name = uiText(lang, 'business'),
+    tagline = uiText(lang, 'tagline'),
+    copyright = `${new Date().getFullYear()} ${business_name}. ${uiText(lang, 'rights')}.`,
     links = [
-      { label: 'About', url: '#about' },
-      { label: 'Services', url: '#services' },
-      { label: 'Contact', url: '#contact' },
+      { label: uiText(lang, 'nav_about'), url: '#about' },
+      { label: uiText(lang, 'nav_services'), url: '#services' },
+      { label: uiText(lang, 'nav_contact'), url: '#contact' },
     ],
     social = [],
   } = data;
@@ -42,7 +45,7 @@ export function footerMultiColumnTemplate(data, config) {
   const socialBlock = socialLinks.length
     ? `
     <div class="footer-social">
-      <h4 class="footer-social-heading">Follow Us</h4>
+      <h4 class="footer-social-heading">${uiText(lang, 'follow_us')}</h4>
       <div class="footer-social-icons">
         ${socialLinks
           .map(
@@ -65,7 +68,7 @@ export function footerMultiColumnTemplate(data, config) {
       <p class="footer-tagline">${tagline}</p>
     </div>
     <div class="footer-links">
-      <h4 class="footer-links-heading">Quick Links</h4>
+      <h4 class="footer-links-heading">${uiText(lang, 'quick_links')}</h4>
       <ul class="footer-links-list">
         ${links.map((link) => `<li><a href="${link.url}"${link.new_tab ? ' target="_blank" rel="noopener"' : ''}>${link.label}</a></li>`).join('')}
       </ul>

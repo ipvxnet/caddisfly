@@ -1,17 +1,18 @@
 // Timeline About Template
 // Company history with visual timeline
 
+import { uiText, defaultItems } from '../section-defaults.js';
+
+// Placeholder years (language-independent), merged with localized title/description.
+const TIMELINE_YEARS = ['2020', '2021', '2022', '2023'];
+
 export function aboutTimelineTemplate(data, config) {
-  const { heading = 'Our Journey', description = '', milestones } = data;
+  const lang = config.lang || 'en';
+  const { heading = uiText(lang, 'our_journey'), description = '', milestones } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
-  // Default milestones if not provided
-  const timelineItems = milestones || [
-    { year: '2020', title: 'Founded', description: 'Started with a vision to make a difference' },
-    { year: '2021', title: 'First Milestone', description: 'Reached 100 satisfied customers' },
-    { year: '2022', title: 'Growth', description: 'Expanded our team and services' },
-    { year: '2023', title: 'Today', description: 'Leading the industry with innovation' },
-  ];
+  // Default milestones if not provided (localized title/description + placeholder year)
+  const timelineItems = milestones || defaultItems(lang, 'about-timeline').map((m, i) => ({ year: TIMELINE_YEARS[i], ...m }));
 
   return `
 <section class="about-timeline">

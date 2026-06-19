@@ -1,7 +1,10 @@
 // Fullscreen Hero Template
 // Full viewport hero with scroll indicator
 
+import { uiText } from '../section-defaults.js';
+
 export function heroFullscreenTemplate(data, config) {
+  const lang = config.lang || 'en';
   const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, background_image } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
@@ -27,7 +30,7 @@ export function heroFullscreenTemplate(data, config) {
     }
   </div>
   <div class="scroll-indicator">
-    <div class="scroll-indicator-text">Scroll Down</div>
+    <div class="scroll-indicator-text">${uiText(lang, 'scroll')}</div>
     <div class="scroll-indicator-arrow">↓</div>
   </div>
 </section>

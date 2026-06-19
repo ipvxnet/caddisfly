@@ -1,17 +1,15 @@
 // Stats Numbers Template
 // Display impressive numbers and metrics
 
+import { defaultItems } from '../section-defaults.js';
+
 export function statsNumbersTemplate(data, config) {
   const { heading, stats } = data;
+  const lang = config.lang || 'en';
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
-  // Default stats if not provided
-  const statsList = stats || [
-    { number: '10K+', label: 'Happy Customers' },
-    { number: '50K+', label: 'Projects Completed' },
-    { number: '99.9%', label: 'Uptime Guarantee' },
-    { number: '24/7', label: 'Customer Support' },
-  ];
+  // Default stats if not provided (localized to the site language)
+  const statsList = stats || defaultItems(lang, 'stats');
 
   return `
 <section class="stats-numbers" style="background: linear-gradient(135deg, ${primaryColor}10, ${primaryColor}05);">

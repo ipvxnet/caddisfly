@@ -32,17 +32,25 @@ const INDUSTRY_KEYWORDS = [
   ['veterinary', ['veterinary', 'veterinarian', 'vet clinic', 'animal hospital', 'animal clinic']],
   // Men's health before health so a men's clinic gets the premium masculine look.
   ['menshealth', ["men's health", 'mens health', "men's clinic", 'mens clinic', 'testosterone', 'trt', 'hormone therapy', 'peptides', 'low testosterone']],
-  ['health', ['clinic', 'medical', 'doctor', 'health', 'therapy', 'chiropractic', 'pharmacy']],
+  // Therapy/counseling before health so a therapist/mental-health practice gets
+  // the calm, personal look instead of the clinical one (bare 'therapy' lives
+  // here now — removed from health below).
+  ['therapy', ['therapy', 'therapist', 'counseling', 'counselling', 'counselor', 'counsellor', 'mental health', 'psychotherapy', 'psychotherapist', 'psychologist', 'psychology', 'psychiatrist', 'marriage counseling', 'family therapy']],
+  ['health', ['clinic', 'medical', 'doctor', 'health', 'chiropractic', 'pharmacy']],
   // Finance before legal so an accountant gets a finance look, not a law-firm one.
   ['finance', ['finance', 'financial', 'accounting', 'accountant', 'bookkeeping', 'tax', 'taxes', 'wealth', 'investment', 'cpa']],
   ['legal', ['law', 'lawyer', 'attorney', 'legal', 'firm', 'insurance', 'consulting']],
   ['realestate', ['real estate', 'realtor', 'property', 'realty', 'mortgage', 'broker']],
+  // Roofing & HVAC before construction/home so an exterior/climate trade gets the
+  // quote-first, badge-forward look. Pulls 'roofing' off construction and 'hvac'
+  // off home (removed there) so those keep their own buckets.
+  ['roofing', ['roofing contractor', 'roofing company', 'roofing', 'roofer', 'roofers', 'roof repair', 'roof replacement', 're-roof', 'reroof', 'shingle', 'shingles', 'metal roof', 'gutter', 'gutters', 'siding', 'hvac', 'heating and cooling', 'heating & cooling', 'air conditioning', 'ac repair', 'furnace', 'heat pump']],
   // Construction before home so a contractor gets the industrial look; home keeps
-  // the lighter recurring-services trades (plumbing/electric/hvac/cleaning).
-  ['construction', ['construction', 'contractor', 'builder', 'remodel', 'remodeling', 'renovation', 'roofing', 'masonry', 'framing', 'concrete']],
+  // the lighter recurring-services trades (plumbing/electric/cleaning).
+  ['construction', ['construction', 'contractor', 'builder', 'remodel', 'remodeling', 'renovation', 'masonry', 'framing', 'concrete']],
   // Landscaping before home so lawn/garden work gets the verdant photo-forward look.
   ['landscaping', ['landscaping', 'lawn care', 'landscape', 'lawn mowing', 'hardscaping', 'irrigation', 'tree service', 'garden design']],
-  ['home', ['plumbing', 'plumber', 'electric', 'electrician', 'hvac', 'cleaning', 'pest control']],
+  ['home', ['plumbing', 'plumber', 'electric', 'electrician', 'cleaning', 'pest control']],
   ['automotive', ['auto', 'car', 'mechanic', 'automotive', 'repair', 'tire', 'dealership']],
   ['pet', ['pet', 'pets', 'dog', 'dogs', 'cat', 'cats', 'puppy', 'kennel', 'pet grooming', 'pet store', 'doggy daycare', 'animal shelter']],
   ['travel', ['travel', 'tour', 'tours', 'tourism', 'hotel', 'resort', 'vacation', 'hostel', 'getaway', 'itinerary', 'destination', 'safari']],
@@ -97,11 +105,13 @@ const PALETTES = {
   veterinary: { primary: '#1aa6a0', secondary: '#ff9f43', accent: '#ffd166' }, // friendly teal + orange
   menshealth: { primary: '#b87333', secondary: '#2b2b2e', accent: '#d9a05b' }, // copper + charcoal
   dental: { primary: '#0aa1dd', secondary: '#16a085', accent: '#4dd0e1' }, // bright clinical cyan/teal
+  therapy: { primary: '#6b8cae', secondary: '#4a5d70', accent: '#cbb89d' }, // calm dusty blue + slate + warm sand
   health: { primary: '#16a085', secondary: '#2980b9', accent: '#1abc9c' },
   finance: { primary: '#1e5631', secondary: '#243b53', accent: '#c9a227' }, // deep green + navy + gold
   legal: { primary: '#1a2980', secondary: '#26334d', accent: '#c9a227' }, // navy + gold
   realestate: { primary: '#2c3e50', secondary: '#16a085', accent: '#e1b12c' },
   construction: { primary: '#d35400', secondary: '#2c3e50', accent: '#f39c12' }, // safety amber + charcoal
+  roofing: { primary: '#1d4e6f', secondary: '#26323a', accent: '#e09f3e' }, // trustworthy steel blue + charcoal + amber
   home: { primary: '#2980b9', secondary: '#27ae60', accent: '#f39c12' },
   automotive: { primary: '#2c3e50', secondary: '#c0392b', accent: '#95a5a6' },
   pet: { primary: '#16a596', secondary: '#ff8c42', accent: '#ffd166' }, // playful teal + orange
@@ -146,11 +156,13 @@ const IMAGE_KEYWORDS = {
   veterinary: 'veterinarian pet care animal hospital',
   menshealth: 'fit man fitness strong confident',
   dental: 'dentist dental clinic smile',
+  therapy: 'therapy counseling calm peaceful office wellness',
   health: 'medical clinic healthcare',
   finance: 'finance accounting office professional',
   legal: 'office professional business',
   realestate: 'modern house real estate interior',
   construction: 'construction site builder tools',
+  roofing: 'roofing contractor roof house exterior home',
   home: 'home service maintenance',
   automotive: 'car automotive garage',
   pet: 'happy pet dog cat grooming',

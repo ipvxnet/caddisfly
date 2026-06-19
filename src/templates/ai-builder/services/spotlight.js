@@ -3,19 +3,19 @@
 // and dark-aware. Same content shape as the other services variants.
 
 import { serviceCardAttrs, serviceModalAssets, serviceLabels } from './service-modal.js';
+import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 const escAttr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export function servicesSpotlightTemplate(data, config) {
-  const { heading = 'Our Services', description = '', services } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'services', 0), description = '', services } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter' } = config;
-  const labels = serviceLabels(config.lang || 'en');
+  const labels = serviceLabels(lang);
 
   const list = Array.isArray(services) && services.length
     ? services
-    : [
-        { title: 'Service', description: 'What we offer', icon: '⭐' },
-      ];
+    : defaultItems(lang, 'services-placeholder');
 
   const rows = list
     .map((s) => {

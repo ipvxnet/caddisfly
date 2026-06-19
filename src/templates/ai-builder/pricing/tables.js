@@ -5,43 +5,22 @@
 // account; plans without one keep the decorative CTA.
 
 import { t } from '../../../i18n/index.js';
+import { sectionDefault, uiText, defaultItems } from '../section-defaults.js';
 
 const escA = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export function pricingTablesTemplate(data, config) {
-  const { heading = 'Pricing', description = '', plans } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'pricing', 0), description = '', plans } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   // Live-checkout wiring (published pages only — previews show a notice,
   // same contract as the contact form: trackId/appOrigin via renderConfig).
-  const lang = config.lang || 'en';
   const siteId = config.trackId || '';
   const subEndpoint = `${config.appOrigin || ''}/api/store/subscribe`;
 
-  // Default pricing plans if not provided
-  const pricingPlans = plans || [
-    {
-      name: 'Starter',
-      price: '$29',
-      period: 'per month',
-      features: ['5 Projects', '10 GB Storage', 'Email Support', 'Basic Analytics'],
-      highlighted: false,
-    },
-    {
-      name: 'Professional',
-      price: '$79',
-      period: 'per month',
-      features: ['Unlimited Projects', '100 GB Storage', 'Priority Support', 'Advanced Analytics', 'Custom Domain'],
-      highlighted: true,
-    },
-    {
-      name: 'Enterprise',
-      price: '$199',
-      period: 'per month',
-      features: ['Unlimited Everything', '1 TB Storage', '24/7 Phone Support', 'White Label', 'Dedicated Account Manager'],
-      highlighted: false,
-    },
-  ];
+  // Default pricing plans if not provided (localized to the site language)
+  const pricingPlans = plans || defaultItems(lang, 'pricing');
 
   return `
 <section class="pricing-tables">
@@ -56,11 +35,11 @@ export function pricingTablesTemplate(data, config) {
         .map(
           (plan, index) => `
         <div class="pricing-card ${plan.highlighted ? 'highlighted' : ''}" data-index="${index}">
-          ${plan.highlighted ? `<div class="pricing-badge" style="background: ${primaryColor};">Most Popular</div>` : ''}
+          ${plan.highlighted ? `<div class="pricing-badge" style="background: ${primaryColor};">${uiText(lang, 'most_popular')}</div>` : ''}
           <h3 class="pricing-name">${plan.name}</h3>
           <div class="pricing-price-wrapper">
             <span class="pricing-price" style="color: ${plan.highlighted ? primaryColor : '#1a202c'};">${plan.price}</span>
-            <span class="pricing-period">${plan.period}</span>
+            <span class="pricing-period">${plan.period || uiText(lang, 'per_month')}</span>
           </div>
           <ul class="pricing-features">
             ${(plan.features || [])
@@ -81,7 +60,7 @@ export function pricingTablesTemplate(data, config) {
                 ${escA(plan.cta_text || t(lang, 'shopw.subscribe'))}
               </button>`
             : `<button class="pricing-cta" style="background: ${plan.highlighted ? primaryColor : '#f7fafc'}; color: ${plan.highlighted ? 'white' : '#1a202c'};">
-            ${escA(plan.cta_text || 'Get Started')}
+            ${escA(plan.cta_text || uiText(lang, 'cta'))}
           </button>`}
         </div>
       `

@@ -3,11 +3,14 @@
 // Distinct from text-image (paragraph), timeline, and team. Token- and
 // dark-aware. Uses the standard about keys (heading/subheading/story/image_url).
 
+import { sectionDefault, defaultItems } from '../section-defaults.js';
+
 export function aboutFounderQuoteTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
-    heading = 'About Us',
+    heading = sectionDefault(lang, 'about', 0),
     subheading = '',
-    story = 'We built this around a simple belief: do great work, and treat people right.',
+    story = defaultItems(lang, 'founder-story'),
     image_url = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&q=70',
     founder_name = '',
     founder_role = '',

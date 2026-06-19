@@ -2,15 +2,18 @@
 // light/bordered by default; flipped on dark themes via darkModeCss. Token-aware
 // (social icon radius). Same content shape as the multi-column footer.
 
+import { uiText } from '../section-defaults.js';
+
 export function footerMinimalTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
-    business_name = 'Your Business',
+    business_name = uiText(lang, 'business'),
     tagline = '',
-    copyright = `${new Date().getFullYear()} ${business_name}. All rights reserved.`,
+    copyright = `${new Date().getFullYear()} ${business_name}. ${uiText(lang, 'rights')}.`,
     links = [
-      { label: 'About', url: '#about' },
-      { label: 'Services', url: '#services' },
-      { label: 'Contact', url: '#contact' },
+      { label: uiText(lang, 'nav_about'), url: '#about' },
+      { label: uiText(lang, 'nav_services'), url: '#services' },
+      { label: uiText(lang, 'nav_contact'), url: '#contact' },
     ],
     social = [],
   } = data;

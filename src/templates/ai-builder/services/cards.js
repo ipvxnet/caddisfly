@@ -3,35 +3,16 @@
 // the full description + a contact/booking CTA.
 
 import { serviceMediaTile, serviceCardAttrs, serviceModalAssets, serviceLabels } from './service-modal.js';
+import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 export function servicesCardsTemplate(data, config) {
-  const { heading = 'Our Services', description = '', services } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'services', 0), description = '', services } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
-  const labels = serviceLabels(config.lang || 'en');
+  const labels = serviceLabels(lang);
 
-  // Default services if not provided
-  const serviceList = services || [
-    {
-      title: 'Consulting',
-      description: 'Expert advice tailored to your unique needs and goals',
-      icon: '💡',
-    },
-    {
-      title: 'Implementation',
-      description: 'Seamless execution from planning to deployment',
-      icon: '⚙️',
-    },
-    {
-      title: 'Support',
-      description: '24/7 assistance to keep your operations running smoothly',
-      icon: '🛟',
-    },
-    {
-      title: 'Training',
-      description: 'Comprehensive training programs for your team',
-      icon: '📚',
-    },
-  ];
+  // Default services if not provided (localized to the site language)
+  const serviceList = services || defaultItems(lang, 'services');
 
   return `
 <section class="services-cards">
