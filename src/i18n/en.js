@@ -946,6 +946,8 @@ export const en = {
     sec_cta: 'Call to action', sec_blog: 'Blog', sec_shop: 'Shop', sec_products: 'Products', sec_stats: 'Stats',
   },
   sed: {
+    appearance: 'Section appearance', appearance_auto: 'Auto (match theme)', appearance_light: 'Light', appearance_dark: 'Dark',
+    appearance_hint: 'By default a section matches your theme. Force a light or dark background here if you want this one to stand out.',
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',
     uploading: 'Uploading…', upload_complete: 'Upload complete!', upload_failed: 'Upload failed', upload_failed_p: 'Upload failed: ',

@@ -3,7 +3,7 @@
 
 import { renderSection } from '../templates/ai-builder/registry.js';
 import { holidayDecorHtml } from './holiday-decor.js';
-import { getTheme, darkModeCss, templateTokensCss } from './site-themes.js';
+import { getTheme, darkModeCss, templateTokensCss, sectionAppearanceCss } from './site-themes.js';
 import { translator } from '../i18n/index.js';
 import { SECTION_NAV_LABELS, rewriteLocalizedAnchors } from './anchor-normalize.js';
 
@@ -123,6 +123,7 @@ export function assemblePage(sections, config, project, opts = {}) {
     body,
     config: renderConfig,
     seo: { seoTitle, seoDescription, socialImage, heroImage, canonicalUrl, pageTitle, business },
+    sections: visibleSections,
   });
 
   return html;
@@ -229,7 +230,7 @@ function seoHead(seo, fallbackTitle, logoUrl = '') {
  * @param {object} options - Document options
  * @returns {string} Complete HTML document
  */
-export function buildHTMLDocument({ title, body, config, seo = null }) {
+export function buildHTMLDocument({ title, body, config, seo = null, sections = null }) {
   const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '', lang = 'en', editOverlay = false } = config;
 
   // Brand favicon from the site logo (AI-generated or uploaded). Relative
@@ -249,6 +250,8 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
   const theme = getTheme(config.style_theme);
   const isDark = theme && theme.mode === 'dark';
   const darkLayer = isDark ? darkModeCss(theme) : '';
+  // Per-section appearance overrides (user-forced light/dark per section).
+  const appearanceLayer = sectionAppearanceCss(sections, theme);
   // Per-template design tokens (radius/shadow/spacing/etc.) → :root CSS vars.
   const tokenVars = templateTokensCss(theme);
 
@@ -331,6 +334,9 @@ export function buildHTMLDocument({ title, body, config, seo = null }) {
 
     /* Dark theme override layer (only present for dark themes) */
     ${darkLayer}
+
+    /* Per-section appearance overrides (forced light/dark) */
+    ${appearanceLayer}
   </style>
 </head>
 <body>

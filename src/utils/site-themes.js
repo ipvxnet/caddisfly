@@ -926,38 +926,72 @@ const DARK_CARD_SURFACES = [
  * @param {object} theme - A theme with a `surface` object
  * @returns {string} CSS (no <style> wrapper)
  */
+// Fallback surfaces for the per-section appearance override (utils below): a
+// standard light surface (to force a section light on a dark theme) and a default
+// dark surface (to force a section dark on a light theme that has no theme.surface).
+const LIGHT_SURFACE = { bg: '#ffffff', card: '#ffffff', text: '#1a202c', muted: '#4a5568', border: 'rgba(0,0,0,.08)' };
+const DEFAULT_DARK_SURFACE = { bg: '#0f1419', card: '#1b2531', text: '#f7fafc', muted: '#9fb0c3', border: 'rgba(255,255,255,.12)' };
+
+/**
+ * The surface override rule block, optionally scoped to a subtree so it can be
+ * reused for both the global dark layer and a per-section appearance override.
+ * @param {string} rootSel - element that gets the bg+text (e.g. 'body' or '#ai-sec-7')
+ * @param {string} p - descendant-selector prefix ('' globally, or '#ai-sec-7 ' scoped)
+ * @param {object} s - a surface { bg, card, text, muted, border }
+ */
+function surfaceLayerCss(rootSel, p, s) {
+  const j = (arr) => arr.map((c) => p + c).join(', ');
+  return `
+    ${rootSel} { background: ${s.bg} !important; color: ${s.text} !important; }
+    ${j(DARK_SURFACE_SECTIONS)} { background: ${s.bg} !important; }
+    ${j(DARK_CARD_SURFACES)} { background: ${s.card} !important; border-color: ${s.border} !important; }
+    ${j(['section h1', 'section h2', 'section h3', 'section h4', 'section h5', 'section h6'])} { color: ${s.text} !important; }
+    ${j(['section p', 'section li', '.service-card p', '.testimonial-card p', '.quote-card p', '.pricing-card li', '.timeline-content p', '.svc-num-desc', '.hero-showcase-sub', '.about-founder-role', '.cta-split-desc', '.vt-quote', '.vt-role', '.tp-quote', '.tp-role'])} { color: ${s.muted} !important; }
+    ${j(['.quote-text', '.author-name', '.testimonial-text', '.testimonial-author', '.contact-info-item', '.contact-social-link', '.contact-form label', '.form-group label', '.footer-minimal-links a', '.footer-minimal-brand', '.cta-boxed-desc', '.svc-num-title', '.tspot-quote', '.tspot-author', '.action-title', '.value-item', '.about-founder-quote', '.about-founder-name', '.vt-name', '.tp-name', '.bkg-panel-head strong', '.bkg-pick'])} { color: ${s.text} !important; }
+    ${j(['.bkg-sub', '.bkg-tz', '.bkg-desc'])} { color: ${s.muted} !important; }
+    ${j(['.bkg-form input', '.bkg-form textarea'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
+    ${j(['.bkg-form input::placeholder', '.bkg-form textarea::placeholder'])} { color: ${s.muted} !important; }
+    ${j(['.action-desc'])} { color: ${s.muted} !important; }
+    ${j(['.blog-post-body', '.blog-card-meta', '.blog-post-date', '.blog-post-body blockquote'])} { color: ${s.muted} !important; }
+    ${j(['.shop-card-excerpt', '.shop-product-desc', '.shop-card-price', '.shop-feat-sub', '.shop-feat-excerpt'])} { color: ${s.muted} !important; }
+    ${j(['.shop-card-body h3', '.shop-product-name', '.shop-feat-price'])} { color: ${s.text} !important; }
+    ${j(['.contact-form input', '.contact-form textarea', '.contact-form select'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
+    ${j(['.contact-form input::placeholder', '.contact-form textarea::placeholder'])} { color: ${s.muted} !important; }`;
+}
+
 export function darkModeCss(theme) {
   const s = theme && theme.surface;
   if (!s) return '';
-  return `
-    body { background: ${s.bg} !important; color: ${s.text} !important; }
-    ${DARK_SURFACE_SECTIONS.join(', ')} { background: ${s.bg} !important; }
-    ${DARK_CARD_SURFACES.join(', ')} { background: ${s.card} !important; border-color: ${s.border} !important; }
-    section h1, section h2, section h3, section h4, section h5, section h6 { color: ${s.text} !important; }
-    section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p, .svc-num-desc,
-    .hero-showcase-sub, .about-founder-role, .cta-split-desc, .vt-quote, .vt-role, .tp-quote, .tp-role { color: ${s.muted} !important; }
-    /* Key content text that isn't a p/li/heading — keep it bright, not dark-on-dark.
-       (review quotes/authors, contact details, form labels, social links.) */
-    .quote-text, .author-name, .testimonial-text, .testimonial-author,
-    .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
-    .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
-    .tspot-quote, .tspot-author, .action-title, .value-item,
-    .about-founder-quote, .about-founder-name, .vt-name, .tp-name,
-    .bkg-panel-head strong, .bkg-pick { color: ${s.text} !important; }
-    .bkg-sub, .bkg-tz, .bkg-desc { color: ${s.muted} !important; }
-    .bkg-form input, .bkg-form textarea {
-      background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important;
-    }
-    .bkg-form input::placeholder, .bkg-form textarea::placeholder { color: ${s.muted} !important; }
-    .action-desc { color: ${s.muted} !important; }
-    .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
-    .shop-card-excerpt, .shop-product-desc, .shop-card-price, .shop-feat-sub, .shop-feat-excerpt { color: ${s.muted} !important; }
-    .shop-card-body h3, .shop-product-name, .shop-feat-price { color: ${s.text} !important; }
-    .contact-form input, .contact-form textarea, .contact-form select {
-      background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important;
-    }
-    .contact-form input::placeholder, .contact-form textarea::placeholder { color: ${s.muted} !important; }
+  return surfaceLayerCss('body', '', s) + `
     /* Caddisfly branding strip */
     body > div[style*="#f7fafc"] { background: ${s.bg} !important; color: ${s.muted} !important; }
   `;
+}
+
+/**
+ * Per-section appearance override. A section's content_json may carry
+ * `_appearance: 'light' | 'dark'` (set in the editor); 'auto'/absent = follow the
+ * theme. We emit CSS scoped to that section's `#ai-sec-<id>` wrapper. The id gives
+ * the scoped rules higher specificity, so a forced-light section beats the global
+ * dark layer and a forced-dark section beats the section's own light CSS.
+ * @param {Array} sections - the page's sections (with id + content_json)
+ * @param {object} theme - the active theme (its surface is used for forced-dark)
+ * @returns {string} CSS (no <style> wrapper)
+ */
+export function sectionAppearanceCss(sections, theme) {
+  if (!Array.isArray(sections) || !sections.length) return '';
+  const darkSurface = (theme && theme.surface) || DEFAULT_DARK_SURFACE;
+  const blocks = [];
+  for (const sec of sections) {
+    if (!sec || sec.id == null) continue;
+    let appearance = '';
+    try {
+      const cj = typeof sec.content_json === 'string' ? JSON.parse(sec.content_json) : (sec.content_json || {});
+      appearance = (cj && cj._appearance) || '';
+    } catch { /* ignore malformed json */ }
+    if (appearance !== 'light' && appearance !== 'dark') continue;
+    const scope = `#ai-sec-${sec.id}`;
+    blocks.push(surfaceLayerCss(scope, `${scope} `, appearance === 'dark' ? darkSurface : LIGHT_SURFACE));
+  }
+  return blocks.join('\n');
 }
