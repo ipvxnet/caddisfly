@@ -2,7 +2,7 @@
 // Section customization interface
 
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
-import { getSiteSections, getBodySectionsForPage, getHomeBodySections } from '../../db/ai-sections.js';
+import { getSiteSections, getBodySectionsForPage, getHomeBodySections, rehomeOrphanedSections } from '../../db/ai-sections.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
@@ -131,6 +131,11 @@ export async function handleAIBuilderCustomize(ctx) {
     if (!currentPage) currentPage = await getHomePage(env.DB, projectKey);
     const currentSlug = currentPage ? currentPage.slug : 'home';
 
+    // Self-heal: rescue any sections stranded on a menu group (or deleted page)
+    // back to the home page so they reappear in the editor and render again.
+    const homePage = pages.find((p) => p.is_home) || pages.find((p) => !p.is_group);
+    if (homePage) await rehomeOrphanedSections(env.DB, projectKey, homePage.id).catch(() => 0);
+
     const siteSections = await getSiteSections(env.DB, projectKey, false);
     const sections = currentPage && currentPage.is_home
       ? await getHomeBodySections(env.DB, projectKey, currentPage.id, false)
@@ -175,7 +180,7 @@ export async function handleAIBuilderCustomize(ctx) {
                     .join('')}
                 </select>
                 ${siteWide ? '' : `<select class="move-page-select" onchange="moveSectionToPage(${section.id}, this.value)" onclick="event.stopPropagation()" title="${tr('cust.move_title')}">
-                  ${pages.map((p) => `<option value="${p.id}" ${section.page_id === p.id ? 'selected' : ''}>→ ${esc(p.nav_label || p.slug)}</option>`).join('')}
+                  ${pages.filter((p) => !p.is_group).map((p) => `<option value="${p.id}" ${section.page_id === p.id ? 'selected' : ''}>→ ${esc(p.nav_label || p.slug)}</option>`).join('')}
                 </select>
                 <button class="del-section-btn" onclick="removeSection(event, ${section.id})" title="${tr('cust.delete_section_title')}">🗑</button>`}
               </div>

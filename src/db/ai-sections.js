@@ -204,6 +204,29 @@ function projectScope(projectKey) {
 }
 
 /**
+ * Self-heal: re-home body sections stranded on a non-content page. A section's
+ * page_id must point to a real content page; if it points to a menu group
+ * (is_group=1) or a deleted page, the section vanishes from the editor and stops
+ * rendering. This re-homes any such orphan to the home page. (Caused by the old
+ * "move to page" dropdown that offered groups as targets.)
+ * @returns {number} number of sections repaired
+ */
+export async function rehomeOrphanedSections(db, projectKey, homePageId) {
+  if (homePageId == null) return 0;
+  const scope = projectScope(projectKey);
+  const res = await db
+    .prepare(
+      `UPDATE ai_sections SET page_id = ?, updated_at = unixepoch()
+       WHERE ${scope.clause} AND section_type NOT IN ('header','footer')
+         AND page_id IS NOT NULL AND page_id != ?
+         AND page_id NOT IN (SELECT id FROM ai_pages WHERE COALESCE(is_group, 0) = 0)`
+    )
+    .bind(homePageId, scope.value, homePageId)
+    .run();
+  return (res && res.meta && res.meta.changes) || 0;
+}
+
+/**
  * Site-level sections (header/footer) — shared across every page, regardless of page_id.
  * @param {object} projectKey - {aiProjectId} or {projectId}
  */
