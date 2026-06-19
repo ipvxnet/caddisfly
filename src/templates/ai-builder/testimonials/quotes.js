@@ -31,8 +31,8 @@ export function testimonialsQuotesTemplate(data, config) {
           const author = testimonial.author || testimonial.name || 'Anonymous';
           const position = testimonial.position || testimonial.role || '';
           const avatarHtml = testimonial.avatar
-            ? `<img src="${testimonial.avatar}" alt="${author}" class="author-avatar" width="60" height="60" loading="lazy">`
-            : `<div class="author-avatar" style="background:${primaryColor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.4rem;">${(author || 'A').charAt(0)}</div>`;
+            ? `<img src="${testimonial.avatar}" alt="${author}" class="author-avatar" width="84" height="84" loading="lazy">`
+            : `<div class="author-avatar" style="background:${primaryColor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:2rem;">${(author || 'A').charAt(0)}</div>`;
           return `
         <div class="quote-card" data-index="${index}">
           <div class="quote-mark" style="color: ${primaryColor};">"</div>
@@ -80,12 +80,14 @@ export function testimonialsQuotesTemplate(data, config) {
 
 .quote-card {
   background: white;
-  padding: 2.5rem;
+  padding: 2rem;
   border-radius: var(--cf-radius, 16px);
   box-shadow: var(--cf-shadow-sm, 0 4px 20px rgba(0, 0, 0, 0.08));
   transition: transform 0.3s, box-shadow 0.3s;
   opacity: 0;
   animation: fadeInUp 0.6s ease-out forwards;
+  display: flex;
+  flex-direction: column;
 }
 
 .quote-card:nth-child(1) { animation-delay: 0.1s; }
@@ -98,34 +100,38 @@ export function testimonialsQuotesTemplate(data, config) {
 }
 
 .quote-mark {
-  font-size: 5rem;
+  font-size: 3rem;
   font-weight: 700;
-  line-height: 0.8;
-  opacity: 0.2;
-  margin-bottom: 1rem;
+  line-height: 0.7;
+  opacity: 0.18;
+  margin-bottom: 0.5rem;
 }
 
 .quote-text {
   font-size: 1.125rem;
-  line-height: 1.8;
+  line-height: 1.7;
   color: #2d3748;
-  margin: 0 0 2rem 0;
+  margin: 0 0 1.5rem 0;
   font-style: italic;
 }
 
+/* Push the author row to the bottom so cards of different quote lengths align,
+   and give the customer photo real presence. */
 .quote-author {
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-top: auto;
 }
 
 .author-avatar {
-  width: 60px;
-  height: 60px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #f7fafc;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  flex: 0 0 auto;
 }
 
 .author-info {
