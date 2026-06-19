@@ -15,6 +15,10 @@ export async function handleAIBuilderLanding(ctx) {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
+  // Optional prompt prefill (e.g. from a per-vertical SEO landing page).
+  const prefill = (() => {
+    try { return (ctx.url && ctx.url.searchParams.get('prefill')) || ''; } catch { return ''; }
+  })().slice(0, 400);
   const html = `
 <!DOCTYPE html>
 <html lang="${lang}">
@@ -281,7 +285,7 @@ export async function handleAIBuilderLanding(ctx) {
           </div>`}
           <div class="form-group">
             <label for="prompt">${tr('builder.prompt_label')}</label>
-            <textarea id="prompt" name="prompt" required placeholder="${tr('builder.prompt_ph')}"></textarea>
+            <textarea id="prompt" name="prompt" required placeholder="${tr('builder.prompt_ph')}">${esc(prefill)}</textarea>
           </div>
           <div class="form-group">
             <label for="site-lang">${tr('builder.lang_label')}</label>

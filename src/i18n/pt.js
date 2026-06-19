@@ -4,6 +4,41 @@
 export const pt = {
   lang: { label: 'Idioma' },
 
+  // Páginas SEO por setor (/website-builder/*). O texto específico de cada setor
+  // fica em utils/seo-verticals.js; aqui ficam as cadeias compartilhadas.
+  vertical: {
+    eyebrow: 'Criador de sites com IA grátis',
+    seo_title: 'Criador de sites com IA grátis para {label} — Pronto em minutos | Caddisfly',
+    prefill: 'Um site moderno para meu negócio de {label}',
+    hero_cta: 'Criar meu site de {label}',
+    hero_cta2: 'Ver modelos',
+    trust: 'Grátis para começar · Sem código · Publique em minutos',
+    why_title: 'Por que criar seu site de {label} com o Caddisfly',
+    templates_title: 'Modelos feitos para {label}',
+    templates_sub: 'Comece com um design ajustado ao seu setor — e deixe com a sua cara conversando com a IA.',
+    templates_all: 'Ver todos os modelos',
+    how_title: 'Da ideia ao site no ar em 3 passos',
+    step1_t: 'Descreva seu negócio',
+    step1_d: 'Diga à IA o que você faz em uma ou duas frases.',
+    step2_t: 'A IA cria seu site',
+    step2_d: 'Receba um site completo e com a sua marca, com textos e imagens, em minutos.',
+    step3_t: 'Personalize e publique',
+    step3_d: 'Ajuste o que quiser conversando e publique — grátis.',
+    faq_title: 'Perguntas frequentes',
+    cta_title: 'Pronto para criar seu site de {label}?',
+    cta_sub: 'Descreva seu negócio e deixe a IA fazer o resto — grátis para começar, sem código.',
+    cta_btn: 'Criar com IA — grátis',
+    others_title: 'Criadores de sites com IA para outros setores',
+    hub_crumb: 'Criador de sites',
+    hub_seo_title: 'Criador de sites com IA por setor — Modelos grátis para qualquer negócio | Caddisfly',
+    hub_seo_desc: 'Escolha seu setor e deixe a IA criar um site feito para o seu negócio — restaurantes, salões, dentistas, imobiliárias e mais. Grátis para começar, sem código.',
+    hub_h1: 'O criador de sites com IA grátis para todos os setores',
+    hub_sub: 'Escolha seu setor e a IA cria um site sob medida para o seu negócio — textos, imagens e layout incluídos. Grátis para começar, sem código.',
+    hub_pick: 'Escolha seu setor',
+    hub_card: 'O {kw} grátis — crie um site completo em minutos.',
+    hub_cta_title: 'Não encontrou seu setor?',
+  },
+
   nav: {
     how_it_works: 'Como funciona',
     templates: 'Modelos',
@@ -172,6 +207,9 @@ export const pt = {
     cta_band_title: 'Pronto para criar?',
     cta_band_sub: 'Comece com IA em menos de um minuto — a pré-visualização é totalmente grátis.',
     cta_band_btn: '✨ Criar com IA',
+    industries_title: 'Um criador de sites com IA para o seu setor',
+    industries_sub: 'O Caddisfly sabe o que cada tipo de negócio precisa. Escolha o seu para um design e textos sob medida.',
+    industries_all: 'Ver todos os setores',
   },
 
   builder: {

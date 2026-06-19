@@ -4,6 +4,7 @@
 
 import puppeteer from '@cloudflare/puppeteer';
 import { STATIC_ASSETS } from '../../assets/favicons.js';
+import { VERTICAL_SLUGS } from '../../utils/seo-verticals.js';
 
 function bytesFromB64(b64) {
   const bin = atob(b64);
@@ -76,6 +77,8 @@ const APP_PAGES = [
   { path: '/', priority: '1.0' },
   { path: '/ai-builder', priority: '0.9' },
   { path: '/templates', priority: '0.9' },
+  { path: '/website-builder', priority: '0.8' },
+  ...VERTICAL_SLUGS.map((slug) => ({ path: `/website-builder/${slug}`, priority: '0.8' })),
   { path: '/pricing', priority: '0.8' },
   { path: '/showcase', priority: '0.7' },
   { path: '/compare', priority: '0.7' },

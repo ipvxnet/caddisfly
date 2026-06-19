@@ -4,6 +4,41 @@
 export const en = {
   lang: { label: 'Language' },
 
+  // Per-vertical SEO landing pages (/website-builder/*). Vertical-specific copy
+  // lives in utils/seo-verticals.js; these are the shared, interpolated strings.
+  vertical: {
+    eyebrow: 'Free AI Website Builder',
+    seo_title: 'Free AI Website Builder for {label} — Build in Minutes | Caddisfly',
+    prefill: 'A modern website for my {label} business',
+    hero_cta: 'Build my {label} website',
+    hero_cta2: 'See templates',
+    trust: 'Free to start · No code · Publish in minutes',
+    why_title: 'Why build your {label} website with Caddisfly',
+    templates_title: 'Templates made for {label}',
+    templates_sub: 'Start from a design tuned to your industry — then make it yours by chatting with AI.',
+    templates_all: 'Browse all templates',
+    how_title: 'From idea to live site in 3 steps',
+    step1_t: 'Describe your business',
+    step1_d: 'Tell the AI what you do in a sentence or two.',
+    step2_t: 'AI builds your site',
+    step2_d: 'Get a complete, on-brand website with copy and images in minutes.',
+    step3_t: 'Customize & publish',
+    step3_d: 'Tweak anything by chatting, then publish — free.',
+    faq_title: 'Frequently asked questions',
+    cta_title: 'Ready to build your {label} website?',
+    cta_sub: 'Describe your business and let AI do the rest — free to start, no code.',
+    cta_btn: 'Build with AI — free',
+    others_title: 'AI website builders for other industries',
+    hub_crumb: 'Website Builder',
+    hub_seo_title: 'AI Website Builder by Industry — Free Templates for Any Business | Caddisfly',
+    hub_seo_desc: 'Pick your industry and let AI build a website made for your business — restaurants, salons, dentists, real estate and more. Free to start, no code.',
+    hub_h1: 'The free AI website builder for every industry',
+    hub_sub: 'Choose your industry and AI builds a website tailored to your business — copy, images and layout included. Free to start, no code.',
+    hub_pick: 'Choose your industry',
+    hub_card: 'The free {kw} — build a complete site in minutes.',
+    hub_cta_title: "Don't see your industry?",
+  },
+
   nav: {
     how_it_works: 'How it works',
     templates: 'Templates',
@@ -172,6 +207,9 @@ export const en = {
     cta_band_title: 'Ready to build?',
     cta_band_sub: 'Start with AI in under a minute — completely free to preview.',
     cta_band_btn: '✨ Build with AI',
+    industries_title: 'An AI website builder for your industry',
+    industries_sub: 'Caddisfly knows what each kind of business needs. Pick yours for a tailored design and copy.',
+    industries_all: 'See all industries',
   },
 
   builder: {

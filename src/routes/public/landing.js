@@ -3,6 +3,7 @@
 import { htmlResponse } from '../../utils/response.js';
 import { headTags, langSwitcher } from '../../components/brand.js';
 import { translator, tArr } from '../../i18n/index.js';
+import { listVerticals } from '../../utils/seo-verticals.js';
 import { buildLoaderAssets, buildLoaderMarkup } from '../../components/build-loader.js';
 import { cannedJoke } from '../../utils/jokes.js';
 
@@ -175,6 +176,12 @@ export async function handleLanding(ctx) {
     .cta-band p{opacity:.92;margin-bottom:1.6rem;font-size:1.05rem}
     .cta-band .btn{background:#fff;color:var(--p2)}
     .cta-band .btn:hover{transform:translateY(-2px)}
+
+    /* Industry chips */
+    .ind-chips{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;max-width:880px;margin:0 auto}
+    .ind-chip{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:999px;padding:.5rem 1rem;font-weight:600;font-size:.92rem;color:var(--body);transition:border-color .15s,color .15s,transform .15s}
+    .ind-chip:hover{border-color:var(--p1);color:var(--p2);transform:translateY(-2px)}
+    .ind-chip-all{background:rgba(118,75,162,.08);color:var(--p2);border-color:rgba(118,75,162,.18)}
 
     /* Footer */
     footer.site{border-top:1px solid var(--line);padding:2.2rem 0;color:var(--muted);font-size:.9rem}
@@ -372,6 +379,16 @@ export async function handleLanding(ctx) {
           <h2>${tr('landing.cta_band_title')}</h2>
           <p>${tr('landing.cta_band_sub')}</p>
           <a class="btn" href="/ai-builder">${tr('landing.cta_band_btn')}</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" style="background:var(--soft);border-top:1px solid var(--line)">
+      <div class="wrap">
+        <div class="sec-head"><h2>${tr('landing.industries_title')}</h2><p>${tr('landing.industries_sub')}</p></div>
+        <div class="ind-chips">
+          ${listVerticals(lang).map((v) => `<a class="ind-chip" href="/website-builder/${v.slug}">${v.label}</a>`).join('')}
+          <a class="ind-chip ind-chip-all" href="/website-builder">${tr('landing.industries_all')} →</a>
         </div>
       </div>
     </section>
