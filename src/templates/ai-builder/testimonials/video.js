@@ -18,6 +18,12 @@ export function testimonialsVideoTemplate(data, config) {
     font_body: fontBody = 'Inter',
   } = config;
   const lang = config.lang || 'en';
+  // Accessibility labels in the site language (play button + modal close).
+  const A11Y = {
+    en: { play: 'Play video testimonial', close: 'Close' },
+    es: { play: 'Reproducir video testimonio', close: 'Cerrar' },
+    pt: { play: 'Reproduzir vídeo depoimento', close: 'Fechar' },
+  }[lang] || { play: 'Play video testimonial', close: 'Close' };
   const tx = TESTIMONIAL_DEFAULTS[lang] || TESTIMONIAL_DEFAULTS.en;
   const { heading = tx.heading, testimonials } = data;
   const list = (Array.isArray(testimonials) && testimonials.length) ? testimonials : tx.items;
@@ -46,7 +52,7 @@ export function testimonialsVideoTemplate(data, config) {
       ? `background-image:url('${escAttr(poster)}')`
       : `background:linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
     return `<figure class="vt-card">
-      <button type="button" class="vt-play" style="${posterStyle}" data-kind="${escAttr(v.kind)}" data-embed="${escAttr(v.embedUrl)}" aria-label="Play video testimonial${author ? ` — ${escAttr(author)}` : ''}">
+      <button type="button" class="vt-play" style="${posterStyle}" data-kind="${escAttr(v.kind)}" data-embed="${escAttr(v.embedUrl)}" aria-label="${escAttr(A11Y.play)}${author ? ` — ${escAttr(author)}` : ''}">
         <span class="vt-play-icon" style="color:${primaryColor};">▶</span>
       </button>
       ${quote ? `<blockquote class="vt-quote">${esc(quote)}</blockquote>` : ''}
@@ -107,7 +113,7 @@ export function testimonialsVideoTemplate(data, config) {
     var player = kind === 'file'
       ? '<video src="' + embed + '" controls autoplay playsinline></video>'
       : '<iframe src="' + embed + '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
-    ov.innerHTML = '<div class="vt-modal-box"><button class="vt-modal-x" aria-label="Close">\\u00D7</button><div class="vt-modal-frame">' + player + '</div></div>';
+    ov.innerHTML = '<div class="vt-modal-box"><button class="vt-modal-x" aria-label="${escAttr(A11Y.close)}">\\u00D7</button><div class="vt-modal-frame">' + player + '</div></div>';
     function close(){ ov.remove(); document.removeEventListener('keydown', onKey); }
     function onKey(ev){ if (ev.key === 'Escape') close(); }
     ov.addEventListener('click', function(ev){ if (ev.target === ov || ev.target.closest('.vt-modal-x')) close(); });
