@@ -462,6 +462,7 @@ export async function handleAIBuilderCustomize(ctx) {
     .menu-group { border: 1px solid #ece9fb; border-radius: 10px; padding: 0.6rem 0.8rem; background: #faf9ff; }
     .menu-group-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
     .menu-group-name { font-weight: 600; color: #1a202c; }
+    .menu-group-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: #7c3aed; background: #f0ecff; border-radius: 999px; padding: 0.08rem 0.45rem; margin-left: 0.35rem; vertical-align: middle; }
     .menu-group-actions { display: inline-flex; gap: 0.6rem; }
     .menu-group-kids { margin: 0.4rem 0 0; padding-left: 1.1rem; color: #4a5568; font-size: 0.9rem; }
     .menu-group-kids li { padding: 0.1rem 0; }
@@ -775,10 +776,10 @@ export async function handleAIBuilderCustomize(ctx) {
           return `<div class="menu-groups">${groups.map((g) => {
             const kids = pages.filter((p) => p.parent_id === g.id);
             return `<div class="menu-group">
-              <div class="menu-group-head"><span class="menu-group-name">▾ ${esc(g.nav_label || g.slug)}</span>
+              <div class="menu-group-head"><span class="menu-group-name">▾ ${esc(g.nav_label || g.slug)} <span class="menu-group-tag">${tr('cust.mnu_group_badge') || 'group'}</span></span>
                 <span class="menu-group-actions">
                   <button class="link-btn" onclick="renamePage(${g.id}, '${esc(g.nav_label || '').replace(/'/g, "\\'")}')">${tr('cust.rename')}</button>
-                  <button class="link-btn danger" onclick="deleteGroup(${g.id})">${tr('cust.delete_page')}</button>
+                  <button class="link-btn danger" onclick="deleteGroup(${g.id})">${tr('cust.delete_group') || 'Delete group'}</button>
                 </span>
               </div>
               ${kids.length
@@ -1193,8 +1194,27 @@ export async function handleAIBuilderCustomize(ctx) {
     }
 
     // ---- Menu organization (nesting / groups) ----
+    const MNU = ${JSON.stringify({
+      group_name_prompt: tr('cust.mnu_group_name_prompt'),
+      group_added: tr('cust.mnu_group_added'),
+      updated: tr('cust.mnu_updated'),
+      update_fail: tr('cust.mnu_update_fail'),
+      group_del_confirm: tr('cust.mnu_group_del_confirm'),
+      group_deleted: tr('cust.mnu_group_deleted'),
+      asking: tr('cust.mnu_asking'),
+      suggest_fail: tr('cust.mnu_suggest_fail'),
+      title: tr('cust.mnu_title'),
+      sub: tr('cust.mnu_sub'),
+      cancel: tr('cust.mnu_cancel'),
+      apply: tr('cust.mnu_apply'),
+      applied: tr('cust.mnu_applied'),
+      apply_fail: tr('cust.mnu_apply_fail'),
+      badge_group: tr('cust.mnu_group_badge'),
+      badge_sections: tr('cust.mnu_badge_sections'),
+      badge_hidden: tr('cust.mnu_badge_hidden'),
+    })};
     async function addGroup() {
-      const label = prompt('Menu group name (a dropdown header — nest pages under it):');
+      const label = prompt(MNU.group_name_prompt);
       if (!label) return;
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages\`, {
@@ -1202,47 +1222,28 @@ export async function handleAIBuilderCustomize(ctx) {
           body: JSON.stringify({ nav_label: label, is_group: 1 })
         });
         const d = await r.json();
-        if (d.success) { flashToast('Menu group added'); location.reload(); } else alert(d.error || 'Failed to add group');
-      } catch (e) { alert('Could not add group: ' + e.message); }
+        if (d.success) { flashToast(MNU.group_added); location.reload(); } else alert(d.error || MNU.update_fail);
+      } catch (e) { alert(MNU.update_fail + ': ' + e.message); }
     }
-    async function setPageParent(id, parentId) {
+    async function updatePageField(id, patch) {
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parent_id: parentId ? Number(parentId) : null })
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch)
         });
         const d = await r.json();
-        if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
-      } catch (e) { alert('Could not update menu: ' + e.message); }
+        if (d.success) { flashToast(MNU.updated); location.reload(); } else alert(d.error || MNU.update_fail);
+      } catch (e) { alert(MNU.update_fail + ': ' + e.message); }
     }
-    async function setPageVisible(id, vis) {
-      try {
-        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ is_visible: vis ? 1 : 0 })
-        });
-        const d = await r.json();
-        if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
-      } catch (e) { alert('Could not update menu: ' + e.message); }
-    }
-    async function setShowSections(id, val) {
-      try {
-        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ show_sections_in_nav: val ? 1 : 0 })
-        });
-        const d = await r.json();
-        if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
-      } catch (e) { alert('Could not update menu: ' + e.message); }
-    }
-
+    function setPageParent(id, parentId) { updatePageField(id, { parent_id: parentId ? Number(parentId) : null }); }
+    function setPageVisible(id, vis) { updatePageField(id, { is_visible: vis ? 1 : 0 }); }
+    function setShowSections(id, val) { updatePageField(id, { show_sections_in_nav: val ? 1 : 0 }); }
     async function deleteGroup(id) {
-      if (!confirm('Delete this menu group? Pages under it move back to the top level.')) return;
+      if (!confirm(MNU.group_del_confirm)) return;
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, { method: 'DELETE' });
         const d = await r.json();
-        if (d.success) { flashToast('Menu group deleted'); location.reload(); } else alert(d.error || 'Failed to delete group');
-      } catch (e) { alert('Could not delete group: ' + e.message); }
+        if (d.success) { flashToast(MNU.group_deleted); location.reload(); } else alert(d.error || MNU.update_fail);
+      } catch (e) { alert(MNU.update_fail + ': ' + e.message); }
     }
 
     // ---- AI Smart Menu (suggest → preview → apply) ----
@@ -1251,7 +1252,7 @@ export async function handleAIBuilderCustomize(ctx) {
       var html = '<ul class="mnu-tree">';
       (items||[]).forEach(function(it){
         if(!it) return;
-        var badge = it.kind==='group' ? ' <span class="mnu-badge">group</span>' : (it.sectionsAsSubmenu ? ' <span class="mnu-badge">+ sections</span>' : '') + (it.hide ? ' <span class="mnu-badge mnu-hide">hidden</span>' : '');
+        var badge = it.kind==='group' ? ' <span class="mnu-badge">'+MNU.badge_group+'</span>' : (it.sectionsAsSubmenu ? ' <span class="mnu-badge">'+MNU.badge_sections+'</span>' : '') + (it.hide ? ' <span class="mnu-badge mnu-hide">'+MNU.badge_hidden+'</span>' : '');
         html += '<li>'+ (it.kind==='group'?'▾ ':'') + escMenu(it.label || ('Page '+it.id)) + badge;
         if(Array.isArray(it.children) && it.children.length) html += renderMenuTree(it.children);
         html += '</li>';
@@ -1260,24 +1261,24 @@ export async function handleAIBuilderCustomize(ctx) {
     }
     var _menuSuggestion = null;
     async function organizeMenu(){
-      flashToast('Asking AI to organize your menu…');
+      flashToast(MNU.asking);
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/menu/suggest\`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
         const d = await r.json();
-        if(!d.success){ alert(d.error || 'Could not suggest a menu'); return; }
+        if(!d.success){ alert(d.error || MNU.suggest_fail); return; }
         _menuSuggestion = d.suggestion;
         const host = document.createElement('div');
         host.id = 'mnu-overlay';
         host.innerHTML =
           '<div class="mnu-card">'
-          + '<h3>✨ Suggested menu</h3>'
-          + '<p class="mnu-sub">Here\\'s how AI would organize your navigation. Review, then apply.</p>'
+          + '<h3>' + escMenu(MNU.title) + '</h3>'
+          + '<p class="mnu-sub">' + escMenu(MNU.sub) + '</p>'
           + renderMenuTree(d.suggestion.items)
-          + '<div class="mnu-actions"><button class="mnu-cancel" onclick="closeMenuPreview()">Cancel</button>'
-          + '<button class="mnu-apply" onclick="applyMenuSuggestion()">Apply menu</button></div>'
+          + '<div class="mnu-actions"><button class="mnu-cancel" onclick="closeMenuPreview()">' + escMenu(MNU.cancel) + '</button>'
+          + '<button class="mnu-apply" onclick="applyMenuSuggestion()">' + escMenu(MNU.apply) + '</button></div>'
           + '</div>';
         document.body.appendChild(host);
-      } catch (e) { alert('Could not suggest a menu: ' + e.message); }
+      } catch (e) { alert(MNU.suggest_fail + ': ' + e.message); }
     }
     function closeMenuPreview(){ var o=document.getElementById('mnu-overlay'); if(o) o.remove(); }
     async function applyMenuSuggestion(){
@@ -1285,8 +1286,8 @@ export async function handleAIBuilderCustomize(ctx) {
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/menu/apply\`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: _menuSuggestion.items }) });
         const d = await r.json();
-        if(d.success){ flashToast('Menu organized'); location.reload(); } else alert(d.error || 'Failed to apply menu');
-      } catch (e) { alert('Could not apply menu: ' + e.message); }
+        if(d.success){ flashToast(MNU.applied); location.reload(); } else alert(d.error || MNU.apply_fail);
+      } catch (e) { alert(MNU.apply_fail + ': ' + e.message); }
     }
 
     // ---- Add / remove sections ----
