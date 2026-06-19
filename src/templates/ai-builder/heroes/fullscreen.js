@@ -5,7 +5,7 @@ export function heroFullscreenTemplate(data, config) {
   const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, background_image } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
-  const backgroundUrl = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920';
+  const backgroundUrl = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1280&auto=format&q=70';
 
   return `
 <section class="hero-fullscreen" style="background: linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0.55) 100%), linear-gradient(135deg, ${primaryColor}99, ${secondaryColor}4d), url('${backgroundUrl}') center/cover;">

@@ -15,7 +15,7 @@ export function heroTagsTemplate(data, config) {
   const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, background_image, tags } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
   const lang = config.lang || 'en';
-  const bg = background_image || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1920';
+  const bg = background_image || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1280&auto=format&q=70';
   const href = cta_link || cta_url || '#contact';
   const pills = (Array.isArray(tags) && tags.length ? tags : (TAG_DEFAULTS[lang] || TAG_DEFAULTS.en)).slice(0, 4);
 

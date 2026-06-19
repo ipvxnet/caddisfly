@@ -12,7 +12,7 @@ export function heroShowcaseTemplate(data, config) {
     cta_link_new_tab = false,
     secondary_cta_text = '',
     secondary_cta_link = '#about',
-    image_url = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1600',
+    image_url = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1280&auto=format&q=70',
   } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
   const newTab = cta_link_new_tab ? ' target="_blank" rel="noopener"' : '';

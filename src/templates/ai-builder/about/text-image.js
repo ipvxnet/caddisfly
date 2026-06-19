@@ -12,7 +12,7 @@ export function aboutTextImageTemplate(data, config) {
     subheading = 'Our Story',
     story = 'We are passionate about what we do.',
     values = ['Quality', 'Innovation', 'Customer Focus'],
-    image_url = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800',
+    image_url = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&q=70',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
 

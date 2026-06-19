@@ -14,10 +14,10 @@ export function galleryMasonryTemplate(data, config) {
     heading = sectionDefault(lang, 'gallery', 0),
     subheading = sectionDefault(lang, 'gallery', 1),
     images = [
-      { alt: 'Gallery image 1', caption: '', url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600' },
-      { alt: 'Gallery image 2', caption: '', url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600' },
-      { alt: 'Gallery image 3', caption: '', url: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600' },
-      { alt: 'Gallery image 4', caption: '', url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600' },
+      { alt: 'Gallery image 1', caption: '', url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&auto=format&q=70' },
+      { alt: 'Gallery image 2', caption: '', url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&q=70' },
+      { alt: 'Gallery image 3', caption: '', url: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&auto=format&q=70' },
+      { alt: 'Gallery image 4', caption: '', url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&auto=format&q=70' },
     ],
   } = data;
   const { font_heading = 'Inter' } = config;
@@ -34,7 +34,7 @@ export function galleryMasonryTemplate(data, config) {
         .map(
           (image) => `
         <div class="gallery-item">
-          <img src="${image.url || 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600'}" alt="${image.alt || image.caption || ''}" width="800" height="600" loading="lazy" />
+          <img src="${image.url || 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&auto=format&q=70'}" alt="${image.alt || image.caption || ''}" width="800" height="600" loading="lazy" />
           ${image.caption && image.caption !== 'undefined' ? `<div class="gallery-caption">${image.caption}</div>` : ''}
         </div>
       `

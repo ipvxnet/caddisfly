@@ -13,7 +13,7 @@ import { searchStockPhotos } from './stock-photos.js';
 // Known-good stock photos (these ship as template defaults in prod, so they're
 // guaranteed to load). Used as a small rotating pool for hero/about/gallery.
 const PHOTOS = [
-  'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1280&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80&auto=format&fit=crop',

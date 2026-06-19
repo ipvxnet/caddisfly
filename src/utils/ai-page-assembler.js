@@ -4,6 +4,7 @@
 import { renderSection } from '../templates/ai-builder/registry.js';
 import { holidayDecorHtml } from './holiday-decor.js';
 import { getTheme, darkModeCss, templateTokensCss, sectionAppearanceCss } from './site-themes.js';
+import { optimizeStockImages, optimizeStockUrl } from './stock-image.js';
 import { translator } from '../i18n/index.js';
 import { SECTION_NAV_LABELS, rewriteLocalizedAnchors } from './anchor-normalize.js';
 
@@ -233,6 +234,10 @@ function seoHead(seo, fallbackTitle, logoUrl = '') {
 export function buildHTMLDocument({ title, body, config, seo = null, sections = null }) {
   const { primary_color = '#667eea', font_heading = 'Inter', font_body = 'Inter', hideBadge = false, trackId = null, appOrigin = '', lang = 'en', editOverlay = false } = config;
 
+  // Hotlinked stock photos (Unsplash/Pexels) bypass our R2 resizer — normalize
+  // them to modern-format + capped-width delivery (auto=format/compress, ≤1280w).
+  body = optimizeStockImages(body);
+
   // Brand favicon from the site logo (AI-generated or uploaded). Relative
   // /preview-asset/ URLs resolve on the app origin, subdomains, and custom
   // domains alike (the sites worker serves them from R2).
@@ -259,7 +264,7 @@ export function buildHTMLDocument({ title, body, config, seo = null, sections = 
 
   // Preload the hero (LCP) image so the browser discovers it before parsing the
   // body — cuts "LCP request discovery" latency. Only for absolute/asset URLs.
-  const heroImg = (seo && seo.heroImage) || '';
+  const heroImg = optimizeStockUrl((seo && seo.heroImage) || '');
   const heroPreload = heroImg && /^(https?:|\/)/.test(heroImg)
     ? `\n  <link rel="preload" as="image" href="${escapeHtml(heroImg)}" fetchpriority="high">`
     : '';
