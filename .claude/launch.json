@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app (caddisfly.ai + builder/API)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "dev"],
+      "port": 8787
+    },
+    {
+      "name": "sites (*.caddisfly.app customer sites)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "dev", "--config", "wrangler.sites.toml", "--port", "8788"],
+      "port": 8788
+    }
+  ]
+}
