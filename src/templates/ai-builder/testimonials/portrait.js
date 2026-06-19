@@ -5,6 +5,7 @@
 // branded monogram tile so the grid still looks intentional. Token- & dark-aware.
 
 import { TESTIMONIAL_DEFAULTS } from './cards.js';
+import { lightboxAttrs, photoLightboxAssets } from './photo-lightbox.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
@@ -27,7 +28,7 @@ export function testimonialsPortraitTemplate(data, config) {
     const role = t.position || t.role || '';
     const photo = t.avatar || t.image || '';
     const media = photo
-      ? `<div class="tp-photo"><img src="${escAttr(photo)}" alt="${escAttr(author)}" width="480" height="360" loading="lazy"></div>`
+      ? `<button type="button" class="tp-photo tp-photo-btn tstlb-trigger" ${lightboxAttrs({ img: photo, name: author, role, quote }, lang)}><img src="${escAttr(photo)}" alt="${escAttr(author)}" width="480" height="360" loading="lazy"></button>`
       : `<div class="tp-photo tp-photo--mono" style="background:linear-gradient(135deg, ${primaryColor}, ${secondaryColor});"><span>${esc((author || 'A').charAt(0))}</span></div>`;
     return `<figure class="tp-card">
       ${media}
@@ -61,11 +62,15 @@ export function testimonialsPortraitTemplate(data, config) {
 .tp-quote { font-size: 1.05rem; line-height: 1.7; color: #2d3748; font-style: italic; margin: 0 0 1.1rem; }
 .tp-name { font-weight: 700; color: #1a202c; }
 .tp-role { font-size: 0.9rem; font-weight: 500; margin-top: 0.15rem; }
+.tp-photo-btn { border: none; padding: 0; width: 100%; cursor: zoom-in; display: block; }
+.tp-photo-btn img { transition: transform 0.3s; }
+.tp-photo-btn:hover img { transform: scale(1.04); }
 @media (max-width: 768px) {
   .testimonials-portrait { padding: 4rem 1.25rem; }
   .tp-heading { font-size: 2rem; margin-bottom: 2rem; }
   .tp-grid { grid-template-columns: 1fr; }
 }
 </style>
+${photoLightboxAssets(primaryColor, lang)}
   `.trim();
 }

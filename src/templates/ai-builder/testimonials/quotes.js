@@ -2,6 +2,7 @@
 // Large quote format testimonials
 
 import { TESTIMONIAL_DEFAULTS } from './cards.js';
+import { lightboxAttrs, photoLightboxAssets } from './photo-lightbox.js';
 
 export function testimonialsQuotesTemplate(data, config) {
   const {
@@ -31,7 +32,7 @@ export function testimonialsQuotesTemplate(data, config) {
           const author = testimonial.author || testimonial.name || 'Anonymous';
           const position = testimonial.position || testimonial.role || '';
           const avatarHtml = testimonial.avatar
-            ? `<img src="${testimonial.avatar}" alt="${author}" class="author-avatar" width="84" height="84" loading="lazy">`
+            ? `<button type="button" class="author-photo-btn tstlb-trigger" ${lightboxAttrs({ img: testimonial.avatar, name: author, role: position, quote }, lang)}><img src="${testimonial.avatar}" alt="${author}" class="author-avatar" width="84" height="84" loading="lazy"></button>`
             : `<div class="author-avatar" style="background:${primaryColor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:2rem;">${(author || 'A').charAt(0)}</div>`;
           return `
         <div class="quote-card" data-index="${index}">
@@ -183,6 +184,9 @@ export function testimonialsQuotesTemplate(data, config) {
     font-size: 4rem;
   }
 }
+.author-photo-btn { border: none; background: none; padding: 0; line-height: 0; border-radius: 50%; cursor: zoom-in; transition: transform 0.2s; }
+.author-photo-btn:hover { transform: scale(1.05); }
 </style>
+${photoLightboxAssets(primaryColor, lang)}
   `;
 }
