@@ -1268,6 +1268,22 @@ function generateContactFields(content, tr) {
     </div>
 
     <div class="form-group">
+      <label for="phone">${tr('sed.phone')}</label>
+      <input type="text" id="phone" name="phone" value="${escapeHtml(content.phone || '')}" placeholder="+1 555 123 4567">
+    </div>
+
+    <div class="form-group">
+      <label for="email">${tr('sed.email')}</label>
+      <input type="text" id="email" name="email" value="${escapeHtml(content.email || '')}" placeholder="hello@business.com">
+    </div>
+
+    <div class="form-group">
+      <label for="address">${tr('sed.address')}</label>
+      <textarea id="address" name="address" rows="2">${escapeHtml(content.address || '')}</textarea>
+      <small>${tr('sed.contact_details_hint')}</small>
+    </div>
+
+    <div class="form-group">
       <label for="button_text">${tr('sed.submit_button')}</label>
       <input type="text" id="button_text" name="button_text" value="${escapeHtml(content.button_text || tr('sed.ph_send_message'))}" required>
     </div>

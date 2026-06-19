@@ -971,6 +971,7 @@ export const en = {
     photos: 'Photos', photos_hint: '· drag-free reorder, replace, or remove — no new AI images', add_photo: '＋ Add photo',
     business_name: 'Business Name', tagline: 'Tagline', copyright: 'Copyright Text',
     phone: 'Phone', description: 'Description',
+    email: 'Email', address: 'Address', contact_details_hint: 'Shown next to the form — leave a field blank to hide it.',
     footer_links: 'Footer links', footer_links_hint: 'Quick links in the footer. Pick a page/section or paste a web address.',
     link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',
