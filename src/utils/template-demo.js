@@ -138,6 +138,28 @@ async function industryPhotos(env, industry) {
   return PHOTOS; // don't cache the fallback — retry next render
 }
 
+// Stock "happy customer" faces for the demo testimonials, so the showcase shows
+// off photo testimonials (cards/quotes/portrait). Cached once; [] if Pexels is
+// unavailable (then demos fall back to monogram avatars).
+let _portraitCache = null;
+async function demoPortraits(env) {
+  if (_portraitCache) return _portraitCache;
+  if (!env || !env.PEXELS_API_KEY) return [];
+  try {
+    const results = await searchStockPhotos(env, 'smiling person portrait headshot', 8);
+    const urls = (results || []).map((r) => r && r.url).filter(Boolean);
+    if (urls.length >= 3) { _portraitCache = urls; return urls; }
+  } catch (e) {
+    console.error(`demo portraits failed: ${e.message}`);
+  }
+  return [];
+}
+
+// Showcase-only: feature a few templates on the photo-forward `portrait`
+// testimonials layout so the gallery demonstrates the capability. DEMO ONLY —
+// the themes' real `variants.testimonials` (used by generation) are untouched.
+const DEMO_TESTIMONIAL_VARIANT = { glow: 'portrait', elevate: 'portrait', companion: 'portrait', estate: 'portrait' };
+
 let _sid = 0;
 function section(type, html_template, content, order) {
   return {
@@ -151,7 +173,7 @@ function section(type, html_template, content, order) {
 }
 
 /** Build the canned section list for a template (variants pulled from the theme). */
-function demoSections(theme, photos) {
+function demoSections(theme, photos, portraits = []) {
   const p = profileFor(theme);
   const v = theme.variants || {};
   const pool = (Array.isArray(photos) && photos.length) ? photos : PHOTOS;
@@ -200,7 +222,17 @@ function demoSections(theme, photos) {
     heading: 'Our Work', description: 'A look at what we do',
     images: [3, 4, 5, 6, 7, 0].map((i, n) => ({ url: photo(i), alt: `${p.brand} ${n + 1}`, caption: '' })),
   }, order++));
-  out.push(section('testimonials', v.testimonials, { heading: 'What Our Customers Say' }, order++));
+  // Sample testimonials WITH customer photos so the showcase demonstrates the
+  // photo capability; a few templates are featured on the `portrait` layout
+  // (demo-only override — theme variants are untouched).
+  const tstSeed = [
+    ['Sarah M.', 'Customer', 'Absolutely thrilled with the results — I can’t recommend them enough!'],
+    ['James T.', 'Client', 'Professional, friendly, and simply the best in town.'],
+    ['Elena R.', 'Customer', 'A wonderful experience from start to finish. Five stars.'],
+  ].map(([name, role, text], i) => ({ name, role, text, rating: 5, avatar: portraits.length ? portraits[i % portraits.length] : '' }));
+  out.push(section('testimonials', DEMO_TESTIMONIAL_VARIANT[theme.key] || v.testimonials, {
+    heading: 'What Our Customers Say', testimonials: tstSeed,
+  }, order++));
   if (v.cta) {
     out.push(section('cta', v.cta, {
       heading: 'Ready to get started?', description: `Reach out to ${p.brand} today — we’d love to help.`, cta_text: 'Contact Us', cta_url: '#contact',
@@ -243,7 +275,8 @@ export async function renderTemplateDemo(themeKey, opts = {}) {
   _sid = 0;
   const industry = (theme.industries && theme.industries[0]) || 'general';
   const photos = await industryPhotos(opts.env, industry);
-  const sections = demoSections(theme, photos);
+  const portraits = await demoPortraits(opts.env);
+  const sections = demoSections(theme, photos, portraits);
   const config = demoConfig(theme);
   const project = { project_id: `demo-${theme.key}`, project_name: profileFor(theme).brand };
   return assemblePage(sections, config, project, {
