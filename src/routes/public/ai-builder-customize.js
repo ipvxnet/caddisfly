@@ -748,7 +748,13 @@ export async function handleAIBuilderCustomize(ctx) {
         ${currentPage && !currentPage.is_home
           ? (() => {
               const hasChildren = pages.some((p) => p.parent_id === currentPage.id);
-              const candidates = pages.filter((p) => !p.parent_id && p.id !== currentPage.id && !pages.some((c) => c.parent_id === p.id && c.id !== currentPage.id));
+              // Valid parents = any TOP-LEVEL page/group except this page. A
+              // group/page may hold MANY children, so do NOT exclude parents
+              // that already have children (that previously capped a group at
+              // one item). One-level nesting is still enforced: a page that
+              // itself has children shows "has submenu items" below instead of
+              // this selector, and the API rejects deeper nesting.
+              const candidates = pages.filter((p) => !p.parent_id && p.id !== currentPage.id);
               return `<div class="menu-org">
           <label class="menu-org-row">${tr('cust.menu_parent') || 'Menu parent'}:
             ${hasChildren
