@@ -4,6 +4,41 @@
 export const es = {
   lang: { label: 'Idioma' },
 
+  // Páginas SEO por sector (/website-builder/*). El texto específico de cada
+  // sector vive en utils/seo-verticals.js; aquí van las cadenas compartidas.
+  vertical: {
+    eyebrow: 'Creador de webs con IA gratis',
+    seo_title: 'Creador de webs con IA gratis para {label} — Listo en minutos | Caddisfly',
+    prefill: 'Una web moderna para mi negocio de {label}',
+    hero_cta: 'Crear mi web de {label}',
+    hero_cta2: 'Ver plantillas',
+    trust: 'Gratis para empezar · Sin código · Publica en minutos',
+    why_title: 'Por qué crear tu web de {label} con Caddisfly',
+    templates_title: 'Plantillas pensadas para {label}',
+    templates_sub: 'Empieza con un diseño afinado a tu sector — y hazlo tuyo conversando con la IA.',
+    templates_all: 'Ver todas las plantillas',
+    how_title: 'De la idea a la web en 3 pasos',
+    step1_t: 'Describe tu negocio',
+    step1_d: 'Cuéntale a la IA qué haces en una o dos frases.',
+    step2_t: 'La IA crea tu web',
+    step2_d: 'Obtén una web completa y con tu marca, con textos e imágenes, en minutos.',
+    step3_t: 'Personaliza y publica',
+    step3_d: 'Ajusta lo que quieras conversando y publica — gratis.',
+    faq_title: 'Preguntas frecuentes',
+    cta_title: '¿Listo para crear tu web de {label}?',
+    cta_sub: 'Describe tu negocio y deja que la IA haga el resto — gratis para empezar, sin código.',
+    cta_btn: 'Crear con IA — gratis',
+    others_title: 'Creadores de webs con IA para otros sectores',
+    hub_crumb: 'Creador de webs',
+    hub_seo_title: 'Creador de webs con IA por sector — Plantillas gratis para cualquier negocio | Caddisfly',
+    hub_seo_desc: 'Elige tu sector y deja que la IA cree una web hecha para tu negocio — restaurantes, salones, dentistas, inmobiliarias y más. Gratis para empezar, sin código.',
+    hub_h1: 'El creador de webs con IA gratis para cada sector',
+    hub_sub: 'Elige tu sector y la IA crea una web a la medida de tu negocio — textos, imágenes y diseño incluidos. Gratis para empezar, sin código.',
+    hub_pick: 'Elige tu sector',
+    hub_card: 'El {kw} gratis — crea una web completa en minutos.',
+    hub_cta_title: '¿No ves tu sector?',
+  },
+
   nav: {
     how_it_works: 'Cómo funciona',
     templates: 'Plantillas',
@@ -172,6 +207,9 @@ export const es = {
     cta_band_title: '¿Listo para crear?',
     cta_band_sub: 'Empieza con IA en menos de un minuto — la vista previa es totalmente gratis.',
     cta_band_btn: '✨ Crear con IA',
+    industries_title: 'Un creador de webs con IA para tu sector',
+    industries_sub: 'Caddisfly sabe lo que necesita cada tipo de negocio. Elige el tuyo para un diseño y textos a medida.',
+    industries_all: 'Ver todos los sectores',
   },
 
   builder: {
