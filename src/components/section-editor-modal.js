@@ -4,16 +4,20 @@
 import { generateAIEditPanel } from './ai-edit-panel.js';
 import { renderLinkField, linkPickerAssets } from './link-picker.js';
 import { translator } from '../i18n/index.js';
+import { TESTIMONIAL_DEFAULTS } from '../templates/ai-builder/testimonials/cards.js';
 
 /**
  * Generate section editor modal HTML
  * @param {object} section - Section data
  * @param {string} projectId - Project ID
- * @param {string} lang - UI language
+ * @param {string} lang - Viewer's UI language (labels/buttons)
+ * @param {string} siteLang - The SITE's language (drives placeholder content so
+ *   the editor matches what the page renders — e.g. PT defaults, not EN)
  * @returns {string} Modal HTML
  */
-export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null) {
+export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null) {
   const tr = translator(lang);
+  const contentLang = siteLang || lang;
   const content = JSON.parse(section.content_json || '{}');
   const lpData = linkData || { pages: [], sections: [], phone: '', email: '' };
 
@@ -33,7 +37,7 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
       <details class="manual-edit" open>
         <summary>${tr('sed.edit_manual')}</summary>
         <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
-          ${generateFormFields(section.section_type, content, tr, projectId)}
+          ${generateFormFields(section.section_type, content, tr, projectId, contentLang)}
 
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="closeModal()">${tr('sed.cancel')}</button>
@@ -806,7 +810,7 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
 /**
  * Generate form fields based on section type
  */
-function generateFormFields(sectionType, content, tr, projectId = '') {
+function generateFormFields(sectionType, content, tr, projectId = '', contentLang = 'en') {
   switch (sectionType) {
     case 'hero':
       return generateHeroFields(content, tr);
@@ -815,7 +819,7 @@ function generateFormFields(sectionType, content, tr, projectId = '') {
     case 'services':
       return generateServicesFields(content, tr);
     case 'testimonials':
-      return generateTestimonialsFields(content, tr);
+      return generateTestimonialsFields(content, tr, contentLang);
     case 'contact':
       return generateContactFields(content, tr);
     case 'gallery':
@@ -1195,7 +1199,11 @@ function generateServicesFields(content, tr) {
   `;
 }
 
-function generateTestimonialsFields(content, tr) {
+function generateTestimonialsFields(content, tr, contentLang = 'en') {
+  // Seed an empty section with the SAME localized defaults the template renders
+  // (site language), so the editor matches the preview instead of showing
+  // English "John Doe" placeholders on a non-English site.
+  const seed = (TESTIMONIAL_DEFAULTS[contentLang] || TESTIMONIAL_DEFAULTS.en).items;
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -1210,11 +1218,7 @@ function generateTestimonialsFields(content, tr) {
     <div class="form-group">
       <label>${tr('sed.testimonials')}</label>
       ${buildRepeater({
-        jsonKey: 'testimonials', items: (Array.isArray(content.testimonials) && content.testimonials.length) ? content.testimonials : [
-          { name: 'John Doe', role: tr('sed.seed_tst_role'), text: tr('sed.seed_tst_text1'), rating: 5 },
-          { name: 'Jane Smith', role: tr('sed.seed_tst_role2'), text: tr('sed.seed_tst_text2'), rating: 5 },
-          { name: 'Bob Johnson', role: tr('sed.seed_tst_role3'), text: tr('sed.seed_tst_text3'), rating: 5 },
-        ], addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
+        jsonKey: 'testimonials', items: (Array.isArray(content.testimonials) && content.testimonials.length) ? content.testimonials : seed, addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
         fields: [
           { key: 'name', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
           { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
