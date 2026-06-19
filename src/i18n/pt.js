@@ -965,6 +965,7 @@ export const pt = {
     photos: 'Fotos', photos_hint: '· reordene, substitua ou remova — sem novas imagens de IA', add_photo: '＋ Adicionar foto',
     business_name: 'Nome do negócio', tagline: 'Slogan', copyright: 'Texto de copyright',
     phone: 'Telefone', description: 'Descrição',
+    email: 'E-mail', address: 'Endereço', contact_details_hint: 'Aparece ao lado do formulário — deixe um campo vazio para ocultá-lo.',
     footer_links: 'Links do rodapé', footer_links_hint: 'Links rápidos no rodapé. Escolha uma página/seção ou cole um endereço web.',
     link_label: 'Texto do link', add_link: '＋ Adicionar link', link_remove: 'Remover link',
     ph_about_us: 'Sobre nós', ph_our_services: 'Os nossos serviços', ph_testimonials: 'Depoimentos', ph_get_in_touch: 'Fale conosco',
