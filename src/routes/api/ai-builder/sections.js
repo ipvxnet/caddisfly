@@ -4,6 +4,7 @@
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
+import { getPageById } from '../../../db/ai-pages.js';
 
 /**
  * Handle section update
@@ -109,7 +110,12 @@ export async function handleAIBuilderSectionUpdate(ctx) {
     }
     if (page_id !== undefined) {
       // Move the section to another page (page_id is a global ai_pages.id).
-      updates.page_id = page_id;
+      // Never allow a menu group (is_group) as the target: groups aren't content
+      // pages, so the section would vanish from the editor and stop rendering.
+      const target = page_id != null ? await getPageById(env.DB, parseInt(page_id)) : null;
+      if (page_id == null || (target && !target.is_group)) {
+        updates.page_id = page_id;
+      }
     }
 
     if (Object.keys(updates).length > 0) {

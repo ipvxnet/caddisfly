@@ -112,7 +112,10 @@ export function navbarTemplate(data, config) {
   const navItem = (p) => {
     const kids = childrenOf(p.id);
     const secLinks = sectionSubLinks(p);
-    if (!kids.length && !secLinks.length && !p.is_group) return pageLink(p);
+    // An empty group (no child pages, no section links) has nothing to drop down —
+    // render nothing rather than a dead dropdown that won't open. A leaf page
+    // renders as a plain link.
+    if (!kids.length && !secLinks.length) return p.is_group ? '' : pageLink(p);
     const label = escapeHtml(p.nav_label || p.title || p.slug);
     const submenu = `<div class="nav-submenu" role="menu">${kids.map(subLink).join('')}${secLinks.join('')}</div>`;
     const caret = `<button type="button" class="nav-caret" aria-haspopup="true" aria-expanded="false" aria-label="${label}"
