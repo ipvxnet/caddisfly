@@ -485,7 +485,7 @@ export const en = {
     toast_snapshot_restored: 'Version restored', toast_seo_saved: 'SEO saved',
     toast_logo_updated: 'Logo updated', toast_logo_removed: 'Logo removed',
     pages: 'Pages', add_page: '+ Page', add_page_title: 'Add a page',
-    add_group: '+ Menu group', menu_parent: 'Menu parent', menu_top_level: 'Top level', menu_has_children: 'has submenu items', menu_show: 'Show in menu', menu_sections_sub: 'Sections as submenu', menu_ai: '✨ Organize menu', menu_ai_title: 'Let AI tidy your menu into groups & submenus — preview before applying',
+    add_group: '+ Menu group', menu_parent: 'Menu parent', menu_top_level: 'Top level', menu_has_children: 'has submenu items', menu_show: 'Show in menu', menu_sections_sub: 'Sections as submenu', menu_ai: '✨ Organize menu', menu_ai_title: 'Let AI tidy your menu into groups & submenus — preview before applying', menu: 'Menu', menu_note: 'Organize how items appear in the top navigation. Groups are dropdown headers — nest pages under them with each page’s “Menu parent”.', menu_no_groups: 'No menu groups yet. Create one to nest pages under a dropdown.', menu_group_empty: 'Empty — set a page’s “Menu parent” to this group.',
     rename: 'Rename', delete_page: 'Delete page', home_page: 'Home page',
     sitewide: 'Site-wide', sitewide_note: '· shown on every page',
     sections_of: '{page} sections',

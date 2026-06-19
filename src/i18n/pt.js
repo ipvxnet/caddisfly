@@ -485,7 +485,7 @@ export const pt = {
     toast_snapshot_restored: 'Versão restaurada', toast_seo_saved: 'SEO salvo',
     toast_logo_updated: 'Logo atualizado', toast_logo_removed: 'Logo removido',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Adicionar uma página',
-    add_group: '+ Grupo de menu', menu_parent: 'Menu pai', menu_top_level: 'Nível principal', menu_has_children: 'tem itens de submenu', menu_show: 'Mostrar no menu', menu_sections_sub: 'Seções como submenu', menu_ai: '✨ Organizar menu', menu_ai_title: 'Deixe a IA organizar seu menu em grupos e submenus — pré-visualize antes de aplicar',
+    add_group: '+ Grupo de menu', menu_parent: 'Menu pai', menu_top_level: 'Nível principal', menu_has_children: 'tem itens de submenu', menu_show: 'Mostrar no menu', menu_sections_sub: 'Seções como submenu', menu_ai: '✨ Organizar menu', menu_ai_title: 'Deixe a IA organizar seu menu em grupos e submenus — pré-visualize antes de aplicar', menu: 'Menu', menu_note: 'Organize como os itens aparecem na navegação superior. Grupos são cabeçalhos suspensos — aninhe páginas neles com o “Menu pai” de cada página.', menu_no_groups: 'Ainda não há grupos de menu. Crie um para aninhar páginas num menu suspenso.', menu_group_empty: 'Vazio — defina o “Menu pai” de uma página para este grupo.',
     rename: 'Renomear', delete_page: 'Excluir página', home_page: 'Página inicial',
     sitewide: 'Todo o site', sitewide_note: '· aparece em todas as páginas',
     sections_of: 'Seções de {page}',

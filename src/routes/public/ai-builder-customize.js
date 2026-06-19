@@ -126,6 +126,8 @@ export async function handleAIBuilderCustomize(ctx) {
     const pages = await getPagesByProject(env.DB, projectKey);
     const requestedSlug = query && query.page;
     let currentPage = requestedSlug ? await getPageBySlug(env.DB, projectKey, requestedSlug) : null;
+    // A menu group is not an editable page — never treat it as the current page.
+    if (currentPage && currentPage.is_group) currentPage = null;
     if (!currentPage) currentPage = await getHomePage(env.DB, projectKey);
     const currentSlug = currentPage ? currentPage.slug : 'home';
 
@@ -456,6 +458,14 @@ export async function handleAIBuilderCustomize(ctx) {
     .menu-org-row { display: inline-flex; align-items: center; gap: 0.4rem; }
     .menu-org select { font-size: 0.85rem; padding: 0.25rem 0.4rem; border: 1px solid #d6d3e8; border-radius: 6px; background: #fff; }
     .page-tab-ai { color: #7c3aed; border-style: dashed; font-weight: 600; }
+    .menu-groups { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem; }
+    .menu-group { border: 1px solid #ece9fb; border-radius: 10px; padding: 0.6rem 0.8rem; background: #faf9ff; }
+    .menu-group-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .menu-group-name { font-weight: 600; color: #1a202c; }
+    .menu-group-actions { display: inline-flex; gap: 0.6rem; }
+    .menu-group-kids { margin: 0.4rem 0 0; padding-left: 1.1rem; color: #4a5568; font-size: 0.9rem; }
+    .menu-group-kids li { padding: 0.1rem 0; }
+    .menu-group-empty { font-size: 0.82rem; margin: 0.35rem 0 0; }
     #mnu-overlay { position: fixed; inset: 0; background: rgba(15,18,34,0.45); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 1rem; }
     .mnu-card { background: #fff; border-radius: 14px; max-width: 480px; width: 100%; max-height: 80vh; overflow: auto; padding: 1.5rem; box-shadow: 0 24px 60px rgba(0,0,0,0.28); }
     .mnu-card h3 { margin: 0 0 0.3rem; font-size: 1.25rem; }
@@ -723,11 +733,10 @@ export async function handleAIBuilderCustomize(ctx) {
         <h2 style="margin-bottom: 0.5rem;">${tr('cust.pages')}</h2>
         <div class="page-tabs">
           ${pages
+            .filter((p) => !p.is_group)
             .map((p) => `<button class="page-tab ${p.slug === currentSlug ? 'active' : ''}" onclick="switchPage('${p.slug}')">${p.is_home ? '🏠 ' : ''}${esc(p.nav_label || p.slug)}</button>`)
             .join('')}
           <button class="page-tab page-tab-add" onclick="addPage()" title="${tr('cust.add_page_title')}">${tr('cust.add_page')}</button>
-          <button class="page-tab page-tab-add" onclick="addGroup()" title="A dropdown menu header with no page of its own — nest pages under it">${tr('cust.add_group') || '+ Menu group'}</button>
-          <button class="page-tab page-tab-ai" onclick="organizeMenu()" title="${tr('cust.menu_ai_title') || 'Let AI tidy your menu into groups & submenus — preview before applying'}">${tr('cust.menu_ai') || '✨ Organize menu'}</button>
         </div>
         <div class="page-toolbar">
           ${currentPage && !currentPage.is_home
@@ -753,6 +762,31 @@ export async function handleAIBuilderCustomize(ctx) {
         </div>`;
             })()
           : ''}
+
+        <h2 style="margin: 1.75rem 0 0.35rem;">${tr('cust.menu') || 'Menu'}</h2>
+        <p class="muted" style="font-size: 0.85rem; margin-bottom: 0.7rem;">${tr('cust.menu_note') || 'Organize how items appear in the top navigation. Groups are dropdown headers — nest pages under them with each page’s “Menu parent”.'}</p>
+        <div class="page-tabs">
+          <button class="page-tab page-tab-add" onclick="addGroup()" title="A dropdown menu header with no page of its own — nest pages under it">${tr('cust.add_group') || '+ Menu group'}</button>
+          <button class="page-tab page-tab-ai" onclick="organizeMenu()" title="${tr('cust.menu_ai_title') || 'Let AI tidy your menu into groups & submenus — preview before applying'}">${tr('cust.menu_ai') || '✨ Organize menu'}</button>
+        </div>
+        ${(() => {
+          const groups = pages.filter((p) => p.is_group);
+          if (!groups.length) return `<p class="muted" style="font-size: 0.85rem;">${tr('cust.menu_no_groups') || 'No menu groups yet. Create one to nest pages under a dropdown.'}</p>`;
+          return `<div class="menu-groups">${groups.map((g) => {
+            const kids = pages.filter((p) => p.parent_id === g.id);
+            return `<div class="menu-group">
+              <div class="menu-group-head"><span class="menu-group-name">▾ ${esc(g.nav_label || g.slug)}</span>
+                <span class="menu-group-actions">
+                  <button class="link-btn" onclick="renamePage(${g.id}, '${esc(g.nav_label || '').replace(/'/g, "\\'")}')">${tr('cust.rename')}</button>
+                  <button class="link-btn danger" onclick="deleteGroup(${g.id})">${tr('cust.delete_page')}</button>
+                </span>
+              </div>
+              ${kids.length
+                ? `<ul class="menu-group-kids">${kids.map((k) => `<li>${esc(k.nav_label || k.slug)}</li>`).join('')}</ul>`
+                : `<p class="menu-group-empty muted">${tr('cust.menu_group_empty') || 'Empty — set a page’s “Menu parent” to this group.'}</p>`}
+            </div>`;
+          }).join('')}</div>`;
+        })()}
 
         ${siteSections.length
           ? `<h3 class="group-title">${tr('cust.sitewide')} <span class="muted">${tr('cust.sitewide_note')}</span></h3>
@@ -1200,6 +1234,15 @@ export async function handleAIBuilderCustomize(ctx) {
         const d = await r.json();
         if (d.success) { flashToast('Menu updated'); location.reload(); } else alert(d.error || 'Failed to update menu');
       } catch (e) { alert('Could not update menu: ' + e.message); }
+    }
+
+    async function deleteGroup(id) {
+      if (!confirm('Delete this menu group? Pages under it move back to the top level.')) return;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/\${id}\`, { method: 'DELETE' });
+        const d = await r.json();
+        if (d.success) { flashToast('Menu group deleted'); location.reload(); } else alert(d.error || 'Failed to delete group');
+      } catch (e) { alert('Could not delete group: ' + e.message); }
     }
 
     // ---- AI Smart Menu (suggest → preview → apply) ----

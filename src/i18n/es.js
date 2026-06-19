@@ -485,7 +485,7 @@ export const es = {
     toast_snapshot_restored: 'Versión restaurada', toast_seo_saved: 'SEO guardado',
     toast_logo_updated: 'Logo actualizado', toast_logo_removed: 'Logo eliminado',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Añadir una página',
-    add_group: '+ Grupo de menú', menu_parent: 'Menú superior', menu_top_level: 'Nivel superior', menu_has_children: 'tiene elementos de submenú', menu_show: 'Mostrar en el menú', menu_sections_sub: 'Secciones como submenú', menu_ai: '✨ Organizar menú', menu_ai_title: 'Deja que la IA ordene tu menú en grupos y submenús — vista previa antes de aplicar',
+    add_group: '+ Grupo de menú', menu_parent: 'Menú superior', menu_top_level: 'Nivel superior', menu_has_children: 'tiene elementos de submenú', menu_show: 'Mostrar en el menú', menu_sections_sub: 'Secciones como submenú', menu_ai: '✨ Organizar menú', menu_ai_title: 'Deja que la IA ordene tu menú en grupos y submenús — vista previa antes de aplicar', menu: 'Menú', menu_note: 'Organiza cómo aparecen los elementos en la navegación superior. Los grupos son encabezados desplegables — anida páginas bajo ellos con el “Menú superior” de cada página.', menu_no_groups: 'Aún no hay grupos de menú. Crea uno para anidar páginas en un desplegable.', menu_group_empty: 'Vacío — asigna el “Menú superior” de una página a este grupo.',
     rename: 'Renombrar', delete_page: 'Eliminar página', home_page: 'Página de inicio',
     sitewide: 'Todo el sitio', sitewide_note: '· se muestra en cada página',
     sections_of: 'Secciones de {page}',
