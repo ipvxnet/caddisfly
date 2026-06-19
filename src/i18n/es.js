@@ -879,6 +879,11 @@ export const es = {
     err_full: 'La agenda está completa este mes. Inténtalo más tarde.',
     err_taken: 'Ese horario se acaba de ocupar — elige otro.',
   },
+  galw: {
+    dot: 'Ir a la diapositiva {n}',
+    prev: 'Diapositiva anterior',
+    next: 'Diapositiva siguiente',
+  },
   bkr: {
     title: 'Pago de la reserva',
     ok_title: '✅ ¡Reservado y pagado!',

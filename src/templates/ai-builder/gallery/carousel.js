@@ -2,6 +2,7 @@
 // Image carousel/slider with navigation
 
 import { sectionDefault } from '../section-defaults.js';
+import { t } from '../../../i18n/index.js';
 
 export function galleryCarouselTemplate(data, config) {
   const lang = config.lang || 'en';
@@ -25,7 +26,7 @@ export function galleryCarouselTemplate(data, config) {
     </div>
 
     <div class="carousel-wrapper">
-      <button class="carousel-btn carousel-prev" onclick="moveCarousel(-1)" style="background: ${primaryColor};">
+      <button type="button" class="carousel-btn carousel-prev" onclick="moveCarousel(-1)" aria-label="${t(lang, 'galw.prev')}" style="background: ${primaryColor};">
         ‹
       </button>
 
@@ -44,7 +45,7 @@ export function galleryCarouselTemplate(data, config) {
         </div>
       </div>
 
-      <button class="carousel-btn carousel-next" onclick="moveCarousel(1)" style="background: ${primaryColor};">
+      <button type="button" class="carousel-btn carousel-next" onclick="moveCarousel(1)" aria-label="${t(lang, 'galw.next')}" style="background: ${primaryColor};">
         ›
       </button>
     </div>
@@ -54,8 +55,10 @@ export function galleryCarouselTemplate(data, config) {
         .map(
           (_, index) => `
         <button
+          type="button"
           class="carousel-dot ${index === 0 ? 'active' : ''}"
           onclick="goToSlide(${index})"
+          aria-label="${t(lang, 'galw.dot', { n: index + 1 })}"
           style="background: ${index === 0 ? primaryColor : '#cbd5e0'};"
         ></button>
       `

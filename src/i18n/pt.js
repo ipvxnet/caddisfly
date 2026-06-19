@@ -879,6 +879,11 @@ export const pt = {
     err_full: 'A agenda está cheia este mês. Tente mais tarde.',
     err_taken: 'Esse horário acabou de ser ocupado — escolha outro.',
   },
+  galw: {
+    dot: 'Ir para o slide {n}',
+    prev: 'Slide anterior',
+    next: 'Próximo slide',
+  },
   bkr: {
     title: 'Pagamento da reserva',
     ok_title: '✅ Reservado e pago!',

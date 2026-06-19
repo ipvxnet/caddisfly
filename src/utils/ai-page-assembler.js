@@ -494,6 +494,11 @@ export function hexToRgb(hex) {
  * solid brand color — so an auto-detected mid-tone (e.g. copper #b87333, where
  * white is only 3.79:1) flips to dark text and clears WCAG AA. Exposed as the
  * `--on-primary` CSS var; buttons use `color: var(--on-primary, #fff)`.
+ *
+ * The dark option is near-black (#111111), not a soft slate: on a mid-tone like
+ * copper #b87333 a softer #1a202c only reaches ~4.31:1 (still failing AA),
+ * whereas #111111 reaches ~4.98:1 and clears it. Using near-black only ever
+ * raises contrast for every color where the dark branch is chosen.
  */
 export function readableOn(hex) {
   const h = String(hex || '').replace(/^#/, '');
@@ -505,7 +510,7 @@ export function readableOn(hex) {
   const L = 0.2126 * lin(h.substring(0, 2)) + 0.7152 * lin(h.substring(2, 4)) + 0.0722 * lin(h.substring(4, 6));
   const onWhite = (1.05) / (L + 0.05); // contrast vs #fff
   const onBlack = (L + 0.05) / 0.05; // contrast vs #000
-  return onWhite >= onBlack ? '#ffffff' : '#1a202c';
+  return onWhite >= onBlack ? '#ffffff' : '#111111';
 }
 
 /**
