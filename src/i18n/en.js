@@ -61,8 +61,18 @@ export const en = {
 
   landing: {
     eyebrow: 'AI website builder',
-    hero_h1_html: 'Launch a <span class="grad-text">beautiful website</span><br>in minutes — with AI.',
+    hero_h1_html: 'The free <span class="grad-text">AI website builder</span><br>that builds your site for you.',
     hero_sub: 'Chat with AI to build a brand-new, multi-page site — or instantly refactor your existing website into a clean, modern design. On-brand, customizable, ready to publish.',
+    seo_title: 'Free AI Website Builder — Build a Website by Chatting | Caddisfly',
+    seo_desc: 'Caddisfly is a free AI website builder. Describe your business and AI builds a complete, mobile-friendly, SEO-ready website in minutes — or refactor your existing site. No code, free to start.',
+    faq_title: 'Frequently asked questions',
+    faqs: [
+      ['Is Caddisfly free?', 'Yes — building and previewing your website is free. Publish on the free plan with a caddisfly.app address, or upgrade to remove branding and connect a custom domain.'],
+      ['Can AI really build my website?', 'Yes. Describe your business and Caddisfly’s AI generates a complete, on-brand, multi-page website — copy, sections, images and layout — that you can edit and publish.'],
+      ['Do I need to know how to code?', 'No. Everything is visual and AI-assisted — no code and no templates to wrestle with. Edit any text, image or section in a few clicks.'],
+      ['How is it different from other website builders?', 'Instead of dragging blocks onto a blank canvas, you chat with AI (or paste your existing site) and get a finished, on-brand website in minutes — then refine it.'],
+      ['Can I use my own domain?', 'Yes. Connect a custom domain on a paid plan, or buy one inside Caddisfly and we connect it for you automatically.'],
+    ],
     trust: 'No code. No templates to wrestle with. Free preview.',
     cta_build: '✨ Build with AI',
     cta_refactor: 'Refactor my site',

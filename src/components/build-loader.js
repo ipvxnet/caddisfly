@@ -108,7 +108,7 @@ export function buildLoaderMarkup({ lang = 'en', title = '', sub = '', joke = ''
   return `
   <div class="cf-wrap">
     <div class="cf-logo">${brandMark('cf-logo-svg', '', true)}</div>
-    <h1 class="cf-h1">${escapeHtml(title)}</h1>
+    <div class="cf-h1">${escapeHtml(title)}</div>
     <p class="cf-sub">${escapeHtml(sub)}</p>
     <div class="cf-card">
       <div class="cf-spinner"></div>

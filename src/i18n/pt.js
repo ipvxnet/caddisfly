@@ -61,8 +61,18 @@ export const pt = {
 
   landing: {
     eyebrow: 'Criador de sites com IA',
-    hero_h1_html: 'Lance um <span class="grad-text">site lindo</span><br>em minutos — com IA.',
+    hero_h1_html: 'O <span class="grad-text">criador de sites com IA</span> grátis<br>que cria seu site por você.',
     hero_sub: 'Converse com a IA para criar um site novo de várias páginas — ou renove na hora o seu site atual com um design limpo e moderno. Com a sua marca, personalizável e pronto para publicar.',
+    seo_title: 'Criador de Sites com IA Grátis — Crie seu Site Conversando | Caddisfly',
+    seo_desc: 'O Caddisfly é um criador de sites com IA grátis. Descreva seu negócio e a IA cria um site completo, responsivo e pronto para SEO em minutos — ou renove o seu site atual. Sem código, grátis para começar.',
+    faq_title: 'Perguntas frequentes',
+    faqs: [
+      ['O Caddisfly é grátis?', 'Sim — criar e visualizar seu site é grátis. Publique no plano gratuito com um endereço caddisfly.app, ou faça upgrade para remover a marca e conectar um domínio próprio.'],
+      ['A IA realmente cria meu site?', 'Sim. Descreva seu negócio e a IA do Caddisfly gera um site completo de várias páginas — textos, seções, imagens e layout — que você pode editar e publicar.'],
+      ['Preciso saber programar?', 'Não. Tudo é visual e assistido por IA — sem código e sem modelos complicados. Edite qualquer texto, imagem ou seção em poucos cliques.'],
+      ['Qual a diferença para outros criadores de sites?', 'Em vez de arrastar blocos numa página em branco, você conversa com a IA (ou cola seu site atual) e recebe um site pronto em minutos — depois é só refinar.'],
+      ['Posso usar meu próprio domínio?', 'Sim. Conecte um domínio próprio em um plano pago, ou compre um dentro do Caddisfly e nós conectamos automaticamente.'],
+    ],
     trust: 'Sem código. Sem modelos para batalhar. Pré-visualização grátis.',
     cta_build: '✨ Criar com IA',
     cta_refactor: 'Renovar meu site',

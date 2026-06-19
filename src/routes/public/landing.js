@@ -2,7 +2,7 @@
 
 import { htmlResponse } from '../../utils/response.js';
 import { headTags, langSwitcher } from '../../components/brand.js';
-import { translator } from '../../i18n/index.js';
+import { translator, tArr } from '../../i18n/index.js';
 import { buildLoaderAssets, buildLoaderMarkup } from '../../components/build-loader.js';
 import { cannedJoke } from '../../utils/jokes.js';
 
@@ -42,16 +42,36 @@ export async function handleLanding(ctx) {
   const origin = (ctx && ctx.url && ctx.url.origin) || (ctx && ctx.env && ctx.env.APP_URL) || '';
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
+
+  // Structured data: SoftwareApplication (free website builder) + FAQPage —
+  // helps rich results for "website builder" / "free" / "AI" queries.
+  const faqItems = tArr(lang, 'landing.faqs');
+  const softwareLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Caddisfly',
+    applicationCategory: 'WebApplication',
+    operatingSystem: 'Web',
+    url: origin || 'https://caddisfly.ai',
+    description: tr('landing.seo_desc'),
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    featureList: ['AI website generation', 'Visual editor', 'Multi-page sites', 'Online store', 'Bookings', 'Blog', 'Custom domains', 'SEO tools'],
+  };
+  const faqLd = (Array.isArray(faqItems) && faqItems.length)
+    ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }
+    : null;
+
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${headTags({
-    title: 'Caddisfly — Build a beautiful website with AI',
-    description: 'Build a brand-new website by chatting with AI, or instantly refactor your existing site into a clean, modern design. Multi-page, on-brand, SEO-ready, and ready to publish.',
+    title: tr('landing.seo_title'),
+    description: tr('landing.seo_desc'),
     origin,
     path: '/',
+    jsonLd: [softwareLd, faqLd].filter(Boolean),
   })}
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -352,6 +372,19 @@ export async function handleLanding(ctx) {
           <h2>${tr('landing.cta_band_title')}</h2>
           <p>${tr('landing.cta_band_sub')}</p>
           <a class="btn" href="/ai-builder">${tr('landing.cta_band_btn')}</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="block">
+      <div class="wrap">
+        <div class="sec-head"><h2>${tr('landing.faq_title')}</h2></div>
+        <div class="faqs">
+          ${tArr(lang, 'landing.faqs').map(([q, a]) => `
+          <details class="faq">
+            <summary>${q}</summary>
+            <p>${a}</p>
+          </details>`).join('')}
         </div>
       </div>
     </section>
