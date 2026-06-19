@@ -39,6 +39,17 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
         <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
           ${generateFormFields(section.section_type, content, tr, projectId, contentLang)}
 
+          ${['header', 'footer', 'hero'].includes(section.section_type) ? '' : `
+          <div class="form-group">
+            <label for="sed-appearance">${tr('sed.appearance')}</label>
+            <select id="sed-appearance" name="_appearance">
+              <option value=""${!content._appearance || content._appearance === 'auto' ? ' selected' : ''}>${tr('sed.appearance_auto')}</option>
+              <option value="light"${content._appearance === 'light' ? ' selected' : ''}>${tr('sed.appearance_light')}</option>
+              <option value="dark"${content._appearance === 'dark' ? ' selected' : ''}>${tr('sed.appearance_dark')}</option>
+            </select>
+            <small>${tr('sed.appearance_hint')}</small>
+          </div>`}
+
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="closeModal()">${tr('sed.cancel')}</button>
             <button type="submit" class="btn-primary" id="save-btn">${tr('sed.save')}</button>
