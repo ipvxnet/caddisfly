@@ -14,7 +14,7 @@ import {
 export const MONTHLY_CREDITS = { free_trial: 50, starter: 500, pro: 2000, agency: 8000 };
 
 // Cost per metered AI action (indicative; tune to measured per-call spend).
-export const CREDIT_COSTS = { generate: 20, image: 5, text_edit: 1, enrich: 10, blog_post: 10, social_pack: 2, product_desc: 2, logo: 10, hero_video: 100, seo_review: 10 };
+export const CREDIT_COSTS = { generate: 20, image: 5, text_edit: 1, enrich: 10, blog_post: 10, social_pack: 2, product_desc: 2, logo: 10, hero_video: 100, seo_review: 10, menu_ai: 3 };
 
 // Published-site cap per tier (Agency = unlimited).
 export const PUBLISH_LIMITS = { free_trial: 1, starter: 3, pro: 15, agency: Infinity };
