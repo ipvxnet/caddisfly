@@ -11,25 +11,25 @@ export function aboutTeamTemplate(data, config) {
       name: 'Sarah Johnson',
       role: 'CEO & Founder',
       bio: 'Visionary leader with 15 years of industry experience',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&q=70',
     },
     {
       name: 'Michael Chen',
       role: 'CTO',
       bio: 'Technology expert driving innovation and excellence',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&q=70',
     },
     {
       name: 'Emily Rodriguez',
       role: 'Head of Design',
       bio: 'Creative director crafting exceptional user experiences',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&auto=format&q=70',
     },
     {
       name: 'David Park',
       role: 'Head of Operations',
       bio: 'Operations specialist ensuring seamless execution',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&q=70',
     },
   ];
 

@@ -10,10 +10,10 @@ export function galleryCarouselTemplate(data, config) {
 
   // Default images if not provided
   const galleryImages = images || [
-    { url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200', caption: 'Modern workspace' },
-    { url: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200', caption: 'Collaborative environment' },
-    { url: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200', caption: 'Innovation hub' },
-    { url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200', caption: 'Creative space' },
+    { url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&q=70', caption: 'Modern workspace' },
+    { url: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&auto=format&q=70', caption: 'Collaborative environment' },
+    { url: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&q=70', caption: 'Innovation hub' },
+    { url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&auto=format&q=70', caption: 'Creative space' },
   ];
 
   return `

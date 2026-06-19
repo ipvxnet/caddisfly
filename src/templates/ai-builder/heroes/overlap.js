@@ -5,7 +5,7 @@
 export function heroOverlapTemplate(data, config) {
   const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, background_image } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
-  const bg = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920';
+  const bg = background_image || 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1280&auto=format&q=70';
   const href = cta_link || cta_url || '#contact';
 
   return `

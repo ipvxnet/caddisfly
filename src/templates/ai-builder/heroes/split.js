@@ -13,7 +13,7 @@ export function heroSplitTemplate(data, config) {
     cta_text = 'Get Started',
     cta_link = '#contact',
     cta_link_new_tab = false,
-    image_url = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800',
+    image_url = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&q=70',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
 

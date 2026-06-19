@@ -8,7 +8,7 @@ export function heroVideoTemplate(data, config) {
   // Use background image as fallback if no video
   const backgroundStyle = video_url
     ? ''
-    : `background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('${background_image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920'}') center/cover;`;
+    : `background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('${background_image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1280&auto=format&q=70'}') center/cover;`;
 
   return `
 <section class="hero-video" style="${!video_url ? backgroundStyle : ''}">
