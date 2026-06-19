@@ -68,6 +68,19 @@ export async function generateAndStore(env, project, profile, opts = {}) {
   // 3. Generate each section's content (in the project's chosen language).
   const context = profileToContext(profile, recipe, industry);
   context.language = (project && project.language) || 'en';
+
+  // Stock customer faces for testimonials so the new photo/portrait layouts
+  // render with real faces out of the box (starter content — the owner swaps in
+  // real customer photos via the editor). [] if Pexels is unavailable → the
+  // templates fall back to monogram tiles.
+  let portraitPool = [];
+  if (types.includes('testimonials')) {
+    try {
+      const r = await searchStockPhotos(env, 'smiling customer portrait person', 6);
+      portraitPool = (r || []).map((x) => x && x.url).filter(Boolean);
+    } catch (e) { /* monogram fallback */ }
+  }
+
   const sections = [];
   let order = 0;
 
@@ -83,6 +96,13 @@ export async function generateAndStore(env, project, profile, opts = {}) {
       };
     } else if (factSections[type]) {
       content = factSections[type]; // hard facts (contact, testimonials)
+      // Give testimonials a customer photo (stock; owner replaces with real ones).
+      if (type === 'testimonials' && Array.isArray(content.testimonials) && portraitPool.length) {
+        content = {
+          ...content,
+          testimonials: content.testimonials.map((t, i) => ({ ...t, avatar: t.avatar || portraitPool[i % portraitPool.length] })),
+        };
+      }
     } else {
       try {
         content = await generateSectionContent(env, type, context);
