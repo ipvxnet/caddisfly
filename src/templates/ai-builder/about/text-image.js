@@ -17,7 +17,7 @@ export function aboutTextImageTemplate(data, config) {
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
 
   return `
-<section id="about" class="about-section">
+<section class="about-section">
   <div class="about-container">
     <div class="about-image">
       <img src="${image_url}" alt="${heading}" width="1200" height="800" loading="lazy" />

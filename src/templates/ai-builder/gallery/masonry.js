@@ -23,7 +23,7 @@ export function galleryMasonryTemplate(data, config) {
   const { font_heading = 'Inter' } = config;
 
   return `
-<section id="gallery" class="gallery-section">
+<section class="gallery-section">
   <div class="gallery-container">
     <div class="gallery-header">
       <h2 class="gallery-heading">${heading}</h2>

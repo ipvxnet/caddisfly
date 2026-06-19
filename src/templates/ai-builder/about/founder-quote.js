@@ -18,7 +18,7 @@ export function aboutFounderQuoteTemplate(data, config) {
   const attribution = founder_name || '';
 
   return `
-<section id="about" class="about-founder">
+<section class="about-founder">
   <div class="about-founder-inner">
     <div class="about-founder-media">
       <img src="${image_url}" alt="${attribution || heading}" width="640" height="760" loading="lazy">

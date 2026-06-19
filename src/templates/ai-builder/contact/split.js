@@ -8,7 +8,7 @@ export function contactSplitTemplate(data, config) {
   const { heading, subheading } = contactCopy(data, config);
 
   return `
-<section id="contact" class="contact-split">
+<section class="contact-split">
   <div class="contact-split-inner">
     <div class="contact-split-info">
       <h2 class="contact-split-heading">${heading}</h2>

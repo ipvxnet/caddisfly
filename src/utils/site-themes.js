@@ -884,7 +884,7 @@ const DARK_SURFACE_SECTIONS = [
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
   '.features-actions',
-  '.hero-showcase', '.about-founder', '.cta-split',
+  '.hero-showcase', '.about-founder', '.cta-split', '.testimonials-video', '.testimonials-portrait',
   '.blog-list-section', '.blog-post-section',
   '.shop-list-section', '.shop-product-section',
 ];
@@ -894,7 +894,7 @@ const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card',
-  '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.cta-split-copy',
+  '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.cta-split-copy', '.vt-card', '.tp-card',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -920,14 +920,14 @@ export function darkModeCss(theme) {
     ${DARK_CARD_SURFACES.join(', ')} { background: ${s.card} !important; border-color: ${s.border} !important; }
     section h1, section h2, section h3, section h4, section h5, section h6 { color: ${s.text} !important; }
     section p, section li, .service-card p, .testimonial-card p, .quote-card p, .pricing-card li, .timeline-content p, .svc-num-desc,
-    .hero-showcase-sub, .about-founder-role, .cta-split-desc { color: ${s.muted} !important; }
+    .hero-showcase-sub, .about-founder-role, .cta-split-desc, .vt-quote, .vt-role, .tp-quote, .tp-role { color: ${s.muted} !important; }
     /* Key content text that isn't a p/li/heading — keep it bright, not dark-on-dark.
        (review quotes/authors, contact details, form labels, social links.) */
     .quote-text, .author-name, .testimonial-text, .testimonial-author,
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
     .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
     .tspot-quote, .tspot-author, .action-title, .value-item,
-    .about-founder-quote, .about-founder-name { color: ${s.text} !important; }
+    .about-founder-quote, .about-founder-name, .vt-name, .tp-name { color: ${s.text} !important; }
     .action-desc { color: ${s.muted} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
     .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }

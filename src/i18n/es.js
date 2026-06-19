@@ -911,7 +911,7 @@ export const es = {
     f_image: 'Foto', img_upload: 'Subir', img_url: 'URL', img_photo: 'Sugerir', img_ai: 'IA', img_remove: 'Quitar',
     swap_all: 'Cambiar todas las fotos con IA', img_url_prompt: 'Pega una URL de imagen',
     img_finding: 'Buscando una foto…', img_generating: 'Generando…', img_fail: 'Falló — inténtalo de nuevo',
-    f_name: 'Nombre', f_role: 'Cargo / empresa', f_quote: 'Cita', f_rating: 'Valoración (1–5)',
+    f_name: 'Nombre', f_role: 'Cargo / empresa', f_quote: 'Cita', f_rating: 'Valoración (1–5)', f_video: 'Video (opcional)', video_ph: 'Enlace de YouTube, Vimeo o Loom',
     photos: 'Fotos', photos_hint: '· reordena, reemplaza o quita — sin nuevas imágenes de IA', add_photo: '＋ Añadir foto',
     business_name: 'Nombre del negocio', tagline: 'Eslogan', copyright: 'Texto de copyright',
     phone: 'Teléfono', description: 'Descripción',

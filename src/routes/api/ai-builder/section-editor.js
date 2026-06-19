@@ -90,8 +90,10 @@ export async function handleGetSectionEditor(ctx) {
     const projectKey = aiProject ? { aiProjectId: aiProject.id } : { projectId: regularProject.id };
     const linkData = await buildLinkData(env.DB, projectKey, tr).catch(() => null);
 
-    // Generate modal HTML (in the viewer's UI language)
-    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData);
+    // Generate modal HTML: labels in the viewer's UI language, but placeholder
+    // CONTENT seeded in the SITE's language so the editor matches the page.
+    const siteLang = (aiProject && aiProject.language) || (regularProject && regularProject.language) || lang;
+    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData, siteLang);
 
     return new Response(html, {
       status: 200,

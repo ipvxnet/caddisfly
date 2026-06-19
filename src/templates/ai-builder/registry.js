@@ -30,6 +30,8 @@ import { servicesNumberedTemplate } from './services/numbered.js';
 import { testimonialsCardsTemplate } from './testimonials/cards.js';
 import { testimonialsQuotesTemplate } from './testimonials/quotes.js';
 import { testimonialsSpotlightTemplate } from './testimonials/spotlight.js';
+import { testimonialsVideoTemplate } from './testimonials/video.js';
+import { testimonialsPortraitTemplate } from './testimonials/portrait.js';
 
 // Gallery templates
 import { galleryMasonryTemplate } from './gallery/masonry.js';
@@ -102,6 +104,8 @@ export const TEMPLATE_REGISTRY = {
     cards: testimonialsCardsTemplate,
     quotes: testimonialsQuotesTemplate,
     spotlight: testimonialsSpotlightTemplate,
+    video: testimonialsVideoTemplate,
+    portrait: testimonialsPortraitTemplate,
     default: testimonialsCardsTemplate,
   },
   gallery: {
