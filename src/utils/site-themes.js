@@ -899,15 +899,17 @@ const DARK_SURFACE_SECTIONS = [
   '.features-actions',
   '.hero-showcase', '.about-founder', '.cta-split', '.testimonials-video', '.testimonials-portrait',
   '.blog-list-section', '.blog-post-section',
-  '.shop-list-section', '.shop-product-section',
+  '.shop-list-section', '.shop-product-section', '.shop-feat-section',
+  '.bkg-section',
 ];
 
 // Inner card/well surfaces (light) — flipped to the slightly lighter surface.card.
 const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
-  '.team-card', '.feature-item', '.blog-card', '.shop-card',
+  '.team-card', '.feature-item', '.blog-card', '.shop-card', '.shop-feat-card',
   '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.cta-split-copy', '.vt-card', '.tp-card',
+  '.bkg-card', '.bkg-panel',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -940,11 +942,17 @@ export function darkModeCss(theme) {
     .contact-info-item, .contact-social-link, .contact-form label, .form-group label,
     .footer-minimal-links a, .footer-minimal-brand, .cta-boxed-desc, .svc-num-title,
     .tspot-quote, .tspot-author, .action-title, .value-item,
-    .about-founder-quote, .about-founder-name, .vt-name, .tp-name { color: ${s.text} !important; }
+    .about-founder-quote, .about-founder-name, .vt-name, .tp-name,
+    .bkg-panel-head strong, .bkg-pick { color: ${s.text} !important; }
+    .bkg-sub, .bkg-tz, .bkg-desc { color: ${s.muted} !important; }
+    .bkg-form input, .bkg-form textarea {
+      background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important;
+    }
+    .bkg-form input::placeholder, .bkg-form textarea::placeholder { color: ${s.muted} !important; }
     .action-desc { color: ${s.muted} !important; }
     .blog-post-body, .blog-card-meta, .blog-post-date, .blog-post-body blockquote { color: ${s.muted} !important; }
-    .shop-card-excerpt, .shop-product-desc, .shop-card-price { color: ${s.muted} !important; }
-    .shop-card-body h3, .shop-product-name { color: ${s.text} !important; }
+    .shop-card-excerpt, .shop-product-desc, .shop-card-price, .shop-feat-sub, .shop-feat-excerpt { color: ${s.muted} !important; }
+    .shop-card-body h3, .shop-product-name, .shop-feat-price { color: ${s.text} !important; }
     .contact-form input, .contact-form textarea, .contact-form select {
       background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important;
     }
