@@ -458,15 +458,17 @@ export async function handleAIBuilderCustomize(ctx) {
     .menu-org-row { display: inline-flex; align-items: center; gap: 0.4rem; }
     .menu-org select { font-size: 0.85rem; padding: 0.25rem 0.4rem; border: 1px solid #d6d3e8; border-radius: 6px; background: #fff; }
     .page-tab-ai { color: #7c3aed; border-style: dashed; font-weight: 600; }
-    .menu-groups { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem; }
-    .menu-group { border: 1px solid #ece9fb; border-radius: 10px; padding: 0.6rem 0.8rem; background: #faf9ff; }
-    .menu-group-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-    .menu-group-name { font-weight: 600; color: #1a202c; }
+    .menu-tree { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.25rem; }
+    .menu-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border: 1px solid #ece9fb; border-radius: 9px; background: #faf9ff; }
+    .menu-row-child { margin-left: 1.6rem; background: #fff; }
+    .menu-row-home { opacity: 0.85; }
+    .menu-row-name { font-weight: 600; color: #1a202c; font-size: 0.92rem; flex: 1; }
+    .menu-row-child .menu-row-name { font-weight: 500; color: #4a5568; }
+    .menu-reorder { display: inline-flex; flex-direction: column; line-height: 0.7; }
+    .menu-arrow { border: none; background: none; cursor: pointer; color: #7c3aed; font-size: 0.62rem; padding: 0.05rem 0.25rem; }
+    .menu-arrow:disabled { color: #cbd5e0; cursor: default; }
     .menu-group-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: #7c3aed; background: #f0ecff; border-radius: 999px; padding: 0.08rem 0.45rem; margin-left: 0.35rem; vertical-align: middle; }
     .menu-group-actions { display: inline-flex; gap: 0.6rem; }
-    .menu-group-kids { margin: 0.4rem 0 0; padding-left: 1.1rem; color: #4a5568; font-size: 0.9rem; }
-    .menu-group-kids li { padding: 0.1rem 0; }
-    .menu-group-empty { font-size: 0.82rem; margin: 0.35rem 0 0; }
     #mnu-overlay { position: fixed; inset: 0; background: rgba(15,18,34,0.45); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 1rem; }
     .mnu-card { background: #fff; border-radius: 14px; max-width: 480px; width: 100%; max-height: 80vh; overflow: auto; padding: 1.5rem; box-shadow: 0 24px 60px rgba(0,0,0,0.28); }
     .mnu-card h3 { margin: 0 0 0.3rem; font-size: 1.25rem; }
@@ -748,7 +750,13 @@ export async function handleAIBuilderCustomize(ctx) {
         ${currentPage && !currentPage.is_home
           ? (() => {
               const hasChildren = pages.some((p) => p.parent_id === currentPage.id);
-              const candidates = pages.filter((p) => !p.parent_id && p.id !== currentPage.id && !pages.some((c) => c.parent_id === p.id && c.id !== currentPage.id));
+              // Valid parents = any TOP-LEVEL page/group except this page. A
+              // group/page may hold MANY children, so do NOT exclude parents
+              // that already have children (that previously capped a group at
+              // one item). One-level nesting is still enforced: a page that
+              // itself has children shows "has submenu items" below instead of
+              // this selector, and the API rejects deeper nesting.
+              const candidates = pages.filter((p) => !p.parent_id && p.id !== currentPage.id);
               return `<div class="menu-org">
           <label class="menu-org-row">${tr('cust.menu_parent') || 'Menu parent'}:
             ${hasChildren
@@ -771,22 +779,28 @@ export async function handleAIBuilderCustomize(ctx) {
           <button class="page-tab page-tab-ai" onclick="organizeMenu()" title="${tr('cust.menu_ai_title') || 'Let AI tidy your menu into groups & submenus — preview before applying'}">${tr('cust.menu_ai') || '✨ Organize menu'}</button>
         </div>
         ${(() => {
-          const groups = pages.filter((p) => p.is_group);
-          if (!groups.length) return `<p class="muted" style="font-size: 0.85rem;">${tr('cust.menu_no_groups') || 'No menu groups yet. Create one to nest pages under a dropdown.'}</p>`;
-          return `<div class="menu-groups">${groups.map((g) => {
-            const kids = pages.filter((p) => p.parent_id === g.id);
-            return `<div class="menu-group">
-              <div class="menu-group-head"><span class="menu-group-name">▾ ${esc(g.nav_label || g.slug)} <span class="menu-group-tag">${tr('cust.mnu_group_badge') || 'group'}</span></span>
-                <span class="menu-group-actions">
-                  <button class="link-btn" onclick="renamePage(${g.id}, '${esc(g.nav_label || '').replace(/'/g, "\\'")}')">${tr('cust.rename')}</button>
-                  <button class="link-btn danger" onclick="deleteGroup(${g.id})">${tr('cust.delete_group') || 'Delete group'}</button>
-                </span>
-              </div>
-              ${kids.length
-                ? `<ul class="menu-group-kids">${kids.map((k) => `<li>${esc(k.nav_label || k.slug)}</li>`).join('')}</ul>`
-                : `<p class="menu-group-empty muted">${tr('cust.menu_group_empty') || 'Empty — set a page’s “Menu parent” to this group.'}</p>`}
-            </div>`;
-          }).join('')}</div>`;
+          const top = pages.filter((p) => !p.parent_id);
+          if (top.length <= 1 && !pages.some((p) => p.parent_id)) {
+            return `<p class="muted" style="font-size: 0.85rem;">${tr('cust.menu_no_groups') || 'No menu groups yet. Create one to nest pages under a dropdown.'}</p>`;
+          }
+          const childrenOf = (id) => pages.filter((p) => p.parent_id === id);
+          const order = { top: top.map((p) => p.id), groups: {} };
+          top.forEach((p) => { const k = childrenOf(p.id); if (k.length) order.groups[p.id] = k.map((c) => c.id); });
+          const arrows = (id, idx, len) => `<span class="menu-reorder">
+            <button class="menu-arrow" ${idx === 0 ? 'disabled' : ''} onclick="moveMenuItem(${id},-1)" title="${tr('cust.menu_move_up') || 'Move up'}" aria-label="${tr('cust.menu_move_up') || 'Move up'}">▲</button>
+            <button class="menu-arrow" ${idx === len - 1 ? 'disabled' : ''} onclick="moveMenuItem(${id},1)" title="${tr('cust.menu_move_down') || 'Move down'}" aria-label="${tr('cust.menu_move_down') || 'Move down'}">▼</button>
+          </span>`;
+          const rows = top.map((p, i) => {
+            const kids = childrenOf(p.id);
+            const tag = p.is_group ? ` <span class="menu-group-tag">${tr('cust.mnu_group_badge') || 'group'}</span>` : (kids.length ? ` <span class="menu-group-tag">▾</span>` : '');
+            const actions = p.is_group
+              ? `<span class="menu-group-actions"><button class="link-btn" onclick="renamePage(${p.id}, '${esc(p.nav_label || '').replace(/'/g, "\\'")}')">${tr('cust.rename')}</button><button class="link-btn danger" onclick="deleteGroup(${p.id})">${tr('cust.delete_group') || 'Delete group'}</button></span>`
+              : '';
+            const head = `<div class="menu-row${p.is_home ? ' menu-row-home' : ''}">${arrows(p.id, i, top.length)}<span class="menu-row-name">${p.is_home ? '🏠 ' : ''}${esc(p.nav_label || p.slug)}${tag}</span>${actions}</div>`;
+            const childRows = kids.map((k, j) => `<div class="menu-row menu-row-child">${arrows(k.id, j, kids.length)}<span class="menu-row-name">${esc(k.nav_label || k.slug)}</span></div>`).join('');
+            return head + childRows;
+          }).join('');
+          return `<script>window.MENU_ORDER=${JSON.stringify(order)};</script><div class="menu-tree">${rows}</div>`;
         })()}
 
         ${siteSections.length
@@ -1237,6 +1251,29 @@ export async function handleAIBuilderCustomize(ctx) {
     function setPageParent(id, parentId) { updatePageField(id, { parent_id: parentId ? Number(parentId) : null }); }
     function setPageVisible(id, vis) { updatePageField(id, { is_visible: vis ? 1 : 0 }); }
     function setShowSections(id, val) { updatePageField(id, { show_sections_in_nav: val ? 1 : 0 }); }
+    async function reorderMenuScope(ids) {
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/pages/reorder\`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page_ids: ids })
+        });
+        const d = await r.json();
+        if (d.success) { flashToast(MNU.updated); location.reload(); } else alert(d.error || MNU.update_fail);
+      } catch (e) { alert(MNU.update_fail + ': ' + e.message); }
+    }
+    // Move a menu item up/down among its siblings (same parent scope). Each scope
+    // is reordered independently — page_order is only relative within a scope.
+    function moveMenuItem(id, dir) {
+      const order = window.MENU_ORDER || { top: [], groups: {} };
+      const lists = [order.top].concat(Object.keys(order.groups).map((k) => order.groups[k]));
+      for (const arr of lists) {
+        const i = arr.indexOf(id);
+        if (i < 0) continue;
+        const j = i + dir;
+        if (j < 0 || j >= arr.length) return;
+        const n = arr.slice(); const t = n[i]; n[i] = n[j]; n[j] = t;
+        reorderMenuScope(n); return;
+      }
+    }
     async function deleteGroup(id) {
       if (!confirm(MNU.group_del_confirm)) return;
       try {
