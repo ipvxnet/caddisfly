@@ -898,7 +898,7 @@ export const pt = {
     not_supported: 'Este tipo de seção ainda não pode ser editado.',
     heading: 'Título', hl_hint: 'Título principal (máx. 60 caracteres)',
     subheading: 'Subtítulo', sub_hint: 'Texto de apoio (máx. 120 caracteres)',
-    button_text: 'Texto do botão', button_link: 'Link do botão',
+    f_tags: 'Tags (selos)', tags_ph: 'Confiável, Experiente, Atendimento personalizado', tags_hint: 'Separadas por vírgula — aparecem no layout de hero com “tags”.', button_text: 'Texto do botão', button_link: 'Link do botão',
     bg_image: 'Imagem de fundo', click_upload: '📸 Clique para enviar uma imagem', img_formats: 'JPG, PNG, WebP (máx. 5 MB)',
     section_heading: 'Título da seção', your_story: 'A sua história', story_hint: 'Conte a sua história (2-3 frases)', image: 'Imagem',
     services_soon: 'Serviços (edição em breve)', services_count: 'Mostrando {n} serviços. A interface de edição completa chega na próxima atualização.',

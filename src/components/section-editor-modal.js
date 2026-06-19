@@ -943,6 +943,13 @@ function generateHeroFields(content, tr) {
     </div>
 
     <div class="form-group">
+      <label for="hero-tags-input">${tr('sed.f_tags')}</label>
+      <input type="hidden" name="tags_json" id="hero-tags-json" value="${escapeHtml(JSON.stringify(Array.isArray(content.tags) ? content.tags : []))}">
+      <input type="text" id="hero-tags-input" value="${escapeHtml((Array.isArray(content.tags) ? content.tags : []).join(', '))}" placeholder="${escapeHtml(tr('sed.tags_ph'))}" oninput="var j=document.getElementById('hero-tags-json'); if (j) j.value = JSON.stringify(this.value.split(',').map(function(s){return s.trim();}).filter(Boolean));">
+      <small>${tr('sed.tags_hint')}</small>
+    </div>
+
+    <div class="form-group">
       <label for="cta_text">${tr('sed.button_text')}</label>
       <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || tr('sed.ph_get_started'))}" required>
     </div>
@@ -1003,7 +1010,12 @@ function generateAboutFields(content, tr) {
 // content[key]. fields: [{ key, label, kind?: 'short'|'textarea', num?, ph? }]
 function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabel, imgT = {} }) {
   const field = (f, it) => {
-    const v = it && it[f.key] != null ? String(it[f.key]) : '';
+    // Read the field's key, falling back to an alias key (`alt`) so items stored
+    // under an alternate schema still populate — e.g. testimonials from Google
+    // reviews use {author, quote} while the editor uses name/text.
+    let raw = it ? it[f.key] : undefined;
+    if ((raw == null || raw === '') && f.alt && it && it[f.alt] != null) raw = it[f.alt];
+    const v = raw != null ? String(raw) : '';
     const num = f.num ? ' data-num="1"' : '';
     if (f.kind === 'image') {
       const l = f.img || {};
@@ -1220,10 +1232,10 @@ function generateTestimonialsFields(content, tr, contentLang = 'en') {
       ${buildRepeater({
         jsonKey: 'testimonials', items: (Array.isArray(content.testimonials) && content.testimonials.length) ? content.testimonials : seed, addLabel: tr('sed.add_testimonial'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_testimonial'),
         fields: [
-          { key: 'name', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
+          { key: 'name', alt: 'author', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
           { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
           { key: 'avatar', label: tr('sed.f_image'), kind: 'image', img: { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
-          { key: 'text', label: tr('sed.f_quote'), kind: 'textarea', ph: tr('sed.tst_text_ph') },
+          { key: 'text', alt: 'quote', label: tr('sed.f_quote'), kind: 'textarea', ph: tr('sed.tst_text_ph') },
           { key: 'rating', label: tr('sed.f_rating'), kind: 'short', num: true, ph: '5' },
           { key: 'video_url', label: tr('sed.f_video') || 'Video (optional)', kind: 'video', ph: tr('sed.video_ph') || 'YouTube, Vimeo or Loom link', vid: { upload: tr('sed.img_upload') || 'Upload' } },
         ],

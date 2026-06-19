@@ -904,7 +904,7 @@ export const en = {
     not_supported: 'Section type not supported for editing yet.',
     heading: 'Heading', hl_hint: 'Main headline (max 60 characters)',
     subheading: 'Subheading', sub_hint: 'Supporting text (max 120 characters)',
-    button_text: 'Button Text', button_link: 'Button Link',
+    f_tags: 'Tags (pills)', tags_ph: 'Trusted, Experienced, Personalized', tags_hint: 'Comma-separated pills — shown on the “tags” hero layout.', button_text: 'Button Text', button_link: 'Button Link',
     bg_image: 'Background Image', click_upload: '📸 Click to upload image', img_formats: 'JPG, PNG, WebP (max 5MB)',
     section_heading: 'Section Heading', your_story: 'Your Story', story_hint: 'Tell your story (2-3 sentences)', image: 'Image',
     services_soon: 'Services (editing coming soon)', services_count: 'Currently showing {n} services. Full editing interface coming in next update.',

@@ -898,7 +898,7 @@ export const es = {
     not_supported: 'Este tipo de sección aún no se puede editar.',
     heading: 'Título', hl_hint: 'Titular principal (máx. 60 caracteres)',
     subheading: 'Subtítulo', sub_hint: 'Texto de apoyo (máx. 120 caracteres)',
-    button_text: 'Texto del botón', button_link: 'Enlace del botón',
+    f_tags: 'Etiquetas (píldoras)', tags_ph: 'De confianza, Con experiencia, Personalizado', tags_hint: 'Separadas por comas — se muestran en el diseño de hero con “etiquetas”.', button_text: 'Texto del botón', button_link: 'Enlace del botón',
     bg_image: 'Imagen de fondo', click_upload: '📸 Haz clic para subir una imagen', img_formats: 'JPG, PNG, WebP (máx. 5 MB)',
     section_heading: 'Título de la sección', your_story: 'Tu historia', story_hint: 'Cuenta tu historia (2-3 frases)', image: 'Imagen',
     services_soon: 'Servicios (edición próximamente)', services_count: 'Mostrando {n} servicios. La interfaz de edición completa llega en la próxima actualización.',

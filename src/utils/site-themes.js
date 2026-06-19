@@ -802,6 +802,19 @@ const STYLE_TAGS = {
 };
 for (const t of SITE_THEMES) { if (!t.style) t.style = STYLE_TAGS[t.key] || 'modern'; }
 
+// Photo-forward verticals show testimonials best as the large-photo `portrait`
+// layout (generation attaches a customer photo to each). Applied in one place
+// so every theme for these industries uses it; other verticals keep their
+// chosen testimonials variant.
+const PORTRAIT_TESTIMONIAL_INDUSTRIES = new Set([
+  'beauty', 'spa', 'medspa', 'fitness', 'dental', 'wedding', 'coaching', 'realestate', 'veterinary', 'barbershop',
+]);
+for (const t of SITE_THEMES) {
+  if (t.variants && t.variants.testimonials && (t.industries || []).some((i) => PORTRAIT_TESTIMONIAL_INDUSTRIES.has(i))) {
+    t.variants.testimonials = 'portrait';
+  }
+}
+
 /**
  * Look up a theme by key.
  * @param {string} key
