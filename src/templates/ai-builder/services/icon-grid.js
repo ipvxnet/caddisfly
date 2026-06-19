@@ -23,7 +23,7 @@ export function servicesIconGridTemplate(data, config) {
   const labels = serviceLabels(config.lang || 'en');
 
   return `
-<section id="services" class="services-section">
+<section class="services-section">
   <div class="services-container">
     <div class="services-header">
       <h2 class="services-heading">${heading}</h2>

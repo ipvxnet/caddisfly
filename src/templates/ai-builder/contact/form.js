@@ -13,7 +13,7 @@ export function contactFormTemplate(data, config) {
   const { heading, subheading } = contactCopy(data, config);
 
   return `
-<section id="contact" class="contact-section">
+<section class="contact-section">
   <div class="contact-container">
     <div class="contact-header">
       <h2 class="contact-heading">${heading}</h2>

@@ -51,7 +51,7 @@ export function testimonialsCardsTemplate(data, config) {
   };
 
   return `
-<section id="testimonials" class="testimonials-section">
+<section class="testimonials-section">
   <div class="testimonials-container">
     <div class="testimonials-header">
       <h2 class="testimonials-heading">${heading}</h2>
