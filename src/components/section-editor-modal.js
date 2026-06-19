@@ -943,6 +943,13 @@ function generateHeroFields(content, tr) {
     </div>
 
     <div class="form-group">
+      <label for="hero-tags-input">${tr('sed.f_tags')}</label>
+      <input type="hidden" name="tags_json" id="hero-tags-json" value="${escapeHtml(JSON.stringify(Array.isArray(content.tags) ? content.tags : []))}">
+      <input type="text" id="hero-tags-input" value="${escapeHtml((Array.isArray(content.tags) ? content.tags : []).join(', '))}" placeholder="${escapeHtml(tr('sed.tags_ph'))}" oninput="var j=document.getElementById('hero-tags-json'); if (j) j.value = JSON.stringify(this.value.split(',').map(function(s){return s.trim();}).filter(Boolean));">
+      <small>${tr('sed.tags_hint')}</small>
+    </div>
+
+    <div class="form-group">
       <label for="cta_text">${tr('sed.button_text')}</label>
       <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || tr('sed.ph_get_started'))}" required>
     </div>

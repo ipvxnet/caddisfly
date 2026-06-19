@@ -4,12 +4,20 @@
 // image with a gradient, so it's always legible (no dark-surface flip needed).
 // Same content fields as the other heroes, plus `tags` (array of strings).
 
+// Localized fallback pills (used only when the section has no `tags` of its own).
+const TAG_DEFAULTS = {
+  en: ['Trusted', 'Experienced', 'Personalized'],
+  es: ['De confianza', 'Con experiencia', 'Personalizado'],
+  pt: ['Confiável', 'Experiente', 'Atendimento personalizado'],
+};
+
 export function heroTagsTemplate(data, config) {
   const { heading = 'Welcome', subheading = 'Your business tagline', cta_text, cta_url, cta_link, cta_link_new_tab = false, background_image, tags } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
+  const lang = config.lang || 'en';
   const bg = background_image || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1920';
   const href = cta_link || cta_url || '#contact';
-  const pills = (Array.isArray(tags) && tags.length ? tags : ['Trusted', 'Experienced', 'Personalized']).slice(0, 4);
+  const pills = (Array.isArray(tags) && tags.length ? tags : (TAG_DEFAULTS[lang] || TAG_DEFAULTS.en)).slice(0, 4);
 
   return `
 <section class="hero-tags" style="background-image: linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.15) 100%), url('${bg}');">
