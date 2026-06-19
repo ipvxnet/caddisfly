@@ -10,3 +10,7 @@ dist/
 .whsec-live
 .cf-token
 temp/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
