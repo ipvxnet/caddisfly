@@ -885,6 +885,11 @@ export const en = {
     err_full: 'This calendar is fully booked this month. Please try again later.',
     err_taken: 'That time was just taken — please pick another one.',
   },
+  galw: {
+    dot: 'Go to slide {n}',
+    prev: 'Previous slide',
+    next: 'Next slide',
+  },
   bkr: {
     title: 'Booking payment',
     ok_title: '✅ Booked and paid!',

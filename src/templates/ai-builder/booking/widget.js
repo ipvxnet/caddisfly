@@ -71,7 +71,7 @@ export function bookingWidgetTemplate(data, config) {
 .bkg-card h3 { color: #1a202c; font-size: 1.15rem; }
 .bkg-meta { color: ${primary_color}; font-weight: 700; font-size: .9rem; }
 .bkg-desc { color: #4a5568; font-size: .92rem; line-height: 1.5; }
-.bkg-book-btn { margin-top: auto; background: ${primary_color}; color: #fff; border: none; border-radius: 9px; padding: .65rem 1rem; font-size: .95rem; font-weight: 700; cursor: pointer; }
+.bkg-book-btn { margin-top: auto; background: ${primary_color}; color: var(--on-primary, #fff); border: none; border-radius: 9px; padding: .65rem 1rem; font-size: .95rem; font-weight: 700; cursor: pointer; }
 .bkg-book-btn:hover { opacity: .9; }
 .bkg-panel { grid-column: 1 / -1; background: #f8f9fc; border: 1px solid rgba(0,0,0,.07); border-radius: 12px; padding: 1.3rem; }
 .bkg-panel-head { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; margin-bottom: .9rem; }
