@@ -1,8 +1,11 @@
 // Boxed CTA — a centered, contained call-to-action card on a light section
 // (distinct from the full-bleed gradient banner). Token- and dark-aware.
 
+import { sectionDefault, uiText } from '../section-defaults.js';
+
 export function ctaBoxedTemplate(data, config) {
-  const { heading = 'Ready to get started?', description = '', cta_text = 'Get Started', cta_url, cta_url_new_tab = false } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'cta', 0), description = '', cta_text = uiText(lang, 'cta'), cta_url, cta_url_new_tab = false } = data;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `

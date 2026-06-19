@@ -1,5 +1,7 @@
 // Centered Hero Template
 
+import { uiText } from '../section-defaults.js';
+
 /**
  * Generates a centered hero section
  * @param {object} data - Content data
@@ -7,7 +9,8 @@
  * @returns {string} HTML template
  */
 export function heroCenteredTemplate(data, config) {
-  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_link = '#contact', cta_link_new_tab = false } = data;
+  const lang = config.lang || 'en';
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = uiText(lang, 'cta'), cta_link = '#contact', cta_link_new_tab = false } = data;
   const { primary_color = '#667eea', secondary_color = '#764ba2', font_heading = 'Inter' } = config;
 
   return `

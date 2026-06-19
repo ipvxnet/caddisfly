@@ -1,8 +1,11 @@
 // Minimal Hero Template
 // Clean, text-focused hero with subtle animations
 
+import { uiText } from '../section-defaults.js';
+
 export function heroMinimalTemplate(data, config) {
-  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = 'Get Started', cta_url = '', cta_link = '', cta_link_new_tab = false } = data;
+  const lang = config.lang || 'en';
+  const { heading = 'Welcome', subheading = 'Your business tagline', cta_text = uiText(lang, 'cta'), cta_url = '', cta_link = '', cta_link_new_tab = false } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
   return `

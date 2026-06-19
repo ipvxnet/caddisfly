@@ -4,11 +4,14 @@
 // photo is the LCP element so it stays eager with explicit dimensions. Token-
 // and dark-aware; CTA text uses --on-primary so it clears contrast on any brand.
 
+import { uiText, defaultItems } from '../section-defaults.js';
+
 export function heroQuoteTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
     heading = 'Trusted Roofing & HVAC, Done Right',
     subheading = 'Licensed, insured, and on time — with upfront pricing and a workmanship guarantee.',
-    cta_text = 'Get a Free Estimate',
+    cta_text = uiText(lang, 'estimate'),
     cta_link = '#contact',
     cta_link_new_tab = false,
     secondary_cta_text = '',
@@ -17,7 +20,7 @@ export function heroQuoteTemplate(data, config) {
     background_image,
     badges,
     tags,
-    rating_text = '★★★★★ Rated 5.0',
+    rating_text = `★★★★★ ${uiText(lang, 'rated')}`,
   } = data;
   const primaryColor = config.primary_color || config.primaryColor || '#1d4e6f';
   const fontHeading = config.font_heading || config.fontHeading || 'Inter';
@@ -27,7 +30,7 @@ export function heroQuoteTemplate(data, config) {
 
   const badgeList = (Array.isArray(badges) && badges.length ? badges
     : Array.isArray(tags) && tags.length ? tags
-    : ['Licensed & Insured', 'Free Estimates', '24/7 Emergency']).slice(0, 4);
+    : defaultItems(lang, 'hero-quote-badges')).slice(0, 4);
 
   return `
 <section class="hero-quote">
@@ -48,7 +51,7 @@ export function heroQuoteTemplate(data, config) {
       <img src="${img}" alt="${heading}" width="720" height="600" fetchpriority="high">
       <div class="hq-card">
         <span class="hq-card-stars">${rating_text}</span>
-        <span class="hq-card-label" style="font-family:'${fontBody}',sans-serif;">Trusted by local homeowners</span>
+        <span class="hq-card-label" style="font-family:'${fontBody}',sans-serif;">${uiText(lang, 'trusted_homeowners')}</span>
       </div>
     </div>
   </div>

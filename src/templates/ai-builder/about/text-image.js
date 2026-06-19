@@ -1,5 +1,7 @@
 // About Section with Text and Image
 
+import { sectionDefault, defaultItems } from '../section-defaults.js';
+
 /**
  * Generates an about section with text and image
  * @param {object} data - Content data
@@ -7,11 +9,12 @@
  * @returns {string} HTML template
  */
 export function aboutTextImageTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
-    heading = 'About Us',
-    subheading = 'Our Story',
-    story = 'We are passionate about what we do.',
-    values = ['Quality', 'Innovation', 'Customer Focus'],
+    heading = sectionDefault(lang, 'about', 0),
+    subheading = sectionDefault(lang, 'about', 1),
+    story = defaultItems(lang, 'about-story'),
+    values = defaultItems(lang, 'about-values'),
     image_url = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&q=70',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;

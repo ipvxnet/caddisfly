@@ -1,22 +1,18 @@
 // Features Grid Template
 // Feature highlights in a grid layout
 
+import { sectionDefault, defaultItems } from '../section-defaults.js';
+
 export function featuresGridTemplate(data, config) {
-  const { heading = 'Features', description = '', features } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'features', 0), description = '', features } = data;
   // Config rows use snake_case; accept camelCase too for safety.
   const primaryColor = config.primary_color || config.primaryColor || '#667eea';
   const fontHeading = config.font_heading || config.fontHeading || 'Inter';
   const fontBody = config.font_body || config.fontBody || 'Inter';
 
-  // Default features if not provided
-  const featureList = features || [
-    { icon: '⚡', title: 'Lightning Fast', description: 'Optimized for speed and performance' },
-    { icon: '🔒', title: 'Secure', description: 'Enterprise-grade security built-in' },
-    { icon: '📱', title: 'Responsive', description: 'Works perfectly on all devices' },
-    { icon: '🎨', title: 'Customizable', description: 'Tailor everything to your brand' },
-    { icon: '🚀', title: 'Scalable', description: 'Grows with your business needs' },
-    { icon: '💬', title: '24/7 Support', description: 'Always here when you need us' },
-  ];
+  // Default features if not provided (localized to the site language)
+  const featureList = features || defaultItems(lang, 'features-grid');
 
   return `
 <section class="features-grid">

@@ -4,17 +4,16 @@
 // the journey matters. Uses the `features` array shape { icon, title, description }.
 // Token- and dark-aware; the number badge uses --on-primary for readable text.
 
+import { sectionDefault, defaultItems } from '../section-defaults.js';
+
 export function featuresStepsTemplate(data, config) {
-  const { heading = 'How It Works', description = '', features } = data;
+  const lang = config.lang || 'en';
+  const { heading = sectionDefault(lang, 'features', 0), description = '', features } = data;
   const primaryColor = config.primary_color || config.primaryColor || '#6b8cae';
   const fontHeading = config.font_heading || config.fontHeading || 'Inter';
   const fontBody = config.font_body || config.fontBody || 'Inter';
 
-  const steps = (Array.isArray(features) && features.length ? features : [
-    { title: 'Reach Out', description: 'Book a free, no-pressure consultation to share what’s on your mind.', icon: '💬' },
-    { title: 'First Session', description: 'We get to know each other and shape a plan that fits your goals.', icon: '🤝' },
-    { title: 'Ongoing Support', description: 'Regular sessions and steady progress, at a pace that feels right.', icon: '🌱' },
-  ]).slice(0, 4);
+  const steps = (Array.isArray(features) && features.length ? features : defaultItems(lang, 'features-steps')).slice(0, 4);
 
   return `
 <section class="features-steps">

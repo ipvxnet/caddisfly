@@ -1,7 +1,7 @@
 // Gallery Carousel Template
 // Image carousel/slider with navigation
 
-import { sectionDefault } from '../section-defaults.js';
+import { sectionDefault, defaultItems } from '../section-defaults.js';
 import { t } from '../../../i18n/index.js';
 
 export function galleryCarouselTemplate(data, config) {
@@ -9,13 +9,14 @@ export function galleryCarouselTemplate(data, config) {
   const { heading = sectionDefault(lang, 'gallery', 0), description = '', images } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
-  // Default images if not provided
+  // Default images if not provided (captions localized to the site language)
+  const captions = defaultItems(lang, 'gallery-captions');
   const galleryImages = images || [
-    { url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&q=70', caption: 'Modern workspace' },
-    { url: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&auto=format&q=70', caption: 'Collaborative environment' },
-    { url: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&q=70', caption: 'Innovation hub' },
-    { url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&auto=format&q=70', caption: 'Creative space' },
-  ];
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&q=70',
+    'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&auto=format&q=70',
+    'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&q=70',
+    'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&auto=format&q=70',
+  ].map((url, i) => ({ url, caption: captions[i] || '' }));
 
   return `
 <section class="gallery-carousel">

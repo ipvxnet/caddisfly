@@ -1,5 +1,7 @@
 // Split Hero Template (text on left, image on right)
 
+import { uiText } from '../section-defaults.js';
+
 /**
  * Generates a split hero section
  * @param {object} data - Content data
@@ -7,10 +9,11 @@
  * @returns {string} HTML template
  */
 export function heroSplitTemplate(data, config) {
+  const lang = config.lang || 'en';
   const {
     heading = 'Welcome',
     subheading = 'Your business tagline',
-    cta_text = 'Get Started',
+    cta_text = uiText(lang, 'cta'),
     cta_link = '#contact',
     cta_link_new_tab = false,
     image_url = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&q=70',

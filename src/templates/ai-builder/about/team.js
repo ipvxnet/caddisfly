@@ -1,37 +1,23 @@
 // Team Grid About Template
 // Team member showcase with photos and bios
 
+import { uiText, defaultItems } from '../section-defaults.js';
+
+// Placeholder headshots (language-independent); merged with localized name/role/bio.
+const TEAM_IMAGES = [
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&q=70',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&q=70',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&auto=format&q=70',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&q=70',
+];
+
 export function aboutTeamTemplate(data, config) {
-  const { heading = 'Meet the Team', description = '', team_members } = data;
+  const lang = config.lang || 'en';
+  const { heading = uiText(lang, 'meet_team'), description = '', team_members } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
 
-  // Default team members if not provided
-  const members = team_members || [
-    {
-      name: 'Sarah Johnson',
-      role: 'CEO & Founder',
-      bio: 'Visionary leader with 15 years of industry experience',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&q=70',
-    },
-    {
-      name: 'Michael Chen',
-      role: 'CTO',
-      bio: 'Technology expert driving innovation and excellence',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&q=70',
-    },
-    {
-      name: 'Emily Rodriguez',
-      role: 'Head of Design',
-      bio: 'Creative director crafting exceptional user experiences',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&auto=format&q=70',
-    },
-    {
-      name: 'David Park',
-      role: 'Head of Operations',
-      bio: 'Operations specialist ensuring seamless execution',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&q=70',
-    },
-  ];
+  // Default team members if not provided (localized name/role/bio + placeholder photo)
+  const members = team_members || defaultItems(lang, 'about-team').map((m, i) => ({ ...m, image: TEAM_IMAGES[i] }));
 
   return `
 <section class="about-team">
