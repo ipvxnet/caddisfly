@@ -121,8 +121,11 @@ export async function generateAndStore(env, project, profile, opts = {}) {
     }
 
     // Owner provided an explicit services list → use ALL of it (overrides the
-    // AI's summarized ~6) so nothing they typed gets dropped.
-    if (type === 'services' || type === 'features') {
+    // AI's summarized ~6) so nothing they typed gets dropped. Apply it to the
+    // SERVICES section only; FEATURES is meant for benefits / "why choose us", so
+    // stuffing the same product list there just reads as repetition. Fall back to
+    // FEATURES only when the line-up has no dedicated services section.
+    if (type === 'services' || (type === 'features' && !types.includes('services'))) {
       const explicitSvcs = explicitServiceItems(profile);
       if (explicitSvcs.length) { content.services = explicitSvcs; content.items = explicitSvcs; }
     }
@@ -407,7 +410,19 @@ function listToItems(text, cap = 15) {
     .map((s) => s.replace(/^[-•*\d.)\s]+/, '').trim()) // strip bullets/numbering
     .filter((s) => s && !seen.has(s.toLowerCase()) && seen.add(s.toLowerCase()))
     .slice(0, cap)
-    .map((title) => ({ title, description: '', icon: '✓' }));
+    .map((title) => ({ title: smartTitleCase(title), description: '', icon: '✓' }));
+}
+
+/**
+ * Title-case a short label for display (service names typed as a comma list come
+ * in with inconsistent casing — "Diesel tools, parts, test benches"). Capitalizes
+ * each word but preserves all-caps acronyms/codes (EUI, HEUI, USA, C175).
+ */
+function smartTitleCase(s) {
+  return String(s).trim().split(/\s+/).map((w) => {
+    if (w.length > 1 && w === w.toUpperCase() && /[A-Z]/.test(w)) return w; // keep EUI/USA/HEUI
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(' ');
 }
 
 /** Recipe service hints → items (fallback when the user gave no explicit list). */
