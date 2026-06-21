@@ -5,6 +5,8 @@ import { jsonResponse } from '../../utils/response.js';
 import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
 import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
+import { pluginKeyForPriceId } from '../../plugins/manifest.js';
+import { getAccountPlugins, upsertAccountPlugin } from '../../db/account-plugins.js';
 import { notifyOpsAsync } from '../../utils/ops-notify.js';
 import { processDomainOrder, processManualRenewal } from './domains-store.js';
 import { updateOrder as updateDomainOrder } from '../../db/domain-orders.js';
@@ -20,19 +22,48 @@ async function emailForSubscription(env, sub) {
   return null;
 }
 
+/**
+ * Reconcile account_plugins from a subscription's items: plugin add-on items →
+ * active; an active row whose item vanished → canceling (keep period end for the
+ * 7-day grace). Webhook is the source of truth for entitlements.
+ */
+async function syncAccountPlugins(env, email, sub, periodEnd) {
+  const items = (sub.items && sub.items.data) || [];
+  const present = new Map(); // pluginKey -> stripe item id
+  for (const it of items) {
+    const key = pluginKeyForPriceId(env, it.price && it.price.id);
+    if (key) present.set(key, it.id);
+  }
+  for (const [key, itemId] of present) {
+    await upsertAccountPlugin(env.DB, { email, pluginKey: key, status: 'active', stripeItemId: itemId, currentPeriodEnd: periodEnd });
+  }
+  const existing = await getAccountPlugins(env.DB, email);
+  for (const row of existing) {
+    if (row.status === 'active' && !present.has(row.plugin_key)) {
+      await upsertAccountPlugin(env.DB, { email, pluginKey: row.plugin_key, status: 'canceling', stripeItemId: row.stripe_item_id, currentPeriodEnd: row.current_period_end });
+    }
+  }
+}
+
 async function applySubscription(env, sub) {
   const email = await emailForSubscription(env, sub);
   if (!email) {
     console.warn('Subscription event without resolvable email:', sub.id);
     return null;
   }
-  const item = sub.items && sub.items.data && sub.items.data[0] ? sub.items.data[0] : null;
-  const priceId = item && item.price ? item.price.id : null;
-  const plan = planForPriceId(env, priceId);
+  const items = (sub.items && sub.items.data) || [];
+  // Find the BASE-PLAN item — a subscription may also carry plugin add-on items,
+  // so don't assume items[0] is the plan.
+  let plan = null;
+  for (const it of items) {
+    const p = planForPriceId(env, it.price && it.price.id);
+    if (p) { plan = p; break; }
+  }
   // Recent Stripe API versions moved current_period_end from the subscription
   // onto the subscription item; fall back to it when the top-level is absent.
+  const anchorItem = items[0] || null;
   const periodEnd =
-    sub.current_period_end != null ? sub.current_period_end : item && item.current_period_end != null ? item.current_period_end : null;
+    sub.current_period_end != null ? sub.current_period_end : anchorItem && anchorItem.current_period_end != null ? anchorItem.current_period_end : null;
   const fields = {
     stripe_customer_id: sub.customer,
     stripe_subscription_id: sub.id,
@@ -45,6 +76,7 @@ async function applySubscription(env, sub) {
     fields.plan_interval = plan.interval;
   }
   await upsertBillingAccount(env.DB, email, fields);
+  await syncAccountPlugins(env, email, sub, periodEnd);
   return { email, plan };
 }
 
@@ -140,6 +172,14 @@ export async function handleStripeWebhook(ctx) {
             subscription_status: 'canceled',
             cancel_at_period_end: 0,
           });
+          // Base plan gone → plugins can't be held (hasPlugin requires a base
+          // plan). Mark them canceled for cleanliness.
+          const plugins = await getAccountPlugins(env.DB, email);
+          for (const row of plugins) {
+            if (row.status !== 'canceled') {
+              await upsertAccountPlugin(env.DB, { email, pluginKey: row.plugin_key, status: 'canceled', stripeItemId: row.stripe_item_id, currentPeriodEnd: row.current_period_end });
+            }
+          }
           notifyOpsAsync(ctx, `🚪 *Subscription canceled*: ${email} → free_trial`);
         }
         break;

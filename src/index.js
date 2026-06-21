@@ -68,6 +68,7 @@ import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './route
 // Billing (Stripe + magic-link) route handlers
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
 import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleCreditCheckout } from './routes/api/billing.js';
+import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
@@ -244,6 +245,10 @@ router.get('/site/:project_id/:page_slug', handlePublishedSite);
 router.get('/billing', handleBilling, [billingAuth]);
 router.get('/billing/verify/:token', handleBillingVerify);
 router.get('/billing/logout', handleBillingLogout);
+
+// Plugin add-ons (subscribe/cancel a $5/mo feature module on the existing sub).
+router.post('/api/plugins/:key/subscribe', handlePluginSubscribe, [billingAuth]);
+router.post('/api/plugins/:key/cancel', handlePluginCancel, [billingAuth]);
 
 // Customer dashboard (websites + team) and team management
 router.get('/dashboard', handleDashboard, [billingAuth]);
