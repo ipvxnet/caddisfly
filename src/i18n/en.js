@@ -741,6 +741,8 @@ export const en = {
     desc_label: 'Description', desc_hint: 'shown on your shop page — or let AI write it',
     ai_desc: '✨ Write with AI', ai_desc_busy: 'Writing…',
     image_label: 'Image URL', image_hint: 'optional — you can generate one with AI after adding',
+    category_label: 'Category', category_hint: 'groups items into catalogue sections (optional)',
+    forsale_label: 'For sale — uncheck for an info-only catalogue item',
     create_btn: 'Add product', creating: 'Adding…',
     save: 'Save', saving: 'Saving…', cancel: 'Cancel', edit: 'Edit',
     delete: 'Delete', delete_confirm: 'Delete this product? This cannot be undone.',
