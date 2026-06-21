@@ -152,6 +152,8 @@ export const es = {
     rf_color_primary_ph: 'Principal #RRGGBB — opcional',
     rf_color_accent_ph: 'Acento #RRGGBB — opcional',
     rf_colors_help: 'Combina con tu marca actual. Déjalo en blanco para usar los colores de la plantilla. También puedes ajustarlos luego en Personalizar.',
+    rf_color_pick: 'Haz clic para elegir un color',
+    rf_color_clear: 'Borrar — usar el color de la plantilla',
     refactor_agree: 'Acepto los {terms} y la {privacy}.',
     refactor_btn: 'Obtener mi vista previa gratis',
     refactor_almost: '¡Casi listo! Revisa tu correo y haz clic en el enlace para crear tu vista previa.',

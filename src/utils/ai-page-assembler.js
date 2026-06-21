@@ -332,10 +332,10 @@ export function buildHTMLDocument({ title, body, config, seo = null, sections = 
       scroll-margin-top: 20px;
     }
 
-    /* NOTE: no body-level opacity fade-in. Starting <body> at opacity:0 made
-       the first paint invisible, so Lighthouse (esp. throttled mobile) reported
-       NO_FCP — "the page did not paint any content" — and it delayed real first
-       paint too. Section entrance animations (fadeInUp etc.) live per-template. */
+    /* NOTE: no body-level opacity fade-in. Starting the page body at opacity:0
+       made the first paint invisible, so Lighthouse (esp. throttled mobile)
+       reported NO_FCP — "the page did not paint any content" — and it delayed
+       real first paint too. Section entrance animations live per-template. */
 
     /* Dark theme override layer (only present for dark themes) */
     ${darkLayer}
@@ -544,14 +544,20 @@ export function generatePreview(sections, config, project, opts = {}) {
 
   // Add preview banner with project ID
   const previewBanner = `
-<div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%); color: white; padding: 0.75rem 1rem; text-align: center; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 0.875rem;">
-  <strong>Preview Mode</strong> - This is a preview of your website. <a href="/ai-builder/customize/${project.project_id}" style="color: white; text-decoration: underline; margin-left: 1rem;">Customize</a>${detailsLink}
+<div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%); color: white; padding: 0.55rem 1rem; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 0.875rem; display: flex; gap: 0.6rem 0.9rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+  <strong>Preview Mode</strong>
+  <a href="/ai-builder/customize/${project.project_id}" style="background: #fff; color: ${config.primary_color}; text-decoration: none; font-weight: 600; padding: 0.35rem 0.9rem; border-radius: 8px; white-space: nowrap;">Customize now →</a>
+  <a href="/dashboard" style="color: #fff; text-decoration: underline; white-space: nowrap;">Dashboard</a>${detailsLink}
 </div>
-<div style="height: 50px;"></div>
+<div style="height: 52px;"></div>
 `;
 
-  // Insert preview banner after <body> tag
-  return pageHtml.replace('<body>', `<body>\n${previewBanner}`);
+  // Insert the banner right after the REAL <body> tag (the one after </head>).
+  // A plain replace('<body>', …) is unsafe — a literal "<body>" can appear
+  // earlier inside a <style> comment in the head, which would inject the banner
+  // into <head> and the browser would drop it (the Customize banner went missing
+  // on every preview this way). Anchor on </head> so only the true body matches.
+  return pageHtml.replace(/(<\/head>\s*<body[^>]*>)/i, `$1\n${previewBanner}`);
 }
 
 /**

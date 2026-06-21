@@ -152,6 +152,8 @@ export const pt = {
     rf_color_primary_ph: 'Principal #RRGGBB — opcional',
     rf_color_accent_ph: 'Destaque #RRGGBB — opcional',
     rf_colors_help: 'Combine com a sua marca atual. Deixe em branco para usar as cores do modelo. Você também pode ajustar depois em Personalizar.',
+    rf_color_pick: 'Clique para escolher uma cor',
+    rf_color_clear: 'Limpar — usar a cor do modelo',
     refactor_agree: 'Concordo com os {terms} e a {privacy}.',
     refactor_btn: 'Obter minha pré-visualização grátis',
     refactor_almost: 'Quase lá! Verifique seu e-mail e clique no link para criar sua prévia.',
