@@ -639,6 +639,7 @@ export const en = {
     list_heading: 'Shop',
     view: 'View',
     add: 'Add to cart',
+    sold_out: 'Sold out', out_of_stock: 'Sorry, an item in your cart is out of stock.',
     added: 'Added ✓',
     cart: 'Cart',
     empty: 'Your cart is empty.',

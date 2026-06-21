@@ -38,7 +38,7 @@ import { sendOrderBuyerEmail, sendOrderMerchantEmail } from '../../../utils/emai
 import { t } from '../../../i18n/index.js';
 import {
   createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
-  countProducts, uniqueProductSlug,
+  countProducts, uniqueProductSlug, decrementStock,
 } from '../../../db/products.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, stripPolicyEcho, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
@@ -456,6 +456,10 @@ export async function handleStoreCheckout(ctx) {
     for (const [id, qty] of wanted) {
       const p = byId.get(id);
       if (!p) return json({ success: false, error: 'A product in your cart is no longer available.' }, 409);
+      // Advanced Store inventory: block buying more than is in stock (stock NULL = untracked).
+      if (p.stock != null && p.stock < qty) {
+        return json({ success: false, error: t(r.language, 'shopw.out_of_stock'), out_of_stock: true, product: p.name }, 409);
+      }
       if (p.product_type === 'physical') hasPhysical = true;
       const productData = { name: p.name };
       if (p.image) {
@@ -772,6 +776,15 @@ export async function recordStoreOrder(env, publicId, session) {
     items_json: JSON.stringify(items).slice(0, 4000),
   });
   if (!row) return { isNew: false }; // already recorded (other writer won)
+
+  // Advanced Store: decrement stock for tracked products (idempotent — only on
+  // a newly-recorded order). metadata.items = [[id,qty],…] set at checkout.
+  try {
+    const cart = JSON.parse((session.metadata && session.metadata.items) || '[]');
+    for (const [id, qty] of cart) {
+      if (Number.isFinite(id)) await decrementStock(env.DB, r.projectKey, id, qty);
+    }
+  } catch (e) { console.error('stock decrement failed (non-fatal):', e.message); }
 
   const appOrigin = env.APP_URL || '';
   const orderRef = session.id.slice(-8).toUpperCase();

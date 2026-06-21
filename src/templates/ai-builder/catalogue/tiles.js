@@ -18,9 +18,9 @@ function money(cents, currency, lang) {
 }
 
 const CAT_T = {
-  en: { heading: 'Catalogue', view: 'View details', buy: 'Buy now', learn: 'Learn more', empty: 'Add catalogue items to show them here.' },
-  es: { heading: 'Catálogo', view: 'Ver detalles', buy: 'Comprar', learn: 'Más información', empty: 'Agrega artículos al catálogo para mostrarlos aquí.' },
-  pt: { heading: 'Catálogo', view: 'Ver detalhes', buy: 'Comprar', learn: 'Saiba mais', empty: 'Adicione itens ao catálogo para exibi-los aqui.' },
+  en: { heading: 'Catalogue', view: 'View details', buy: 'Buy now', learn: 'Learn more', empty: 'Add catalogue items to show them here.', soldout: 'Sold out' },
+  es: { heading: 'Catálogo', view: 'Ver detalles', buy: 'Comprar', learn: 'Más información', empty: 'Agrega artículos al catálogo para mostrarlos aquí.', soldout: 'Agotado' },
+  pt: { heading: 'Catálogo', view: 'Ver detalhes', buy: 'Comprar', learn: 'Saiba mais', empty: 'Adicione itens ao catálogo para exibi-los aqui.', soldout: 'Esgotado' },
 };
 
 export function catalogueTilesTemplate(data, config) {
@@ -59,6 +59,7 @@ export function catalogueTilesTemplate(data, config) {
 .cat-view { color: ${primary_color}; font-weight: 700; font-size: .9rem; text-decoration: none; }
 .cat-buy { background: ${primary_color}; color: #fff; border: none; border-radius: 9px; padding: .5rem .85rem; font-size: .85rem; font-weight: 700; cursor: pointer; transition: opacity .2s; text-decoration: none; }
 .cat-buy:hover { opacity: .88; }
+.cat-soldout { font-size: .82rem; font-weight: 700; color: #9b2c2c; background: #fed7d7; border-radius: 8px; padding: .35rem .7rem; }
 .cat-empty { text-align: center; color: #718096; border: 2px dashed #e2e8f0; border-radius: 14px; padding: 2.5rem 1.5rem; max-width: 640px; margin: 0 auto; }
 @media (max-width: 768px) { .cat-section { padding: 3rem 1.5rem; } }
 </style>`;
@@ -87,9 +88,11 @@ ${styles}`.trim();
       </a>
       <div class="cat-foot">
         ${buyable ? `<span class="cat-price">${money(p.price_cents, currency, lang)}</span>` : `<a class="cat-view" href="${href}">${esc(tr.view)} →</a>`}
-        ${buyable && published
-          ? `<button class="cat-buy" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${esc(tr.buy)}</button>`
-          : `<a class="cat-buy" href="${href}">${esc(buyable ? tr.buy : tr.learn)}</a>`}
+        ${p.stock === 0
+          ? `<span class="cat-soldout">${esc(tr.soldout)}</span>`
+          : (buyable && published
+            ? `<button class="cat-buy" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${esc(tr.buy)}</button>`
+            : `<a class="cat-buy" href="${href}">${esc(buyable ? tr.buy : tr.learn)}</a>`)}
       </div>
     </div>`;
     })
@@ -140,6 +143,7 @@ export function catalogueShowcaseTemplate(data, config) {
 .cat-sc-img-empty { background: linear-gradient(135deg, ${primary_color}55, ${primary_color}99); }
 .cat-sc-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.6rem 1rem .9rem; background: linear-gradient(transparent, rgba(0,0,0,.8)); }
 .cat-sc-title { color: #fff; font-weight: 700; font-size: 1.05rem; line-height: 1.3; }
+.cat-sc-badge { position: absolute; top: .6rem; right: .6rem; font-size: .72rem; font-weight: 700; color: #fff; background: #9b2c2c; border-radius: 6px; padding: .25rem .55rem; }
 .cat-empty { text-align: center; color: #718096; border: 2px dashed #e2e8f0; border-radius: 14px; padding: 2.5rem 1.5rem; max-width: 640px; margin: 0 auto; }
 @media (max-width: 768px) { .cat-section { padding: 3rem 1.5rem; } }
 </style>`;
@@ -159,6 +163,7 @@ ${styles}`.trim();
       return `
     <a class="cat-sc-card" href="${href}" aria-label="${esc(p.name)}">
       ${p.image ? `<div class="cat-sc-img" style="background-image:url('${esc(p.image)}')"></div>` : '<div class="cat-sc-img cat-sc-img-empty"></div>'}
+      ${p.stock === 0 ? `<span class="cat-sc-badge">${esc(tr.soldout)}</span>` : ''}
       <div class="cat-sc-overlay"><span class="cat-sc-title">${esc(p.name)}</span></div>
     </a>`;
     })

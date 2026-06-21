@@ -635,6 +635,7 @@ export const pt = {
     list_heading: 'Loja',
     view: 'Ver',
     add: 'Adicionar ao carrinho',
+    sold_out: 'Esgotado', out_of_stock: 'Desculpe, um item do seu carrinho está esgotado.',
     added: 'Adicionado ✓',
     cart: 'Carrinho',
     empty: 'Seu carrinho está vazio.',
