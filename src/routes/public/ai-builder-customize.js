@@ -152,6 +152,8 @@ export async function handleAIBuilderCustomize(ctx) {
       if (s.plugin && !(s.plugin in pluginOk)) pluginOk[s.plugin] = await hasPlugin(env, ctx.billingEmail, s.plugin);
     }
     const addableSections = ADDABLE_SECTIONS.filter((s) => !s.plugin || pluginOk[s.plugin]);
+    // CRM is a manager tool (no section) — link it from the toolbar when entitled.
+    const hasCrm = await hasPlugin(env, ctx.billingEmail, 'crm');
 
     // Layout variants per addable section type (for the add-time layout picker).
     const sectionVariants = Object.fromEntries(addableSections.map((s) => [s.type, getAvailableVariants(s.type)]));
@@ -733,6 +735,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
       <a href="/ai-builder/blog/${project.project_id}" class="btn btn-secondary" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
       <a href="/ai-builder/store/${project.project_id}" class="btn btn-secondary" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
+      ${hasCrm ? `<a href="/ai-builder/crm/${project.project_id}" class="btn btn-secondary" title="${tr('cust.crm')}">${tr('cust.crm')}</a>` : ''}
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
       <span class="pub-badge ${currentSubdomain ? 'pub' : 'draft'}" id="pub-badge" title="${currentSubdomain ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${currentSubdomain ? tr('cust.status_published') : tr('cust.status_draft')}</span>
       ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite(this)">${tr('cust.deploy')}</button>` : ''}
