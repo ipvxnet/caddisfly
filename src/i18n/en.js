@@ -525,6 +525,7 @@ export const en = {
     analytics: '📊 Analytics', analytics_title: 'Traffic analytics for your published site',
     blog: '📝 Blog', blog_title: 'Write and publish blog posts with AI',
     store: '🛍 Store', store_title: 'Sell on your site — products, orders, Stripe payments',
+    crm: '👥 CRM',
     full_preview: 'View Full Preview', deploy: 'Deploy Website', deploying: 'Deploying…',
     upgrade_title: 'Upgrade to unlock this', view_plans: 'View plans →', maybe_later: 'Maybe later',
     tab_content: 'Content', tab_design: 'Design',
