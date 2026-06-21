@@ -379,7 +379,10 @@ ${POLICY_INSTRUCTION}`;
     const description = start === -1 ? '' : String(raw).slice(start + 'DESCRIPTION:'.length).replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
     if (!description) return json({ success: false, error: 'The AI description came back malformed — please try again.' }, 502);
     const outScreen = screenContent(description);
-    if (!outScreen.allowed) return json(policyError(outScreen), 422);
+    if (!outScreen.allowed) {
+      console.log('AIDESCRIBE_BLOCKED ' + JSON.stringify({ category: outScreen.category, description }));
+      return json(policyError(outScreen), 422);
+    }
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.product_desc);
     audit(ctx, 'credit.product_desc', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.product_desc } });
