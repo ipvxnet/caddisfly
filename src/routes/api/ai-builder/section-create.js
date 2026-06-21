@@ -9,6 +9,7 @@
 
 import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
+import { hasPlugin } from '../../../plugins/entitlements.js';
 import {
   ensurePagesForProject,
   getPageBySlug,
@@ -34,6 +35,7 @@ export const ADDABLE_SECTIONS = [
   { type: 'testimonials', emoji: '💬', label: 'Testimonials' },
   { type: 'pricing', emoji: '💲', label: 'Pricing' },
   { type: 'products', emoji: '🛍️', label: 'Shop products' },
+  { type: 'catalogue', emoji: '📒', label: 'Catalogue', plugin: 'catalogue' },
   { type: 'booking', emoji: '📅', label: 'Bookings' },
   { type: 'stats', emoji: '📊', label: 'Stats' },
   { type: 'cta', emoji: '📣', label: 'Call to action' },
@@ -78,6 +80,12 @@ export async function handleAddSection(ctx) {
   const type = String(body.section_type || '').toLowerCase().trim();
   if (!ADDABLE_TYPES.has(type) || !isSectionTypeValid(type)) {
     return json({ success: false, error: 'Unknown or non-addable section type' }, 400);
+  }
+
+  // Plugin-gated section types require an active entitlement (server-side, §8.1).
+  const addable = ADDABLE_SECTIONS.find((s) => s.type === type);
+  if (addable && addable.plugin && !(await hasPlugin(env, ctx.billingEmail, addable.plugin))) {
+    return json({ success: false, error: 'plugin_required', plugin: addable.plugin }, 402);
   }
 
   await ensurePagesForProject(env.DB, proj.projectKey);
