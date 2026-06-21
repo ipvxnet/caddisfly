@@ -152,6 +152,8 @@ export const en = {
     rf_color_primary_ph: 'Primary #RRGGBB — optional',
     rf_color_accent_ph: 'Accent #RRGGBB — optional',
     rf_colors_help: 'Match your existing brand. Leave blank to use the template’s colors. You can also fine-tune colors later in Customize.',
+    rf_color_pick: 'Click to pick a color',
+    rf_color_clear: 'Clear — use template color',
     refactor_agree: 'I agree to the {terms} and {privacy}.',
     refactor_btn: 'Get my free preview',
     refactor_note: 'We’ll email you a link to confirm and build your preview.',

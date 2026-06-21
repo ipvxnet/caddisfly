@@ -300,13 +300,15 @@ export async function handleLanding(ctx) {
                   <input type="text" id="rf-logo" name="rf-logo" placeholder="https://…/logo.png"></div>
                 <div class="field"><label>${tr('landing.rf_q_colors')}</label>
                   <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-                    <span style="display:flex;gap:.4rem;align-items:center;flex:1;min-width:160px">
-                      <input type="color" value="#764ba2" aria-label="primary" oninput="document.getElementById('rf-primary').value=this.value" style="width:42px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;flex:none">
+                    <span class="rf-color" style="display:flex;gap:.4rem;align-items:center;flex:1;min-width:170px">
+                      <input type="color" id="rf-primary-pick" value="#764ba2" aria-label="Pick primary brand color" title="${tr('landing.rf_color_pick')}" style="width:46px;height:40px;padding:0;border:1px solid var(--line);border-radius:8px;flex:none;cursor:pointer">
                       <input type="text" id="rf-primary" name="rf-primary" placeholder="${tr('landing.rf_color_primary_ph')}" style="flex:1">
+                      <button type="button" id="rf-primary-clear" aria-label="${tr('landing.rf_color_clear')}" title="${tr('landing.rf_color_clear')}" hidden style="flex:none;border:none;background:none;cursor:pointer;color:var(--muted);font-size:1.05rem;line-height:1;padding:.2rem .35rem">✕</button>
                     </span>
-                    <span style="display:flex;gap:.4rem;align-items:center;flex:1;min-width:160px">
-                      <input type="color" value="#caa14a" aria-label="accent" oninput="document.getElementById('rf-accent').value=this.value" style="width:42px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;flex:none">
+                    <span class="rf-color" style="display:flex;gap:.4rem;align-items:center;flex:1;min-width:170px">
+                      <input type="color" id="rf-accent-pick" value="#caa14a" aria-label="Pick accent brand color" title="${tr('landing.rf_color_pick')}" style="width:46px;height:40px;padding:0;border:1px solid var(--line);border-radius:8px;flex:none;cursor:pointer">
                       <input type="text" id="rf-accent" name="rf-accent" placeholder="${tr('landing.rf_color_accent_ph')}" style="flex:1">
+                      <button type="button" id="rf-accent-clear" aria-label="${tr('landing.rf_color_clear')}" title="${tr('landing.rf_color_clear')}" hidden style="flex:none;border:none;background:none;cursor:pointer;color:var(--muted);font-size:1.05rem;line-height:1;padding:.2rem .35rem">✕</button>
                     </span>
                   </div>
                   <p class="form-note" style="margin-top:.35rem;text-align:left">${tr('landing.rf_colors_help')}</p>
@@ -544,6 +546,28 @@ export async function handleLanding(ctx) {
           btn.disabled = false; label.textContent = RF.btn_preview; spin.classList.remove('show');
         }
       });
+
+      // Brand-color pickers: click the swatch to pick (native color UI), with
+      // two-way sync to the hex field + a clear button. The text field stays the
+      // source of truth — empty = blank = use the template's colors. The swatch
+      // is muted until a color is actually chosen so a default never looks picked.
+      function wireColor(pickId, textId, clearId){
+        var pick = document.getElementById(pickId);
+        var text = document.getElementById(textId);
+        var clr  = document.getElementById(clearId);
+        if (!pick || !text || !clr) return;
+        function setActive(on){ clr.hidden = !on; pick.style.opacity = on ? '1' : '.45'; }
+        setActive(false); // start blank → use template colors
+        pick.addEventListener('input', function(){ text.value = pick.value.toUpperCase(); setActive(true); });
+        text.addEventListener('input', function(){
+          var v = text.value.trim();
+          if (/^#?[0-9a-fA-F]{6}$/.test(v)) { if (v[0] !== '#') v = '#' + v; pick.value = v; setActive(true); }
+          else if (v === '') { setActive(false); }
+        });
+        clr.addEventListener('click', function(){ text.value = ''; setActive(false); text.focus(); });
+      }
+      wireColor('rf-primary-pick', 'rf-primary', 'rf-primary-clear');
+      wireColor('rf-accent-pick', 'rf-accent', 'rf-accent-clear');
     })();
   </script>
   <div id="cf-overlay" style="display:none;position:fixed;inset:0;z-index:10070;color:#fff;padding:24px;overflow:auto;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 55%,#f093fb 120%)">
