@@ -45,6 +45,10 @@ import {
   listDiscounts, getDiscountByCode, createDiscount, updateDiscount, deleteDiscount,
   incrementDiscountUse, checkDiscount, discountAmountFor, normalizeCode,
 } from '../../../db/discounts.js';
+import {
+  listVariants, getActiveVariants, getVariantById, createVariant, updateVariant,
+  deleteVariant, decrementVariantStock,
+} from '../../../db/variants.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, stripPolicyEcho, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { hasPlugin } from '../../../plugins/entitlements.js';
@@ -666,6 +670,67 @@ export async function handleDiscountValidate(ctx) {
     console.error('discount validate error:', e);
     return json({ success: false, error: 'Could not check the code.' }, 500);
   }
+}
+
+// ---- Advanced Store: product variants ------------------------------------
+// A product with >= 1 active variant sells by variant (each its own price +
+// stock). Admin CRUD is gated at the route (pluginGate('advanced_store')).
+
+function variantView(v) {
+  return {
+    id: v.id, product_id: v.product_id, label: v.label, price_cents: v.price_cents,
+    stock: v.stock, sku: v.sku, sort_order: v.sort_order, active: !!v.active,
+  };
+}
+
+/** GET /api/ai-builder/:project_id/store/products/:product_id/variants */
+export async function handleVariantList(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const rows = await listVariants(env.DB, r.projectKey, parseInt(params.product_id, 10));
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  return json({ success: true, variants: rows.map(variantView), currency: config.store_currency || 'usd' });
+}
+
+/** POST /api/ai-builder/:project_id/store/products/:product_id/variants */
+export async function handleVariantCreate(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const productId = parseInt(params.product_id, 10);
+  const product = await getProductById(env.DB, r.projectKey, productId);
+  if (!product) return json({ success: false, error: 'Product not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const label = (body.label || '').toString().trim();
+  if (!label) return json({ success: false, error: t(r.language, 'varw.label_required') }, 400);
+  const variant = await createVariant(env.DB, r.projectKey, productId, {
+    label, price_cents: body.price_cents, stock: body.stock, sku: body.sku, sort_order: body.sort_order,
+  });
+  return json({ success: true, variant: variantView(variant) }, 201);
+}
+
+/** PUT /api/ai-builder/:project_id/store/products/:product_id/variants/:variant_id */
+export async function handleVariantUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const updated = await updateVariant(env.DB, r.projectKey, parseInt(params.variant_id, 10), {
+    label: body.label, price_cents: body.price_cents, stock: body.stock, sku: body.sku,
+    active: body.active, sort_order: body.sort_order,
+  });
+  if (!updated) return json({ success: false, error: 'Variant not found' }, 404);
+  return json({ success: true, variant: variantView(updated) });
+}
+
+/** DELETE /api/ai-builder/:project_id/store/products/:product_id/variants/:variant_id */
+export async function handleVariantDelete(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  await deleteVariant(env.DB, r.projectKey, parseInt(params.variant_id, 10));
+  return json({ success: true });
 }
 
 // ---- Subscriptions via the pricing section -------------------------------

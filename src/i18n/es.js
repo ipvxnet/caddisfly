@@ -676,6 +676,15 @@ export const es = {
     bad_input: 'Introduce un código y un valor de descuento (porcentaje 1–100 o un importe fijo).',
   },
 
+  // Mensajes de variantes de producto (Tienda Avanzada) — comprador + administrador.
+  varw: {
+    label_required: 'Ponle un nombre a la opción (p. ej. «Grande», «Rojo»).',
+    choose: 'Elige una opción',
+    out_of_stock: 'Lo sentimos, la opción que elegiste está agotada.',
+    sold_out: 'Agotado',
+    select_first: 'Por favor, elige una opción primero.',
+  },
+
   // Página de recibo + correo de confirmación al comprador (idioma del SITIO).
   rcpt: {
     title: 'Pedido confirmado',
@@ -794,6 +803,16 @@ export const es = {
     disc_enable: 'Activar', disc_disable: 'Desactivar',
     disc_delete_confirm: '¿Eliminar este código? Los compradores ya no podrán usarlo.',
     disc_expires_on: 'caduca {date}',
+    // Variantes (plugin Tienda Avanzada) — dentro del editor de producto.
+    var_heading: 'Variantes',
+    var_hint: 'Opciones como talla o color, cada una con su propio precio y stock. Añade una o más y este producto se venderá por opción.',
+    var_label_label: 'Opción', var_label_ph: 'p. ej. Grande / Rojo',
+    var_price_label: 'Precio', var_stock_label: 'Stock', var_sku_label: 'SKU',
+    var_add: 'Añadir opción', var_adding: 'Añadiendo…',
+    var_none: 'Aún no hay opciones — este producto se vende a su precio base.',
+    var_delete_confirm: '¿Eliminar esta opción?',
+    var_active: 'activa', var_inactive: 'desactivada', var_enable: 'Activar', var_disable: 'Desactivar',
+    var_sold_out: 'agotado',
   },
 
   blogm: {
