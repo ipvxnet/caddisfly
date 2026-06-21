@@ -4,7 +4,7 @@
 
 import { getBillingAccount } from '../db/billing.js';
 import { getAccountPlugin, isEntitlementValid } from '../db/account-plugins.js';
-import { PLUGINS } from './manifest.js';
+import { PLUGINS, pluginForSectionType } from './manifest.js';
 import { redirect, jsonResponse } from '../utils/response.js';
 
 // Subscription statuses that mean the base plan is NOT usable. A null status
@@ -44,5 +44,27 @@ export function pluginGate(pluginKey, { json = false } = {}) {
     if (ok) return undefined; // entitled → continue
     if (json) return jsonResponse({ error: 'plugin_required', plugin: pluginKey }, 402);
     return redirect(`/plugins?upgrade=${encodeURIComponent(pluginKey)}`, 303);
+  };
+}
+
+/**
+ * Build a synchronous section filter for a site owner — drops sections whose
+ * type belongs to a plugin the owner isn't entitled to (assemble-time gating,
+ * §8.3). Each plugin's entitlement is checked ONCE here; the returned predicate
+ * is cheap to apply across many section arrays / pages. Non-plugin sections and
+ * unknown owners pass through unchanged (no gated types → no-op).
+ * @returns {Promise<(sections: any[]) => any[]>}
+ */
+export async function entitledSectionFilter(env, ownerEmail) {
+  const denied = new Set(); // plugin keys the owner is NOT entitled to
+  for (const p of Object.values(PLUGINS)) {
+    if (!(await hasPlugin(env, ownerEmail, p.key))) denied.add(p.key);
+  }
+  return function filterSections(sections) {
+    if (!Array.isArray(sections) || denied.size === 0) return sections;
+    return sections.filter((s) => {
+      const plugin = pluginForSectionType(s && (s.section_type || s.type));
+      return !plugin || !denied.has(plugin.key);
+    });
   };
 }

@@ -130,6 +130,7 @@ import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
 import { processBookingReminders } from './routes/api/bookings-remind.js';
 import { handleHolidayThemesSave, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
+import { processPluginGraceHides } from './plugins/grace-cron.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
@@ -516,6 +517,12 @@ export default {
       console.log('holiday themes:', JSON.stringify(summary));
     } catch (e) {
       console.error('scheduled holiday themes failed:', e.message);
+    }
+    try {
+      const summary = await processPluginGraceHides(env, ctx);
+      console.log('plugin grace hides:', JSON.stringify(summary));
+    } catch (e) {
+      console.error('scheduled plugin grace hides failed:', e.message);
     }
   },
 

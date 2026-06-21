@@ -7,6 +7,7 @@ import { getProjectByPreviewId, updateProject } from '../../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../../db/ai-config.js';
 import { ensurePagesForProject, getPagesByProject } from '../../../db/ai-pages.js';
 import { getSiteSections, getBodySectionsForPage, getHomeBodySections } from '../../../db/ai-sections.js';
+import { entitledSectionFilter } from '../../../plugins/entitlements.js';
 import { assemblePage } from '../../../utils/ai-page-assembler.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
@@ -135,10 +136,14 @@ export async function handleAIBuilderDeploy(ctx) {
     // Home page's body sections drive a CONSISTENT section-anchor nav on every
     // page (sub-pages prefix the anchors with the home route so the primary
     // menu doesn't collapse to just that page's own sections).
+    // Plugin gating (§8.3): drop sections whose plugin the owner isn't entitled
+    // to, so a lapsed plugin's sections never reach the published static HTML.
+    const filterSections = await entitledSectionFilter(env, email);
+
     const homePageRow = pages.find((p) => p.is_home) || pages.find((p) => p.slug === 'home') || null;
-    const homeSections = homePageRow
+    const homeSections = filterSections(homePageRow
       ? await getHomeBodySections(env.DB, projectKey, homePageRow.id, true)
-      : [];
+      : []);
 
     // For pages opted into "sections as submenu", collect their body sections so
     // the navbar can list them under that page's menu item (on every page).
@@ -147,7 +152,7 @@ export async function handleAIBuilderDeploy(ctx) {
       if (p.is_visible === 0 || !p.show_sections_in_nav) continue;
       pageSections[p.id] = p.is_home
         ? homeSections
-        : await getBodySectionsForPage(env.DB, p.id, true);
+        : filterSections(await getBodySectionsForPage(env.DB, p.id, true));
     }
 
     // Assign a unique subdomain for *.caddisfly.app hosting (idempotent).
@@ -183,9 +188,9 @@ export async function handleAIBuilderDeploy(ctx) {
     let heroImage = null; // og:image last-resort fallback (first hero photo found)
     for (const page of pages) {
       if (page.is_visible === 0) continue;
-      const body = page.is_home
+      const body = filterSections(page.is_home
         ? await getHomeBodySections(env.DB, projectKey, page.id, true)
-        : await getBodySectionsForPage(env.DB, page.id, true);
+        : await getBodySectionsForPage(env.DB, page.id, true));
       const combined = [...header, ...body, ...footer];
       if (combined.length === 0) continue;
 
