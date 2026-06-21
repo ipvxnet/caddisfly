@@ -288,6 +288,8 @@ export function applyDetailedOverride(profile, detailedRaw) {
   if (d.brand_color) out.brand_color = d.brand_color;   // owner's primary brand color
   if (d.accent_color) out.accent_color = d.accent_color; // owner's accent/secondary
   if (d.services) out.user_services = d.services;        // raw list → explicit service tiles
+  if (d.history) out.history = d.history;                // owner's "about us" narrative
+  if (d.founder) out.founder = d.founder;                // owner's founder story → About
 
   const social = SOCIAL_PLATFORMS.filter((k) => d.social[k]).map((k) => ({ platform: k, url: d.social[k] }));
   if (social.length) out.social = social;

@@ -146,6 +146,12 @@ export function detailedToFactSections(profile) {
   const social_links = SOCIAL_PLATFORMS.filter((k) => p.social[k]).map((k) => ({ platform: k, url: p.social[k] }));
   if (social_links.length) sections.social = { social_links };
 
+  // Owner's "about us"/founder narrative → render their actual words as the
+  // About story (both about variants read `story`) instead of leaving it as soft
+  // AI context that often got dropped.
+  const aboutStory = [p.history, p.founder].filter((s) => s && s.trim()).join('\n\n').trim();
+  if (aboutStory) sections.about = { story: aboutStory };
+
   return sections;
 }
 

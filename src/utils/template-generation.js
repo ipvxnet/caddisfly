@@ -22,7 +22,7 @@ import { assemblePage } from './ai-page-assembler.js';
 import { uploadToR2 } from './r2-storage.js';
 import { fetchPlacePhotoBytes } from './google-places.js';
 import { searchStockPhotos } from './stock-photos.js';
-import { inferIndustry, paletteFor, imageKeywordsFor } from './industry-style.js';
+import { inferIndustry, inferIndustryPreferring, paletteFor, imageKeywordsFor } from './industry-style.js';
 import { getRecipe, recipeVariant } from './industry-recipe.js';
 import { attachImages, makePhotoPicker } from './section-images.js';
 
@@ -39,11 +39,13 @@ export async function generateAndStore(env, project, profile, opts = {}) {
   // scraped from the original site — so a scrape-only refactor (no verified
   // Places match) still lands on the right vertical (palette, fonts, imagery).
   const src = profile.source || {};
-  const industry = inferIndustry(
-    profile.category,
-    profile.name,
-    ...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []),
-    src.scrape_sample || ''
+  // Prefer authoritative signals (Places category, business name, the owner's own
+  // description + services) over the scraped page body — a stray keyword in the
+  // scrape (e.g. a "we speak …, Italian" languages list) must not outscore the
+  // real vertical. Scrape text is a fallback only when the rest says nothing.
+  const industry = inferIndustryPreferring(
+    [profile.category, profile.name, profile.description, profile.user_services],
+    [...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []), src.scrape_sample || '']
   );
   const recipe = getRecipe(industry);
   // Phase C: curated template for the vertical (composes variants + fonts +
@@ -64,6 +66,11 @@ export async function generateAndStore(env, project, profile, opts = {}) {
   const types = recipe.sections.filter(
     (t) => (t !== 'gallery' || photoPool.length >= 3) && (t !== 'testimonials' || !!factSections.testimonials)
   );
+  // The owner wrote an about/founder story but the recipe has no About section
+  // (e.g. fitness) → guarantee one so their words actually appear.
+  if (!types.includes('about') && ownerAboutStory(profile)) {
+    types.splice(Math.min(2, types.length), 0, 'about');
+  }
 
   // 3. Generate each section's content (in the project's chosen language).
   const context = profileToContext(profile, recipe, industry);
@@ -114,14 +121,24 @@ export async function generateAndStore(env, project, profile, opts = {}) {
     }
 
     // Owner provided an explicit services list → use ALL of it (overrides the
-    // AI's summarized ~6) so nothing they typed gets dropped.
-    if (type === 'services' || type === 'features') {
+    // AI's summarized ~6) so nothing they typed gets dropped. Apply it to the
+    // SERVICES section only; FEATURES is meant for benefits / "why choose us", so
+    // stuffing the same product list there just reads as repetition. Fall back to
+    // FEATURES only when the line-up has no dedicated services section.
+    if (type === 'services' || (type === 'features' && !types.includes('services'))) {
       const explicitSvcs = explicitServiceItems(profile);
       if (explicitSvcs.length) { content.services = explicitSvcs; content.items = explicitSvcs; }
     }
     // Features reuse the services {title,description,icon} shape.
     if (type === 'features' && !Array.isArray(content.features)) {
       content.features = content.services || content.items || [];
+    }
+    // Owner typed an "about us"/founder story → render their ACTUAL words as the
+    // About body (both about variants use `story`), keeping the AI heading/
+    // subheading/image. Soft AI context dropped this; the owner's text is verbatim.
+    if (type === 'about') {
+      const story = ownerAboutStory(profile);
+      if (story) content.story = story;
     }
     // These templates render a `description` subtitle; AI returns `subheading`.
     if ((type === 'services' || type === 'features') && !content.description && content.subheading) {
@@ -393,7 +410,19 @@ function listToItems(text, cap = 15) {
     .map((s) => s.replace(/^[-•*\d.)\s]+/, '').trim()) // strip bullets/numbering
     .filter((s) => s && !seen.has(s.toLowerCase()) && seen.add(s.toLowerCase()))
     .slice(0, cap)
-    .map((title) => ({ title, description: '', icon: '✓' }));
+    .map((title) => ({ title: smartTitleCase(title), description: '', icon: '✓' }));
+}
+
+/**
+ * Title-case a short label for display (service names typed as a comma list come
+ * in with inconsistent casing — "Diesel tools, parts, test benches"). Capitalizes
+ * each word but preserves all-caps acronyms/codes (EUI, HEUI, USA, C175).
+ */
+function smartTitleCase(s) {
+  return String(s).trim().split(/\s+/).map((w) => {
+    if (w.length > 1 && w === w.toUpperCase() && /[A-Z]/.test(w)) return w; // keep EUI/USA/HEUI
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(' ');
 }
 
 /** Recipe service hints → items (fallback when the user gave no explicit list). */
@@ -404,4 +433,12 @@ function hintsToItems(hints) {
 /** The owner's explicit services list (from the onboarding form), if any. */
 function explicitServiceItems(profile) {
   return listToItems(profile && profile.user_services, 15);
+}
+
+/** The owner's About story (history + founder narrative), if they typed any. */
+function ownerAboutStory(profile) {
+  return [profile && profile.history, profile && profile.founder]
+    .filter((s) => s && String(s).trim())
+    .join('\n\n')
+    .trim();
 }
