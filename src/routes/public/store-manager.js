@@ -149,6 +149,17 @@ export async function handleStoreManager(ctx) {
         <label>${tr('storem.category_label')} <span class="hint">${tr('storem.category_hint')}</span></label>
         <input id="np-category" maxlength="80" placeholder="Parts, Tools…">
         <label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" id="np-forsale" checked style="width:auto"> ${tr('storem.forsale_label')}</label>
+        <details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">${tr('storem.media_label')}</summary>
+          <label>${tr('storem.media_gallery')} <span class="hint">${tr('storem.media_perline')}</span></label>
+          <textarea id="np-gallery" rows="2" placeholder="https://…/photo1.jpg"></textarea>
+          <label>${tr('storem.media_videos')} <span class="hint">${tr('storem.media_perline')}</span></label>
+          <textarea id="np-videos" rows="2" placeholder="https://youtu.be/…"></textarea>
+          <label>${tr('storem.media_files')} <span class="hint">Name | URL</span></label>
+          <textarea id="np-files" rows="2" placeholder="Datasheet | https://…/spec.pdf"></textarea>
+          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">${tr('storem.upload_pdf')}</button>
+          <label>${tr('storem.media_links')} <span class="hint">Label | URL</span></label>
+          <textarea id="np-links" rows="2" placeholder="Manufacturer | https://…"></textarea>
+        </details>
         <div class="edit-actions">
           <button class="btn" onclick="createProduct(this)">${tr('storem.create_btn')}</button>
           <button class="btn ghost" onclick="toggleAdd()">${tr('storem.cancel')}</button>
@@ -197,6 +208,13 @@ export async function handleStoreManager(ctx) {
       imageLabel: ${JSON.stringify(tr('storem.image_label'))},
       categoryLabel: ${JSON.stringify(tr('storem.category_label'))},
       forsaleLabel: ${JSON.stringify(tr('storem.forsale_label'))},
+      mediaLabel: ${JSON.stringify(tr('storem.media_label'))},
+      mediaGallery: ${JSON.stringify(tr('storem.media_gallery'))},
+      mediaVideos: ${JSON.stringify(tr('storem.media_videos'))},
+      mediaFiles: ${JSON.stringify(tr('storem.media_files'))},
+      mediaLinks: ${JSON.stringify(tr('storem.media_links'))},
+      mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
+      uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
       types: {
         physical: ${JSON.stringify(tr('storem.type_physical'))},
         digital: ${JSON.stringify(tr('storem.type_digital'))},
@@ -294,6 +312,7 @@ export async function handleStoreManager(ctx) {
     }
 
     function prodCard(p) {
+      var mt = mediaText(p.media_json || '');
       var thumb = p.image
         ? '<img class="prod-thumb" src="' + esc(p.image) + '" alt="" loading="lazy">'
         : '<div class="prod-thumb ph">📦</div>';
@@ -323,6 +342,13 @@ export async function handleStoreManager(ctx) {
         '<label>' + T.imageLabel + '</label><input class="f-image" maxlength="500" value="' + esc(p.image || '') + '">' +
         '<label>' + T.categoryLabel + '</label><input class="f-category" maxlength="80" value="' + esc(p.category || '') + '">' +
         '<label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" class="f-forsale"' + (p.for_sale === 0 ? '' : ' checked') + ' style="width:auto"> ' + T.forsaleLabel + '</label>' +
+        '<details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">' + T.mediaLabel + '</summary>' +
+        '<label>' + T.mediaGallery + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-gallery" rows="2">' + esc(mt.gallery) + '</textarea>' +
+        '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
+        '<label>' + T.mediaFiles + ' <span class="hint">Name | URL</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
+        '<label>' + T.mediaLinks + ' <span class="hint">Label | URL</span></label><textarea class="m-links" rows="2">' + esc(mt.links) + '</textarea>' +
+        '</details>' +
         '<div class="edit-actions">' +
         '<button class="btn" onclick="saveProduct(' + p.id + ', this)">' + T.save + '</button>' +
         '<button class="btn ghost" onclick="toggleEdit(' + p.id + ')">' + T.cancel + '</button>' +
@@ -347,6 +373,32 @@ export async function handleStoreManager(ctx) {
       catch (e) { document.getElementById('products-list').innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; }
     }
 
+    // ---- catalogue media (one-per-line text → media_json) ----
+    function linesToArr(s){ return (s||'').split('\\n').map(function(x){return x.trim();}).filter(Boolean); }
+    function linesToPairs(s, keyName){ return linesToArr(s).map(function(line){ var i=line.indexOf('|'); var a=i<0?line:line.slice(0,i).trim(); var b=i<0?line:line.slice(i+1).trim(); var o={url:b}; o[keyName]=a; return o; }).filter(function(o){return o.url;}); }
+    function mediaFrom(g,v,f,l){ return { gallery: linesToArr(g), videos: linesToArr(v), files: linesToPairs(f,'name'), links: linesToPairs(l,'label') }; }
+    function mediaText(raw){ var m={}; try{ m=raw?JSON.parse(raw):{}; }catch(e){ m={}; } var arr=function(x){return Array.isArray(x)?x:[];}; return { gallery: arr(m.gallery).join('\\n'), videos: arr(m.videos).join('\\n'), files: arr(m.files).map(function(f){return (f.name||'')+' | '+(f.url||'');}).join('\\n'), links: arr(m.links).map(function(l){return (l.label||'')+' | '+(l.url||'');}).join('\\n') }; }
+
+    // Upload a PDF → R2, append "name | url" to the given files textarea.
+    function uploadPdf(btn, ta) {
+      if (!ta) return;
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'application/pdf';
+      inp.onchange = async function(){
+        var f = inp.files && inp.files[0]; if (!f) return;
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
+        try {
+          var fd = new FormData(); fd.append('file', f);
+          var res = await fetch('/api/ai-builder/' + PID + '/upload', { method: 'POST', body: fd });
+          var d = await res.json();
+          if (d && d.success && d.url) { var line = f.name + ' | ' + d.url; ta.value = ta.value ? (ta.value + '\\n' + line) : line; }
+          else { alert((d && d.error) || T.errorPrefix); }
+        } catch(e) { alert(T.errorPrefix); }
+        btn.disabled = false; btn.textContent = old;
+      };
+      inp.click();
+    }
+
     async function createProduct(btn) {
       var name = document.getElementById('np-name').value.trim();
       var forsale = document.getElementById('np-forsale').checked;
@@ -364,6 +416,7 @@ export async function handleStoreManager(ctx) {
           image: document.getElementById('np-image').value.trim(),
           category: document.getElementById('np-category').value.trim(),
           for_sale: forsale ? 1 : 0,
+          media: mediaFrom(document.getElementById('np-gallery').value, document.getElementById('np-videos').value, document.getElementById('np-files').value, document.getElementById('np-links').value),
         });
         document.getElementById('np-name').value = '';
         document.getElementById('np-price').value = '';
@@ -371,6 +424,7 @@ export async function handleStoreManager(ctx) {
         document.getElementById('np-image').value = '';
         document.getElementById('np-category').value = '';
         document.getElementById('np-forsale').checked = true;
+        ['np-gallery','np-videos','np-files','np-links'].forEach(function(id){ document.getElementById(id).value = ''; });
         toggleAdd();
         await loadProducts();
       } catch (e) { alert(e.message); }
@@ -398,6 +452,7 @@ export async function handleStoreManager(ctx) {
           image: box.querySelector('.f-image').value.trim(),
           category: box.querySelector('.f-category').value.trim(),
           for_sale: forsale ? 1 : 0,
+          media: mediaFrom(box.querySelector('.m-gallery').value, box.querySelector('.m-videos').value, box.querySelector('.m-files').value, box.querySelector('.m-links').value),
         });
         await loadProducts();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = T.save; }

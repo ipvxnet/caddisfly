@@ -42,6 +42,7 @@ import {
 } from '../../../db/products.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, stripPolicyEcho, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
+import { hasPlugin } from '../../../plugins/entitlements.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS, PRODUCT_LIMITS } from '../../../utils/credits.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { audit } from '../../../utils/audit.js';
@@ -205,6 +206,15 @@ function validPrice(cents) {
   return n;
 }
 
+// The Catalogue plugin raises the product/item cap (a key part of its value).
+const CATALOGUE_PRODUCT_LIMIT = 1000;
+async function effectiveProductLimit(env, email, tier) {
+  const base = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+  if (!Number.isFinite(base)) return base; // already unlimited (agency)
+  if (await hasPlugin(env, email, 'catalogue')) return Math.max(base, CATALOGUE_PRODUCT_LIMIT);
+  return base;
+}
+
 /** GET /api/ai-builder/:project_id/store/products — list + cap info. */
 export async function handleProductList(ctx) {
   const { env, params } = ctx;
@@ -212,7 +222,7 @@ export async function handleProductList(ctx) {
   if (!r) return json({ success: false, error: 'Project not found' }, 404);
   const products = await getProductsByProject(env.DB, r.projectKey);
   const tier = await getUserTier(env.DB, r.email);
-  const limit = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+  const limit = await effectiveProductLimit(env, r.email, tier);
   const config = await getOrCreateConfig(env.DB, r.projectKey);
   return json({
     success: true,
@@ -233,7 +243,7 @@ export async function handleProductCreate(ctx) {
 
     // Product-count gate (production only, like PUBLISH_LIMITS in deploy.js).
     const tier = await getUserTier(env.DB, r.email);
-    const limit = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+    const limit = await effectiveProductLimit(env, r.email, tier);
     if (env.ENVIRONMENT === 'production' && Number.isFinite(limit)) {
       const n = await countProducts(env.DB, r.projectKey);
       if (n >= limit) {
@@ -673,7 +683,7 @@ export async function handleProductImport(ctx) {
     }
 
     const tier = await getUserTier(env.DB, r.email);
-    const limit = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
+    const limit = await effectiveProductLimit(env, r.email, tier);
     const enforced = env.ENVIRONMENT === 'production' && Number.isFinite(limit);
     let count = await countProducts(env.DB, r.projectKey);
 
