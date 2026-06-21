@@ -117,11 +117,16 @@ export async function handleAIBuilderGenerate(ctx) {
     // Infer from EVERYTHING we know — name alone is often vague ("Trattoria
     // Lucia"); the describe-prompt + detailed description/services carry the real
     // signal ("Italian restaurant, pasta, pizza"). Drives palette + template.
+    // Include the FULL detailed profile (source_material = history + founder +
+    // services + target customers), not just the 300-char description slice — a
+    // partial slice dropped the auto-repair signal and let a stray "training"
+    // mention score the business as fitness instead of automotive.
     const industry = inferIndustry(
       context.industry,
       context.business_type,
       context.business_name,
       context.description || '',
+      context.source_material || '',
       context.prompt || ''
     );
     const recipe = getRecipe(industry);

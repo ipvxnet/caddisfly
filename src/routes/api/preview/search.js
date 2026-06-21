@@ -17,7 +17,7 @@ import { buildProfile, applyDetailedOverride } from '../../../utils/company-prof
 import { extractBrandColors } from '../../../utils/brand-colors.js';
 import { coerceDetailedProfile } from '../../../utils/detailed-profile.js';
 import { buildPhotoPool } from '../../../utils/template-generation.js';
-import { inferIndustry } from '../../../utils/industry-style.js';
+import { inferIndustryPreferring } from '../../../utils/industry-style.js';
 import { lookupAllowance, recordLookup, hashIp, LOOKUP_DAILY_LIMIT } from '../../../db/lookup-attempts.js';
 import { screenContent, policyError } from '../../../utils/content-policy.js';
 import { translator } from '../../../i18n/index.js';
@@ -115,10 +115,11 @@ export async function handlePreviewSearch(ctx) {
     });
 
     const src = profile.source || {};
-    const industry = inferIndustry(
-      profile.category, profile.name,
-      ...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []),
-      src.scrape_sample || ''
+    // Authoritative signals (Places category, name, owner-provided description +
+    // services) win over the scraped page body; scrape is a fallback only.
+    const industry = inferIndustryPreferring(
+      [profile.category, profile.name, profile.description, profile.user_services],
+      [...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []), src.scrape_sample || '']
     );
     let photoPool = [];
     try {

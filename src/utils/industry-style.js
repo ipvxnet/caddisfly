@@ -213,6 +213,29 @@ export function inferIndustry(...texts) {
 }
 
 /**
+ * Infer an industry while PREFERRING authoritative signals (user-typed business
+ * details, a Google Places category) over noisy free text (a scraped page body
+ * or a long describe-prompt). The fallback text is consulted only when the
+ * authoritative signals alone don't identify a vertical.
+ *
+ * Why: inferIndustry() sums matched-keyword length across one flat haystack, so
+ * a single stray word in low-trust text can outscore the truth — e.g. a diesel
+ * shop whose site lists "we speak …, Italian, …" scored `food` (italian=7) over
+ * `automotive` (auto=4), and a detailed profile mentioning "training" scored
+ * `fitness` over the real auto-repair signal. Scoring the trustworthy text first
+ * keeps that noise from hijacking the palette + template.
+ *
+ * @param {string[]} authoritativeTexts - high-trust signals (category, name, user details)
+ * @param {string[]} [fallbackTexts] - low-trust signals (scrape body, raw prompt)
+ * @returns {string} industry key
+ */
+export function inferIndustryPreferring(authoritativeTexts = [], fallbackTexts = []) {
+  const primary = inferIndustry(...authoritativeTexts);
+  if (primary !== 'general') return primary;
+  return inferIndustry(...authoritativeTexts, ...fallbackTexts);
+}
+
+/**
  * Color palette for an industry.
  * @param {string} industry
  * @returns {{primary: string, secondary: string, accent: string}}

@@ -22,7 +22,7 @@ import { assemblePage } from './ai-page-assembler.js';
 import { uploadToR2 } from './r2-storage.js';
 import { fetchPlacePhotoBytes } from './google-places.js';
 import { searchStockPhotos } from './stock-photos.js';
-import { inferIndustry, paletteFor, imageKeywordsFor } from './industry-style.js';
+import { inferIndustry, inferIndustryPreferring, paletteFor, imageKeywordsFor } from './industry-style.js';
 import { getRecipe, recipeVariant } from './industry-recipe.js';
 import { attachImages, makePhotoPicker } from './section-images.js';
 
@@ -39,11 +39,13 @@ export async function generateAndStore(env, project, profile, opts = {}) {
   // scraped from the original site — so a scrape-only refactor (no verified
   // Places match) still lands on the right vertical (palette, fonts, imagery).
   const src = profile.source || {};
-  const industry = inferIndustry(
-    profile.category,
-    profile.name,
-    ...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []),
-    src.scrape_sample || ''
+  // Prefer authoritative signals (Places category, business name, the owner's own
+  // description + services) over the scraped page body — a stray keyword in the
+  // scrape (e.g. a "we speak …, Italian" languages list) must not outscore the
+  // real vertical. Scrape text is a fallback only when the rest says nothing.
+  const industry = inferIndustryPreferring(
+    [profile.category, profile.name, profile.description, profile.user_services],
+    [...(Array.isArray(src.scrape_headings) ? src.scrape_headings : []), src.scrape_sample || '']
   );
   const recipe = getRecipe(industry);
   // Phase C: curated template for the vertical (composes variants + fonts +
