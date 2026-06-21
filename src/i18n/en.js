@@ -639,6 +639,7 @@ export const en = {
     list_heading: 'Shop',
     view: 'View',
     add: 'Add to cart',
+    sold_out: 'Sold out', out_of_stock: 'Sorry, an item in your cart is out of stock.',
     added: 'Added ✓',
     cart: 'Cart',
     empty: 'Your cart is empty.',
@@ -660,6 +661,23 @@ export const en = {
     feat_heading: 'Our products',
     feat_cta: 'Visit the shop',
     feat_empty: 'No products yet — add products on your Store page and they’ll appear here automatically.',
+    // Discount code (Advanced Store) — buyer cart.
+    discount_label: 'Discount code',
+    discount_apply: 'Apply',
+    discount_applied: 'Code applied',
+    discount_remove: 'Remove',
+    discount_off: 'Discount',
+    discount_checking: 'Checking…',
+  },
+
+  // Discount-code messages (Advanced Store) — buyer + admin (SITE/app language).
+  discw: {
+    invalid: 'That code isn’t valid.',
+    inactive: 'That code is no longer active.',
+    expired: 'That code has expired.',
+    used_up: 'That code has reached its usage limit.',
+    duplicate: 'A code with that name already exists.',
+    bad_input: 'Enter a code and a discount value (percent 1–100, or a fixed amount).',
   },
 
   // Order receipt page + buyer confirmation email (SITE's language).
@@ -745,7 +763,7 @@ export const en = {
     image_label: 'Image URL', image_hint: 'optional — you can generate one with AI after adding',
     category_label: 'Category', category_hint: 'groups items into catalogue sections (optional)',
     forsale_label: 'For sale — uncheck for an info-only catalogue item',
-    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line', upload_pdf: '⬆ Upload PDF',
+    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', stock_label: 'Stock', stock_hint: 'leave blank for unlimited; 0 = out of stock', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line', upload_pdf: '⬆ Upload PDF',
     create_btn: 'Add product', creating: 'Adding…',
     save: 'Save', saving: 'Saving…', cancel: 'Cancel', edit: 'Edit',
     delete: 'Delete', delete_confirm: 'Delete this product? This cannot be undone.',
@@ -767,6 +785,21 @@ export const en = {
     import_none: 'No importable products found in your Stripe account (one-time prices only).',
     skip_recurring: 'subscription price', skip_exists: 'already in store', skip_currency: 'different currency',
     skip_no_price: 'no price', skip_limit: 'plan limit', skip_policy: 'content policy', skip_price_range: 'price out of range',
+    // Discount codes (Advanced Store plugin) — manager panel.
+    disc_heading: '🏷 Discount codes',
+    disc_hint: 'Codes buyers enter at checkout. Percent or a fixed amount off.',
+    disc_code_label: 'Code', disc_code_ph: 'e.g. WELCOME10',
+    disc_kind_label: 'Type', disc_kind_percent: '% off', disc_kind_fixed: 'Amount off',
+    disc_value_label: 'Value', disc_value_hint_pct: '1–100', disc_value_hint_fixed: 'e.g. 10.00',
+    disc_max_label: 'Max uses', disc_max_hint: 'blank = unlimited',
+    disc_expiry_label: 'Expires', disc_expiry_hint: 'optional',
+    disc_add: 'Add code', disc_adding: 'Adding…',
+    disc_none: 'No discount codes yet.',
+    disc_used: '{used} used', disc_used_max: '{used} / {max} used',
+    disc_active: 'active', disc_inactive: 'off',
+    disc_enable: 'Enable', disc_disable: 'Disable',
+    disc_delete_confirm: 'Delete this code? Buyers can no longer use it.',
+    disc_expires_on: 'expires {date}',
   },
 
   blogm: {

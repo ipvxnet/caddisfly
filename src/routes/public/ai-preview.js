@@ -7,7 +7,7 @@ import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } fro
 import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js';
-import { entitledSectionFilter } from '../../plugins/entitlements.js';
+import { entitledSectionFilter, hasPlugin } from '../../plugins/entitlements.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { getProductsByProject } from '../../db/products.js';
 import { getServices } from '../../db/bookings.js';
@@ -139,6 +139,11 @@ export async function handleAIPreview(ctx) {
         project_name: businessName,
         id: regularProject.id,
         language: regularProject.language || 'en',
+        // Carry the owner email so entitledSectionFilter (plugin gating) can
+        // resolve entitlements — without it every plugin section (catalogue,
+        // CRM, …) is treated as un-entitled and silently dropped from the
+        // refactor preview (the published deploy.js path already passes it).
+        customer_email: regularProject.customer_email,
       };
 
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
@@ -184,6 +189,8 @@ export async function handleAIPreview(ctx) {
     // to, so the preview reflects entitlement live (no-op until a gated section).
     const filterSections = await entitledSectionFilter(env, project && project.customer_email);
     const combined = filterSections([...header, ...body, ...footer]);
+    // Advanced Store: gate the mini-cart's discount-code input on entitlement.
+    const hasAdvStore = await hasPlugin(env, project && project.customer_email, 'advanced_store');
 
     // Home page's body sections → consistent section-anchor nav across all pages
     // (reuse `body` when already on home to avoid a second query).
@@ -225,6 +232,7 @@ export async function handleAIPreview(ctx) {
       products: activeProducts, // 🛍 featured-products section (live data)
       bookingServices, // 📅 booking section (live data; widget inert until published)
       holiday: holSettings.applied && holSettings.decor ? holSettings.applied.holiday : null,
+      hasAdvStore, // mini-cart discount-code input gating
       // Refactor previews get an "Add your details" link to the detailed form.
       detailedLink: !isAIBuilder,
       // Badge "Built with Caddisfly" links back to THIS app origin (the new

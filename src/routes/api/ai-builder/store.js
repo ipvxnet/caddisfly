@@ -24,6 +24,7 @@ import {
   signConnectState,
   verifyConnectState,
   createStoreCheckoutSession,
+  createConnectCoupon,
   getStoreCheckoutSession,
   listConnectProducts,
   listConnectRecurringPrices,
@@ -38,8 +39,12 @@ import { sendOrderBuyerEmail, sendOrderMerchantEmail } from '../../../utils/emai
 import { t } from '../../../i18n/index.js';
 import {
   createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
-  countProducts, uniqueProductSlug,
+  countProducts, uniqueProductSlug, decrementStock,
 } from '../../../db/products.js';
+import {
+  listDiscounts, getDiscountByCode, createDiscount, updateDiscount, deleteDiscount,
+  incrementDiscountUse, checkDiscount, discountAmountFor, normalizeCode,
+} from '../../../db/discounts.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
 import { screenContent, stripPolicyEcho, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { hasPlugin } from '../../../plugins/entitlements.js';
@@ -284,6 +289,8 @@ export async function handleProductCreate(ctx) {
       body: (body.body || '').toString().slice(0, 20000),
       media_json: body.media && typeof body.media === 'object' ? JSON.stringify(body.media) : (body.media_json || '').toString().slice(0, 20000),
       for_sale,
+      // Inventory (Advanced Store plugin) — only honored when entitled.
+      stock: body.stock != null && (await hasPlugin(env, r.email, 'advanced_store')) ? body.stock : null,
     });
     return json({ success: true, product }, 201);
   } catch (e) {
@@ -328,6 +335,10 @@ export async function handleProductUpdate(ctx) {
     if (body.category != null) updates.category = body.category.toString().trim().slice(0, 80);
     if (body.body != null) updates.body = body.body.toString().slice(0, 20000);
     if (body.media != null) updates.media_json = typeof body.media === 'object' ? JSON.stringify(body.media) : body.media.toString().slice(0, 20000);
+    // Inventory (Advanced Store) — '' clears to untracked; gated by entitlement.
+    if (body.stock != null && (await hasPlugin(env, r.email, 'advanced_store'))) {
+      updates.stock = body.stock === '' ? null : Math.max(0, Math.round(Number(body.stock)) || 0);
+    }
 
     if (updates.name != null || updates.description != null) {
       const screen = screenContent(`${updates.name || product.name}\n${updates.description != null ? updates.description : product.description}`);
@@ -447,9 +458,15 @@ export async function handleStoreCheckout(ctx) {
     const appOrigin = env.APP_URL || '';
     const lineItems = [];
     let hasPhysical = false;
+    let subtotalCents = 0;
     for (const [id, qty] of wanted) {
       const p = byId.get(id);
       if (!p) return json({ success: false, error: 'A product in your cart is no longer available.' }, 409);
+      // Advanced Store inventory: block buying more than is in stock (stock NULL = untracked).
+      if (p.stock != null && p.stock < qty) {
+        return json({ success: false, error: t(r.language, 'shopw.out_of_stock'), out_of_stock: true, product: p.name }, 409);
+      }
+      subtotalCents += p.price_cents * qty;
       if (p.product_type === 'physical') hasPhysical = true;
       const productData = { name: p.name };
       if (p.image) {
@@ -477,11 +494,40 @@ export async function handleStoreCheckout(ctx) {
     let path = (body.path || '/shop').toString().split('?')[0].slice(0, 200);
     if (!path.startsWith('/')) path = '/shop';
 
+    // Advanced Store discount code (optional). Only honoured when the OWNER is
+    // entitled to advanced_store; validated server-side (active/expiry/uses) and
+    // applied as a one-off Stripe coupon. Invalid codes 409 so the cart can react.
+    let discounts = null;
+    let discountCode = null;
+    const rawCode = normalizeCode(body.discount_code);
+    if (rawCode) {
+      const entitled = await hasPlugin(env, r.email, 'advanced_store');
+      if (entitled) {
+        const d = await getDiscountByCode(env.DB, r.projectKey, rawCode);
+        const chk = checkDiscount(d);
+        if (!chk.ok) {
+          return json({ success: false, error: t(r.language, `discw.${chk.reason}`), discount_error: chk.reason }, 409);
+        }
+        if (discountAmountFor(d, subtotalCents) > 0) {
+          try {
+            const coupon = await createConnectCoupon(env, config.stripe_account_id, {
+              kind: d.kind, value: d.value, currency: config.store_currency || 'usd', name: d.code,
+            });
+            discounts = [{ coupon }];
+            discountCode = d.code;
+          } catch (e) {
+            console.error('discount coupon create failed (non-fatal):', e.message);
+          }
+        }
+      }
+    }
+
     let session;
     try {
       session = await createStoreCheckoutSession(env, {
         account: config.stripe_account_id,
         lineItems,
+        discounts,
         // Success lands on OUR receipt page (server-verified order details,
         // print-to-PDF, triggers order recording + emails). {CHECKOUT_SESSION_ID}
         // is a literal Stripe placeholder — must not be URL-encoded.
@@ -493,6 +539,7 @@ export async function handleStoreCheckout(ctx) {
           back: `${origin}${path}`.slice(0, 400), // receipt's "back to shop" link
           // compact for the 500-char metadata cap: [[id,qty],…]
           items: JSON.stringify([...wanted]).slice(0, 480),
+          ...(discountCode ? { discount: discountCode } : {}),
         },
         collectShipping: hasPhysical,
       });
@@ -506,6 +553,118 @@ export async function handleStoreCheckout(ctx) {
   } catch (e) {
     console.error('store checkout error:', e);
     return json({ success: false, error: 'Could not start checkout — please try again.' }, 500);
+  }
+}
+
+// ---- Advanced Store: discount codes --------------------------------------
+// Admin CRUD is gated at the route (pluginGate('advanced_store')). The buyer
+// validate endpoint is public (no auth) like checkout, and self-gates on the
+// OWNER's entitlement so a lapsed store silently stops honouring codes.
+
+/** Shape a discount row for the admin UI (kept lean). */
+function discountView(d) {
+  return {
+    id: d.id, code: d.code, kind: d.kind, value: d.value, active: !!d.active,
+    max_uses: d.max_uses, used_count: d.used_count, expires_at: d.expires_at,
+  };
+}
+
+/** GET /api/ai-builder/:project_id/store/discounts */
+export async function handleDiscountList(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const rows = await listDiscounts(env.DB, r.projectKey);
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  return json({ success: true, discounts: rows.map(discountView), currency: config.store_currency || 'usd' });
+}
+
+/** POST /api/ai-builder/:project_id/store/discounts */
+export async function handleDiscountCreate(ctx) {
+  const { env, request, params } = ctx;
+  let lang = 'en';
+  try {
+    const r = await resolveStoreProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+    lang = r.language || 'en';
+    const body = await request.json().catch(() => ({}));
+    const discount = await createDiscount(env.DB, r.projectKey, {
+      code: body.code, kind: body.kind, value: body.value,
+      max_uses: body.max_uses, expires_at: body.expires_at,
+    });
+    return json({ success: true, discount: discountView(discount) }, 201);
+  } catch (e) {
+    if (e.message === 'duplicate') return json({ success: false, error: t(lang, 'discw.duplicate') }, 409);
+    if (e.message === 'invalid') return json({ success: false, error: t(lang, 'discw.bad_input') }, 400);
+    console.error('discount create error:', e);
+    return json({ success: false, error: 'Failed to create discount' }, 500);
+  }
+}
+
+/** PUT /api/ai-builder/:project_id/store/discounts/:discount_id */
+export async function handleDiscountUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const updated = await updateDiscount(env.DB, r.projectKey, parseInt(params.discount_id, 10), {
+    active: body.active, value: body.value, max_uses: body.max_uses, expires_at: body.expires_at,
+  });
+  if (!updated) return json({ success: false, error: 'Discount not found' }, 404);
+  return json({ success: true, discount: discountView(updated) });
+}
+
+/** DELETE /api/ai-builder/:project_id/store/discounts/:discount_id */
+export async function handleDiscountDelete(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  await deleteDiscount(env.DB, r.projectKey, parseInt(params.discount_id, 10));
+  return json({ success: true });
+}
+
+/**
+ * POST /api/store/discount/validate — PUBLIC. Buyer cart previews a code:
+ * { s: publicId, code, items:[{id,qty}] } → { success, code, amount_cents }
+ * (amount the code takes off the current cart). Repriced from the DB; mirrors
+ * the authoritative checkout-time validation so the preview can't be gamed.
+ */
+export async function handleDiscountValidate(ctx) {
+  const { env, request } = ctx;
+  try {
+    const body = await request.json().catch(() => ({}));
+    const publicId = (body.s || '').toString();
+    if (!PUBLIC_ID_RE.test(publicId)) return json({ success: false, error: 'Unknown site' }, 404);
+    const code = normalizeCode(body.code);
+    if (!code) return json({ success: false, error: t('en', 'discw.bad_input') }, 400);
+
+    const r = await resolveStoreProject(env, publicId);
+    if (!r) return json({ success: false, error: 'Unknown site' }, 404);
+    if (!(await hasPlugin(env, r.email, 'advanced_store'))) {
+      return json({ success: false, error: t(r.language, 'discw.invalid'), discount_error: 'invalid' }, 409);
+    }
+
+    const d = await getDiscountByCode(env.DB, r.projectKey, code);
+    const chk = checkDiscount(d);
+    if (!chk.ok) return json({ success: false, error: t(r.language, `discw.${chk.reason}`), discount_error: chk.reason }, 409);
+
+    // Reprice the cart subtotal so the previewed amount matches checkout.
+    const rawItems = Array.isArray(body.items) ? body.items.slice(0, 20) : [];
+    const wanted = new Map();
+    for (const it of rawItems) {
+      const id = parseInt(it && it.id, 10);
+      const qty = Math.min(99, Math.max(1, parseInt(it && it.qty, 10) || 1));
+      if (Number.isFinite(id) && id > 0) wanted.set(id, (wanted.get(id) || 0) + qty);
+    }
+    const products = await getProductsByProject(env.DB, r.projectKey, true);
+    const byId = new Map(products.map((p) => [p.id, p]));
+    let subtotal = 0;
+    for (const [id, qty] of wanted) { const p = byId.get(id); if (p) subtotal += p.price_cents * qty; }
+    const amount = discountAmountFor(d, subtotal);
+    return json({ success: true, code: d.code, kind: d.kind, value: d.value, amount_cents: amount });
+  } catch (e) {
+    console.error('discount validate error:', e);
+    return json({ success: false, error: 'Could not check the code.' }, 500);
   }
 }
 
@@ -766,6 +925,22 @@ export async function recordStoreOrder(env, publicId, session) {
     items_json: JSON.stringify(items).slice(0, 4000),
   });
   if (!row) return { isNew: false }; // already recorded (other writer won)
+
+  // Advanced Store: decrement stock for tracked products (idempotent — only on
+  // a newly-recorded order). metadata.items = [[id,qty],…] set at checkout.
+  try {
+    const cart = JSON.parse((session.metadata && session.metadata.items) || '[]');
+    for (const [id, qty] of cart) {
+      if (Number.isFinite(id)) await decrementStock(env.DB, r.projectKey, id, qty);
+    }
+  } catch (e) { console.error('stock decrement failed (non-fatal):', e.message); }
+
+  // Advanced Store: bump the discount code's usage count (idempotent — only on a
+  // newly-recorded order). metadata.discount = the applied code.
+  try {
+    const code = session.metadata && session.metadata.discount;
+    if (code) await incrementDiscountUse(env.DB, r.projectKey, code);
+  } catch (e) { console.error('discount use bump failed (non-fatal):', e.message); }
 
   const appOrigin = env.APP_URL || '';
   const orderRef = session.id.slice(-8).toUpperCase();

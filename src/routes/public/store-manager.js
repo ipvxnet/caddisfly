@@ -6,6 +6,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
+import { hasPlugin } from '../../plugins/entitlements.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -17,6 +18,8 @@ export async function handleStoreManager(ctx) {
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
   const publicId = params.project_id;
+  // Advanced Store plugin → show the inventory (stock) field when entitled.
+  const hasAdvStore = await hasPlugin(env, ctx.billingEmail, 'advanced_store');
 
   // Resolve the project name (ai-first, like blog-manager).
   const aiProject = await getAIProjectByProjectId(env.DB, publicId);
@@ -149,6 +152,7 @@ export async function handleStoreManager(ctx) {
         <label>${tr('storem.category_label')} <span class="hint">${tr('storem.category_hint')}</span></label>
         <input id="np-category" maxlength="80" placeholder="Parts, Tools…">
         <label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" id="np-forsale" checked style="width:auto"> ${tr('storem.forsale_label')}</label>
+        ${hasAdvStore ? `<label>${tr('storem.stock_label')} <span class="hint">${tr('storem.stock_hint')}</span></label><input id="np-stock" type="number" min="0" placeholder="∞">` : ''}
         <details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">${tr('storem.media_label')}</summary>
           <label>${tr('storem.media_gallery')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-gallery" rows="2" placeholder="https://…/photo1.jpg"></textarea>
@@ -169,10 +173,36 @@ export async function handleStoreManager(ctx) {
 
       <div id="products-list"><p class="muted">${tr('storem.loading')}</p></div>
     </div>
+
+    ${hasAdvStore ? `<div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <h2 style="margin-bottom:0">${tr('storem.disc_heading')}</h2>
+      </div>
+      <p class="muted" style="margin-top:.4rem">${tr('storem.disc_hint')}</p>
+      <div class="addform" id="disc-form" style="display:block">
+        <div class="row3">
+          <div><label>${tr('storem.disc_code_label')}</label><input id="nd-code" maxlength="40" placeholder="${tr('storem.disc_code_ph')}"></div>
+          <div><label>${tr('storem.disc_kind_label')}</label>
+            <select id="nd-kind">
+              <option value="percent">${tr('storem.disc_kind_percent')}</option>
+              <option value="fixed">${tr('storem.disc_kind_fixed')}</option>
+            </select>
+          </div>
+          <div><label>${tr('storem.disc_value_label')} <span class="hint" id="nd-value-hint">${tr('storem.disc_value_hint_pct')}</span></label><input id="nd-value" inputmode="decimal" placeholder="10"></div>
+        </div>
+        <div class="row3">
+          <div><label>${tr('storem.disc_max_label')} <span class="hint">${tr('storem.disc_max_hint')}</span></label><input id="nd-max" type="number" min="1" placeholder="∞"></div>
+          <div><label>${tr('storem.disc_expiry_label')} <span class="hint">${tr('storem.disc_expiry_hint')}</span></label><input id="nd-expiry" type="date"></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn" onclick="addDiscount(this)" style="width:100%">${tr('storem.disc_add')}</button></div>
+        </div>
+      </div>
+      <div id="discounts-list"><p class="muted">${tr('storem.loading')}</p></div>
+    </div>` : ''}
   </div></main>
   ${siteFooter({ lang })}
   <script>
     var PID = ${JSON.stringify(publicId)};
+    var ADV = ${hasAdvStore ? 'true' : 'false'};
     var T = {
       connected: ${JSON.stringify(tr('storem.connected_as'))},
       notConnected: ${JSON.stringify(tr('storem.not_connected'))},
@@ -215,6 +245,8 @@ export async function handleStoreManager(ctx) {
       mediaLinks: ${JSON.stringify(tr('storem.media_links'))},
       mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
       uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
+      stockLabel: ${JSON.stringify(tr('storem.stock_label'))},
+      stockHint: ${JSON.stringify(tr('storem.stock_hint'))},
       types: {
         physical: ${JSON.stringify(tr('storem.type_physical'))},
         digital: ${JSON.stringify(tr('storem.type_digital'))},
@@ -238,6 +270,20 @@ export async function handleStoreManager(ctx) {
         policy: ${JSON.stringify(tr('storem.skip_policy'))},
         price_range: ${JSON.stringify(tr('storem.skip_price_range'))},
       },
+      discValueHintPct: ${JSON.stringify(tr('storem.disc_value_hint_pct'))},
+      discValueHintFixed: ${JSON.stringify(tr('storem.disc_value_hint_fixed'))},
+      discAdd: ${JSON.stringify(tr('storem.disc_add'))},
+      discAdding: ${JSON.stringify(tr('storem.disc_adding'))},
+      discNone: ${JSON.stringify(tr('storem.disc_none'))},
+      discUsed: ${JSON.stringify(tr('storem.disc_used'))},
+      discUsedMax: ${JSON.stringify(tr('storem.disc_used_max'))},
+      discActive: ${JSON.stringify(tr('storem.disc_active'))},
+      discInactive: ${JSON.stringify(tr('storem.disc_inactive'))},
+      discEnable: ${JSON.stringify(tr('storem.disc_enable'))},
+      discDisable: ${JSON.stringify(tr('storem.disc_disable'))},
+      discDelConfirm: ${JSON.stringify(tr('storem.disc_delete_confirm'))},
+      discExpiresOn: ${JSON.stringify(tr('storem.disc_expires_on'))},
+      discBadInput: ${JSON.stringify(tr('discw.bad_input'))},
     };
     var LANG = ${JSON.stringify(lang)};
     var CUR = 'usd';
@@ -342,6 +388,7 @@ export async function handleStoreManager(ctx) {
         '<label>' + T.imageLabel + '</label><input class="f-image" maxlength="500" value="' + esc(p.image || '') + '">' +
         '<label>' + T.categoryLabel + '</label><input class="f-category" maxlength="80" value="' + esc(p.category || '') + '">' +
         '<label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" class="f-forsale"' + (p.for_sale === 0 ? '' : ' checked') + ' style="width:auto"> ' + T.forsaleLabel + '</label>' +
+        (ADV ? '<label>' + T.stockLabel + ' <span class="hint">' + T.stockHint + '</span></label><input class="f-stock" type="number" min="0" value="' + (p.stock == null ? '' : p.stock) + '">' : '') +
         '<details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">' + T.mediaLabel + '</summary>' +
         '<label>' + T.mediaGallery + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-gallery" rows="2">' + esc(mt.gallery) + '</textarea>' +
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
@@ -417,6 +464,7 @@ export async function handleStoreManager(ctx) {
           category: document.getElementById('np-category').value.trim(),
           for_sale: forsale ? 1 : 0,
           media: mediaFrom(document.getElementById('np-gallery').value, document.getElementById('np-videos').value, document.getElementById('np-files').value, document.getElementById('np-links').value),
+          stock: document.getElementById('np-stock') ? document.getElementById('np-stock').value : '',
         });
         document.getElementById('np-name').value = '';
         document.getElementById('np-price').value = '';
@@ -453,6 +501,7 @@ export async function handleStoreManager(ctx) {
           category: box.querySelector('.f-category').value.trim(),
           for_sale: forsale ? 1 : 0,
           media: mediaFrom(box.querySelector('.m-gallery').value, box.querySelector('.m-videos').value, box.querySelector('.m-files').value, box.querySelector('.m-links').value),
+          stock: box.querySelector('.f-stock') ? box.querySelector('.f-stock').value : '',
         });
         await loadProducts();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = T.save; }
@@ -562,6 +611,80 @@ export async function handleStoreManager(ctx) {
       } catch (e) { list.innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; }
     }
     loadOrders();
+
+    // ---- discount codes (Advanced Store) ------------------------------------
+    if (ADV) {
+      var kindSel = document.getElementById('nd-kind');
+      if (kindSel) kindSel.addEventListener('change', function () {
+        document.getElementById('nd-value-hint').textContent = kindSel.value === 'fixed' ? T.discValueHintFixed : T.discValueHintPct;
+      });
+    }
+    function discValueText(d) { return d.kind === 'fixed' ? money(d.value) : (d.value + '%'); }
+    function discUsage(d) {
+      return d.max_uses != null
+        ? T.discUsedMax.replace('{used}', d.used_count).replace('{max}', d.max_uses)
+        : T.discUsed.replace('{used}', d.used_count);
+    }
+    function discountRow(d) {
+      var meta = discUsage(d);
+      if (d.expires_at) meta += ' · ' + T.discExpiresOn.replace('{date}', new Date(d.expires_at * 1000).toLocaleDateString(LANG, { dateStyle: 'medium' }));
+      return '<div class="prod" data-id="' + d.id + '">' +
+        '<div class="prod-top"><div class="prod-main">' +
+        '<div class="prod-name"><code>' + esc(d.code) + '</code> ' +
+        '<span class="pill ' + (d.active ? 'ok' : 'warn') + '">' + (d.active ? T.discActive : T.discInactive) + '</span></div>' +
+        '<div class="prod-price">' + discValueText(d) + '</div>' +
+        '<div class="post-meta muted" style="font-size:.85rem;margin-top:.2rem">' + meta + '</div>' +
+        '</div>' +
+        '<div class="prod-actions">' +
+        '<button class="btn ghost" onclick="toggleDiscount(' + d.id + ', ' + (d.active ? 'false' : 'true') + ')">' + (d.active ? T.discDisable : T.discEnable) + '</button>' +
+        '<button class="link-btn danger" onclick="delDiscount(' + d.id + ')">' + T.del + '</button>' +
+        '</div></div></div>';
+    }
+    function renderDiscounts(d) {
+      var list = document.getElementById('discounts-list');
+      var rows = d.discounts || [];
+      list.innerHTML = rows.length ? rows.map(discountRow).join('') : '<p class="muted">' + T.discNone + '</p>';
+    }
+    async function loadDiscounts() {
+      try { renderDiscounts(await api('GET', '/discounts')); }
+      catch (e) { document.getElementById('discounts-list').innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; }
+    }
+    function expiryToEpoch(v) {
+      if (!v) return '';
+      var ms = Date.parse(v + 'T23:59:59');
+      return isFinite(ms) ? Math.floor(ms / 1000) : '';
+    }
+    async function addDiscount(btn) {
+      var code = document.getElementById('nd-code').value.trim();
+      var kind = document.getElementById('nd-kind').value;
+      var raw = document.getElementById('nd-value').value;
+      var value = kind === 'fixed' ? parsePrice(raw) : parseInt(raw, 10);
+      if (!code || value == null || !isFinite(value) || value <= 0 || (kind === 'percent' && value > 100)) { alert(T.discBadInput); return; }
+      btn.disabled = true; btn.textContent = T.discAdding;
+      try {
+        await api('POST', '/discounts', {
+          code: code, kind: kind, value: value,
+          max_uses: document.getElementById('nd-max').value,
+          expires_at: expiryToEpoch(document.getElementById('nd-expiry').value),
+        });
+        document.getElementById('nd-code').value = '';
+        document.getElementById('nd-value').value = '';
+        document.getElementById('nd-max').value = '';
+        document.getElementById('nd-expiry').value = '';
+        await loadDiscounts();
+      } catch (e) { alert(e.message); }
+      btn.disabled = false; btn.textContent = T.discAdd;
+    }
+    async function toggleDiscount(id, active) {
+      try { await api('PUT', '/discounts/' + id, { active: active }); await loadDiscounts(); }
+      catch (e) { alert(e.message); }
+    }
+    async function delDiscount(id) {
+      if (!confirm(T.discDelConfirm)) return;
+      try { await api('DELETE', '/discounts/' + id); await loadDiscounts(); }
+      catch (e) { alert(e.message); }
+    }
+    if (ADV) loadDiscounts();
   </script>
 </body>
 </html>`;

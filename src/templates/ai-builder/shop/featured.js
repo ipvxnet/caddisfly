@@ -56,6 +56,7 @@ export function featuredProductsTemplate(data, config) {
 .shop-feat-foot .shop-add-btn { background: ${primary_color}; color: #fff; border: none; border-radius: 9px; padding: .5rem .85rem;
   font-size: .85rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
 .shop-feat-foot .shop-add-btn:hover { opacity: .88; }
+.shop-sold-out { font-size: .82rem; font-weight: 700; color: #9b2c2c; background: #fed7d7; border-radius: 8px; padding: .35rem .7rem; }
 .shop-feat-cta-wrap { text-align: center; margin-top: 2.6rem; }
 .shop-feat-cta { display: inline-block; background: ${primary_color}; color: #fff; text-decoration: none; font-weight: 700;
   padding: .85rem 2rem; border-radius: 10px; transition: opacity .2s; }
@@ -90,9 +91,11 @@ ${styles}
       </a>
       <div class="shop-feat-foot">
         <span class="shop-feat-price">${money(p.price_cents, currency, lang)}</span>
-        ${published
-          ? `<button class="shop-add-btn" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>`
-          : ''}
+        ${p.stock === 0
+          ? `<span class="shop-sold-out">${t(lang, 'shopw.sold_out')}</span>`
+          : (published
+            ? `<button class="shop-add-btn" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>`
+            : '')}
       </div>
     </div>`
     )
