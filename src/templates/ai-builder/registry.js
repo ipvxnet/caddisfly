@@ -67,7 +67,7 @@ import { shopProductTemplate } from './shop/product.js';
 // Featured products — a real ADDABLE body section (live product injection)
 import { featuredProductsTemplate } from './shop/featured.js';
 // Catalogue (plugin) — addable body section, live product injection by category
-import { catalogueTilesTemplate } from './catalogue/tiles.js';
+import { catalogueTilesTemplate, catalogueShowcaseTemplate } from './catalogue/tiles.js';
 import { bookingWidgetTemplate } from './booking/widget.js';
 
 /**
@@ -159,8 +159,9 @@ export const TEMPLATE_REGISTRY = {
     default: featuredProductsTemplate,
   },
   catalogue: {
-    tiles: catalogueTilesTemplate,
-    default: catalogueTilesTemplate,
+    showcase: catalogueShowcaseTemplate, // compact, title-over-image (DEFAULT)
+    tiles: catalogueTilesTemplate, // image + title + description card
+    default: catalogueShowcaseTemplate,
   },
   booking: {
     panel: bookingWidgetTemplate,

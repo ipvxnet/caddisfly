@@ -107,3 +107,72 @@ ${styles}`.trim();
 </section>
 ${styles}`.trim();
 }
+
+/**
+ * Showcase variant — compact, image-forward tiles with the title overlaid at the
+ * bottom of the picture (no description on the card, to save space). Clicking a
+ * tile opens the item detail page (description + Buy now). This is the DEFAULT
+ * catalogue variant.
+ */
+export function catalogueShowcaseTemplate(data, config) {
+  const { primary_color = '#667eea', font_heading = 'Inter' } = config;
+  const lang = config.lang || 'en';
+  const tr = CAT_T[lang] || CAT_T.en;
+  const all = Array.isArray(config.products) ? config.products : [];
+  const base = config.previewBase || '';
+  const embedSuffix = config.embed ? '?embed=1' : '';
+  const published = !!config.trackId;
+  const category = (data.category || '').trim();
+  const items = category ? all.filter((p) => (p.category || '') === category) : all;
+  const heading = data.heading || category || tr.heading;
+
+  const styles = `
+<style>
+.cat-section { padding: 5rem 2rem; background: #fff; }
+.cat-container { max-width: 1100px; margin: 0 auto; }
+.cat-header { text-align: center; margin-bottom: 3rem; }
+.cat-heading { font-family: ${font_heading}, sans-serif; font-size: clamp(2rem, 3vw, 2.5rem); font-weight: 700; color: #1a202c; }
+.cat-sub { font-size: 1.15rem; color: #4a5568; margin-top: .6rem; }
+.cat-sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+.cat-sc-card { position: relative; display: block; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; text-decoration: none; box-shadow: 0 4px 18px rgba(0,0,0,.1); }
+.cat-sc-img { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform .3s ease; }
+.cat-sc-card:hover .cat-sc-img { transform: scale(1.06); }
+.cat-sc-img-empty { background: linear-gradient(135deg, ${primary_color}55, ${primary_color}99); }
+.cat-sc-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.6rem 1rem .9rem; background: linear-gradient(transparent, rgba(0,0,0,.8)); }
+.cat-sc-title { color: #fff; font-weight: 700; font-size: 1.05rem; line-height: 1.3; }
+.cat-empty { text-align: center; color: #718096; border: 2px dashed #e2e8f0; border-radius: 14px; padding: 2.5rem 1.5rem; max-width: 640px; margin: 0 auto; }
+@media (max-width: 768px) { .cat-section { padding: 3rem 1.5rem; } }
+</style>`;
+
+  if (!items.length) {
+    if (published) return '';
+    return `
+<section class="cat-section">
+  <div class="cat-container"><div class="cat-empty">📒 ${esc(tr.empty)}</div></div>
+</section>
+${styles}`.trim();
+  }
+
+  const cards = items
+    .map((p) => {
+      const href = esc(`${base}/shop/${p.slug}${embedSuffix}`);
+      return `
+    <a class="cat-sc-card" href="${href}" aria-label="${esc(p.name)}">
+      ${p.image ? `<div class="cat-sc-img" style="background-image:url('${esc(p.image)}')"></div>` : '<div class="cat-sc-img cat-sc-img-empty"></div>'}
+      <div class="cat-sc-overlay"><span class="cat-sc-title">${esc(p.name)}</span></div>
+    </a>`;
+    })
+    .join('');
+
+  return `
+<section class="cat-section">
+  <div class="cat-container">
+    <div class="cat-header">
+      <h2 class="cat-heading">${esc(heading)}</h2>
+      ${data.subheading ? `<p class="cat-sub">${esc(data.subheading)}</p>` : ''}
+    </div>
+    <div class="cat-sc-grid">${cards}</div>
+  </div>
+</section>
+${styles}`.trim();
+}
