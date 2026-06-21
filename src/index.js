@@ -126,6 +126,7 @@ import {
   handleStoreWebhook, handleOrderList, handleProductImport,
   handleDiscountList, handleDiscountCreate, handleDiscountUpdate, handleDiscountDelete,
   handleDiscountValidate,
+  handleVariantList, handleVariantCreate, handleVariantUpdate, handleVariantDelete,
   handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
@@ -434,6 +435,11 @@ router.get('/api/ai-builder/:project_id/store/discounts', handleDiscountList, AD
 router.post('/api/ai-builder/:project_id/store/discounts', handleDiscountCreate, ADV);
 router.put('/api/ai-builder/:project_id/store/discounts/:discount_id', handleDiscountUpdate, ADV);
 router.delete('/api/ai-builder/:project_id/store/discounts/:discount_id', handleDiscountDelete, ADV);
+// Product variants (Advanced Store plugin — gated by entitlement).
+router.get('/api/ai-builder/:project_id/store/products/:product_id/variants', handleVariantList, ADV);
+router.post('/api/ai-builder/:project_id/store/products/:product_id/variants', handleVariantCreate, ADV);
+router.put('/api/ai-builder/:project_id/store/products/:product_id/variants/:variant_id', handleVariantUpdate, ADV);
+router.delete('/api/ai-builder/:project_id/store/products/:product_id/variants/:variant_id', handleVariantDelete, ADV);
 router.get('/api/ai-builder/:project_id/store/prices', handleSubPriceList, PROJ);
 router.post('/api/ai-builder/:project_id/store/prices', handleSubPriceCreate, PROJ);
 

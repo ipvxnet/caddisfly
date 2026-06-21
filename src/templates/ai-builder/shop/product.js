@@ -35,7 +35,16 @@ export function shopProductTemplate(data, config) {
   const base = data.base || '';
   const currency = data.currency || 'usd';
   const media = p.media || {};
-  const buyable = p.for_sale !== 0 && (p.price_cents || 0) > 0;
+  // Variants (Advanced Store): when present the buyer picks one; each has its own
+  // price + stock. A variant product is buyable if >= 1 variant is in stock,
+  // regardless of the base price (which variants override).
+  const variants = Array.isArray(p.variants) ? p.variants : [];
+  const hasVariants = variants.length > 0;
+  const inStockVariants = variants.filter((v) => v.stock == null || v.stock > 0);
+  const buyable = hasVariants ? inStockVariants.length > 0 : (p.for_sale !== 0 && (p.price_cents || 0) > 0);
+  const firstBuyable = inStockVariants[0] || variants[0] || null;
+  const displayPrice = hasVariants ? (firstBuyable ? firstBuyable.price_cents : 0) : (p.price_cents || 0);
+  const soldOut = t(lang, 'varw.sold_out');
 
   // Rich catalogue detail (body + media) — only present on catalogue items.
   const detail = [];
@@ -63,9 +72,18 @@ export function shopProductTemplate(data, config) {
       </div>
       <div class="shop-product-info">
         <h1 class="shop-product-name">${esc(p.name)}</h1>
-        ${buyable ? `<div class="shop-product-price">${money(p.price_cents || 0, currency, lang)}</div>` : ''}
+        ${buyable ? `<div class="shop-product-price" data-cf-price>${money(displayPrice, currency, lang)}</div>` : ''}
         ${p.description_html ? `<div class="shop-product-desc">${p.description_html}</div>` : ''}
-        ${buyable ? `<button class="shop-add-btn shop-add-lg" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents || 0}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>` : ''}
+        ${hasVariants
+          ? (buyable
+            ? `<div data-cf-buy>
+        <select class="shop-variant" data-cf-variant aria-label="${esc(p.name)}">
+          ${variants.map((v) => `<option value="${v.id}" data-price="${v.price_cents}" data-label="${esc(v.label)}"${v.stock === 0 ? ' disabled' : ''}>${esc(v.label)} — ${money(v.price_cents, currency, lang)}${v.stock === 0 ? ` (${esc(soldOut)})` : ''}</option>`).join('')}
+        </select>
+        <button class="shop-add-btn shop-add-lg" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>
+      </div>`
+            : `<div class="shop-sold-out-lg">${esc(soldOut)}</div>`)
+          : (buyable ? `<button class="shop-add-btn shop-add-lg" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents || 0}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>` : '')}
       </div>
     </div>
     ${detail.length ? `<div class="cat-detail">${detail.join('')}</div>` : ''}
@@ -85,6 +103,9 @@ export function shopProductTemplate(data, config) {
 .shop-product-desc p { margin-bottom: .9rem; }
 .shop-product-desc ul { padding-left: 1.2rem; margin-bottom: .9rem; }
 .shop-add-lg { margin-top: 1.4rem; padding: .8rem 1.6rem; font-size: 1rem; border-radius: 11px; }
+.shop-variant { display: block; width: 100%; max-width: 320px; margin-top: 1.2rem; padding: .65rem .7rem; font-size: .95rem; border: 1px solid #cbd5e0; border-radius: 10px; background: #fff; }
+[data-cf-buy] .shop-add-lg { margin-top: .8rem; }
+.shop-sold-out-lg { margin-top: 1.4rem; display: inline-block; font-weight: 700; color: #9b2c2c; background: #fed7d7; border-radius: 10px; padding: .6rem 1.1rem; }
 .shop-add-btn { background: ${primary_color}; color: #fff; border: none; font-weight: 700; cursor: pointer; transition: opacity .2s; }
 .shop-add-btn:hover { opacity: .88; }
 .cat-detail { margin-top: 3rem; max-width: 820px; }

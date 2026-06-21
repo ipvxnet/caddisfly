@@ -668,6 +668,8 @@ export const en = {
     discount_remove: 'Remove',
     discount_off: 'Discount',
     discount_checking: 'Checking…',
+    view_options: 'View options',
+    from_price: 'from',
   },
 
   // Discount-code messages (Advanced Store) — buyer + admin (SITE/app language).
@@ -678,6 +680,15 @@ export const en = {
     used_up: 'That code has reached its usage limit.',
     duplicate: 'A code with that name already exists.',
     bad_input: 'Enter a code and a discount value (percent 1–100, or a fixed amount).',
+  },
+
+  // Product variant messages (Advanced Store) — buyer + admin.
+  varw: {
+    label_required: 'Give the option a name (e.g. “Large”, “Red”).',
+    choose: 'Choose an option',
+    out_of_stock: 'Sorry, the option you selected is out of stock.',
+    sold_out: 'Sold out',
+    select_first: 'Please choose an option first.',
   },
 
   // Order receipt page + buyer confirmation email (SITE's language).
@@ -800,6 +811,16 @@ export const en = {
     disc_enable: 'Enable', disc_disable: 'Disable',
     disc_delete_confirm: 'Delete this code? Buyers can no longer use it.',
     disc_expires_on: 'expires {date}',
+    // Variants (Advanced Store plugin) — inside the product editor.
+    var_heading: 'Variants',
+    var_hint: 'Options like size or colour, each with its own price and stock. Add one or more and this product sells by option.',
+    var_label_label: 'Option', var_label_ph: 'e.g. Large / Red',
+    var_price_label: 'Price', var_stock_label: 'Stock', var_sku_label: 'SKU',
+    var_add: 'Add option', var_adding: 'Adding…',
+    var_none: 'No options yet — this product sells at its base price.',
+    var_delete_confirm: 'Delete this option?',
+    var_active: 'on', var_inactive: 'off', var_enable: 'Enable', var_disable: 'Disable',
+    var_sold_out: 'sold out',
   },
 
   blogm: {

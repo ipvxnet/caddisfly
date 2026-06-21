@@ -38,8 +38,11 @@ export function shopGridTemplate(data, config) {
         </div>
       </a>
       <div class="shop-card-foot">
-        <span class="shop-card-price">${money(p.price_cents, currency, lang)}</span>
-        <button class="shop-add-btn" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>
+        ${p.has_variants
+          ? `<span class="shop-card-price">${t(lang, 'shopw.from_price')} ${money(p.price_from || 0, currency, lang)}</span>
+        <a class="shop-add-btn" href="${esc(`${base}/shop/${p.slug}`)}">${t(lang, 'shopw.view_options')}</a>`
+          : `<span class="shop-card-price">${money(p.price_cents, currency, lang)}</span>
+        <button class="shop-add-btn" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>`}
       </div>
     </div>`
     )

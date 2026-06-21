@@ -47,6 +47,7 @@ export function cartScript(config) {
       discountRemove: t(lang, 'shopw.discount_remove'),
       discountOff: t(lang, 'shopw.discount_off'),
       discountChecking: t(lang, 'shopw.discount_checking'),
+      variantSelect: t(lang, 'varw.select_first'),
     },
     ordersUrl: siteId ? `${config.appOrigin || ''}/store/orders?s=${siteId}` : '',
   };
@@ -111,7 +112,7 @@ export function cartScript(config) {
     var rows = cart.map(function (i, idx) {
       return '<div class="cf-cart-row">' +
         (i.image ? '<img src="' + i.image.replace(/"/g, '&quot;') + '" alt="">' : '<img alt="">') +
-        '<div class="cf-i"><b></b><span>' + money(i.price_cents) + '</span></div>' +
+        '<div class="cf-i"><b></b><span>' + money(i.price_cents) + (i.variant_label ? ' · <em class="cf-var"></em>' : '') + '</span></div>' +
         '<div class="cf-qty"><button data-d="' + idx + '">−</button><span>' + i.qty + '</span><button data-u="' + idx + '">+</button></div>' +
         '<button class="cf-rm" data-r="' + idx + '" title="' + CFG.s.remove + '">✕</button></div>';
     }).join('');
@@ -134,9 +135,12 @@ export function cartScript(config) {
       '<button class="cf-cart-go">' + CFG.s.checkout + '</button>' +
       (CFG.preview ? '<div class="cf-cart-note">' + CFG.s.preview + '</div>' : '') +
       (CFG.ordersUrl ? '<div class="cf-cart-note"><a href="' + CFG.ordersUrl + '" target="_blank" rel="noopener" style="color:inherit">' + CFG.s.myOrders + ' →</a></div>' : '');
-    // product names via textContent (never trusted as HTML)
+    // product names + variant labels via textContent (never trusted as HTML)
     var bs = panel.querySelectorAll('.cf-i b');
     for (var k = 0; k < cart.length; k++) bs[k].textContent = cart[k].name;
+    var vs = panel.querySelectorAll('.cf-i .cf-var');
+    var vi = 0;
+    for (var k2 = 0; k2 < cart.length; k2++) { if (cart[k2].variant_label) { vs[vi].textContent = cart[k2].variant_label; vi++; } }
     panel.querySelectorAll('[data-d]').forEach(function (b) { b.onclick = function () { bump(+b.getAttribute('data-d'), -1); }; });
     panel.querySelectorAll('[data-u]').forEach(function (b) { b.onclick = function () { bump(+b.getAttribute('data-u'), 1); }; });
     panel.querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { var c = read(); c.splice(+b.getAttribute('data-r'), 1); write(c); }; });
@@ -150,7 +154,7 @@ export function cartScript(config) {
     var cart = read();
     var res = await fetch(CFG.validateUrl, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ s: CFG.site, code: code, items: cart.map(function (i) { return { id: i.id, qty: i.qty }; }) }),
+      body: JSON.stringify({ s: CFG.site, code: code, items: cart.map(function (i) { return { id: i.id, qty: i.qty, variant_id: i.variant_id || undefined }; }) }),
     });
     var d = await res.json().catch(function () { return {}; });
     if (!res.ok || d.success === false) throw new Error(d.error || CFG.s.error);
@@ -176,10 +180,11 @@ export function cartScript(config) {
   }
   function add(item) {
     var c = read();
+    var vid = item.variant_id || null;
     for (var i = 0; i < c.length; i++) {
-      if (c[i].id === item.id) { c[i].qty = Math.min(99, c[i].qty + 1); write(c); return; }
+      if (c[i].id === item.id && (c[i].variant_id || null) === vid) { c[i].qty = Math.min(99, c[i].qty + 1); write(c); return; }
     }
-    c.push({ id: item.id, name: item.name, price_cents: item.price_cents, image: item.image, qty: 1 });
+    c.push({ id: item.id, name: item.name, price_cents: item.price_cents, image: item.image, qty: 1, variant_id: vid || undefined, variant_label: item.variant_label || undefined });
     write(c);
   }
   async function checkout() {
@@ -193,7 +198,7 @@ export function cartScript(config) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           s: CFG.site,
-          items: cart.map(function (i) { return { id: i.id, qty: i.qty }; }),
+          items: cart.map(function (i) { return { id: i.id, qty: i.qty, variant_id: i.variant_id || undefined }; }),
           path: location.pathname,
           discount_code: APPLIED.code || undefined,
         }),
@@ -211,12 +216,23 @@ export function cartScript(config) {
     var b = ev.target.closest('[data-cf-add]');
     if (!b) return;
     ev.preventDefault();
-    add({
+    var item = {
       id: parseInt(b.getAttribute('data-id'), 10),
       name: b.getAttribute('data-name') || '',
       price_cents: parseInt(b.getAttribute('data-price'), 10) || 0,
       image: b.getAttribute('data-image') || '',
-    });
+    };
+    // Variant products: the price/id come from the chosen option (data-cf-buy wrapper).
+    var buy = b.closest('[data-cf-buy]');
+    if (buy) {
+      var sel = buy.querySelector('[data-cf-variant]');
+      var opt = sel && sel.options[sel.selectedIndex];
+      if (!opt || opt.disabled) { toast(CFG.s.variantSelect); return; }
+      item.variant_id = parseInt(opt.value, 10);
+      item.variant_label = opt.getAttribute('data-label') || '';
+      item.price_cents = parseInt(opt.getAttribute('data-price'), 10) || item.price_cents;
+    }
+    add(item);
     var old = b.textContent; b.textContent = CFG.s.added;
     setTimeout(function () { b.textContent = old; }, 1200);
     document.getElementById('cf-cart-panel').style.display = 'block';
@@ -231,6 +247,16 @@ export function cartScript(config) {
     document.body.appendChild(fab);
     var panel = document.createElement('div'); panel.id = 'cf-cart-panel'; document.body.appendChild(panel);
     var tst = document.createElement('div'); tst.id = 'cf-shop-toast'; document.body.appendChild(tst);
+    // Variant selectors (product detail): reflect the chosen option's price.
+    document.querySelectorAll('[data-cf-buy]').forEach(function (buy) {
+      var sel = buy.querySelector('[data-cf-variant]');
+      var priceEl = buy.parentElement && buy.parentElement.querySelector('[data-cf-price]');
+      if (!sel || !priceEl) return;
+      sel.addEventListener('change', function () {
+        var opt = sel.options[sel.selectedIndex];
+        if (opt) priceEl.textContent = money(parseInt(opt.getAttribute('data-price'), 10) || 0);
+      });
+    });
     var q = new URLSearchParams(location.search);
     if (q.get('paid') === '1') { write([]); toast(CFG.s.paid, 6000); }
     else if (q.get('cancelled') === '1') { toast(CFG.s.cancelled); }

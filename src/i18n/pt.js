@@ -664,6 +664,8 @@ export const pt = {
     discount_remove: 'Remover',
     discount_off: 'Desconto',
     discount_checking: 'Verificando…',
+    view_options: 'Ver opções',
+    from_price: 'a partir de',
   },
 
   // Mensagens de código de desconto (Loja Avançada) — comprador + administrador.
@@ -674,6 +676,15 @@ export const pt = {
     used_up: 'Esse código atingiu o limite de usos.',
     duplicate: 'Já existe um código com esse nome.',
     bad_input: 'Insira um código e um valor de desconto (porcentagem 1–100 ou um valor fixo).',
+  },
+
+  // Mensagens de variantes de produto (Loja Avançada) — comprador + administrador.
+  varw: {
+    label_required: 'Dê um nome à opção (ex.: “Grande”, “Vermelho”).',
+    choose: 'Escolha uma opção',
+    out_of_stock: 'Desculpe, a opção que você escolheu está esgotada.',
+    sold_out: 'Esgotado',
+    select_first: 'Por favor, escolha uma opção primeiro.',
   },
 
   // Página de recibo + e-mail de confirmação ao comprador (idioma do SITE).
@@ -794,6 +805,16 @@ export const pt = {
     disc_enable: 'Ativar', disc_disable: 'Desativar',
     disc_delete_confirm: 'Excluir este código? Os compradores não poderão mais usá-lo.',
     disc_expires_on: 'expira {date}',
+    // Variantes (plugin Loja Avançada) — dentro do editor de produto.
+    var_heading: 'Variantes',
+    var_hint: 'Opções como tamanho ou cor, cada uma com seu próprio preço e estoque. Adicione uma ou mais e este produto passa a ser vendido por opção.',
+    var_label_label: 'Opção', var_label_ph: 'ex.: Grande / Vermelho',
+    var_price_label: 'Preço', var_stock_label: 'Estoque', var_sku_label: 'SKU',
+    var_add: 'Adicionar opção', var_adding: 'Adicionando…',
+    var_none: 'Ainda não há opções — este produto é vendido pelo preço base.',
+    var_delete_confirm: 'Excluir esta opção?',
+    var_active: 'ativa', var_inactive: 'desativada', var_enable: 'Ativar', var_disable: 'Desativar',
+    var_sold_out: 'esgotado',
   },
 
   blogm: {

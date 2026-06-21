@@ -284,6 +284,23 @@ export async function handleStoreManager(ctx) {
       discDelConfirm: ${JSON.stringify(tr('storem.disc_delete_confirm'))},
       discExpiresOn: ${JSON.stringify(tr('storem.disc_expires_on'))},
       discBadInput: ${JSON.stringify(tr('discw.bad_input'))},
+      varHeading: ${JSON.stringify(tr('storem.var_heading'))},
+      varHint: ${JSON.stringify(tr('storem.var_hint'))},
+      varLabelLabel: ${JSON.stringify(tr('storem.var_label_label'))},
+      varLabelPh: ${JSON.stringify(tr('storem.var_label_ph'))},
+      varPriceLabel: ${JSON.stringify(tr('storem.var_price_label'))},
+      varStockLabel: ${JSON.stringify(tr('storem.var_stock_label'))},
+      varSkuLabel: ${JSON.stringify(tr('storem.var_sku_label'))},
+      varAdd: ${JSON.stringify(tr('storem.var_add'))},
+      varAdding: ${JSON.stringify(tr('storem.var_adding'))},
+      varNone: ${JSON.stringify(tr('storem.var_none'))},
+      varDelConfirm: ${JSON.stringify(tr('storem.var_delete_confirm'))},
+      varActive: ${JSON.stringify(tr('storem.var_active'))},
+      varInactive: ${JSON.stringify(tr('storem.var_inactive'))},
+      varEnable: ${JSON.stringify(tr('storem.var_enable'))},
+      varDisable: ${JSON.stringify(tr('storem.var_disable'))},
+      varSoldOut: ${JSON.stringify(tr('storem.var_sold_out'))},
+      varLabelRequired: ${JSON.stringify(tr('varw.label_required'))},
     };
     var LANG = ${JSON.stringify(lang)};
     var CUR = 'usd';
@@ -396,6 +413,20 @@ export async function handleStoreManager(ctx) {
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
         '<label>' + T.mediaLinks + ' <span class="hint">Label | URL</span></label><textarea class="m-links" rows="2">' + esc(mt.links) + '</textarea>' +
         '</details>' +
+        (ADV ? '<details class="var-wrap" data-pid="' + p.id + '" ontoggle="if(this.open)loadVariants(' + p.id + ')">' +
+          '<summary style="cursor:pointer;font-weight:600">' + T.varHeading + '</summary>' +
+          '<p class="hint" style="margin:.3rem 0 .5rem">' + T.varHint + '</p>' +
+          '<div class="var-list" id="var-list-' + p.id + '"></div>' +
+          '<div class="row3" style="margin-top:.5rem">' +
+          '<div><label>' + T.varLabelLabel + '</label><input class="nv-label" maxlength="80" placeholder="' + esc(T.varLabelPh) + '"></div>' +
+          '<div><label>' + T.varPriceLabel + '</label><input class="nv-price" inputmode="decimal" placeholder="29.99"></div>' +
+          '<div><label>' + T.varStockLabel + '</label><input class="nv-stock" type="number" min="0" placeholder="∞"></div>' +
+          '</div>' +
+          '<div class="row3">' +
+          '<div><label>' + T.varSkuLabel + '</label><input class="nv-sku" maxlength="60"></div>' +
+          '<div style="display:flex;align-items:flex-end"><button class="btn ghost" onclick="addVariant(' + p.id + ', this)" style="width:100%">' + T.varAdd + '</button></div>' +
+          '<div></div></div>' +
+          '</details>' : '') +
         '<div class="edit-actions">' +
         '<button class="btn" onclick="saveProduct(' + p.id + ', this)">' + T.save + '</button>' +
         '<button class="btn ghost" onclick="toggleEdit(' + p.id + ')">' + T.cancel + '</button>' +
@@ -685,6 +716,63 @@ export async function handleStoreManager(ctx) {
       catch (e) { alert(e.message); }
     }
     if (ADV) loadDiscounts();
+
+    // ---- product variants (Advanced Store) ----------------------------------
+    function varStockText(v) { return v.stock == null ? '' : (v.stock === 0 ? T.varSoldOut : ('· ' + v.stock)); }
+    function variantRow(pid, v) {
+      return '<div class="prod" data-id="' + v.id + '" style="padding:.5rem .7rem">' +
+        '<div class="prod-top"><div class="prod-main">' +
+        '<div class="prod-name">' + esc(v.label) +
+        ' <span class="pill ' + (v.active ? 'ok' : 'warn') + '">' + (v.active ? T.varActive : T.varInactive) + '</span></div>' +
+        '<div class="prod-price">' + money(v.price_cents) + ' ' +
+        '<span class="muted" style="font-weight:400">' + (v.sku ? esc(v.sku) + ' ' : '') + varStockText(v) + '</span></div>' +
+        '</div>' +
+        '<div class="prod-actions">' +
+        '<button class="btn ghost" onclick="toggleVariant(' + pid + ',' + v.id + ',' + (v.active ? 'false' : 'true') + ')">' + (v.active ? T.varDisable : T.varEnable) + '</button>' +
+        '<button class="link-btn danger" onclick="delVariant(' + pid + ',' + v.id + ')">' + T.del + '</button>' +
+        '</div></div></div>';
+    }
+    function renderVariants(pid, list) {
+      var box = document.getElementById('var-list-' + pid);
+      if (!box) return;
+      box.innerHTML = list.length ? list.map(function (v) { return variantRow(pid, v); }).join('') : '<p class="muted">' + T.varNone + '</p>';
+    }
+    async function loadVariants(pid) {
+      var box = document.getElementById('var-list-' + pid);
+      if (box && !box.innerHTML) box.innerHTML = '<p class="muted">…</p>';
+      try { var d = await api('GET', '/products/' + pid + '/variants'); renderVariants(pid, d.variants || []); }
+      catch (e) { if (box) box.innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; }
+    }
+    async function addVariant(pid, btn) {
+      var wrap = btn.closest('.var-wrap');
+      var label = wrap.querySelector('.nv-label').value.trim();
+      if (!label) { alert(T.varLabelRequired); return; }
+      var price = parsePrice(wrap.querySelector('.nv-price').value);
+      btn.disabled = true; btn.textContent = T.varAdding;
+      try {
+        await api('POST', '/products/' + pid + '/variants', {
+          label: label,
+          price_cents: price == null ? 0 : price,
+          stock: wrap.querySelector('.nv-stock').value,
+          sku: wrap.querySelector('.nv-sku').value.trim(),
+        });
+        wrap.querySelector('.nv-label').value = '';
+        wrap.querySelector('.nv-price').value = '';
+        wrap.querySelector('.nv-stock').value = '';
+        wrap.querySelector('.nv-sku').value = '';
+        await loadVariants(pid);
+      } catch (e) { alert(e.message); }
+      btn.disabled = false; btn.textContent = T.varAdd;
+    }
+    async function toggleVariant(pid, vid, active) {
+      try { await api('PUT', '/products/' + pid + '/variants/' + vid, { active: active }); await loadVariants(pid); }
+      catch (e) { alert(e.message); }
+    }
+    async function delVariant(pid, vid) {
+      if (!confirm(T.varDelConfirm)) return;
+      try { await api('DELETE', '/products/' + pid + '/variants/' + vid); await loadVariants(pid); }
+      catch (e) { alert(e.message); }
+    }
   </script>
 </body>
 </html>`;

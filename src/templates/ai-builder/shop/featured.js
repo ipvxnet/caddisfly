@@ -90,12 +90,15 @@ ${styles}
         </div>
       </a>
       <div class="shop-feat-foot">
-        <span class="shop-feat-price">${money(p.price_cents, currency, lang)}</span>
+        ${(p.has_variants && Array.isArray(p.variants) && p.variants.length)
+          ? `<span class="shop-feat-price">${t(lang, 'shopw.from_price')} ${money(Math.min(...p.variants.map((v) => v.price_cents)), currency, lang)}</span>
+        <a class="shop-add-btn" href="${esc(`${base}/shop/${p.slug}${embedSuffix}`)}">${t(lang, 'shopw.view_options')}</a>`
+          : `<span class="shop-feat-price">${money(p.price_cents, currency, lang)}</span>
         ${p.stock === 0
           ? `<span class="shop-sold-out">${t(lang, 'shopw.sold_out')}</span>`
           : (published
             ? `<button class="shop-add-btn" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${t(lang, 'shopw.add')}</button>`
-            : '')}
+            : '')}`}
       </div>
     </div>`
     )

@@ -11,6 +11,7 @@ import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } fro
 import { ensurePagesForProject, getPagesByProject } from '../../db/ai-pages.js';
 import { getSiteSections } from '../../db/ai-sections.js';
 import { getProductsByProject } from '../../db/products.js';
+import { annotateProductsWithVariants } from '../../db/variants.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../utils/shop-render.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { blogNavPage } from '../../utils/blog-render.js';
@@ -47,6 +48,7 @@ export async function handleAIPreviewShop(ctx) {
     await ensurePagesForProject(env.DB, projectKey);
     const pages = await getPagesByProject(env.DB, projectKey);
     const allProducts = await getProductsByProject(env.DB, projectKey);
+    await annotateProductsWithVariants(env.DB, projectKey, allProducts); // option selectors
     const active = allProducts.filter((p) => p.active);
     const currency = config.store_currency || 'usd';
 
