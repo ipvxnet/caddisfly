@@ -4,7 +4,7 @@
 import { uiText, defaultItems } from '../section-defaults.js';
 
 // Placeholder years (language-independent), merged with localized title/description.
-const TIMELINE_YEARS = ['2020', '2021', '2022', '2023'];
+export const TIMELINE_YEARS = ['2020', '2021', '2022', '2023'];
 
 export function aboutTimelineTemplate(data, config) {
   const lang = config.lang || 'en';
