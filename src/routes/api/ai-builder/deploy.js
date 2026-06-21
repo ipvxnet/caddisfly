@@ -7,7 +7,7 @@ import { getProjectByPreviewId, updateProject } from '../../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../../db/ai-config.js';
 import { ensurePagesForProject, getPagesByProject } from '../../../db/ai-pages.js';
 import { getSiteSections, getBodySectionsForPage, getHomeBodySections } from '../../../db/ai-sections.js';
-import { entitledSectionFilter } from '../../../plugins/entitlements.js';
+import { entitledSectionFilter, hasPlugin } from '../../../plugins/entitlements.js';
 import { assemblePage } from '../../../utils/ai-page-assembler.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
@@ -139,6 +139,7 @@ export async function handleAIBuilderDeploy(ctx) {
     // Plugin gating (§8.3): drop sections whose plugin the owner isn't entitled
     // to, so a lapsed plugin's sections never reach the published static HTML.
     const filterSections = await entitledSectionFilter(env, email);
+    const hasAdvStore = await hasPlugin(env, email, 'advanced_store'); // mini-cart discount input gating
 
     const homePageRow = pages.find((p) => p.is_home) || pages.find((p) => p.slug === 'home') || null;
     const homeSections = filterSections(homePageRow
@@ -219,6 +220,7 @@ export async function handleAIBuilderDeploy(ctx) {
         products: activeProducts, // 🛍 featured-products section (live data)
         bookingServices, // 📅 booking section (live data)
         holiday: activeHolidayDecor, // 🎄 flyby overlay while a skin is applied
+        hasAdvStore, // mini-cart discount-code input gating
         // SEO: per-page overrides + site social image + business identity.
         seoTitle: page.seo_title || null,
         seoDescription: page.seo_description || null,
@@ -312,6 +314,7 @@ export async function handleAIBuilderDeploy(ctx) {
         appOrigin,
         lang: siteLang,
         business,
+        hasAdvStore, // mini-cart discount-code input gating
       };
       const writeShopPage = async (slugPath, sectionFor, seo) => {
         // /site/:id copy

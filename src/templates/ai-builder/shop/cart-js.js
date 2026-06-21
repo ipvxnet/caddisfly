@@ -23,6 +23,10 @@ export function cartScript(config) {
     currency,
     lang,
     preview: !siteId,
+    // Discount codes (Advanced Store): the input shows only when the owner is
+    // entitled; the buyer's preview is server-validated (re-priced) before checkout.
+    discounts: !!config.hasAdvStore,
+    validateUrl: `${config.appOrigin || ''}/api/store/discount/validate`,
     s: {
       added: t(lang, 'shopw.added'),
       add: t(lang, 'shopw.add'),
@@ -37,6 +41,12 @@ export function cartScript(config) {
       error: t(lang, 'shopw.error'),
       preview: t(lang, 'shopw.preview_note'),
       myOrders: t(lang, 'rcpt.my_orders'),
+      discountLabel: t(lang, 'shopw.discount_label'),
+      discountApply: t(lang, 'shopw.discount_apply'),
+      discountApplied: t(lang, 'shopw.discount_applied'),
+      discountRemove: t(lang, 'shopw.discount_remove'),
+      discountOff: t(lang, 'shopw.discount_off'),
+      discountChecking: t(lang, 'shopw.discount_checking'),
     },
     ordersUrl: siteId ? `${config.appOrigin || ''}/store/orders?s=${siteId}` : '',
   };
@@ -64,6 +74,12 @@ export function cartScript(config) {
 .cf-cart-go { width: 100%; background: ${primary}; color: #fff; border: none; border-radius: 10px; padding: .75rem; font-size: .95rem; font-weight: 700; cursor: pointer; }
 .cf-cart-go:disabled { opacity: .6; cursor: default; }
 .cf-cart-note { font-size: .8rem; color: #718096; margin-top: .5rem; text-align: center; }
+.cf-disc { display: flex; gap: .4rem; margin: .5rem 0 .2rem; }
+.cf-disc input { flex: 1; min-width: 0; border: 1px solid #e2e8f0; border-radius: 8px; padding: .5rem .6rem; font-size: .85rem; text-transform: uppercase; }
+.cf-disc button { border: 1px solid ${primary}; background: #fff; color: ${primary}; border-radius: 8px; padding: 0 .9rem; font-weight: 700; cursor: pointer; font-size: .85rem; }
+.cf-disc-applied { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; margin: .4rem 0 .2rem; color: #15803d; }
+.cf-disc-applied button { background: none; border: none; color: #b91c1c; cursor: pointer; font-size: .8rem; text-decoration: underline; }
+.cf-cart-disc { display: flex; justify-content: space-between; color: #15803d; font-size: .9rem; margin: .3rem 0 0; }
 #cf-shop-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 1.2rem; z-index: 9002; background: #1a202c; color: #fff;
   border-radius: 10px; padding: .7rem 1.1rem; font-size: .9rem; box-shadow: 0 8px 24px rgba(0,0,0,.3); display: none; max-width: 90vw; }
 </style>
@@ -72,8 +88,9 @@ export function cartScript(config) {
   if (window.__cfCartLoaded) return; window.__cfCartLoaded = true;
   var CFG = ${JSON.stringify(cfg)};
   var KEY = 'cf-cart-' + (CFG.site || 'preview');
+  var APPLIED = { code: null, amount: 0 }; // discount code applied to this cart
   function read() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } }
-  function write(c) { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} render(); }
+  function write(c) { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} render(); if (APPLIED.code) refreshDiscount(); }
   function money(cents) {
     try { return new Intl.NumberFormat(CFG.lang, { style: 'currency', currency: CFG.currency }).format(cents / 100); }
     catch (e) { return (cents / 100).toFixed(2) + ' ' + CFG.currency; }
@@ -99,8 +116,21 @@ export function cartScript(config) {
         '<button class="cf-rm" data-r="' + idx + '" title="' + CFG.s.remove + '">✕</button></div>';
     }).join('');
     var total = cart.reduce(function (a, i) { return a + i.price_cents * i.qty; }, 0);
+    var discAmt = APPLIED.code ? Math.min(APPLIED.amount, total) : 0;
+    var finalTotal = total - discAmt;
+    var discBlock = '';
+    if (CFG.discounts && !CFG.preview) {
+      if (APPLIED.code) {
+        discBlock =
+          '<div class="cf-cart-disc"><span>' + CFG.s.discountOff + ' (' + APPLIED.code + ')</span><span>−' + money(discAmt) + '</span></div>' +
+          '<div class="cf-disc-applied"><span>' + CFG.s.discountApplied + ' ✓</span><button class="cf-disc-remove">' + CFG.s.discountRemove + '</button></div>';
+      } else {
+        discBlock = '<div class="cf-disc"><input class="cf-disc-input" placeholder="' + CFG.s.discountLabel + '" maxlength="40"><button class="cf-disc-apply">' + CFG.s.discountApply + '</button></div>';
+      }
+    }
     panel.innerHTML = '<h3>' + CFG.s.cart + '</h3>' + rows +
-      '<div class="cf-cart-total"><span>' + CFG.s.total + '</span><span>' + money(total) + '</span></div>' +
+      discBlock +
+      '<div class="cf-cart-total"><span>' + CFG.s.total + '</span><span>' + money(finalTotal) + '</span></div>' +
       '<button class="cf-cart-go">' + CFG.s.checkout + '</button>' +
       (CFG.preview ? '<div class="cf-cart-note">' + CFG.s.preview + '</div>' : '') +
       (CFG.ordersUrl ? '<div class="cf-cart-note"><a href="' + CFG.ordersUrl + '" target="_blank" rel="noopener" style="color:inherit">' + CFG.s.myOrders + ' →</a></div>' : '');
@@ -111,6 +141,32 @@ export function cartScript(config) {
     panel.querySelectorAll('[data-u]').forEach(function (b) { b.onclick = function () { bump(+b.getAttribute('data-u'), 1); }; });
     panel.querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { var c = read(); c.splice(+b.getAttribute('data-r'), 1); write(c); }; });
     panel.querySelector('.cf-cart-go').onclick = checkout;
+    var applyBtn = panel.querySelector('.cf-disc-apply');
+    if (applyBtn) applyBtn.onclick = function () { applyCode(panel.querySelector('.cf-disc-input').value); };
+    var remBtn = panel.querySelector('.cf-disc-remove');
+    if (remBtn) remBtn.onclick = removeCode;
+  }
+  async function validateCode(code) {
+    var cart = read();
+    var res = await fetch(CFG.validateUrl, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ s: CFG.site, code: code, items: cart.map(function (i) { return { id: i.id, qty: i.qty }; }) }),
+    });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok || d.success === false) throw new Error(d.error || CFG.s.error);
+    return d;
+  }
+  async function applyCode(raw) {
+    var code = (raw || '').trim();
+    if (!code) return;
+    try { var d = await validateCode(code); APPLIED = { code: d.code, amount: d.amount_cents || 0 }; render(); }
+    catch (e) { toast(e.message || CFG.s.error); }
+  }
+  function removeCode() { APPLIED = { code: null, amount: 0 }; render(); }
+  async function refreshDiscount() {
+    if (!APPLIED.code) return;
+    try { var d = await validateCode(APPLIED.code); if (d.amount_cents !== APPLIED.amount) { APPLIED.amount = d.amount_cents || 0; render(); } }
+    catch (e) { removeCode(); }
   }
   function bump(idx, d) {
     var c = read(); if (!c[idx]) return;
@@ -139,9 +195,12 @@ export function cartScript(config) {
           s: CFG.site,
           items: cart.map(function (i) { return { id: i.id, qty: i.qty }; }),
           path: location.pathname,
+          discount_code: APPLIED.code || undefined,
         }),
       });
       var d = await res.json().catch(function () { return {}; });
+      // A code that lapsed between apply and checkout → drop it and let them retry.
+      if (d && d.discount_error) { removeCode(); }
       if (!res.ok || !d.url) throw new Error(d.error || CFG.s.error);
       location.href = d.url;
       return;
