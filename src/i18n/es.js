@@ -657,6 +657,23 @@ export const es = {
     feat_heading: 'Nuestros productos',
     feat_cta: 'Visita la tienda',
     feat_empty: 'Aún no hay productos — añade productos en tu página Tienda y aparecerán aquí automáticamente.',
+    // Código de descuento (Tienda Avanzada) — carrito.
+    discount_label: 'Código de descuento',
+    discount_apply: 'Aplicar',
+    discount_applied: 'Código aplicado',
+    discount_remove: 'Quitar',
+    discount_off: 'Descuento',
+    discount_checking: 'Comprobando…',
+  },
+
+  // Mensajes de código de descuento (Tienda Avanzada) — comprador + administrador.
+  discw: {
+    invalid: 'Ese código no es válido.',
+    inactive: 'Ese código ya no está activo.',
+    expired: 'Ese código ha caducado.',
+    used_up: 'Ese código alcanzó su límite de usos.',
+    duplicate: 'Ya existe un código con ese nombre.',
+    bad_input: 'Introduce un código y un valor de descuento (porcentaje 1–100 o un importe fijo).',
   },
 
   // Página de recibo + correo de confirmación al comprador (idioma del SITIO).
@@ -762,6 +779,21 @@ export const es = {
     import_none: 'No se encontraron productos importables en tu cuenta de Stripe (solo precios de pago único).',
     skip_recurring: 'precio de suscripción', skip_exists: 'ya está en la tienda', skip_currency: 'moneda distinta',
     skip_no_price: 'sin precio', skip_limit: 'límite del plan', skip_policy: 'política de contenido', skip_price_range: 'precio fuera de rango',
+    // Códigos de descuento (plugin Tienda Avanzada) — panel del administrador.
+    disc_heading: '🏷 Códigos de descuento',
+    disc_hint: 'Códigos que los compradores introducen al pagar. Porcentaje o importe fijo.',
+    disc_code_label: 'Código', disc_code_ph: 'p. ej. BIENVENIDA10',
+    disc_kind_label: 'Tipo', disc_kind_percent: '% desc.', disc_kind_fixed: 'Importe',
+    disc_value_label: 'Valor', disc_value_hint_pct: '1–100', disc_value_hint_fixed: 'p. ej. 10.00',
+    disc_max_label: 'Usos máx.', disc_max_hint: 'vacío = ilimitado',
+    disc_expiry_label: 'Caduca', disc_expiry_hint: 'opcional',
+    disc_add: 'Añadir código', disc_adding: 'Añadiendo…',
+    disc_none: 'Aún no hay códigos de descuento.',
+    disc_used: '{used} usados', disc_used_max: '{used} / {max} usados',
+    disc_active: 'activo', disc_inactive: 'desactivado',
+    disc_enable: 'Activar', disc_disable: 'Desactivar',
+    disc_delete_confirm: '¿Eliminar este código? Los compradores ya no podrán usarlo.',
+    disc_expires_on: 'caduca {date}',
   },
 
   blogm: {

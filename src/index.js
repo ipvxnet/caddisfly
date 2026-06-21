@@ -124,6 +124,8 @@ import {
   handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
   handleProductAIDescribe, handleProductImage, handleStoreCheckout,
   handleStoreWebhook, handleOrderList, handleProductImport,
+  handleDiscountList, handleDiscountCreate, handleDiscountUpdate, handleDiscountDelete,
+  handleDiscountValidate,
   handleSubPriceList, handleSubPriceCreate, handleStoreSubscribe,
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
@@ -317,6 +319,7 @@ router.get('/api/booking/:project_id/slots', handleBookingSlots);
 router.post('/api/booking/:project_id/book', handleBookingCreate);
 // Store checkout — public, called cross-origin by the mini cart on shop pages
 router.post('/api/store/checkout', handleStoreCheckout);
+router.post('/api/store/discount/validate', handleDiscountValidate);
 router.post('/api/store/subscribe', handleStoreSubscribe);
 // Buyer receipt page (Stripe success_url) + Connect webhook (order backstop)
 router.get('/store/receipt', handleStoreReceipt);
@@ -425,6 +428,12 @@ router.put('/api/ai-builder/:project_id/store/products/:product_id', handleProdu
 router.delete('/api/ai-builder/:project_id/store/products/:product_id', handleProductDelete, PROJ);
 router.get('/api/ai-builder/:project_id/store/orders', handleOrderList, PROJ);
 router.post('/api/ai-builder/:project_id/store/import', handleProductImport, PROJ);
+// Discount codes (Advanced Store plugin — gated by entitlement).
+const ADV = [billingAuth, projectAccess, pluginGate('advanced_store', { json: true })];
+router.get('/api/ai-builder/:project_id/store/discounts', handleDiscountList, ADV);
+router.post('/api/ai-builder/:project_id/store/discounts', handleDiscountCreate, ADV);
+router.put('/api/ai-builder/:project_id/store/discounts/:discount_id', handleDiscountUpdate, ADV);
+router.delete('/api/ai-builder/:project_id/store/discounts/:discount_id', handleDiscountDelete, ADV);
 router.get('/api/ai-builder/:project_id/store/prices', handleSubPriceList, PROJ);
 router.post('/api/ai-builder/:project_id/store/prices', handleSubPriceCreate, PROJ);
 

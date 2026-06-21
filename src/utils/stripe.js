@@ -190,7 +190,7 @@ export const SHIPPING_COUNTRIES = [
  * @returns {Promise<{id:string,url:string}>}
  */
 export async function createStoreCheckoutSession(env, {
-  account, lineItems, successUrl, cancelUrl, metadata, collectShipping = false,
+  account, lineItems, successUrl, cancelUrl, metadata, collectShipping = false, discounts = null,
 }) {
   const body = {
     mode: 'payment',
@@ -203,7 +203,29 @@ export async function createStoreCheckoutSession(env, {
   if (collectShipping) {
     body.shipping_address_collection = { allowed_countries: SHIPPING_COUNTRIES };
   }
+  // Advanced Store discount codes ride as a Checkout `discounts:[{coupon}]` —
+  // Stripe does the math and shows it on its checkout UI + receipt.
+  if (Array.isArray(discounts) && discounts.length) body.discounts = discounts;
   return stripeRequest(env, '/checkout/sessions', body, account);
+}
+
+/**
+ * Advanced Store: create a one-off, single-use coupon ON the merchant's connected
+ * account for a store discount code. `duration:'once'` (per-checkout). kind maps
+ * to percent_off (1..100) or amount_off (minor units) + currency. Returns the
+ * coupon id to pass as `discounts:[{coupon:id}]`.
+ */
+export async function createConnectCoupon(env, account, { kind, value, currency = 'usd', name }) {
+  const body = { duration: 'once' };
+  if (name) body.name = String(name).slice(0, 40);
+  if (kind === 'fixed') {
+    body.amount_off = Math.max(1, parseInt(value, 10) || 0);
+    body.currency = (currency || 'usd').toLowerCase();
+  } else {
+    body.percent_off = Math.min(100, Math.max(1, parseInt(value, 10) || 0));
+  }
+  const c = await stripeRequest(env, '/coupons', body, account);
+  return c.id;
 }
 
 /**
