@@ -23,7 +23,11 @@ const PATTERNS = [
   {
     category: 'weapons',
     severity: 'high',
-    re: /\b(buy|sell|unlicensed|untraceable|ghost|illegal)\b[^.?!\n]{0,30}\b(guns?|firearms?|ammunition|explosives?|grenades?|silencers?)\b/i,
+    // NOTE: bare "explosive(s)" is intentionally NOT here — it's a common
+    // marketing adjective ("explosive power/growth/acceleration") that caused
+    // false positives on legit products (e.g. a diesel turbocharger). Match
+    // specific explosive DEVICES instead.
+    re: /\b(buy|sell|order|purchase|unlicensed|untraceable|ghost|illegal)\b[^.?!\n]{0,30}\b(guns?|firearms?|ammunition|grenades?|silencers?|detonators?|dynamite|pipe\s*bombs?)\b/i,
   },
   {
     category: 'malware_fraud',
