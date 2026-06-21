@@ -69,6 +69,7 @@ import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './route
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
 import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleCreditCheckout } from './routes/api/billing.js';
 import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
+import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
@@ -246,7 +247,8 @@ router.get('/billing', handleBilling, [billingAuth]);
 router.get('/billing/verify/:token', handleBillingVerify);
 router.get('/billing/logout', handleBillingLogout);
 
-// Plugin add-ons (subscribe/cancel a $5/mo feature module on the existing sub).
+// Plugin marketplace + add-on subscribe/cancel (a $5/mo module on the existing sub).
+router.get('/plugins', handlePluginsMarketplace, [billingAuth]);
 router.post('/api/plugins/:key/subscribe', handlePluginSubscribe, [billingAuth]);
 router.post('/api/plugins/:key/cancel', handlePluginCancel, [billingAuth]);
 
