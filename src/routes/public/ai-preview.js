@@ -139,6 +139,11 @@ export async function handleAIPreview(ctx) {
         project_name: businessName,
         id: regularProject.id,
         language: regularProject.language || 'en',
+        // Carry the owner email so entitledSectionFilter (plugin gating) can
+        // resolve entitlements — without it every plugin section (catalogue,
+        // CRM, …) is treated as un-entitled and silently dropped from the
+        // refactor preview (the published deploy.js path already passes it).
+        customer_email: regularProject.customer_email,
       };
 
       config = await getWebsiteConfigByRegularProjectId(env.DB, regularProject.id);
