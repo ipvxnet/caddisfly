@@ -735,6 +735,8 @@ export const es = {
     desc_label: 'Descripción', desc_hint: 'se muestra en tu tienda — o deja que la IA la escriba',
     ai_desc: '✨ Escribir con IA', ai_desc_busy: 'Escribiendo…',
     image_label: 'URL de imagen', image_hint: 'opcional — puedes generar una con IA después de añadirlo',
+    category_label: 'Categoría', category_hint: 'agrupa los artículos en secciones del catálogo (opcional)',
+    forsale_label: 'A la venta — desmarca para un artículo de catálogo solo informativo',
     create_btn: 'Añadir producto', creating: 'Añadiendo…',
     save: 'Guardar', saving: 'Guardando…', cancel: 'Cancelar', edit: 'Editar',
     delete: 'Eliminar', delete_confirm: '¿Eliminar este producto? Esto no se puede deshacer.',

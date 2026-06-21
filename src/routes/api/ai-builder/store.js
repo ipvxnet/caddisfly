@@ -41,7 +41,7 @@ import {
   countProducts, uniqueProductSlug,
 } from '../../../db/products.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
-import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
+import { screenContent, stripPolicyEcho, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS, PRODUCT_LIMITS } from '../../../utils/credits.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { audit } from '../../../utils/audit.js';
@@ -249,8 +249,14 @@ export async function handleProductCreate(ctx) {
     const body = await request.json().catch(() => ({}));
     const name = (body.name || '').toString().trim().slice(0, 140);
     if (!name) return json({ success: false, error: 'Product name is required' }, 400);
-    const price_cents = validPrice(body.price_cents);
-    if (price_cents == null) return json({ success: false, error: 'Price must be between 0.50 and 999,999.99' }, 400);
+    // Catalogue items can be info-only (for_sale=0) with no price; buyable items
+    // require a valid price.
+    const for_sale = body.for_sale === 0 || body.for_sale === false || body.for_sale === '0' ? 0 : 1;
+    let price_cents = 0;
+    if (for_sale) {
+      price_cents = validPrice(body.price_cents);
+      if (price_cents == null) return json({ success: false, error: 'Price must be between 0.50 and 999,999.99' }, 400);
+    }
     const description = (body.description || '').toString().slice(0, 5000);
     const screen = screenContent(`${name}\n${description}`);
     if (!screen.allowed) return json(policyError(screen), 422);
@@ -263,6 +269,11 @@ export async function handleProductCreate(ctx) {
       price_cents,
       image: (body.image || '').toString().trim().slice(0, 500),
       product_type: PRODUCT_TYPES.includes(body.product_type) ? body.product_type : 'physical',
+      // Catalogue fields (Catalogue plugin) — harmless on plain shop products.
+      category: (body.category || '').toString().trim().slice(0, 80),
+      body: (body.body || '').toString().slice(0, 20000),
+      media_json: body.media && typeof body.media === 'object' ? JSON.stringify(body.media) : (body.media_json || '').toString().slice(0, 20000),
+      for_sale,
     });
     return json({ success: true, product }, 201);
   } catch (e) {
@@ -288,15 +299,25 @@ export async function handleProductUpdate(ctx) {
       updates.name = name;
       if (name !== product.name) updates.slug = await uniqueProductSlug(env.DB, r.projectKey, name, product.id);
     }
+    if (body.for_sale != null) updates.for_sale = (body.for_sale === 0 || body.for_sale === false || body.for_sale === '0') ? 0 : 1;
     if (body.price_cents != null) {
-      const price_cents = validPrice(body.price_cents);
-      if (price_cents == null) return json({ success: false, error: 'Price must be between 0.50 and 999,999.99' }, 400);
-      updates.price_cents = price_cents;
+      // Info-only catalogue items (for_sale=0) may have a 0 price.
+      const infoOnly = updates.for_sale === 0 || (updates.for_sale == null && product.for_sale === 0);
+      if (infoOnly && (body.price_cents === 0 || body.price_cents === '0' || body.price_cents === '')) {
+        updates.price_cents = 0;
+      } else {
+        const price_cents = validPrice(body.price_cents);
+        if (price_cents == null) return json({ success: false, error: 'Price must be between 0.50 and 999,999.99' }, 400);
+        updates.price_cents = price_cents;
+      }
     }
     if (body.description != null) updates.description = body.description.toString().slice(0, 5000);
     if (body.image != null) updates.image = body.image.toString().trim().slice(0, 500);
     if (body.product_type != null && PRODUCT_TYPES.includes(body.product_type)) updates.product_type = body.product_type;
     if (body.active != null) updates.active = body.active ? 1 : 0;
+    if (body.category != null) updates.category = body.category.toString().trim().slice(0, 80);
+    if (body.body != null) updates.body = body.body.toString().slice(0, 20000);
+    if (body.media != null) updates.media_json = typeof body.media === 'object' ? JSON.stringify(body.media) : body.media.toString().slice(0, 20000);
 
     if (updates.name != null || updates.description != null) {
       const screen = screenContent(`${updates.name || product.name}\n${updates.description != null ? updates.description : product.description}`);
@@ -355,7 +376,9 @@ ${POLICY_INSTRUCTION}`;
 
     const raw = await callWorkersAI(env, prompt, { max_tokens: 512, temperature: 0.6, system_message: 'You are a professional e-commerce copywriter for small businesses.' });
     const start = String(raw || '').search(/DESCRIPTION:/);
-    const description = start === -1 ? '' : String(raw).slice(start + 'DESCRIPTION:'.length).replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
+    // stripPolicyEcho: weak models sometimes parrot the trailing policy
+    // instruction into the output, which would screen against itself.
+    const description = start === -1 ? '' : stripPolicyEcho(String(raw).slice(start + 'DESCRIPTION:'.length).replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, ''));
     if (!description) return json({ success: false, error: 'The AI description came back malformed — please try again.' }, 502);
     const outScreen = screenContent(description);
     if (!outScreen.allowed) return json(policyError(outScreen), 422);

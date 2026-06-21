@@ -29,11 +29,11 @@ export async function uniqueProductSlug(db, projectKey, name, excludeId = null) 
   return `${base}-${Date.now() % 10000}`;
 }
 
-export async function createProduct(db, projectKey, { slug, name, description, price_cents, image, product_type }) {
+export async function createProduct(db, projectKey, { slug, name, description, price_cents, image, product_type, category, body, media_json, for_sale }) {
   return db
     .prepare(
-      `INSERT INTO products (ai_project_id, project_id, slug, name, description, price_cents, image, product_type)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO products (ai_project_id, project_id, slug, name, description, price_cents, image, product_type, category, body, media_json, for_sale)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
@@ -43,9 +43,24 @@ export async function createProduct(db, projectKey, { slug, name, description, p
       description || '',
       Math.max(0, Math.round(price_cents) || 0),
       image || '',
-      ['physical', 'digital', 'service'].includes(product_type) ? product_type : 'physical'
+      ['physical', 'digital', 'service'].includes(product_type) ? product_type : 'physical',
+      category || '',
+      body || '',
+      typeof media_json === 'string' ? media_json : media_json ? JSON.stringify(media_json) : '',
+      for_sale === 0 || for_sale === false ? 0 : 1
     )
     .first();
+}
+
+/** Distinct non-empty catalogue categories for a project (for the section config). */
+export async function getProductCategories(db, projectKey, activeOnly = true) {
+  const k = keyWhere(projectKey);
+  const where = activeOnly ? `${k.sql} AND active = 1` : k.sql;
+  const { results } = await db
+    .prepare(`SELECT DISTINCT category FROM products WHERE ${where} AND category <> '' ORDER BY category`)
+    .bind(k.val)
+    .all();
+  return (results || []).map((r) => r.category);
 }
 
 export async function getProductsByProject(db, projectKey, activeOnly = false) {
@@ -63,7 +78,7 @@ export async function getProductById(db, projectKey, id) {
   return db.prepare(`SELECT * FROM products WHERE ${k.sql} AND id = ?`).bind(k.val, id).first();
 }
 
-const PRODUCT_FIELDS = ['slug', 'name', 'description', 'price_cents', 'image', 'product_type', 'active', 'sort_order'];
+const PRODUCT_FIELDS = ['slug', 'name', 'description', 'price_cents', 'image', 'product_type', 'active', 'sort_order', 'category', 'body', 'media_json', 'for_sale'];
 
 export async function updateProduct(db, projectKey, id, updates) {
   const k = keyWhere(projectKey);

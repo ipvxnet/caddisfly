@@ -146,6 +146,9 @@ export async function handleStoreManager(ctx) {
         </div>
         <label>${tr('storem.image_label')} <span class="hint">${tr('storem.image_hint')}</span></label>
         <input id="np-image" maxlength="500" placeholder="https://…">
+        <label>${tr('storem.category_label')} <span class="hint">${tr('storem.category_hint')}</span></label>
+        <input id="np-category" maxlength="80" placeholder="Parts, Tools…">
+        <label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" id="np-forsale" checked style="width:auto"> ${tr('storem.forsale_label')}</label>
         <div class="edit-actions">
           <button class="btn" onclick="createProduct(this)">${tr('storem.create_btn')}</button>
           <button class="btn ghost" onclick="toggleAdd()">${tr('storem.cancel')}</button>
@@ -192,6 +195,8 @@ export async function handleStoreManager(ctx) {
       typeLabel: ${JSON.stringify(tr('storem.type_label'))},
       descLabel: ${JSON.stringify(tr('storem.desc_label'))},
       imageLabel: ${JSON.stringify(tr('storem.image_label'))},
+      categoryLabel: ${JSON.stringify(tr('storem.category_label'))},
+      forsaleLabel: ${JSON.stringify(tr('storem.forsale_label'))},
       types: {
         physical: ${JSON.stringify(tr('storem.type_physical'))},
         digital: ${JSON.stringify(tr('storem.type_digital'))},
@@ -316,6 +321,8 @@ export async function handleStoreManager(ctx) {
         '<div class="desc-row"><textarea class="f-desc" rows="4">' + esc(p.description || '') + '</textarea>' +
         '<button class="btn ghost" onclick="aiDescribeEdit(' + p.id + ', this)">' + T.aiDesc + '</button></div>' +
         '<label>' + T.imageLabel + '</label><input class="f-image" maxlength="500" value="' + esc(p.image || '') + '">' +
+        '<label>' + T.categoryLabel + '</label><input class="f-category" maxlength="80" value="' + esc(p.category || '') + '">' +
+        '<label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" class="f-forsale"' + (p.for_sale === 0 ? '' : ' checked') + ' style="width:auto"> ' + T.forsaleLabel + '</label>' +
         '<div class="edit-actions">' +
         '<button class="btn" onclick="saveProduct(' + p.id + ', this)">' + T.save + '</button>' +
         '<button class="btn ghost" onclick="toggleEdit(' + p.id + ')">' + T.cancel + '</button>' +
@@ -342,9 +349,11 @@ export async function handleStoreManager(ctx) {
 
     async function createProduct(btn) {
       var name = document.getElementById('np-name').value.trim();
+      var forsale = document.getElementById('np-forsale').checked;
       var cents = parsePrice(document.getElementById('np-price').value);
       if (!name) { document.getElementById('np-name').focus(); return; }
-      if (cents == null || cents < 50) { alert(T.badPrice); return; }
+      if (forsale && (cents == null || cents < 50)) { alert(T.badPrice); return; }
+      if (!forsale) cents = 0;
       btn.disabled = true; btn.textContent = T.adding;
       try {
         await api('POST', '/products', {
@@ -353,11 +362,15 @@ export async function handleStoreManager(ctx) {
           product_type: document.getElementById('np-type').value,
           description: document.getElementById('np-desc').value,
           image: document.getElementById('np-image').value.trim(),
+          category: document.getElementById('np-category').value.trim(),
+          for_sale: forsale ? 1 : 0,
         });
         document.getElementById('np-name').value = '';
         document.getElementById('np-price').value = '';
         document.getElementById('np-desc').value = '';
         document.getElementById('np-image').value = '';
+        document.getElementById('np-category').value = '';
+        document.getElementById('np-forsale').checked = true;
         toggleAdd();
         await loadProducts();
       } catch (e) { alert(e.message); }
@@ -371,8 +384,10 @@ export async function handleStoreManager(ctx) {
 
     async function saveProduct(id, btn) {
       var box = document.getElementById('edit-' + id);
+      var forsale = box.querySelector('.f-forsale').checked;
       var cents = parsePrice(box.querySelector('.f-price').value);
-      if (cents == null || cents < 50) { alert(T.badPrice); return; }
+      if (forsale && (cents == null || cents < 50)) { alert(T.badPrice); return; }
+      if (!forsale) cents = 0;
       btn.disabled = true; btn.textContent = T.saving;
       try {
         await api('PUT', '/products/' + id, {
@@ -381,6 +396,8 @@ export async function handleStoreManager(ctx) {
           product_type: box.querySelector('.f-type').value,
           description: box.querySelector('.f-desc').value,
           image: box.querySelector('.f-image').value.trim(),
+          category: box.querySelector('.f-category').value.trim(),
+          for_sale: forsale ? 1 : 0,
         });
         await loadProducts();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = T.save; }

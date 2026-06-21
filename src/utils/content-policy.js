@@ -13,7 +13,10 @@ const PATTERNS = [
   {
     category: 'sexual_explicit',
     severity: 'high',
-    re: /(pornograph|pornhub|\bxxx\b|hardcore\s*sex|sex\s*cam|adult\s*(video|webcam|cam\s*site)|escort\s*service|prostitut|nude\s*model|onlyfans)/i,
+    // NOTE: bare "xxx" is intentionally NOT matched alone — AI product copy uses
+    // "XXX" as a spec placeholder ("up to XXX HP", "Part #XXX"), which falsely
+    // flagged a turbocharger description. Only match "xxx" in a porn context.
+    re: /(pornograph|pornhub|xxx[\s.-]*(porn|sex|video|adult|rated|hub|cam)|(porn|hardcore|adult)[\s.-]*xxx|hardcore\s*sex|sex\s*cam|adult\s*(video|webcam|cam\s*site)|escort\s*service|prostitut|nude\s*model|onlyfans)/i,
   },
   {
     category: 'illegal_drugs',
@@ -23,7 +26,11 @@ const PATTERNS = [
   {
     category: 'weapons',
     severity: 'high',
-    re: /\b(buy|sell|unlicensed|untraceable|ghost|illegal)\b[^.?!\n]{0,30}\b(guns?|firearms?|ammunition|explosives?|grenades?|silencers?)\b/i,
+    // NOTE: bare "explosive(s)" is intentionally NOT here — it's a common
+    // marketing adjective ("explosive power/growth/acceleration") that caused
+    // false positives on legit products (e.g. a diesel turbocharger). Match
+    // specific explosive DEVICES instead.
+    re: /\b(buy|sell|order|purchase|unlicensed|untraceable|ghost|illegal)\b[^.?!\n]{0,30}\b(guns?|firearms?|ammunition|grenades?|silencers?|detonators?|dynamite|pipe\s*bombs?)\b/i,
   },
   {
     category: 'malware_fraud',
@@ -31,6 +38,18 @@ const PATTERNS = [
     re: /(phishing\s*(kit|site|page)|ransomware|spyware|keylogger|carding|stolen\s*credit\s*cards?|fake\s*ids?|counterfeit\s*(money|currency|cash))/i,
   },
 ];
+
+/**
+ * Strip an echoed POLICY_INSTRUCTION that weak models sometimes parrot into
+ * their OUTPUT. Without this the generated text screens against itself — the
+ * policy wording contains "pornographic"/"sexually explicit"/"weapons" — and
+ * legit copy gets false-blocked. Apply to AI output before screening/storing.
+ * @param {string} text
+ * @returns {string}
+ */
+export function stripPolicyEcho(text) {
+  return String(text == null ? '' : text).split(/\n+\s*CONTENT POLICY\b/i)[0].trim();
+}
 
 /**
  * Screen free-text user input against the Acceptable Use Policy.

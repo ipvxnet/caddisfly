@@ -66,6 +66,8 @@ import { shopGridTemplate } from './shop/grid.js';
 import { shopProductTemplate } from './shop/product.js';
 // Featured products — a real ADDABLE body section (live product injection)
 import { featuredProductsTemplate } from './shop/featured.js';
+// Catalogue (plugin) — addable body section, live product injection by category
+import { catalogueTilesTemplate } from './catalogue/tiles.js';
 import { bookingWidgetTemplate } from './booking/widget.js';
 
 /**
@@ -155,6 +157,10 @@ export const TEMPLATE_REGISTRY = {
   products: {
     grid: featuredProductsTemplate,
     default: featuredProductsTemplate,
+  },
+  catalogue: {
+    tiles: catalogueTilesTemplate,
+    default: catalogueTilesTemplate,
   },
   booking: {
     panel: bookingWidgetTemplate,

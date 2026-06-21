@@ -16,10 +16,12 @@ const ALLOWED_MIME_TYPES = {
   'image/svg+xml': '.svg',
   'video/mp4': '.mp4',
   'video/webm': '.webm',
+  'application/pdf': '.pdf', // catalogue plugin: datasheets, manuals, training
 };
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB
+const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20MB (PDF)
 
 /**
  * Handle asset upload
@@ -67,7 +69,7 @@ export async function handleAIBuilderUpload(ctx) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid file type. Allowed: JPG, PNG, GIF, WebP, SVG',
+          error: 'Invalid file type. Allowed: JPG, PNG, GIF, WebP, SVG, MP4, WebM, PDF',
         }),
         {
           status: 400,
@@ -76,9 +78,10 @@ export async function handleAIBuilderUpload(ctx) {
       );
     }
 
-    // Validate file size (videos allowed to be larger than images).
+    // Validate file size (videos + PDFs allowed to be larger than images).
     const isVideo = file.type.startsWith('video/');
-    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const isPdf = file.type === 'application/pdf';
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : isPdf ? MAX_DOC_SIZE : MAX_IMAGE_SIZE;
     if (file.size > maxSize) {
       return new Response(
         JSON.stringify({

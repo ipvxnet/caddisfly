@@ -13,6 +13,7 @@ import { inferIndustry } from '../../utils/industry-style.js';
 import { generateFontPicker } from '../../components/font-picker.js';
 import { getAvailableVariants } from '../../templates/ai-builder/registry.js';
 import { ADDABLE_SECTIONS } from '../api/ai-builder/section-create.js';
+import { hasPlugin } from '../../plugins/entitlements.js';
 import { renderDomainsPanel, DOMAINS_CSS, domainsJs } from '../../components/domains-panel.js';
 import { canDeploy, canManageDomains, canRequestDeploy } from '../../middleware/project-access.js';
 import { getCreditState, CREDIT_COSTS } from '../../utils/credits.js';
@@ -144,8 +145,16 @@ export async function handleAIBuilderCustomize(ctx) {
     const esc = (s) =>
       String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+    // Hide plugin-gated section types (e.g. Catalogue) unless the owner is
+    // entitled (§8.1). The add-section API enforces the same gate server-side.
+    const pluginOk = {};
+    for (const s of ADDABLE_SECTIONS) {
+      if (s.plugin && !(s.plugin in pluginOk)) pluginOk[s.plugin] = await hasPlugin(env, ctx.billingEmail, s.plugin);
+    }
+    const addableSections = ADDABLE_SECTIONS.filter((s) => !s.plugin || pluginOk[s.plugin]);
+
     // Layout variants per addable section type (for the add-time layout picker).
-    const sectionVariants = Object.fromEntries(ADDABLE_SECTIONS.map((s) => [s.type, getAvailableVariants(s.type)]));
+    const sectionVariants = Object.fromEntries(addableSections.map((s) => [s.type, getAvailableVariants(s.type)]));
 
     // One section tile. siteWide tiles (header/footer) omit the "move to page" select.
     const renderTile = (section, siteWide = false) => `
@@ -824,7 +833,7 @@ export async function handleAIBuilderCustomize(ctx) {
         <div class="add-section-wrap">
           <button class="add-section-btn" onclick="toggleAddSection()" title="${tr('cust.add_section_title')}">${tr('cust.add_section')}</button>
           <div class="add-section-menu" id="add-section-menu" hidden>
-            ${ADDABLE_SECTIONS.map((s) => `<button class="add-section-option" onclick="pickSectionType('${s.type}')">${s.emoji} ${esc(s.label)}</button>`).join('')}
+            ${addableSections.map((s) => `<button class="add-section-option" onclick="pickSectionType('${s.type}')">${s.emoji} ${esc(s.label)}</button>`).join('')}
           </div>
           <div class="add-variant-menu" id="add-variant-menu" hidden></div>
         </div>
@@ -1334,7 +1343,7 @@ export async function handleAIBuilderCustomize(ctx) {
 
     // ---- Add / remove sections ----
     const sectionVariants = ${JSON.stringify(sectionVariants)};
-    const addableLabels = ${JSON.stringify(Object.fromEntries(ADDABLE_SECTIONS.map((s) => [s.type, s.label])))};
+    const addableLabels = ${JSON.stringify(Object.fromEntries(addableSections.map((s) => [s.type, s.label])))};
 
     function toggleAddSection() {
       const m = document.getElementById('add-section-menu');

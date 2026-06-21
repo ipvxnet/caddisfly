@@ -4,7 +4,7 @@
 // identical posts and the prompt only lives in one place.
 
 import { callWorkersAI } from './ai-content-generator.js';
-import { screenContent, POLICY_INSTRUCTION } from './content-policy.js';
+import { screenContent, stripPolicyEcho, POLICY_INSTRUCTION } from './content-policy.js';
 import { mdLiteExcerpt } from './md-lite.js';
 
 const LANG_NAMES = { en: 'English', es: 'Spanish', pt: 'Portuguese' };
@@ -77,6 +77,8 @@ ${POLICY_INSTRUCTION}`;
     e.code = 'malformed';
     throw e;
   }
+  // CONTENT is the last label, so an echoed policy instruction lands in it.
+  draft.content = stripPolicyEcho(draft.content);
   const outScreen = screenContent(`${draft.title}\n${draft.content}`);
   if (!outScreen.allowed) {
     const e = new Error(outScreen.message);
