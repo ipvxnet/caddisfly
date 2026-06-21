@@ -19,6 +19,7 @@ import { getPostsByProject } from '../../../db/blog-posts.js';
 import { autoSyndicateOnDeploy } from './social.js';
 import { blogNavPage, blogListSection, blogPostSection } from '../../../utils/blog-render.js';
 import { getProductsByProject } from '../../../db/products.js';
+import { annotateProductsWithVariants } from '../../../db/variants.js';
 import { getServices } from '../../../db/bookings.js';
 import { parseHolidaySettings } from '../../../utils/holiday-themes.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
@@ -118,6 +119,7 @@ export async function handleAIBuilderDeploy(ctx) {
     // Shop: active products become /shop + /shop/<slug> pages with a Shop nav
     // link (synthetic, like the blog; see utils/shop-render.js).
     const activeProducts = await getProductsByProject(env.DB, projectKey, true);
+    await annotateProductsWithVariants(env.DB, projectKey, activeProducts); // option selectors
     const storeCurrency = config.store_currency || 'usd';
     if (activeProducts.length) navPages.push(shopNavPage(siteLang));
 

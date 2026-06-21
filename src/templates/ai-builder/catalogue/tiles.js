@@ -18,9 +18,9 @@ function money(cents, currency, lang) {
 }
 
 const CAT_T = {
-  en: { heading: 'Catalogue', view: 'View details', buy: 'Buy now', learn: 'Learn more', empty: 'Add catalogue items to show them here.', soldout: 'Sold out' },
-  es: { heading: 'Catálogo', view: 'Ver detalles', buy: 'Comprar', learn: 'Más información', empty: 'Agrega artículos al catálogo para mostrarlos aquí.', soldout: 'Agotado' },
-  pt: { heading: 'Catálogo', view: 'Ver detalhes', buy: 'Comprar', learn: 'Saiba mais', empty: 'Adicione itens ao catálogo para exibi-los aqui.', soldout: 'Esgotado' },
+  en: { heading: 'Catalogue', view: 'View details', buy: 'Buy now', learn: 'Learn more', empty: 'Add catalogue items to show them here.', soldout: 'Sold out', viewopts: 'View options', from: 'from' },
+  es: { heading: 'Catálogo', view: 'Ver detalles', buy: 'Comprar', learn: 'Más información', empty: 'Agrega artículos al catálogo para mostrarlos aquí.', soldout: 'Agotado', viewopts: 'Ver opciones', from: 'desde' },
+  pt: { heading: 'Catálogo', view: 'Ver detalhes', buy: 'Comprar', learn: 'Saiba mais', empty: 'Adicione itens ao catálogo para exibi-los aqui.', soldout: 'Esgotado', viewopts: 'Ver opções', from: 'a partir de' },
 };
 
 export function catalogueTilesTemplate(data, config) {
@@ -76,7 +76,19 @@ ${styles}`.trim();
   const cards = items
     .map((p) => {
       const href = esc(`${base}/shop/${p.slug}${embedSuffix}`);
-      const buyable = p.for_sale !== 0 && p.price_cents > 0;
+      const hv = p.has_variants && Array.isArray(p.variants) && p.variants.length;
+      const buyable = hv ? true : (p.for_sale !== 0 && p.price_cents > 0);
+      const priceLabel = hv
+        ? `${esc(tr.from)} ${money(Math.min(...p.variants.map((v) => v.price_cents)), currency, lang)}`
+        : money(p.price_cents, currency, lang);
+      // Variant products must pick an option on the detail page → "View options".
+      const action = hv
+        ? `<a class="cat-buy" href="${href}">${esc(tr.viewopts)}</a>`
+        : (p.stock === 0
+          ? `<span class="cat-soldout">${esc(tr.soldout)}</span>`
+          : (buyable && published
+            ? `<button class="cat-buy" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${esc(tr.buy)}</button>`
+            : `<a class="cat-buy" href="${href}">${esc(buyable ? tr.buy : tr.learn)}</a>`));
       return `
     <div class="cat-card">
       <a class="cat-link" href="${href}">
@@ -87,12 +99,8 @@ ${styles}`.trim();
         </div>
       </a>
       <div class="cat-foot">
-        ${buyable ? `<span class="cat-price">${money(p.price_cents, currency, lang)}</span>` : `<a class="cat-view" href="${href}">${esc(tr.view)} →</a>`}
-        ${p.stock === 0
-          ? `<span class="cat-soldout">${esc(tr.soldout)}</span>`
-          : (buyable && published
-            ? `<button class="cat-buy" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${esc(tr.buy)}</button>`
-            : `<a class="cat-buy" href="${href}">${esc(buyable ? tr.buy : tr.learn)}</a>`)}
+        ${buyable ? `<span class="cat-price">${priceLabel}</span>` : `<a class="cat-view" href="${href}">${esc(tr.view)} →</a>`}
+        ${action}
       </div>
     </div>`;
     })

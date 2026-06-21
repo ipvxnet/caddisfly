@@ -664,6 +664,8 @@ export const pt = {
     discount_remove: 'Remover',
     discount_off: 'Desconto',
     discount_checking: 'Verificando…',
+    view_options: 'Ver opções',
+    from_price: 'a partir de',
   },
 
   // Mensagens de código de desconto (Loja Avançada) — comprador + administrador.

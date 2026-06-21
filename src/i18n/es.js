@@ -664,6 +664,8 @@ export const es = {
     discount_remove: 'Quitar',
     discount_off: 'Descuento',
     discount_checking: 'Comprobando…',
+    view_options: 'Ver opciones',
+    from_price: 'desde',
   },
 
   // Mensajes de código de descuento (Tienda Avanzada) — comprador + administrador.

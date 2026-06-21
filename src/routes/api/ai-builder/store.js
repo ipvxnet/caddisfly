@@ -446,33 +446,54 @@ export async function handleStoreCheckout(ctx) {
       return json({ success: false, error: 'This store isn’t accepting payments yet.' }, 503);
     }
 
-    // Validate the cart: 1..20 distinct lines, qty 1..99 each.
+    // Validate the cart: 1..20 distinct lines (by product+variant), qty 1..99.
     const rawItems = Array.isArray(body.items) ? body.items.slice(0, 20) : [];
-    const wanted = new Map();
+    const merged = new Map(); // `${id}:${variant_id}` -> { id, qty, variant_id }
     for (const it of rawItems) {
       const id = parseInt(it && it.id, 10);
       const qty = Math.min(99, Math.max(1, parseInt(it && it.qty, 10) || 1));
-      if (Number.isFinite(id) && id > 0) wanted.set(id, (wanted.get(id) || 0) + qty);
+      const vid = parseInt(it && it.variant_id, 10);
+      const variant_id = Number.isFinite(vid) && vid > 0 ? vid : 0;
+      if (Number.isFinite(id) && id > 0) {
+        const key = `${id}:${variant_id}`;
+        const ex = merged.get(key);
+        if (ex) ex.qty = Math.min(99, ex.qty + qty);
+        else merged.set(key, { id, qty, variant_id });
+      }
     }
-    if (!wanted.size) return json({ success: false, error: 'Cart is empty' }, 400);
+    const lines = [...merged.values()];
+    if (!lines.length) return json({ success: false, error: 'Cart is empty' }, 400);
 
-    // Reprice from the DB — active products only.
+    // Reprice from the DB — active products only. Variant lines reprice + stock-
+    // check against the chosen variant (its price overrides the product's).
     const products = await getProductsByProject(env.DB, r.projectKey, true);
     const byId = new Map(products.map((p) => [p.id, p]));
     const appOrigin = env.APP_URL || '';
     const lineItems = [];
     let hasPhysical = false;
     let subtotalCents = 0;
-    for (const [id, qty] of wanted) {
-      const p = byId.get(id);
+    for (const ln of lines) {
+      const p = byId.get(ln.id);
       if (!p) return json({ success: false, error: 'A product in your cart is no longer available.' }, 409);
-      // Advanced Store inventory: block buying more than is in stock (stock NULL = untracked).
-      if (p.stock != null && p.stock < qty) {
-        return json({ success: false, error: t(r.language, 'shopw.out_of_stock'), out_of_stock: true, product: p.name }, 409);
+      let unit = p.price_cents;
+      let stock = p.stock;
+      let nameSuffix = '';
+      if (ln.variant_id) {
+        const v = await getVariantById(env.DB, r.projectKey, ln.variant_id);
+        if (!v || v.product_id !== p.id || !v.active) {
+          return json({ success: false, error: 'A product in your cart is no longer available.' }, 409);
+        }
+        unit = v.price_cents;
+        stock = v.stock;
+        nameSuffix = ` — ${v.label}`;
       }
-      subtotalCents += p.price_cents * qty;
+      // Advanced Store inventory: block buying more than is in stock (NULL = untracked).
+      if (stock != null && stock < ln.qty) {
+        return json({ success: false, error: t(r.language, ln.variant_id ? 'varw.out_of_stock' : 'shopw.out_of_stock'), out_of_stock: true, product: p.name + nameSuffix }, 409);
+      }
+      subtotalCents += unit * ln.qty;
       if (p.product_type === 'physical') hasPhysical = true;
-      const productData = { name: p.name };
+      const productData = { name: p.name + nameSuffix };
       if (p.image) {
         // Stripe needs absolute image URLs; ours may be relative /preview-asset/…
         const abs = p.image.startsWith('/') ? `${appOrigin}${p.image}` : p.image;
@@ -481,10 +502,10 @@ export async function handleStoreCheckout(ctx) {
       lineItems.push({
         price_data: {
           currency: config.store_currency || 'usd',
-          unit_amount: p.price_cents,
+          unit_amount: unit,
           product_data: productData,
         },
-        quantity: qty,
+        quantity: ln.qty,
       });
     }
 
@@ -541,8 +562,8 @@ export async function handleStoreCheckout(ctx) {
           type: 'store_order',
           site: publicId,
           back: `${origin}${path}`.slice(0, 400), // receipt's "back to shop" link
-          // compact for the 500-char metadata cap: [[id,qty],…]
-          items: JSON.stringify([...wanted]).slice(0, 480),
+          // compact for the 500-char metadata cap: [[id,qty,variantId],…]
+          items: JSON.stringify(lines.map((l) => [l.id, l.qty, l.variant_id])).slice(0, 480),
           ...(discountCode ? { discount: discountCode } : {}),
         },
         collectShipping: hasPhysical,
@@ -652,18 +673,25 @@ export async function handleDiscountValidate(ctx) {
     const chk = checkDiscount(d);
     if (!chk.ok) return json({ success: false, error: t(r.language, `discw.${chk.reason}`), discount_error: chk.reason }, 409);
 
-    // Reprice the cart subtotal so the previewed amount matches checkout.
+    // Reprice the cart subtotal so the previewed amount matches checkout (variant
+    // lines use the variant's price, like checkout does).
     const rawItems = Array.isArray(body.items) ? body.items.slice(0, 20) : [];
-    const wanted = new Map();
-    for (const it of rawItems) {
-      const id = parseInt(it && it.id, 10);
-      const qty = Math.min(99, Math.max(1, parseInt(it && it.qty, 10) || 1));
-      if (Number.isFinite(id) && id > 0) wanted.set(id, (wanted.get(id) || 0) + qty);
-    }
     const products = await getProductsByProject(env.DB, r.projectKey, true);
     const byId = new Map(products.map((p) => [p.id, p]));
     let subtotal = 0;
-    for (const [id, qty] of wanted) { const p = byId.get(id); if (p) subtotal += p.price_cents * qty; }
+    for (const it of rawItems) {
+      const id = parseInt(it && it.id, 10);
+      const qty = Math.min(99, Math.max(1, parseInt(it && it.qty, 10) || 1));
+      const vid = parseInt(it && it.variant_id, 10);
+      const p = Number.isFinite(id) ? byId.get(id) : null;
+      if (!p) continue;
+      if (Number.isFinite(vid) && vid > 0) {
+        const v = await getVariantById(env.DB, r.projectKey, vid);
+        subtotal += (v && v.product_id === p.id ? v.price_cents : p.price_cents) * qty;
+      } else {
+        subtotal += p.price_cents * qty;
+      }
+    }
     const amount = discountAmountFor(d, subtotal);
     return json({ success: true, code: d.code, kind: d.kind, value: d.value, amount_cents: amount });
   } catch (e) {
@@ -995,8 +1023,10 @@ export async function recordStoreOrder(env, publicId, session) {
   // a newly-recorded order). metadata.items = [[id,qty],…] set at checkout.
   try {
     const cart = JSON.parse((session.metadata && session.metadata.items) || '[]');
-    for (const [id, qty] of cart) {
-      if (Number.isFinite(id)) await decrementStock(env.DB, r.projectKey, id, qty);
+    for (const [id, qty, vid] of cart) {
+      // 3-tuple [id,qty,variantId]; older 2-tuples have vid undefined → product stock.
+      if (vid) await decrementVariantStock(env.DB, r.projectKey, vid, qty);
+      else if (Number.isFinite(id)) await decrementStock(env.DB, r.projectKey, id, qty);
     }
   } catch (e) { console.error('stock decrement failed (non-fatal):', e.message); }
 

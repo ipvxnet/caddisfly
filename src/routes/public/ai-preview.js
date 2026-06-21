@@ -10,6 +10,7 @@ import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js'
 import { entitledSectionFilter, hasPlugin } from '../../plugins/entitlements.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { getProductsByProject } from '../../db/products.js';
+import { annotateProductsWithVariants } from '../../db/variants.js';
 import { getServices } from '../../db/bookings.js';
 import { parseHolidaySettings } from '../../utils/holiday-themes.js';
 import { blogNavPage } from '../../utils/blog-render.js';
@@ -171,6 +172,7 @@ export async function handleAIPreview(ctx) {
     const publishedPosts = await getPostsByProject(env.DB, projectKey, true);
     if (publishedPosts.length) navPages.push(blogNavPage(siteLang));
     const activeProducts = await getProductsByProject(env.DB, projectKey, true);
+    await annotateProductsWithVariants(env.DB, projectKey, activeProducts); // option selectors
     if (activeProducts.length) navPages.push(shopNavPage(siteLang));
     const bookingServices = await getServices(env.DB, projectKey, { activeOnly: true });
     const holSettings = parseHolidaySettings(config);

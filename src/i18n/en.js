@@ -668,6 +668,8 @@ export const en = {
     discount_remove: 'Remove',
     discount_off: 'Discount',
     discount_checking: 'Checking…',
+    view_options: 'View options',
+    from_price: 'from',
   },
 
   // Discount-code messages (Advanced Store) — buyer + admin (SITE/app language).

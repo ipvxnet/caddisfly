@@ -46,6 +46,31 @@ export async function getProductIdsWithVariants(db, projectKey) {
   return new Set((results || []).map((r) => r.product_id));
 }
 
+/**
+ * Annotate a products array (in place) with `variants` (active list) and
+ * `has_variants`. One query for the whole project, grouped by product_id — used
+ * by the render paths so storefront templates can show option selectors. Returns
+ * the same array for chaining.
+ */
+export async function annotateProductsWithVariants(db, projectKey, products) {
+  if (!Array.isArray(products) || !products.length) return products;
+  const k = keyWhere(projectKey);
+  const { results } = await db
+    .prepare(`SELECT * FROM product_variants WHERE ${k.sql} AND active = 1 ORDER BY sort_order, id`)
+    .bind(k.val)
+    .all();
+  const byProduct = new Map();
+  for (const v of results || []) {
+    if (!byProduct.has(v.product_id)) byProduct.set(v.product_id, []);
+    byProduct.get(v.product_id).push(v);
+  }
+  for (const p of products) {
+    p.variants = byProduct.get(p.id) || [];
+    p.has_variants = p.variants.length > 0;
+  }
+  return products;
+}
+
 /** One variant by id (checkout repricing / stock). */
 export async function getVariantById(db, projectKey, id) {
   const k = keyWhere(projectKey);

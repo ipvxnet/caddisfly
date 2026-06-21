@@ -31,6 +31,10 @@ export function shopListSection(products, base, currency, lang = 'en') {
       price_cents: p.price_cents,
       image: p.image || '',
       excerpt: productExcerpt(p.description),
+      has_variants: !!p.has_variants, // → "View options" link instead of add-to-cart
+      price_from: p.has_variants && Array.isArray(p.variants) && p.variants.length
+        ? Math.min(...p.variants.map((v) => v.price_cents))
+        : null,
     })),
   };
   return {
@@ -72,6 +76,11 @@ export function shopProductSection(product, base, currency) {
       body_html: product.body ? mdLiteToHtml(product.body) : '',
       for_sale: product.for_sale === 0 ? 0 : 1,
       media: parseMedia(product.media_json),
+      // Variants (Advanced Store): the buy flow picks one of these; each carries
+      // its own price + stock. Empty → product sells at its base price.
+      variants: Array.isArray(product.variants)
+        ? product.variants.map((v) => ({ id: v.id, label: v.label, price_cents: v.price_cents, stock: v.stock, sku: v.sku }))
+        : [],
     },
   };
   return {
