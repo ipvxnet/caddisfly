@@ -149,6 +149,7 @@ export async function handleStoreManager(ctx) {
         </div>
         <label>${tr('storem.image_label')} <span class="hint">${tr('storem.image_hint')}</span></label>
         <input id="np-image" maxlength="500" placeholder="https://…">
+        <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, false)">${tr('storem.upload_image')}</button>
         <label>${tr('storem.category_label')} <span class="hint">${tr('storem.category_hint')}</span></label>
         <input id="np-category" maxlength="80" placeholder="Parts, Tools…">
         <label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" id="np-forsale" checked style="width:auto"> ${tr('storem.forsale_label')}</label>
@@ -156,6 +157,7 @@ export async function handleStoreManager(ctx) {
         <details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">${tr('storem.media_label')}</summary>
           <label>${tr('storem.media_gallery')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-gallery" rows="2" placeholder="https://…/photo1.jpg"></textarea>
+          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, true)">${tr('storem.upload_image')}</button>
           <label>${tr('storem.media_videos')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-videos" rows="2" placeholder="https://youtu.be/…"></textarea>
           <label>${tr('storem.media_files')} <span class="hint">Name | URL</span></label>
@@ -245,6 +247,7 @@ export async function handleStoreManager(ctx) {
       mediaLinks: ${JSON.stringify(tr('storem.media_links'))},
       mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
       uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
+      uploadImage: ${JSON.stringify(tr('storem.upload_image'))},
       stockLabel: ${JSON.stringify(tr('storem.stock_label'))},
       stockHint: ${JSON.stringify(tr('storem.stock_hint'))},
       types: {
@@ -403,11 +406,13 @@ export async function handleStoreManager(ctx) {
         '<div class="desc-row"><textarea class="f-desc" rows="4">' + esc(p.description || '') + '</textarea>' +
         '<button class="btn ghost" onclick="aiDescribeEdit(' + p.id + ', this)">' + T.aiDesc + '</button></div>' +
         '<label>' + T.imageLabel + '</label><input class="f-image" maxlength="500" value="' + esc(p.image || '') + '">' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, false)">' + T.uploadImage + '</button>' +
         '<label>' + T.categoryLabel + '</label><input class="f-category" maxlength="80" value="' + esc(p.category || '') + '">' +
         '<label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" class="f-forsale"' + (p.for_sale === 0 ? '' : ' checked') + ' style="width:auto"> ' + T.forsaleLabel + '</label>' +
         (ADV ? '<label>' + T.stockLabel + ' <span class="hint">' + T.stockHint + '</span></label><input class="f-stock" type="number" min="0" value="' + (p.stock == null ? '' : p.stock) + '">' : '') +
         '<details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">' + T.mediaLabel + '</summary>' +
         '<label>' + T.mediaGallery + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-gallery" rows="2">' + esc(mt.gallery) + '</textarea>' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, true)">' + T.uploadImage + '</button>' +
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
         '<label>' + T.mediaFiles + ' <span class="hint">Name | URL</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
@@ -456,6 +461,30 @@ export async function handleStoreManager(ctx) {
     function linesToPairs(s, keyName){ return linesToArr(s).map(function(line){ var i=line.indexOf('|'); var a=i<0?line:line.slice(0,i).trim(); var b=i<0?line:line.slice(i+1).trim(); var o={url:b}; o[keyName]=a; return o; }).filter(function(o){return o.url;}); }
     function mediaFrom(g,v,f,l){ return { gallery: linesToArr(g), videos: linesToArr(v), files: linesToPairs(f,'name'), links: linesToPairs(l,'label') }; }
     function mediaText(raw){ var m={}; try{ m=raw?JSON.parse(raw):{}; }catch(e){ m={}; } var arr=function(x){return Array.isArray(x)?x:[];}; return { gallery: arr(m.gallery).join('\\n'), videos: arr(m.videos).join('\\n'), files: arr(m.files).map(function(f){return (f.name||'')+' | '+(f.url||'');}).join('\\n'), links: arr(m.links).map(function(l){return (l.label||'')+' | '+(l.url||'');}).join('\\n') }; }
+
+    // Upload an image → R2 (served via /preview-asset, auto-resized to AVIF/WebP
+    // on delivery by the sites worker). target is an <input> (replace) or a
+    // gallery <textarea> (append one URL per line).
+    function uploadImageInto(btn, target, append) {
+      if (!target) return;
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp';
+      inp.onchange = async function(){
+        var f = inp.files && inp.files[0]; if (!f) return;
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
+        try {
+          var fd = new FormData(); fd.append('file', f); fd.append('asset_type', 'catalogue');
+          var res = await fetch('/api/ai-builder/' + PID + '/upload', { method: 'POST', body: fd });
+          var d = await res.json();
+          if (d && d.success && d.url) {
+            if (append) target.value = target.value ? (target.value + '\\n' + d.url) : d.url;
+            else target.value = d.url;
+          } else { alert((d && d.error) || T.errorPrefix); }
+        } catch(e) { alert(T.errorPrefix); }
+        btn.disabled = false; btn.textContent = old;
+      };
+      inp.click();
+    }
 
     // Upload a PDF → R2, append "name | url" to the given files textarea.
     function uploadPdf(btn, ta) {
