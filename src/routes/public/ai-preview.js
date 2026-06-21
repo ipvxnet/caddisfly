@@ -7,6 +7,7 @@ import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } fro
 import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js';
+import { entitledSectionFilter } from '../../plugins/entitlements.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { getProductsByProject } from '../../db/products.js';
 import { getServices } from '../../db/bookings.js';
@@ -179,22 +180,25 @@ export async function handleAIPreview(ctx) {
     const body = page && page.is_home
       ? await getHomeBodySections(env.DB, projectKey, page.id, true)
       : await getBodySectionsForPage(env.DB, page ? page.id : -1, true);
-    const combined = [...header, ...body, ...footer];
+    // Plugin gating (§8.3): drop sections whose plugin the owner isn't entitled
+    // to, so the preview reflects entitlement live (no-op until a gated section).
+    const filterSections = await entitledSectionFilter(env, project && project.customer_email);
+    const combined = filterSections([...header, ...body, ...footer]);
 
     // Home page's body sections → consistent section-anchor nav across all pages
     // (reuse `body` when already on home to avoid a second query).
     const homePageRow = navPages.find((p) => p.is_home) || navPages.find((p) => p.slug === 'home') || null;
-    const homeSections = (page && page.is_home)
+    const homeSections = filterSections((page && page.is_home)
       ? body
-      : (homePageRow ? await getHomeBodySections(env.DB, projectKey, homePageRow.id, true) : []);
+      : (homePageRow ? await getHomeBodySections(env.DB, projectKey, homePageRow.id, true) : []));
 
     // Pages opted into "sections as submenu" → collect their sections for the nav.
     const pageSections = {};
     for (const p of navPages) {
       if (!p.show_sections_in_nav) continue;
-      pageSections[p.id] = (page && p.id === page.id)
+      pageSections[p.id] = filterSections((page && p.id === page.id)
         ? body
-        : (p.is_home && homePageRow ? homeSections : await getBodySectionsForPage(env.DB, p.id, true));
+        : (p.is_home && homePageRow ? homeSections : await getBodySectionsForPage(env.DB, p.id, true)));
     }
 
     if (combined.length === 0) {

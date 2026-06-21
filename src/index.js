@@ -68,6 +68,8 @@ import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './route
 // Billing (Stripe + magic-link) route handlers
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
 import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleCreditCheckout } from './routes/api/billing.js';
+import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
+import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
@@ -128,6 +130,7 @@ import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
 import { processBookingReminders } from './routes/api/bookings-remind.js';
 import { handleHolidayThemesSave, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
+import { processPluginGraceHides } from './plugins/grace-cron.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
@@ -244,6 +247,11 @@ router.get('/site/:project_id/:page_slug', handlePublishedSite);
 router.get('/billing', handleBilling, [billingAuth]);
 router.get('/billing/verify/:token', handleBillingVerify);
 router.get('/billing/logout', handleBillingLogout);
+
+// Plugin marketplace + add-on subscribe/cancel (a $5/mo module on the existing sub).
+router.get('/plugins', handlePluginsMarketplace, [billingAuth]);
+router.post('/api/plugins/:key/subscribe', handlePluginSubscribe, [billingAuth]);
+router.post('/api/plugins/:key/cancel', handlePluginCancel, [billingAuth]);
 
 // Customer dashboard (websites + team) and team management
 router.get('/dashboard', handleDashboard, [billingAuth]);
@@ -509,6 +517,12 @@ export default {
       console.log('holiday themes:', JSON.stringify(summary));
     } catch (e) {
       console.error('scheduled holiday themes failed:', e.message);
+    }
+    try {
+      const summary = await processPluginGraceHides(env, ctx);
+      console.log('plugin grace hides:', JSON.stringify(summary));
+    } catch (e) {
+      console.error('scheduled plugin grace hides failed:', e.message);
     }
   },
 

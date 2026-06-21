@@ -66,7 +66,7 @@ function toForm(obj) {
   return params;
 }
 
-async function stripeRequest(env, path, body, stripeAccount = null) {
+async function stripeRequest(env, path, body, stripeAccount = null, method = 'POST') {
   if (!isStripeConfigured(env)) throw new Error('Stripe is not configured');
   const headers = {
     Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
@@ -74,11 +74,9 @@ async function stripeRequest(env, path, body, stripeAccount = null) {
   };
   // Act on a connected account (Connect direct charge / read).
   if (stripeAccount) headers['Stripe-Account'] = stripeAccount;
-  const res = await fetch(`${STRIPE_API}${path}`, {
-    method: 'POST',
-    headers,
-    body: toForm(body).toString(),
-  });
+  const init = { method, headers };
+  if (method !== 'GET' && body) init.body = toForm(body).toString();
+  const res = await fetch(`${STRIPE_API}${path}`, init);
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = json && json.error && json.error.message ? json.error.message : `Stripe ${res.status}`;
@@ -106,6 +104,31 @@ export async function createCheckoutSession(env, { email, priceId, successUrl, c
   if (customerId) body.customer = customerId;
   else body.customer_email = email;
   return stripeRequest(env, '/checkout/sessions', body);
+}
+
+// ---- Subscription items (plugin add-ons ride the account's existing sub) ----
+
+/** Fetch a subscription (incl. items + current_period_end). */
+export async function getSubscription(env, subscriptionId) {
+  return stripeRequest(env, `/subscriptions/${subscriptionId}`, null, null, 'GET');
+}
+
+/** Add a price as a new item on an existing subscription (prorated). */
+export async function addSubscriptionItem(env, subscriptionId, priceId) {
+  return stripeRequest(env, '/subscription_items', {
+    subscription: subscriptionId,
+    price: priceId,
+    quantity: 1,
+    proration_behavior: 'create_prorations',
+  });
+}
+
+/**
+ * Remove a subscription item. proration_behavior='none' → no refund and they
+ * keep access through the already-paid period (our 7-day grace covers the tail).
+ */
+export async function deleteSubscriptionItem(env, itemId) {
+  return stripeRequest(env, `/subscription_items/${itemId}`, { proration_behavior: 'none' }, null, 'DELETE');
 }
 
 // One-time AI credit top-up packs (flat 50 credits per $1; purchased credits
