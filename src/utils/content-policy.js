@@ -13,7 +13,10 @@ const PATTERNS = [
   {
     category: 'sexual_explicit',
     severity: 'high',
-    re: /(pornograph|pornhub|\bxxx\b|hardcore\s*sex|sex\s*cam|adult\s*(video|webcam|cam\s*site)|escort\s*service|prostitut|nude\s*model|onlyfans)/i,
+    // NOTE: bare "xxx" is intentionally NOT matched alone — AI product copy uses
+    // "XXX" as a spec placeholder ("up to XXX HP", "Part #XXX"), which falsely
+    // flagged a turbocharger description. Only match "xxx" in a porn context.
+    re: /(pornograph|pornhub|xxx[\s.-]*(porn|sex|video|adult|rated|hub|cam)|(porn|hardcore|adult)[\s.-]*xxx|hardcore\s*sex|sex\s*cam|adult\s*(video|webcam|cam\s*site)|escort\s*service|prostitut|nude\s*model|onlyfans)/i,
   },
   {
     category: 'illegal_drugs',
