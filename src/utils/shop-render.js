@@ -44,6 +44,19 @@ export function shopListSection(products, base, currency, lang = 'en') {
 }
 
 /** Synthetic shop_product section for one product page. */
+/** Parse a product's media_json into safe arrays for the detail page. */
+function parseMedia(raw) {
+  let m = {};
+  try { m = raw ? JSON.parse(raw) : {}; } catch { m = {}; }
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  return {
+    gallery: arr(m.gallery).filter((u) => typeof u === 'string' && u),
+    videos: arr(m.videos).filter((u) => typeof u === 'string' && u),
+    files: arr(m.files).filter((f) => f && f.url),
+    links: arr(m.links).filter((l) => l && l.url),
+  };
+}
+
 export function shopProductSection(product, base, currency) {
   const data = {
     base,
@@ -55,6 +68,10 @@ export function shopProductSection(product, base, currency) {
       price_cents: product.price_cents,
       image: product.image || '',
       description_html: mdLiteToHtml(product.description || ''),
+      // Catalogue fields (Catalogue plugin) — rich detail + media + buy flag.
+      body_html: product.body ? mdLiteToHtml(product.body) : '',
+      for_sale: product.for_sale === 0 ? 0 : 1,
+      media: parseMedia(product.media_json),
     },
   };
   return {
