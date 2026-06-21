@@ -30,10 +30,12 @@ plans. Each "plugin" is a self-contained feature module the user can subscribe t
 | Sequencing | Build thin platform + **Catalogue plugin #1** end-to-end, then CRM / Advanced Store |
 | Pricing | $5/mo per plugin; bundles save (combo discount) |
 | Free tier | Plugins **require a base paid plan** (Starter+); no standalone-on-Free |
-| Downgrade behavior | **Grace period, then HIDE** the plugin's sections on the live site; data kept in DB, restorable on resubscribe |
+| Downgrade behavior | **Grace 7 days, then HIDE** the plugin's sections on the live site; data kept in DB, restorable on resubscribe |
 | Catalogue backend | **Extend `products`** (not a parallel entity) — reuse Stripe Connect/orders/detail-pages |
-| Catalogue media v1 | PDF upload + view/download (gallery/video/links scope TBD at build) |
+| Catalogue media v1 | **FULL: PDF + multi-image gallery + videos (embed+upload) + external links/training** |
 | Buy per item | **Optional** via a `for_sale` flag (info-only items: Training, PDFs, spec sheets) |
+| Caps | Catalogue plugin **raises** the product/item cap (exact limit TBD) |
+| Subscribe mechanics | Add a Stripe **subscription item via API** onto the existing subscription (one invoice, auto-proration) |
 | Auto-extract catalogue from refactor | **Deferred** — manual authoring first |
 
 ## 4. Architecture overview
@@ -239,13 +241,17 @@ sellable items ARE products.
 - Catalogue: multi-category multi-section page; for_sale vs info-only; PDF view/download; buy via Connect end-to-end on preview.
 - Migrations applied to BOTH DBs; bridge pattern intact.
 
-## 14. Open questions to resolve before/at build
-1. **Grace length** (e.g., 7 days post period-end?) and what the user sees in that window.
-2. **Catalogue media v1 exact scope** — PDF confirmed; include gallery/video/links in B or stage them?
-3. **Bundle pricing** — exact combo price(s) and which plugins bundle.
-4. **Subscribe mechanics** — add subscription item via API vs a Checkout that appends the line item (proration + payment-method-on-file implications).
-5. **Catalogue vs Shop coexistence** — can the same item appear in both a Shop grid and a Catalogue section? (Proposed: yes, same products row.)
-6. **Caps** — do catalogue items count toward commerce-v1 product caps, or does the plugin raise/replace them?
+## 14. Open questions
+
+**Resolved (2026-06-21):**
+1. **Grace length → 7 days** post period-end, then sections hide. Show the resubscribe-by date in that window.
+2. **Catalogue media v1 → FULL: PDF + multi-image gallery + videos (embed+upload) + external links/training.** (Build all in Phase B.)
+4. **Subscribe mechanics → add a Stripe subscription ITEM via API** onto the existing subscription (one invoice, auto-proration; base plan guarantees a payment method on file).
+6. **Caps → the plugin RAISES the cap** (catalogue items get more headroom than the base tier's product cap; exact new limit TBD).
+
+**Still open:**
+3. **Bundle pricing** — exact combo price(s) and which plugins bundle (pure pricing decision).
+5. **Catalogue vs Shop coexistence** — same item in both a Shop grid and a Catalogue section? (Proposed: yes, same `products` row.)
 7. **`/catalog/:slug` vs reusing `/shop/:slug`** for detail pages.
 
 ---
