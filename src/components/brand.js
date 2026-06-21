@@ -143,6 +143,7 @@ export function siteHeader(activePath = '', opts = {}) {
       <a href="/showcase"${a('/showcase')}>${tr('nav.showcase')}</a>
       <a href="/#features">${tr('nav.features')}</a>
       <a href="/dashboard"${a('/dashboard')}>${tr('nav.dashboard')}</a>
+      <a href="/plugins"${a('/plugins')}>${tr('nav.plugins')}</a>
       ${langSwitcher(lang)}
       ${pill}
       <a class="btn btn-primary" href="/ai-builder">${tr('nav.build')} →</a>

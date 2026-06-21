@@ -156,6 +156,7 @@ export async function handleStoreManager(ctx) {
           <textarea id="np-videos" rows="2" placeholder="https://youtu.be/…"></textarea>
           <label>${tr('storem.media_files')} <span class="hint">Name | URL</span></label>
           <textarea id="np-files" rows="2" placeholder="Datasheet | https://…/spec.pdf"></textarea>
+          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">${tr('storem.upload_pdf')}</button>
           <label>${tr('storem.media_links')} <span class="hint">Label | URL</span></label>
           <textarea id="np-links" rows="2" placeholder="Manufacturer | https://…"></textarea>
         </details>
@@ -213,6 +214,7 @@ export async function handleStoreManager(ctx) {
       mediaFiles: ${JSON.stringify(tr('storem.media_files'))},
       mediaLinks: ${JSON.stringify(tr('storem.media_links'))},
       mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
+      uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
       types: {
         physical: ${JSON.stringify(tr('storem.type_physical'))},
         digital: ${JSON.stringify(tr('storem.type_digital'))},
@@ -344,6 +346,7 @@ export async function handleStoreManager(ctx) {
         '<label>' + T.mediaGallery + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-gallery" rows="2">' + esc(mt.gallery) + '</textarea>' +
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
         '<label>' + T.mediaFiles + ' <span class="hint">Name | URL</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
         '<label>' + T.mediaLinks + ' <span class="hint">Label | URL</span></label><textarea class="m-links" rows="2">' + esc(mt.links) + '</textarea>' +
         '</details>' +
         '<div class="edit-actions">' +
@@ -375,6 +378,26 @@ export async function handleStoreManager(ctx) {
     function linesToPairs(s, keyName){ return linesToArr(s).map(function(line){ var i=line.indexOf('|'); var a=i<0?line:line.slice(0,i).trim(); var b=i<0?line:line.slice(i+1).trim(); var o={url:b}; o[keyName]=a; return o; }).filter(function(o){return o.url;}); }
     function mediaFrom(g,v,f,l){ return { gallery: linesToArr(g), videos: linesToArr(v), files: linesToPairs(f,'name'), links: linesToPairs(l,'label') }; }
     function mediaText(raw){ var m={}; try{ m=raw?JSON.parse(raw):{}; }catch(e){ m={}; } var arr=function(x){return Array.isArray(x)?x:[];}; return { gallery: arr(m.gallery).join('\\n'), videos: arr(m.videos).join('\\n'), files: arr(m.files).map(function(f){return (f.name||'')+' | '+(f.url||'');}).join('\\n'), links: arr(m.links).map(function(l){return (l.label||'')+' | '+(l.url||'');}).join('\\n') }; }
+
+    // Upload a PDF → R2, append "name | url" to the given files textarea.
+    function uploadPdf(btn, ta) {
+      if (!ta) return;
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'application/pdf';
+      inp.onchange = async function(){
+        var f = inp.files && inp.files[0]; if (!f) return;
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
+        try {
+          var fd = new FormData(); fd.append('file', f);
+          var res = await fetch('/api/ai-builder/' + PID + '/upload', { method: 'POST', body: fd });
+          var d = await res.json();
+          if (d && d.success && d.url) { var line = f.name + ' | ' + d.url; ta.value = ta.value ? (ta.value + '\\n' + line) : line; }
+          else { alert((d && d.error) || T.errorPrefix); }
+        } catch(e) { alert(T.errorPrefix); }
+        btn.disabled = false; btn.textContent = old;
+      };
+      inp.click();
+    }
 
     async function createProduct(btn) {
       var name = document.getElementById('np-name').value.trim();
