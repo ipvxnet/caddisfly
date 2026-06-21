@@ -40,6 +40,18 @@ const PATTERNS = [
 ];
 
 /**
+ * Strip an echoed POLICY_INSTRUCTION that weak models sometimes parrot into
+ * their OUTPUT. Without this the generated text screens against itself — the
+ * policy wording contains "pornographic"/"sexually explicit"/"weapons" — and
+ * legit copy gets false-blocked. Apply to AI output before screening/storing.
+ * @param {string} text
+ * @returns {string}
+ */
+export function stripPolicyEcho(text) {
+  return String(text == null ? '' : text).split(/\n+\s*CONTENT POLICY\b/i)[0].trim();
+}
+
+/**
  * Screen free-text user input against the Acceptable Use Policy.
  * @param {string} text
  * @returns {{allowed:boolean, category?:string, severity?:string, message?:string}}

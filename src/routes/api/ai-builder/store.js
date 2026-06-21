@@ -41,7 +41,7 @@ import {
   countProducts, uniqueProductSlug,
 } from '../../../db/products.js';
 import { callWorkersAI } from '../../../utils/ai-content-generator.js';
-import { screenContent, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
+import { screenContent, stripPolicyEcho, policyError, POLICY_INSTRUCTION } from '../../../utils/content-policy.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS, PRODUCT_LIMITS } from '../../../utils/credits.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { audit } from '../../../utils/audit.js';
@@ -376,13 +376,9 @@ ${POLICY_INSTRUCTION}`;
 
     const raw = await callWorkersAI(env, prompt, { max_tokens: 512, temperature: 0.6, system_message: 'You are a professional e-commerce copywriter for small businesses.' });
     const start = String(raw || '').search(/DESCRIPTION:/);
-    const description = start === -1 ? '' : String(raw).slice(start + 'DESCRIPTION:'.length)
-      .replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '')
-      // Weak models sometimes ECHO the trailing policy instruction into the
-      // output; drop it (it also otherwise screens against itself — the policy
-      // text contains words like "pornographic"/"sexually explicit").
-      .split(/\n+\s*CONTENT POLICY\b/i)[0]
-      .trim();
+    // stripPolicyEcho: weak models sometimes parrot the trailing policy
+    // instruction into the output, which would screen against itself.
+    const description = start === -1 ? '' : stripPolicyEcho(String(raw).slice(start + 'DESCRIPTION:'.length).replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, ''));
     if (!description) return json({ success: false, error: 'The AI description came back malformed — please try again.' }, 502);
     const outScreen = screenContent(description);
     if (!outScreen.allowed) return json(policyError(outScreen), 422);
