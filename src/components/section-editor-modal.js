@@ -15,7 +15,7 @@ import { TESTIMONIAL_DEFAULTS } from '../templates/ai-builder/testimonials/cards
  *   the editor matches what the page renders — e.g. PT defaults, not EN)
  * @returns {string} Modal HTML
  */
-export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null) {
+export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null, catCategories = null) {
   const tr = translator(lang);
   const contentLang = siteLang || lang;
   const content = JSON.parse(section.content_json || '{}');
@@ -37,7 +37,7 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
       <details class="manual-edit" open>
         <summary>${tr('sed.edit_manual')}</summary>
         <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
-          ${generateFormFields(section.section_type, content, tr, projectId, contentLang)}
+          ${generateFormFields(section.section_type, content, tr, projectId, contentLang, catCategories)}
 
           ${['header', 'footer', 'hero'].includes(section.section_type) ? '' : `
           <div class="form-group">
@@ -821,12 +821,42 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
 /**
  * Generate form fields based on section type
  */
-function generateFormFields(sectionType, content, tr, projectId = '', contentLang = 'en') {
+// Catalogue section: heading/subheading + a category FILTER. One catalogue
+// section shows one category (empty = all items), so multiple sections on
+// different pages can each show a different category.
+function generateCatalogueFields(content, tr, catCategories) {
+  const cats = Array.isArray(catCategories) ? catCategories.slice() : [];
+  const sel = content.category || '';
+  // Preserve a manually-set category even if it currently has no products.
+  if (sel && !cats.includes(sel)) cats.unshift(sel);
+  const options = [`<option value="">${escapeHtml(tr('sed.cat_all'))}</option>`]
+    .concat(cats.map((c) => `<option value="${escapeHtml(c)}"${c === sel ? ' selected' : ''}>${escapeHtml(c)}</option>`))
+    .join('');
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    <div class="form-group">
+      <label for="category">${tr('sed.cat_filter')}</label>
+      <select id="category" name="category">${options}</select>
+      <small>${tr('sed.cat_filter_hint')}</small>
+    </div>
+  `;
+}
+
+function generateFormFields(sectionType, content, tr, projectId = '', contentLang = 'en', catCategories = null) {
   switch (sectionType) {
     case 'hero':
       return generateHeroFields(content, tr);
     case 'about':
       return generateAboutFields(content, tr);
+    case 'catalogue':
+      return generateCatalogueFields(content, tr, catCategories);
     case 'services':
       return generateServicesFields(content, tr);
     case 'testimonials':

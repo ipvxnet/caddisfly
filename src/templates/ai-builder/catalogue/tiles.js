@@ -17,6 +17,21 @@ function money(cents, currency, lang) {
   }
 }
 
+// For an INFO-ONLY item (for_sale=0), clicking the tile should open its document
+// or video directly rather than the shop detail page. Precedence: first PDF file →
+// first video → fall back to the detail page. Returns { href, ext } (ext → new tab).
+function infoTarget(p, fallbackHref) {
+  if (p.for_sale !== 0) return { href: fallbackHref, ext: false };
+  let media = {};
+  try { media = p.media_json ? JSON.parse(p.media_json) : {}; } catch { media = {}; }
+  const files = Array.isArray(media.files) ? media.files : [];
+  const pdf = files.find((f) => f && f.url && /\.pdf(\?|$)/i.test(f.url));
+  if (pdf) return { href: pdf.url, ext: true };
+  const videos = Array.isArray(media.videos) ? media.videos.filter((u) => typeof u === 'string' && u) : [];
+  if (videos.length) return { href: videos[0], ext: true };
+  return { href: fallbackHref, ext: false };
+}
+
 const CAT_T = {
   en: { heading: 'Catalogue', view: 'View details', buy: 'Buy now', learn: 'Learn more', empty: 'Add catalogue items to show them here.', soldout: 'Sold out', viewopts: 'View options', from: 'from' },
   es: { heading: 'Catálogo', view: 'Ver detalles', buy: 'Comprar', learn: 'Más información', empty: 'Agrega artículos al catálogo para mostrarlos aquí.', soldout: 'Agotado', viewopts: 'Ver opciones', from: 'desde' },
@@ -75,23 +90,27 @@ ${styles}`.trim();
 
   const cards = items
     .map((p) => {
-      const href = esc(`${base}/shop/${p.slug}${embedSuffix}`);
+      const detailHref = `${base}/shop/${p.slug}${embedSuffix}`;
       const hv = p.has_variants && Array.isArray(p.variants) && p.variants.length;
       const buyable = hv ? true : (p.for_sale !== 0 && p.price_cents > 0);
       const priceLabel = hv
         ? `${esc(tr.from)} ${money(Math.min(...p.variants.map((v) => v.price_cents)), currency, lang)}`
         : money(p.price_cents, currency, lang);
+      // Info-only items open their PDF/video directly; everything else → detail.
+      const tgt = hv ? { href: detailHref, ext: false } : infoTarget(p, detailHref);
+      const cardHref = esc(tgt.href);
+      const cardAttr = tgt.ext ? ' target="_blank" rel="noopener"' : '';
       // Variant products must pick an option on the detail page → "View options".
       const action = hv
-        ? `<a class="cat-buy" href="${href}">${esc(tr.viewopts)}</a>`
+        ? `<a class="cat-buy" href="${esc(detailHref)}">${esc(tr.viewopts)}</a>`
         : (p.stock === 0
           ? `<span class="cat-soldout">${esc(tr.soldout)}</span>`
           : (buyable && published
             ? `<button class="cat-buy" data-cf-add data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price_cents}" data-image="${esc(p.image || '')}">${esc(tr.buy)}</button>`
-            : `<a class="cat-buy" href="${href}">${esc(buyable ? tr.buy : tr.learn)}</a>`));
+            : `<a class="cat-buy" href="${cardHref}"${cardAttr}>${esc(buyable ? tr.buy : tr.learn)}</a>`));
       return `
     <div class="cat-card">
-      <a class="cat-link" href="${href}">
+      <a class="cat-link" href="${cardHref}"${cardAttr}>
         ${p.image ? `<div class="cat-img" style="background-image:url('${esc(p.image)}')"></div>` : '<div class="cat-img cat-img-empty"></div>'}
         <div class="cat-body">
           <h3>${esc(p.name)}</h3>
@@ -99,7 +118,7 @@ ${styles}`.trim();
         </div>
       </a>
       <div class="cat-foot">
-        ${buyable ? `<span class="cat-price">${priceLabel}</span>` : `<a class="cat-view" href="${href}">${esc(tr.view)} →</a>`}
+        ${buyable ? `<span class="cat-price">${priceLabel}</span>` : `<a class="cat-view" href="${cardHref}"${cardAttr}>${esc(tr.view)} →</a>`}
         ${action}
       </div>
     </div>`;
@@ -167,9 +186,14 @@ ${styles}`.trim();
 
   const cards = items
     .map((p) => {
-      const href = esc(`${base}/shop/${p.slug}${embedSuffix}`);
+      const detailHref = `${base}/shop/${p.slug}${embedSuffix}`;
+      const hv = p.has_variants && Array.isArray(p.variants) && p.variants.length;
+      // Info-only items open their PDF/video directly; everything else → detail.
+      const tgt = hv ? { href: detailHref, ext: false } : infoTarget(p, detailHref);
+      const cardHref = esc(tgt.href);
+      const cardAttr = tgt.ext ? ' target="_blank" rel="noopener"' : '';
       return `
-    <a class="cat-sc-card" href="${href}" aria-label="${esc(p.name)}">
+    <a class="cat-sc-card" href="${cardHref}"${cardAttr} aria-label="${esc(p.name)}">
       ${p.image ? `<div class="cat-sc-img" style="background-image:url('${esc(p.image)}')"></div>` : '<div class="cat-sc-img cat-sc-img-empty"></div>'}
       ${p.stock === 0 ? `<span class="cat-sc-badge">${esc(tr.soldout)}</span>` : ''}
       <div class="cat-sc-overlay"><span class="cat-sc-title">${esc(p.name)}</span></div>
