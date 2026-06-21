@@ -31,7 +31,15 @@ export const PLUGINS = {
     priceVar: 'STRIPE_PRICE_PLUGIN_CRM',
     sectionTypes: [], // CRM is a manager/admin tool, not a site section
   },
-  // Future (see PLUGIN_PLATFORM_DESIGN.md §11A): advanced_store, members.
+  advanced_store: {
+    key: 'advanced_store',
+    label: 'Advanced Store',
+    summary: 'Inventory tracking, low-stock alerts and discount codes for your shop.',
+    priceCents: 500,
+    priceVar: 'STRIPE_PRICE_PLUGIN_ADVANCED_STORE',
+    sectionTypes: [], // upgrades the existing store; no new section
+  },
+  // Future (see PLUGIN_PLATFORM_DESIGN.md §11A): members.
 };
 
 /**

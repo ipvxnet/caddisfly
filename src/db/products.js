@@ -29,11 +29,11 @@ export async function uniqueProductSlug(db, projectKey, name, excludeId = null) 
   return `${base}-${Date.now() % 10000}`;
 }
 
-export async function createProduct(db, projectKey, { slug, name, description, price_cents, image, product_type, category, body, media_json, for_sale }) {
+export async function createProduct(db, projectKey, { slug, name, description, price_cents, image, product_type, category, body, media_json, for_sale, stock }) {
   return db
     .prepare(
-      `INSERT INTO products (ai_project_id, project_id, slug, name, description, price_cents, image, product_type, category, body, media_json, for_sale)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO products (ai_project_id, project_id, slug, name, description, price_cents, image, product_type, category, body, media_json, for_sale, stock)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
@@ -47,7 +47,8 @@ export async function createProduct(db, projectKey, { slug, name, description, p
       category || '',
       body || '',
       typeof media_json === 'string' ? media_json : media_json ? JSON.stringify(media_json) : '',
-      for_sale === 0 || for_sale === false ? 0 : 1
+      for_sale === 0 || for_sale === false ? 0 : 1,
+      stock === '' || stock == null ? null : Math.max(0, Math.round(Number(stock)) || 0)
     )
     .first();
 }
@@ -78,7 +79,18 @@ export async function getProductById(db, projectKey, id) {
   return db.prepare(`SELECT * FROM products WHERE ${k.sql} AND id = ?`).bind(k.val, id).first();
 }
 
-const PRODUCT_FIELDS = ['slug', 'name', 'description', 'price_cents', 'image', 'product_type', 'active', 'sort_order', 'category', 'body', 'media_json', 'for_sale'];
+const PRODUCT_FIELDS = ['slug', 'name', 'description', 'price_cents', 'image', 'product_type', 'active', 'sort_order', 'category', 'body', 'media_json', 'for_sale', 'stock'];
+
+/** Decrement a product's stock by qty (Advanced Store). No-op when stock is
+ *  untracked (NULL); clamps at 0. Returns the new stock or null if untracked. */
+export async function decrementStock(db, projectKey, productId, qty) {
+  const k = keyWhere(projectKey);
+  const p = await db.prepare(`SELECT stock FROM products WHERE ${k.sql} AND id = ?`).bind(k.val, productId).first();
+  if (!p || p.stock == null) return null; // untracked → unlimited
+  const next = Math.max(0, p.stock - Math.max(1, qty || 1));
+  await db.prepare(`UPDATE products SET stock = ?, updated_at = ? WHERE ${k.sql} AND id = ?`).bind(next, nowSec(), k.val, productId).run();
+  return next;
+}
 
 export async function updateProduct(db, projectKey, id, updates) {
   const k = keyWhere(projectKey);

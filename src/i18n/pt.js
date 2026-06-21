@@ -739,7 +739,7 @@ export const pt = {
     image_label: 'URL da imagem', image_hint: 'opcional — você pode gerar uma com IA depois de adicionar',
     category_label: 'Categoria', category_hint: 'agrupa os itens em seções do catálogo (opcional)',
     forsale_label: 'À venda — desmarque para um item de catálogo apenas informativo',
-    media_label: 'Mídia do catálogo (opcional)', media_gallery: 'URLs de imagens da galeria', media_videos: 'URLs de vídeo', media_files: 'PDF / arquivos', media_links: 'Links', media_perline: 'um por linha', upload_pdf: '⬆ Enviar PDF',
+    media_label: 'Mídia do catálogo (opcional)', media_gallery: 'URLs de imagens da galeria', stock_label: 'Estoque', stock_hint: 'deixe em branco para ilimitado; 0 = esgotado', media_videos: 'URLs de vídeo', media_files: 'PDF / arquivos', media_links: 'Links', media_perline: 'um por linha', upload_pdf: '⬆ Enviar PDF',
     create_btn: 'Adicionar produto', creating: 'Adicionando…',
     save: 'Salvar', saving: 'Salvando…', cancel: 'Cancelar', edit: 'Editar',
     delete: 'Excluir', delete_confirm: 'Excluir este produto? Isso não pode ser desfeito.',

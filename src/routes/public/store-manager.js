@@ -6,6 +6,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
+import { hasPlugin } from '../../plugins/entitlements.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -17,6 +18,8 @@ export async function handleStoreManager(ctx) {
   const lang = (ctx && ctx.lang) || 'en';
   const tr = translator(lang);
   const publicId = params.project_id;
+  // Advanced Store plugin → show the inventory (stock) field when entitled.
+  const hasAdvStore = await hasPlugin(env, ctx.billingEmail, 'advanced_store');
 
   // Resolve the project name (ai-first, like blog-manager).
   const aiProject = await getAIProjectByProjectId(env.DB, publicId);
@@ -149,6 +152,7 @@ export async function handleStoreManager(ctx) {
         <label>${tr('storem.category_label')} <span class="hint">${tr('storem.category_hint')}</span></label>
         <input id="np-category" maxlength="80" placeholder="Parts, Tools…">
         <label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" id="np-forsale" checked style="width:auto"> ${tr('storem.forsale_label')}</label>
+        ${hasAdvStore ? `<label>${tr('storem.stock_label')} <span class="hint">${tr('storem.stock_hint')}</span></label><input id="np-stock" type="number" min="0" placeholder="∞">` : ''}
         <details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">${tr('storem.media_label')}</summary>
           <label>${tr('storem.media_gallery')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-gallery" rows="2" placeholder="https://…/photo1.jpg"></textarea>
@@ -173,6 +177,7 @@ export async function handleStoreManager(ctx) {
   ${siteFooter({ lang })}
   <script>
     var PID = ${JSON.stringify(publicId)};
+    var ADV = ${hasAdvStore ? 'true' : 'false'};
     var T = {
       connected: ${JSON.stringify(tr('storem.connected_as'))},
       notConnected: ${JSON.stringify(tr('storem.not_connected'))},
@@ -215,6 +220,8 @@ export async function handleStoreManager(ctx) {
       mediaLinks: ${JSON.stringify(tr('storem.media_links'))},
       mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
       uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
+      stockLabel: ${JSON.stringify(tr('storem.stock_label'))},
+      stockHint: ${JSON.stringify(tr('storem.stock_hint'))},
       types: {
         physical: ${JSON.stringify(tr('storem.type_physical'))},
         digital: ${JSON.stringify(tr('storem.type_digital'))},
@@ -342,6 +349,7 @@ export async function handleStoreManager(ctx) {
         '<label>' + T.imageLabel + '</label><input class="f-image" maxlength="500" value="' + esc(p.image || '') + '">' +
         '<label>' + T.categoryLabel + '</label><input class="f-category" maxlength="80" value="' + esc(p.category || '') + '">' +
         '<label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" class="f-forsale"' + (p.for_sale === 0 ? '' : ' checked') + ' style="width:auto"> ' + T.forsaleLabel + '</label>' +
+        (ADV ? '<label>' + T.stockLabel + ' <span class="hint">' + T.stockHint + '</span></label><input class="f-stock" type="number" min="0" value="' + (p.stock == null ? '' : p.stock) + '">' : '') +
         '<details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">' + T.mediaLabel + '</summary>' +
         '<label>' + T.mediaGallery + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-gallery" rows="2">' + esc(mt.gallery) + '</textarea>' +
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
@@ -417,6 +425,7 @@ export async function handleStoreManager(ctx) {
           category: document.getElementById('np-category').value.trim(),
           for_sale: forsale ? 1 : 0,
           media: mediaFrom(document.getElementById('np-gallery').value, document.getElementById('np-videos').value, document.getElementById('np-files').value, document.getElementById('np-links').value),
+          stock: document.getElementById('np-stock') ? document.getElementById('np-stock').value : '',
         });
         document.getElementById('np-name').value = '';
         document.getElementById('np-price').value = '';
@@ -453,6 +462,7 @@ export async function handleStoreManager(ctx) {
           category: box.querySelector('.f-category').value.trim(),
           for_sale: forsale ? 1 : 0,
           media: mediaFrom(box.querySelector('.m-gallery').value, box.querySelector('.m-videos').value, box.querySelector('.m-files').value, box.querySelector('.m-links').value),
+          stock: box.querySelector('.f-stock') ? box.querySelector('.f-stock').value : '',
         });
         await loadProducts();
       } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = T.save; }

@@ -284,6 +284,8 @@ export async function handleProductCreate(ctx) {
       body: (body.body || '').toString().slice(0, 20000),
       media_json: body.media && typeof body.media === 'object' ? JSON.stringify(body.media) : (body.media_json || '').toString().slice(0, 20000),
       for_sale,
+      // Inventory (Advanced Store plugin) — only honored when entitled.
+      stock: body.stock != null && (await hasPlugin(env, r.email, 'advanced_store')) ? body.stock : null,
     });
     return json({ success: true, product }, 201);
   } catch (e) {
@@ -328,6 +330,10 @@ export async function handleProductUpdate(ctx) {
     if (body.category != null) updates.category = body.category.toString().trim().slice(0, 80);
     if (body.body != null) updates.body = body.body.toString().slice(0, 20000);
     if (body.media != null) updates.media_json = typeof body.media === 'object' ? JSON.stringify(body.media) : body.media.toString().slice(0, 20000);
+    // Inventory (Advanced Store) — '' clears to untracked; gated by entitlement.
+    if (body.stock != null && (await hasPlugin(env, r.email, 'advanced_store'))) {
+      updates.stock = body.stock === '' ? null : Math.max(0, Math.round(Number(body.stock)) || 0);
+    }
 
     if (updates.name != null || updates.description != null) {
       const screen = screenContent(`${updates.name || product.name}\n${updates.description != null ? updates.description : product.description}`);
