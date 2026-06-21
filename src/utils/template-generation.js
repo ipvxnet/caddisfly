@@ -66,6 +66,11 @@ export async function generateAndStore(env, project, profile, opts = {}) {
   const types = recipe.sections.filter(
     (t) => (t !== 'gallery' || photoPool.length >= 3) && (t !== 'testimonials' || !!factSections.testimonials)
   );
+  // The owner wrote an about/founder story but the recipe has no About section
+  // (e.g. fitness) → guarantee one so their words actually appear.
+  if (!types.includes('about') && ownerAboutStory(profile)) {
+    types.splice(Math.min(2, types.length), 0, 'about');
+  }
 
   // 3. Generate each section's content (in the project's chosen language).
   const context = profileToContext(profile, recipe, industry);
@@ -124,6 +129,13 @@ export async function generateAndStore(env, project, profile, opts = {}) {
     // Features reuse the services {title,description,icon} shape.
     if (type === 'features' && !Array.isArray(content.features)) {
       content.features = content.services || content.items || [];
+    }
+    // Owner typed an "about us"/founder story → render their ACTUAL words as the
+    // About body (both about variants use `story`), keeping the AI heading/
+    // subheading/image. Soft AI context dropped this; the owner's text is verbatim.
+    if (type === 'about') {
+      const story = ownerAboutStory(profile);
+      if (story) content.story = story;
     }
     // These templates render a `description` subtitle; AI returns `subheading`.
     if ((type === 'services' || type === 'features') && !content.description && content.subheading) {
@@ -406,4 +418,12 @@ function hintsToItems(hints) {
 /** The owner's explicit services list (from the onboarding form), if any. */
 function explicitServiceItems(profile) {
   return listToItems(profile && profile.user_services, 15);
+}
+
+/** The owner's About story (history + founder narrative), if they typed any. */
+function ownerAboutStory(profile) {
+  return [profile && profile.history, profile && profile.founder]
+    .filter((s) => s && String(s).trim())
+    .join('\n\n')
+    .trim();
 }

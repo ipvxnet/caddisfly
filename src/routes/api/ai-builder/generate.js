@@ -179,6 +179,11 @@ export async function handleAIBuilderGenerate(ctx) {
       : recipe.sections;
     // Always lead with a brand header (text wordmark — no original logo here).
     const sectionsToGenerate = ['header', ...selected.filter((s) => s !== 'header')];
+    // Owner wrote an about/founder story but no About section is in the line-up →
+    // add one so their words appear (the overlay below fills it).
+    if (context.facts && context.facts.about && !sectionsToGenerate.includes('about')) {
+      sectionsToGenerate.splice(Math.min(2, sectionsToGenerate.length), 0, 'about');
+    }
 
     // Idempotent (re)generation: clear any prior pages/sections so a rebuild
     // doesn't collide on the (ai_project_id, slug) unique index. No-op on a
@@ -254,6 +259,11 @@ export async function handleAIBuilderGenerate(ctx) {
       }
       if (sectionType === 'footer' && context.facts && context.facts.social) {
         content.social = context.facts.social.social_links;
+      }
+      // Render the owner's real "about us"/founder story (their words) as the
+      // About body — soft AI context dropped it; keep AI heading/subheading/image.
+      if (sectionType === 'about' && context.facts && context.facts.about) {
+        Object.assign(content, context.facts.about);
       }
 
       // Pick the recipe's variant for this section, then inject real images.
