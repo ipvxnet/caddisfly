@@ -743,6 +743,7 @@ export const en = {
     image_label: 'Image URL', image_hint: 'optional — you can generate one with AI after adding',
     category_label: 'Category', category_hint: 'groups items into catalogue sections (optional)',
     forsale_label: 'For sale — uncheck for an info-only catalogue item',
+    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line',
     create_btn: 'Add product', creating: 'Adding…',
     save: 'Save', saving: 'Saving…', cancel: 'Cancel', edit: 'Edit',
     delete: 'Delete', delete_confirm: 'Delete this product? This cannot be undone.',
