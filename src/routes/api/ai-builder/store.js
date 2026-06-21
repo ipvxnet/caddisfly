@@ -376,13 +376,16 @@ ${POLICY_INSTRUCTION}`;
 
     const raw = await callWorkersAI(env, prompt, { max_tokens: 512, temperature: 0.6, system_message: 'You are a professional e-commerce copywriter for small businesses.' });
     const start = String(raw || '').search(/DESCRIPTION:/);
-    const description = start === -1 ? '' : String(raw).slice(start + 'DESCRIPTION:'.length).replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
+    const description = start === -1 ? '' : String(raw).slice(start + 'DESCRIPTION:'.length)
+      .replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '')
+      // Weak models sometimes ECHO the trailing policy instruction into the
+      // output; drop it (it also otherwise screens against itself — the policy
+      // text contains words like "pornographic"/"sexually explicit").
+      .split(/\n+\s*CONTENT POLICY\b/i)[0]
+      .trim();
     if (!description) return json({ success: false, error: 'The AI description came back malformed — please try again.' }, 502);
     const outScreen = screenContent(description);
-    if (!outScreen.allowed) {
-      console.log('AIDESCRIBE_BLOCKED ' + JSON.stringify({ category: outScreen.category, description }));
-      return json(policyError(outScreen), 422);
-    }
+    if (!outScreen.allowed) return json(policyError(outScreen), 422);
 
     await chargeCredits(env, env.DB, r.email, CREDIT_COSTS.product_desc);
     audit(ctx, 'credit.product_desc', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, metadata: { credits: CREDIT_COSTS.product_desc } });
