@@ -55,9 +55,17 @@ def places_text_search(query, max_pages=2):
         params = {"query": query, "key": PLACES_KEY}
         if token:
             params["pagetoken"] = token
-            time.sleep(2)  # next_page_token needs a moment to become valid
         url = "https://maps.googleapis.com/maps/api/place/textsearch/json?" + urllib.parse.urlencode(params)
-        d = http_json(url)
+        # A fresh next_page_token isn't valid immediately — Google returns
+        # INVALID_REQUEST until it ripens. Wait + retry a few times before giving up.
+        d = {}
+        for attempt in range(4):
+            if token:
+                time.sleep(2.5)
+            d = http_json(url)
+            if d.get("status") == "INVALID_REQUEST" and token:
+                continue
+            break
         if d.get("status") not in ("OK", "ZERO_RESULTS"):
             print(f"  ! Places error: {d.get('status')} {d.get('error_message','')}", file=sys.stderr)
             break
@@ -98,8 +106,11 @@ def scrape_email(website):
 
 def post_leads(leads):
     body = json.dumps({"leads": leads}).encode()
-    req = urllib.request.Request(BASE + "/api/admin/leads/ingest", data=body,
-                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + INGEST_TOKEN})
+    # A real User-Agent is required — Cloudflare's bot protection 403s the default
+    # "Python-urllib/x.y" UA before the request reaches the Worker.
+    req = urllib.request.Request(BASE + "/api/admin/leads/ingest", data=body, headers={
+        "Content-Type": "application/json", "Authorization": "Bearer " + INGEST_TOKEN, "User-Agent": UA,
+    })
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read())
 
