@@ -48,7 +48,10 @@ export function navbarTemplate(data, config) {
   // coexist with a single-page (one-pager) content site, so they don't count as
   // "multi-page content".
   const CONTENT_SLUGS = new Set(['home', 'about', 'services', 'gallery', 'contact']);
-  const contentPages = pages.filter((p) => CONTENT_SLUGS.has(p.slug));
+  // A label-only menu GROUP (e.g. an "About" dropdown header) is NOT a content
+  // page — counting it as one used to flip a one-pager into "multi-page" mode and
+  // strip the home page's section-anchor nav. Exclude groups from the decision.
+  const contentPages = pages.filter((p) => CONTENT_SLUGS.has(p.slug) && !p.is_group);
   const extraPages = pages.filter((p) => !CONTENT_SLUGS.has(p.slug)); // e.g. blog, shop
   const multiPage = contentPages.length > 1;
   const sectionNav = Array.isArray(config.sectionNav) ? config.sectionNav : [];
@@ -92,6 +95,10 @@ export function navbarTemplate(data, config) {
     const seen = new Set();
     const out = [];
     const cls = deep ? 'nav-sublink nav-sublink-deep' : 'nav-sublink';
+    // A deep anchor whose label just repeats the page's own name is redundant with
+    // the page link right above it (e.g. an "About Us" page whose lone section is
+    // also "About Us") — skip it.
+    const pageLabel = String(p.nav_label || p.title || p.slug || '').trim().toLowerCase();
     for (const s of secs) {
       if (s.is_visible === 0) continue;
       let meta = {};
@@ -100,6 +107,7 @@ export function navbarTemplate(data, config) {
       const type = s.section_type;
       const label = meta._nav_label || meta.heading || navLabels[type];
       if (!label) continue;                 // only navigable, titled sections
+      if (deep && String(label).trim().toLowerCase() === pageLabel) continue; // redundant with the page link
       if (seen.has(type)) continue;         // first of each type
       seen.add(type);
       const href = p.slug === currentSlug ? `#${type}` : `${pageHref(p).replace(embedSuffix, '')}${embedSuffix}#${type}`;
