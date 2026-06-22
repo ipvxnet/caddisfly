@@ -17,6 +17,10 @@ export async function handlePreviewBuildConfirm(ctx) {
     const previewId = params.preview_id;
     const body = await request.json().catch(() => ({}));
     const token = (body && body.token) || '';
+    // "Faithful import" mode — match the existing site (real copy + photos)
+    // instead of AI-regenerating. Falls back to AI per-section where there's no
+    // usable block (no scrape blocks → behaves like the normal flow).
+    const importMode = body && body.import_mode === 'faithful' ? 'faithful' : 'reimagine';
 
     const project = await getProjectByPreviewId(env.DB, previewId);
     if (!project) return json({ success: false, error: 'Preview not found' }, 404);
@@ -36,7 +40,7 @@ export async function handlePreviewBuildConfirm(ctx) {
       return json({ success: false, error: 'No cached search found — please run the preview again.' }, 400);
     }
 
-    await generateAndStore(env, project, cp.profile, { photoPool: cp.photoPool || [] });
+    await generateAndStore(env, project, cp.profile, { photoPool: cp.photoPool || [], import_mode: importMode });
 
     await updateProject(env.DB, project.id, {
       status: 'preview_ready',
