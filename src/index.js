@@ -86,7 +86,7 @@ import { billingAuth } from './middleware/billing-auth.js';
 import { projectAccess } from './middleware/project-access.js';
 import { pluginGate } from './plugins/entitlements.js';
 import { handleCrmManager } from './routes/public/crm-manager.js';
-import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity } from './routes/api/ai-builder/crm.js';
+import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrmContactAdd, handleCrmDedupKey } from './routes/api/ai-builder/crm.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete, handleFormTest, handleFormSettings } from './routes/api/forms.js';
@@ -262,6 +262,8 @@ router.post('/api/plugins/:key/cancel', handlePluginCancel, [billingAuth]);
 // CRM plugin (gated by an active 'crm' entitlement).
 router.get('/ai-builder/crm/:project_id', handleCrmManager, [billingAuth, projectAccess, pluginGate('crm')]);
 router.get('/api/ai-builder/:project_id/crm/contacts', handleCrmContacts, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.post('/api/ai-builder/:project_id/crm/contacts', handleCrmContactAdd, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.put('/api/ai-builder/:project_id/crm/dedup-key', handleCrmDedupKey, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.put('/api/ai-builder/:project_id/crm/contacts/:email', handleCrmContactUpdate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.get('/api/ai-builder/:project_id/crm/contacts/:email/activity', handleCrmActivity, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 
