@@ -15,6 +15,7 @@ const LINKS = [
   { path: '/admin/audit', label: '🧾 Audit' },
   { path: '/admin/legal', label: '📄 Legal' },
   { path: '/admin/showcase', label: '📣 Showcase' },
+  { path: '/admin/leads', label: '📇 Leads' },
 ];
 
 /** Build the nav bar. opts: { email, openTickets, extra } (extra = page-specific HTML in the right slot). */
