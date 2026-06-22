@@ -9,7 +9,8 @@ import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { ensurePagesForProject, getPagesByProject } from '../../db/ai-pages.js';
-import { getSiteSections } from '../../db/ai-sections.js';
+import { getSiteSections, getHomeBodySections, getBodySectionsForPage } from '../../db/ai-sections.js';
+import { entitledSectionFilter } from '../../plugins/entitlements.js';
 import { getProductsByProject } from '../../db/products.js';
 import { annotateProductsWithVariants } from '../../db/variants.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../utils/shop-render.js';
@@ -23,12 +24,13 @@ export async function handleAIPreviewShop(ctx) {
     const publicId = params.project_id;
 
     let project = await getAIProjectByProjectId(env.DB, publicId);
-    let config, projectKey, language, businessName;
+    let config, projectKey, language, businessName, ownerEmail;
     if (project) {
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
       projectKey = { aiProjectId: project.id };
       language = project.language || 'en';
       businessName = project.project_name || 'My Website';
+      ownerEmail = project.customer_email;
       project = { project_id: publicId, project_name: businessName, id: project.id };
     } else {
       const regular = await getProjectByPreviewId(env.DB, publicId);
@@ -41,6 +43,7 @@ export async function handleAIPreviewShop(ctx) {
       config = await getWebsiteConfigByRegularProjectId(env.DB, regular.id);
       projectKey = { projectId: regular.id };
       language = regular.language || 'en';
+      ownerEmail = regular.customer_email;
       project = { project_id: publicId, project_name: businessName, id: regular.id };
     }
     if (!config) return new Response('Preview not ready yet', { status: 400 });
@@ -72,6 +75,20 @@ export async function handleAIPreviewShop(ctx) {
     if (publishedPosts.length) navPages.push(blogNavPage(language));
     if (allProducts.length) navPages.push(shopNavPage(language));
 
+    // Same nav context the page previews build, so the shop page keeps the full
+    // menu (home section anchors + any "sections as submenu" pages) instead of
+    // collapsing — entitlement-filtered like everywhere else.
+    const filterSections = await entitledSectionFilter(env, ownerEmail);
+    const homePageRow = navPages.find((p) => p.is_home) || navPages.find((p) => p.slug === 'home') || null;
+    const homeSections = homePageRow ? filterSections(await getHomeBodySections(env.DB, projectKey, homePageRow.id, true)) : [];
+    const pageSections = {};
+    for (const p of navPages) {
+      if (!p.show_sections_in_nav) continue;
+      pageSections[p.id] = (homePageRow && p.id === homePageRow.id)
+        ? homeSections
+        : filterSections(await getBodySectionsForPage(env.DB, p.id, true));
+    }
+
     const html = assemblePage([...header, bodySection, ...footer], config, project, {
       pages: navPages,
       currentSlug: 'shop',
@@ -79,6 +96,8 @@ export async function handleAIPreviewShop(ctx) {
       embed: true, // bare render (no Preview-Mode banner) — linked from the store manager
       preordered: true,
       lang: language,
+      homeSections,
+      pageSections,
       appOrigin: env.APP_URL || '',
     });
     return new Response(html, {
