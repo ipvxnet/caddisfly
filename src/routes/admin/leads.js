@@ -7,6 +7,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 import {
   bulkInsertLeads, listLeads, leadStats, leadFacets, updateLead, deleteLead, addManualLead, LEAD_STATUSES,
+  leadsNeedingEmail, setLeadEmails,
 } from '../../db/leads.js';
 
 function esc(s) {
@@ -32,6 +33,26 @@ export async function handleLeadsIngest(ctx) {
   if (!leads.length) return json({ success: false, error: 'No leads provided' }, 400);
   const r = await bulkInsertLeads(ctx.env.DB, leads);
   return json({ success: true, ...r });
+}
+
+/** GET /api/admin/leads/need-email?limit=N — token-auth work-list for the
+ *  enrich (2nd-pass) email scrape: leads with a website but no email yet. */
+export async function handleLeadsNeedEmail(ctx) {
+  if (!ingestTokenOk(ctx)) return json({ success: false, error: 'Unauthorized' }, 401);
+  const limit = parseInt(ctx.url.searchParams.get('limit'), 10) || 500;
+  const leads = await leadsNeedingEmail(ctx.env.DB, limit);
+  return json({ success: true, leads });
+}
+
+/** POST /api/admin/leads/enrich — token-auth; { updates:[{id,email}] }. Fills
+ *  emails the enrich pass scraped (only where still empty). */
+export async function handleLeadsEnrich(ctx) {
+  if (!ingestTokenOk(ctx)) return json({ success: false, error: 'Unauthorized' }, 401);
+  const body = await ctx.request.json().catch(() => ({}));
+  const updates = Array.isArray(body.updates) ? body.updates : [];
+  if (!updates.length) return json({ success: false, error: 'No updates provided' }, 400);
+  const updated = await setLeadEmails(ctx.env.DB, updates);
+  return json({ success: true, updated, received: updates.length });
 }
 
 // ---- admin UI (session + admin gated in index.js) -------------------------

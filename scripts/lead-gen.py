@@ -104,6 +104,38 @@ def scrape_email(website):
     return ""
 
 
+def caddisfly_get(path):
+    req = urllib.request.Request(BASE + path, headers={"Authorization": "Bearer " + INGEST_TOKEN, "User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+
+def caddisfly_post(path, payload):
+    req = urllib.request.Request(BASE + path, data=json.dumps(payload).encode(), headers={
+        "Content-Type": "application/json", "Authorization": "Bearer " + INGEST_TOKEN, "User-Agent": UA,
+    })
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+
+def enrich_emails(limit):
+    """2nd pass: read existing leads that have a site but no email, scrape, update.
+    Makes NO Google Places calls (free) — only fetches each business's own site."""
+    pending = caddisfly_get(f"/api/admin/leads/need-email?limit={limit}").get("leads", [])
+    print(f"{len(pending)} leads with a site but no email — scraping…")
+    updates = []
+    for l in pending:
+        em = scrape_email(l.get("website", ""))
+        if em:
+            updates.append({"id": l["id"], "email": em})
+            print(f"    ✓ {em}", flush=True)
+    if not updates:
+        print("No new emails found.")
+        return
+    r = caddisfly_post("/api/admin/leads/enrich", {"updates": updates})
+    print(f"Updated {r.get('updated')} of {len(updates)} found.")
+
+
 def post_leads(leads):
     body = json.dumps({"leads": leads}).encode()
     # A real User-Agent is required — Cloudflare's bot protection 403s the default
@@ -121,9 +153,17 @@ def main():
     ap.add_argument("--verticals", default=",".join(DEFAULT_VERTICALS))
     ap.add_argument("--max-leads", type=int, default=300, help="hard cap on Place Details calls / leads collected")
     ap.add_argument("--pages", type=int, default=2, help="Places search pages per query (20 results each)")
-    ap.add_argument("--no-email", action="store_true", help="skip the per-site email scrape")
+    ap.add_argument("--no-email", action="store_true", help="skip the per-site email scrape (collect leads only)")
+    ap.add_argument("--enrich-emails", action="store_true", help="2nd pass: scrape emails for EXISTING leads missing one (no Places calls)")
     ap.add_argument("--dry-run", action="store_true", help="collect + print, do NOT post to Caddisfly")
     args = ap.parse_args()
+
+    # Enrich pass needs only the ingest token (no Places billing).
+    if args.enrich_emails:
+        if not INGEST_TOKEN:
+            sys.exit("Set LEADS_INGEST_TOKEN")
+        enrich_emails(args.max_leads)
+        return
 
     if not PLACES_KEY:
         sys.exit("Set GOOGLE_PLACES_API_KEY")

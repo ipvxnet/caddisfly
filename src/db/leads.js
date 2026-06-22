@@ -101,6 +101,32 @@ export async function deleteLead(db, id) {
   await db.prepare('DELETE FROM leads WHERE id = ?').bind(id).run();
 }
 
+/** Leads that have a website but no email yet — the enrich (2nd-pass) work-list. */
+export async function leadsNeedingEmail(db, limit = 500) {
+  const { results } = await db
+    .prepare(`SELECT id, website FROM leads WHERE website <> '' AND email = '' ORDER BY id LIMIT ?`)
+    .bind(Math.min(2000, Math.max(1, limit)))
+    .all();
+  return results || [];
+}
+
+/** Fill emails for the enrich pass — only sets rows whose email is still empty
+ *  (never clobbers a value you've curated). updates: [{id, email}]. */
+export async function setLeadEmails(db, updates) {
+  if (!Array.isArray(updates) || !updates.length) return 0;
+  let n = 0;
+  const t = nowSec();
+  const stmt = db.prepare(`UPDATE leads SET email = ?, updated_at = ? WHERE id = ? AND email = ''`);
+  for (const u of updates.slice(0, 2000)) {
+    const email = clean(u.email, 200).toLowerCase();
+    const id = parseInt(u.id, 10);
+    if (!email || !Number.isFinite(id)) continue;
+    const res = await stmt.bind(email, t, id).run();
+    if (res.meta && res.meta.changes) n += res.meta.changes;
+  }
+  return n;
+}
+
 /** Add one lead by hand (admin UI). Returns the row, or null on dup place/empty. */
 export async function addManualLead(db, l) {
   const business = clean(l.business, 200);
