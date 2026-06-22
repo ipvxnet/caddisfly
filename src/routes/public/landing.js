@@ -447,6 +447,11 @@ export async function handleLanding(ctx) {
         built: tr('landing.rf_built'),
         view: tr('landing.rf_view'),
         nomatch: tr('landing.rf_nomatch'),
+        mode_label: tr('landing.rf_mode_label'),
+        mode_match: tr('landing.rf_mode_match'),
+        mode_match_hint: tr('landing.rf_mode_match_hint'),
+        mode_fresh: tr('landing.rf_mode_fresh'),
+        mode_fresh_hint: tr('landing.rf_mode_fresh_hint'),
       })};
 
       function isEmail(v){ return v && v.indexOf('@') > 0 && v.length > 3; }
@@ -457,12 +462,12 @@ export async function handleLanding(ctx) {
 
       function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
-      async function doBuild(previewId, token, prev){
+      async function doBuild(previewId, token, prev, mode){
         bad.classList.remove('show');
         var ov = document.getElementById('cf-overlay');
         if (ov) { ov.style.display = 'flex'; if (window.CFLoader) CFLoader.startSteps(); }
         try {
-          var res = await fetch('/api/preview/build/' + previewId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: token }) });
+          var res = await fetch('/api/preview/build/' + previewId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: token, import_mode: mode || 'faithful' }) });
           var d = await res.json();
           if (d.success && d.preview_url) {
             if (window.CFLoader) CFLoader.complete();
@@ -495,12 +500,24 @@ export async function handleLanding(ctx) {
           + (data.sample?('<p style="font-size:.85rem;color:var(--body);margin-top:.5rem">'+esc(data.sample)+'…</p>'):'')
           + revs
           + (data.found?'':('<p style="font-size:.8rem;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.5rem .7rem;margin-top:.7rem">'+esc(RF.nomatch)+'</p>'))
+          + '<div class="rf-mode" style="margin-top:.95rem;display:grid;gap:.5rem">'
+          + '<div style="font-size:.72rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">'+esc(RF.mode_label)+'</div>'
+          + '<label class="rf-mode-opt" style="display:flex;gap:.55rem;align-items:flex-start;border:1.5px solid var(--p2);border-radius:11px;padding:.6rem .7rem;cursor:pointer;background:var(--soft)"><input type="radio" name="rf-mode" value="faithful" checked style="margin-top:.2rem"><span><b style="color:var(--ink);font-size:.9rem">'+esc(RF.mode_match)+'</b><br><span style="font-size:.8rem;color:var(--body)">'+esc(RF.mode_match_hint)+'</span></span></label>'
+          + '<label class="rf-mode-opt" style="display:flex;gap:.55rem;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;padding:.6rem .7rem;cursor:pointer"><input type="radio" name="rf-mode" value="reimagine" style="margin-top:.2rem"><span><b style="color:var(--ink);font-size:.9rem">'+esc(RF.mode_fresh)+'</b><br><span style="font-size:.8rem;color:var(--body)">'+esc(RF.mode_fresh_hint)+'</span></span></label>'
+          + '</div>'
           + '<div style="display:flex;gap:.5rem;margin-top:.9rem"><button type="button" class="btn btn-primary rf-build" style="flex:1;justify-content:center">'+esc(RF.build)+'</button>'
           + '<button type="button" class="btn btn-ghost rf-refine">'+esc(RF.refine)+'</button></div>'
           + rem
           + '</div>';
         prev.hidden = false;
-        prev.querySelector('.rf-build').addEventListener('click', function(){ doBuild(data.preview_id, data.build_token, prev); });
+        prev.querySelector('.rf-build').addEventListener('click', function(){
+          var sel = prev.querySelector('input[name="rf-mode"]:checked');
+          doBuild(data.preview_id, data.build_token, prev, sel ? sel.value : 'faithful');
+        });
+        // Highlight the selected mode card.
+        prev.querySelectorAll('input[name="rf-mode"]').forEach(function(r){ r.addEventListener('change', function(){
+          prev.querySelectorAll('.rf-mode-opt').forEach(function(l){ var on = l.querySelector('input').checked; l.style.borderColor = on ? 'var(--p2)' : 'var(--line)'; l.style.background = on ? 'var(--soft)' : 'transparent'; });
+        }); });
         prev.querySelector('.rf-refine').addEventListener('click', function(){ prev.hidden = true; var s=document.getElementById('rf-search'); if(s) s.focus(); });
         prev.scrollIntoView({behavior:'smooth', block:'nearest'});
       }
