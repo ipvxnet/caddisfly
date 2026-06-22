@@ -9,6 +9,7 @@
  */
 
 import { coerceDetailedProfile, SOCIAL_PLATFORMS } from './detailed-profile.js';
+import { extractBlocks } from './faithful-import.js';
 
 /**
  * Extract a lightweight signal from scraped HTML without any dependencies.
@@ -65,6 +66,11 @@ export function extractScrapeSignal(html, url) {
   // Real content photos from the page body (the original site's own imagery) —
   // used to fill the photo pool when the business has no Google Places listing.
   signal.images = extractContentImages(html, url);
+
+  // Faithful-import: ordered content blocks (heading+text+images per section).
+  // Cheap (reuses the already-fetched HTML); only meaningful for browser-rendered
+  // pages, so it's empty for thin/app-shell static fetches — harmless either way.
+  signal.blocks = extractBlocks(html, url);
 
   return signal;
 }
@@ -165,6 +171,7 @@ export function buildProfile(scrapeSignal = {}, placesData = {}) {
       place_id: places.place_id || null,
       scrape_headings: scrapeSignal.headings || [],
       scrape_sample: scrapeSignal.sampleText || '',
+      scrape_blocks: Array.isArray(scrapeSignal.blocks) ? scrapeSignal.blocks : [],
     },
   };
 }

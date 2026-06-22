@@ -25,6 +25,7 @@ import { searchStockPhotos } from './stock-photos.js';
 import { inferIndustry, inferIndustryPreferring, paletteFor, imageKeywordsFor } from './industry-style.js';
 import { getRecipe, recipeVariant } from './industry-recipe.js';
 import { attachImages, makePhotoPicker } from './section-images.js';
+import { buildFaithfulContent } from './faithful-import.js';
 
 /**
  * Generate a full templated site from a profile, persist sections + config, and
@@ -59,6 +60,14 @@ export async function generateAndStore(env, project, profile, opts = {}) {
     ? opts.photoPool
     : await buildPhotoPool(env, project, profile, industry);
   const pickPhoto = makePhotoPicker(photoPool);
+
+  // Faithful Import: when the owner chose "match my current site", build section
+  // content from the site's REAL blocks (extracted at scrape time) instead of
+  // AI-regenerating it. Covers hero/services/gallery/about; contact/testimonials
+  // still come from hard facts, AI fills any remaining recipe sections.
+  const faithful = opts.import_mode === 'faithful'
+    ? buildFaithfulContent((profile.source || {}).scrape_blocks, { profile, photoPool, lang: project.language || 'en' }).content
+    : null;
 
   // 2. Section line-up from the industry recipe, data-gated: drop gallery
   //    without enough imagery and testimonials without real reviews.
@@ -101,6 +110,8 @@ export async function generateAndStore(env, project, profile, opts = {}) {
         phone: profile.phone || '',
         cta_link: '#contact',
       };
+    } else if (faithful && faithful[type]) {
+      content = { ...faithful[type] }; // the site's REAL copy + photos (faithful import)
     } else if (factSections[type]) {
       content = factSections[type]; // hard facts (contact, testimonials)
       // Give testimonials a customer photo (stock; owner replaces with real ones).
