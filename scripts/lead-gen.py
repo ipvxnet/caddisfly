@@ -155,6 +155,7 @@ def main():
     ap.add_argument("--pages", type=int, default=2, help="Places search pages per query (20 results each)")
     ap.add_argument("--no-email", action="store_true", help="skip the per-site email scrape (collect leads only)")
     ap.add_argument("--enrich-emails", action="store_true", help="2nd pass: scrape emails for EXISTING leads missing one (no Places calls)")
+    ap.add_argument("--no-skip", action="store_true", help="don't skip businesses already in the CRM (default: skip them)")
     ap.add_argument("--dry-run", action="store_true", help="collect + print, do NOT post to Caddisfly")
     args = ap.parse_args()
 
@@ -174,7 +175,17 @@ def main():
     verticals = [v.strip() for v in args.verticals.split(",") if v.strip()]
     seen, leads = set(), []
 
-    print(f"Target: {len(verticals)} verticals x {len(areas)} areas → cap {args.max_leads} leads. base={BASE}")
+    # Skip businesses already in the CRM — BEFORE the priced Place Details call and
+    # before they count toward --max-leads — so each run surfaces only NEW leads.
+    known = set()
+    if INGEST_TOKEN and not args.no_skip:
+        try:
+            known = set(caddisfly_get("/api/admin/leads/place-ids").get("place_ids", []))
+            print(f"Already in CRM: {len(known)} businesses — will skip those.")
+        except Exception as e:
+            print(f"  ! couldn't fetch existing place_ids ({e}) — proceeding without skip", file=sys.stderr)
+
+    print(f"Target: {len(verticals)} verticals x {len(areas)} areas → cap {args.max_leads} NEW leads. base={BASE}")
     for area in areas:
         for vert in verticals:
             if len(leads) >= args.max_leads:
@@ -182,7 +193,7 @@ def main():
             print(f"· {vert} in {area} …", flush=True)
             for res in places_text_search(f"{vert} in {area}", args.pages):
                 pid = res.get("place_id")
-                if not pid or pid in seen:
+                if not pid or pid in seen or pid in known:
                     continue
                 seen.add(pid)
                 if len(leads) >= args.max_leads:

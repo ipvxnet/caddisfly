@@ -7,7 +7,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { renderAdminNav, ADMIN_NAV_CSS } from './nav.js';
 import {
   bulkInsertLeads, listLeads, leadStats, leadFacets, updateLead, deleteLead, addManualLead, LEAD_STATUSES,
-  leadsNeedingEmail, setLeadEmails,
+  leadsNeedingEmail, setLeadEmails, existingPlaceIds,
 } from '../../db/leads.js';
 
 function esc(s) {
@@ -33,6 +33,14 @@ export async function handleLeadsIngest(ctx) {
   if (!leads.length) return json({ success: false, error: 'No leads provided' }, 400);
   const r = await bulkInsertLeads(ctx.env.DB, leads);
   return json({ success: true, ...r });
+}
+
+/** GET /api/admin/leads/place-ids — token-auth; the place_ids already collected,
+ *  so the lead-gen script can skip them before a priced Place Details call. */
+export async function handleLeadsPlaceIds(ctx) {
+  if (!ingestTokenOk(ctx)) return json({ success: false, error: 'Unauthorized' }, 401);
+  const place_ids = await existingPlaceIds(ctx.env.DB);
+  return json({ success: true, place_ids });
 }
 
 /** GET /api/admin/leads/need-email?limit=N — token-auth work-list for the

@@ -17,7 +17,7 @@ import { handleVerticalLanding, handleVerticalHub } from './routes/public/vertic
 import { handleShowcase } from './routes/public/showcase.js';
 import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
-import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich } from './routes/admin/leads.js';
+import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich, handleLeadsPlaceIds } from './routes/admin/leads.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
@@ -497,6 +497,7 @@ router.delete('/api/admin/showcase/:id', handleAdminShowcaseDelete, [authMiddlew
 // Leads — Caddisfly's outbound-sales CRM. Ingest is token-authorized (for the
 // lead-gen script); the UI + edits are admin-session gated.
 router.post('/api/admin/leads/ingest', handleLeadsIngest);
+router.get('/api/admin/leads/place-ids', handleLeadsPlaceIds);
 router.get('/api/admin/leads/need-email', handleLeadsNeedEmail);
 router.post('/api/admin/leads/enrich', handleLeadsEnrich);
 router.get('/admin/leads', handleAdminLeads, [authMiddleware, adminMiddleware]);

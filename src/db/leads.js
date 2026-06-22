@@ -101,6 +101,13 @@ export async function deleteLead(db, id) {
   await db.prepare('DELETE FROM leads WHERE id = ?').bind(id).run();
 }
 
+/** All Google place_ids already in the CRM — so the lead-gen script can skip them
+ *  BEFORE making a (priced) Place Details call and before counting toward its cap. */
+export async function existingPlaceIds(db) {
+  const { results } = await db.prepare(`SELECT place_id FROM leads WHERE place_id <> ''`).all();
+  return (results || []).map((r) => r.place_id);
+}
+
 /** Leads that have a website but no email yet — the enrich (2nd-pass) work-list. */
 export async function leadsNeedingEmail(db, limit = 500) {
   const { results } = await db
