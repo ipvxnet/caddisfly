@@ -108,9 +108,13 @@ export function navbarTemplate(data, config) {
       const label = meta._nav_label || meta.heading || navLabels[type];
       if (!label) continue;                 // only navigable, titled sections
       if (deep && String(label).trim().toLowerCase() === pageLabel) continue; // redundant with the page link
-      if (seen.has(type)) continue;         // first of each type
-      seen.add(type);
-      const href = p.slug === currentSlug ? `#${type}` : `${pageHref(p).replace(embedSuffix, '')}${embedSuffix}#${type}`;
+      const key = String(label).trim().toLowerCase();
+      if (seen.has(key)) continue;          // dedup by LABEL — a page can hold many sections of one type (e.g. two catalogues)
+      seen.add(key);
+      // Anchor each section by its unique wrapper id (ai-sec-<id>) so multiple
+      // same-type sections each resolve; fall back to the type id when unavailable.
+      const anchor = s.id != null ? `#ai-sec-${s.id}` : `#${type}`;
+      const href = p.slug === currentSlug ? anchor : `${pageHref(p).replace(embedSuffix, '')}${embedSuffix}${anchor}`;
       out.push(`<a class="${cls}" role="menuitem" href="${escapeAttr(href)}">${escapeHtml(String(label).slice(0, 40))}</a>`);
     }
     return out;
