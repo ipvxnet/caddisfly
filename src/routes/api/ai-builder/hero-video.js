@@ -10,8 +10,9 @@ import { audit } from '../../../utils/audit.js';
 import { getSectionById, updateSectionContent, updateSection } from '../../../db/ai-sections.js';
 import { generateImageToR2 } from './ai-edit.js';
 import { generateImageToVideo, isVideoGenConfigured } from '../../../utils/ai-video.js';
-import { uploadToR2 } from '../../../utils/r2-storage.js';
+import { uploadToR2, existsInR2 } from '../../../utils/r2-storage.js';
 import { generateToken } from '../../../utils/crypto.js';
+import { signToken } from '../../../utils/signed-token.js';
 import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { screenContent, policyError } from '../../../utils/content-policy.js';
@@ -71,28 +72,37 @@ export async function handleGenerateHeroVideo(ctx) {
       imageUrl = absolutize(genPath, appOrigin);
     }
 
-    // Generate (blocks ~30s) → temporary URL → re-host in our R2.
-    const motion = `subtle cinematic motion, gentle camera movement, seamless looping background${r.industry ? ` for a ${r.industry} website` : ''}${brief ? `, ${brief}` : ''}, no text, no people talking`;
-    const tempUrl = await generateImageToVideo(env, { imageUrl, prompt: motion, duration: DURATION });
-
-    // The x.ai temp URL isn't always ready the instant generation completes, and
-    // the download can blip — retry before giving up (xAI already billed, so we
-    // must not waste the generation).
-    let bytes = null;
-    for (let attempt = 1; attempt <= 4 && !bytes; attempt++) {
-      try {
-        const vidRes = await fetch(tempUrl);
-        if (vidRes.ok) {
-          const buf = await vidRes.arrayBuffer();
-          if (buf.byteLength > 0) bytes = new Uint8Array(buf);
-        }
-      } catch { /* transient — retry */ }
-      if (!bytes && attempt < 4) await new Promise((r) => setTimeout(r, attempt * 1500));
-    }
-    if (!bytes) throw new Error('Could not download the generated video.');
+    // Decide the final destination UP FRONT so the model can upload straight to
+    // it under Zero Data Retention (Cloudflare relays Workers-AI→xAI as a ZDR
+    // team, so xAI won't return a temp URL — it must PUT to `output.upload_url`).
+    // The sink (/api/video-sink/:token) writes the bytes to this exact R2 path.
     const file = `hero-vid-${generateToken(10)}.mp4`;
-    await uploadToR2(env.STORAGE, `assets/${params.project_id}/${file}`, bytes, 'video/mp4');
+    const r2Path = `assets/${params.project_id}/${file}`;
     const videoPath = `/preview-asset/${params.project_id}/${file}`;
+    const sinkToken = await signToken(env.STRIPE_SECRET_KEY, 'vsink', { p: params.project_id, f: file }, 600);
+    const uploadUrl = `${appOrigin}/api/video-sink/${sinkToken}`;
+
+    // Generate (blocks ~30s). ZDR → clip uploaded to uploadUrl → R2; a non-ZDR
+    // account would instead return a temp URL we re-host below.
+    const motion = `subtle cinematic motion, gentle camera movement, seamless looping background${r.industry ? ` for a ${r.industry} website` : ''}${brief ? `, ${brief}` : ''}, no text, no people talking`;
+    const tempUrl = await generateImageToVideo(env, { imageUrl, prompt: motion, duration: DURATION, uploadUrl });
+
+    // Source of truth is the object in R2. ZDR: the sink wrote it (it may land a
+    // moment after ai/run returns — poll briefly). Non-ZDR: re-host the temp URL.
+    let stored = await existsInR2(env.STORAGE, r2Path);
+    if (!stored && tempUrl) {
+      let bytes = null;
+      for (let attempt = 1; attempt <= 4 && !bytes; attempt++) {
+        try {
+          const vidRes = await fetch(tempUrl);
+          if (vidRes.ok) { const buf = await vidRes.arrayBuffer(); if (buf.byteLength > 0) bytes = new Uint8Array(buf); }
+        } catch { /* transient — retry */ }
+        if (!bytes && attempt < 4) await new Promise((res) => setTimeout(res, attempt * 1500));
+      }
+      if (bytes) { await uploadToR2(env.STORAGE, r2Path, bytes, 'video/mp4'); stored = true; }
+    }
+    for (let i = 0; i < 6 && !stored; i++) { await new Promise((res) => setTimeout(res, 1500)); stored = await existsInR2(env.STORAGE, r2Path); }
+    if (!stored) throw new Error('Could not retrieve the generated video.');
 
     // Point the hero at the video + switch to the video variant.
     heroContent.video_url = videoPath;
@@ -100,7 +110,7 @@ export async function handleGenerateHeroVideo(ctx) {
     await updateSection(env.DB, hero.id, { html_template: 'video' });
 
     await chargeCredits(env, env.DB, r.email, cost);
-    audit(ctx, 'credit.hero_video', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, resourceName: r.businessName, metadata: { credits: cost, bytes: bytes.length } });
+    audit(ctx, 'credit.hero_video', { teamOwner: r.email, resourceType: 'site', resourceId: params.project_id, resourceName: r.businessName, metadata: { credits: cost } });
 
     return json({ success: true, video_url: videoPath });
   } catch (error) {

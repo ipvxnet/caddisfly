@@ -131,6 +131,7 @@ import {
 } from './routes/api/ai-builder/store.js';
 import { handleLogoGenerate, handleLogoSet } from './routes/api/ai-builder/logo.js';
 import { handleGenerateHeroVideo } from './routes/api/ai-builder/hero-video.js';
+import { handleVideoSink } from './routes/api/ai-builder/video-sink.js';
 import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDomainOrders, handleDomainAutoRenew, handleDomainReconnect, handleDnsList, handleDnsSync, handleDnsSave, handleDnsEmailSetup, handleRenewCheckout, handleRenewReceipt } from './routes/api/domains-store.js';
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
@@ -320,6 +321,10 @@ router.post('/api/forms/submit', handleFormSubmit);
 router.get('/api/booking/:project_id/services', handleBookingServices);
 router.get('/api/booking/:project_id/slots', handleBookingSlots);
 router.post('/api/booking/:project_id/book', handleBookingCreate);
+// Video upload sink — PUBLIC, token-authorized; the xAI video model PUTs the
+// finished clip here under Zero Data Retention (see video-sink.js).
+router.put('/api/video-sink/:token', handleVideoSink);
+router.post('/api/video-sink/:token', handleVideoSink);
 // Store checkout — public, called cross-origin by the mini cart on shop pages
 router.post('/api/store/checkout', handleStoreCheckout);
 router.post('/api/store/discount/validate', handleDiscountValidate);
