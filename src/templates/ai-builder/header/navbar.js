@@ -86,11 +86,12 @@ export function navbarTemplate(data, config) {
   // (`show_sections_in_nav`). config.pageSections maps pageId -> raw sections.
   const navLabels = SECTION_NAV_LABELS[config.lang] || SECTION_NAV_LABELS.en || {};
   const pageSections = (config.pageSections && typeof config.pageSections === 'object') ? config.pageSections : {};
-  const sectionSubLinks = (p) => {
+  const sectionSubLinks = (p, deep = false) => {
     if (!p.show_sections_in_nav) return [];
     const secs = pageSections[p.id] || [];
     const seen = new Set();
     const out = [];
+    const cls = deep ? 'nav-sublink nav-sublink-deep' : 'nav-sublink';
     for (const s of secs) {
       if (s.is_visible === 0) continue;
       let meta = {};
@@ -102,7 +103,7 @@ export function navbarTemplate(data, config) {
       if (seen.has(type)) continue;         // first of each type
       seen.add(type);
       const href = p.slug === currentSlug ? `#${type}` : `${pageHref(p).replace(embedSuffix, '')}${embedSuffix}#${type}`;
-      out.push(`<a class="nav-sublink" role="menuitem" href="${escapeAttr(href)}">${escapeHtml(String(label).slice(0, 40))}</a>`);
+      out.push(`<a class="${cls}" role="menuitem" href="${escapeAttr(href)}">${escapeHtml(String(label).slice(0, 40))}</a>`);
     }
     return out;
   };
@@ -117,7 +118,12 @@ export function navbarTemplate(data, config) {
     // renders as a plain link.
     if (!kids.length && !secLinks.length) return p.is_group ? '' : pageLink(p);
     const label = escapeHtml(p.nav_label || p.title || p.slug);
-    const submenu = `<div class="nav-submenu" role="menu">${kids.map(subLink).join('')}${secLinks.join('')}</div>`;
+    // A nested child page that opted into "sections as submenu" surfaces its
+    // section anchors right under its own link (flattened into this one dropdown —
+    // menus stay one level deep). Without this a page's section submenu vanished
+    // the moment it was nested under a group.
+    const kidLinks = kids.map((k) => subLink(k) + sectionSubLinks(k, true).join('')).join('');
+    const submenu = `<div class="nav-submenu" role="menu">${kidLinks}${secLinks.join('')}</div>`;
     const caret = `<button type="button" class="nav-caret" aria-haspopup="true" aria-expanded="false" aria-label="${label}"
         onclick="var i=this.closest('.nav-item');var o=i.classList.toggle('open');this.setAttribute('aria-expanded',o)">▾</button>`;
     const trigger = p.is_group
@@ -253,6 +259,8 @@ export function navbarTemplate(data, config) {
 }
 .nav-sublink:hover { background: rgba(0,0,0,0.04); color: ${primaryColor}; }
 .nav-sublink.nav-link-active { color: ${primaryColor}; border-bottom: none; }
+/* A nested page's own section anchors, indented under its link in a group dropdown. */
+.nav-sublink-deep { padding-left: 1.5rem; font-size: 0.86rem; opacity: 0.9; }
 
 .nav-toggle { display: none; background: none; border: 1.5px solid rgba(0,0,0,0.12); border-radius: 8px;
   font-size: 1.05rem; line-height: 1; padding: 0.4rem 0.6rem; cursor: pointer; color: #2d3748; }

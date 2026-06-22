@@ -1,8 +1,9 @@
 // CRM plugin API — list aggregated contacts, set status/notes, fetch a
 // contact's activity. Routes are gated by pluginGate('crm') in index.js.
 
-import { getCrmContacts, upsertCrmContact, getContactActivity } from '../../../db/crm.js';
-import { resolveStoreProject } from './store.js';
+import { getCrmContacts, upsertCrmContact, getContactActivity, addManualCrmContact, CRM_DEDUP_KEYS } from '../../../db/crm.js';
+import { resolveStoreProject, getOrCreateConfig } from './store.js';
+import { updateWebsiteConfigById } from '../../../db/ai-config.js';
 
 const CRM_STATUSES = ['new', 'contacted', 'qualified', 'won', 'lost'];
 
@@ -15,8 +16,39 @@ export async function handleCrmContacts(ctx) {
   const { env, params } = ctx;
   const r = await resolveStoreProject(env, params.project_id);
   if (!r) return json({ success: false, error: 'Project not found' }, 404);
-  const contacts = await getCrmContacts(env.DB, r.projectKey, params.project_id);
-  return json({ success: true, contacts });
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  const dedupKey = CRM_DEDUP_KEYS.includes(config.crm_dedup_key) ? config.crm_dedup_key : 'email';
+  const contacts = await getCrmContacts(env.DB, r.projectKey, params.project_id, dedupKey);
+  return json({ success: true, contacts, dedup_key: dedupKey });
+}
+
+/** POST /api/ai-builder/:project_id/crm/contacts — add a contact by hand */
+export async function handleCrmContactAdd(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  try {
+    await addManualCrmContact(env.DB, r.projectKey, {
+      email: body.email, name: body.name, phone: body.phone, status: body.status, notes: body.notes,
+    });
+  } catch (e) {
+    if (e.message === 'email_required') return json({ success: false, error: 'A valid email is required.' }, 400);
+    throw e;
+  }
+  return json({ success: true }, 201);
+}
+
+/** PUT /api/ai-builder/:project_id/crm/dedup-key — choose email|phone|name */
+export async function handleCrmDedupKey(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const key = CRM_DEDUP_KEYS.includes(body.dedup_key) ? body.dedup_key : 'email';
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  await updateWebsiteConfigById(env.DB, config.id, { crm_dedup_key: key });
+  return json({ success: true, dedup_key: key });
 }
 
 /** PUT /api/ai-builder/:project_id/crm/contacts/:email — status + notes */

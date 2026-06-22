@@ -54,6 +54,7 @@ async function gatherMenu(env, projectKey, lang) {
       : await getBodySectionsForPage(env.DB, p.id, true);
     out.push({
       id: p.id, kind: 'page', isHome: !!p.is_home, label: p.nav_label || p.title || p.slug,
+      sectionsAsSubmenu: !!p.show_sections_in_nav, // current state, so the model can preserve it
       sections: (secs || []).map((s) => ({ id: s.id, type: s.section_type, title: sectionTitle(s, lang) })),
     });
   }
@@ -149,7 +150,9 @@ export async function handleApplyMenu(ctx) {
       };
       if (p.is_home) { updates.is_visible = 1; updates.parent_id = null; } // home stays top-level & visible
       if (typeof item.label === 'string' && item.label.trim()) updates.nav_label = item.label.trim().slice(0, 60);
-      updates.show_sections_in_nav = item.sectionsAsSubmenu ? 1 : 0;
+      // Only touch "sections as submenu" when the proposal explicitly says so —
+      // otherwise an omission would silently disable a feature the user turned on.
+      if (item.sectionsAsSubmenu !== undefined) updates.show_sections_in_nav = item.sectionsAsSubmenu ? 1 : 0;
       await updatePage(env.DB, p.id, updates);
 
       // Per-section hide flags (only this page's own sections).

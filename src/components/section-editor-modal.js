@@ -5,6 +5,9 @@ import { generateAIEditPanel } from './ai-edit-panel.js';
 import { renderLinkField, linkPickerAssets } from './link-picker.js';
 import { translator } from '../i18n/index.js';
 import { TESTIMONIAL_DEFAULTS } from '../templates/ai-builder/testimonials/cards.js';
+import { TEAM_IMAGES } from '../templates/ai-builder/about/team.js';
+import { TIMELINE_YEARS } from '../templates/ai-builder/about/timeline.js';
+import { defaultItems, uiText } from '../templates/ai-builder/section-defaults.js';
 
 /**
  * Generate section editor modal HTML
@@ -15,7 +18,7 @@ import { TESTIMONIAL_DEFAULTS } from '../templates/ai-builder/testimonials/cards
  *   the editor matches what the page renders — e.g. PT defaults, not EN)
  * @returns {string} Modal HTML
  */
-export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null) {
+export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null, catCategories = null) {
   const tr = translator(lang);
   const contentLang = siteLang || lang;
   const content = JSON.parse(section.content_json || '{}');
@@ -37,7 +40,7 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
       <details class="manual-edit" open>
         <summary>${tr('sed.edit_manual')}</summary>
         <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
-          ${generateFormFields(section.section_type, content, tr, projectId, contentLang)}
+          ${generateFormFields(section.section_type, content, tr, projectId, contentLang, catCategories, section.html_template)}
 
           ${['header', 'footer', 'hero'].includes(section.section_type) ? '' : `
           <div class="form-group">
@@ -821,12 +824,42 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
 /**
  * Generate form fields based on section type
  */
-function generateFormFields(sectionType, content, tr, projectId = '', contentLang = 'en') {
+// Catalogue section: heading/subheading + a category FILTER. One catalogue
+// section shows one category (empty = all items), so multiple sections on
+// different pages can each show a different category.
+function generateCatalogueFields(content, tr, catCategories) {
+  const cats = Array.isArray(catCategories) ? catCategories.slice() : [];
+  const sel = content.category || '';
+  // Preserve a manually-set category even if it currently has no products.
+  if (sel && !cats.includes(sel)) cats.unshift(sel);
+  const options = [`<option value="">${escapeHtml(tr('sed.cat_all'))}</option>`]
+    .concat(cats.map((c) => `<option value="${escapeHtml(c)}"${c === sel ? ' selected' : ''}>${escapeHtml(c)}</option>`))
+    .join('');
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    <div class="form-group">
+      <label for="category">${tr('sed.cat_filter')}</label>
+      <select id="category" name="category">${options}</select>
+      <small>${tr('sed.cat_filter_hint')}</small>
+    </div>
+  `;
+}
+
+function generateFormFields(sectionType, content, tr, projectId = '', contentLang = 'en', catCategories = null, variant = 'default') {
   switch (sectionType) {
     case 'hero':
       return generateHeroFields(content, tr);
     case 'about':
-      return generateAboutFields(content, tr);
+      return generateAboutFields(content, tr, variant, contentLang);
+    case 'catalogue':
+      return generateCatalogueFields(content, tr, catCategories);
     case 'services':
       return generateServicesFields(content, tr);
     case 'testimonials':
@@ -984,7 +1017,24 @@ function generateHeroFields(content, tr) {
   `;
 }
 
-function generateAboutFields(content, tr) {
+// About is the one section whose VARIANTS have different content shapes
+// (text-image vs team vs timeline vs founder-quote), so its editor must be
+// variant-aware — otherwise switching to e.g. "team" showed text-image fields
+// and no way to edit team members or their photos.
+function generateAboutFields(content, tr, variant = 'default', contentLang = 'en') {
+  switch (variant) {
+    case 'team': return generateAboutTeamFields(content, tr, contentLang);
+    case 'timeline': return generateAboutTimelineFields(content, tr, contentLang);
+    case 'founder-quote': return generateAboutFounderFields(content, tr);
+    default: return generateAboutTextImageFields(content, tr);
+  }
+}
+
+function aboutImgLabels(tr) {
+  return { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') };
+}
+
+function generateAboutTextImageFields(content, tr) {
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -993,12 +1043,12 @@ function generateAboutFields(content, tr) {
 
     <div class="form-group">
       <label for="subheading">${tr('sed.subheading')}</label>
-      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}" required>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
 
     <div class="form-group">
       <label for="story">${tr('sed.your_story')}</label>
-      <textarea id="story" name="story" rows="5" required>${escapeHtml(content.story || '')}</textarea>
+      <textarea id="story" name="story" rows="5">${escapeHtml(content.story || '')}</textarea>
       <small>${tr('sed.story_hint')}</small>
     </div>
 
@@ -1011,6 +1061,99 @@ function generateAboutFields(content, tr) {
         <div class="upload-progress"></div>
       </div>
       <input type="file" id="about-image-input" accept="image/*" style="display: none" onchange="uploadImage(this, 'image_url')">
+    </div>
+  `;
+}
+
+function generateAboutTeamFields(content, tr, contentLang) {
+  const members = (Array.isArray(content.team_members) && content.team_members.length)
+    ? content.team_members
+    : defaultItems(contentLang, 'about-team').map((m, i) => ({ ...m, image: TEAM_IMAGES[i % TEAM_IMAGES.length] }));
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || uiText(contentLang, 'meet_team'))}" required>
+    </div>
+    <div class="form-group">
+      <label for="description">${tr('sed.description')}</label>
+      <input type="text" id="description" name="description" value="${escapeHtml(content.description || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    <div class="form-group">
+      <label>${tr('sed.team_members')}</label>
+      ${buildRepeater({
+        jsonKey: 'team_members', items: members,
+        addLabel: tr('sed.add_member'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_member'),
+        fields: [
+          { key: 'name', label: tr('sed.f_name'), ph: 'Jane Doe' },
+          { key: 'role', label: tr('sed.f_role'), ph: tr('sed.f_role') },
+          { key: 'bio', label: tr('sed.f_bio'), kind: 'textarea', ph: tr('sed.ph_optional') },
+          { key: 'image', label: tr('sed.f_image'), kind: 'image', img: aboutImgLabels(tr) },
+        ],
+      })}
+    </div>
+  `;
+}
+
+function generateAboutTimelineFields(content, tr, contentLang) {
+  const milestones = (Array.isArray(content.milestones) && content.milestones.length)
+    ? content.milestones
+    : defaultItems(contentLang, 'about-timeline').map((m, i) => ({ year: TIMELINE_YEARS[i % TIMELINE_YEARS.length], ...m }));
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || uiText(contentLang, 'our_journey'))}" required>
+    </div>
+    <div class="form-group">
+      <label for="description">${tr('sed.description')}</label>
+      <input type="text" id="description" name="description" value="${escapeHtml(content.description || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    <div class="form-group">
+      <label>${tr('sed.milestones')}</label>
+      ${buildRepeater({
+        jsonKey: 'milestones', items: milestones,
+        addLabel: tr('sed.add_milestone'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_milestone'),
+        fields: [
+          { key: 'year', label: tr('sed.f_year'), kind: 'short', ph: '2024' },
+          { key: 'title', label: tr('sed.f_title'), ph: tr('sed.f_title') },
+          { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.ph_optional') },
+        ],
+      })}
+    </div>
+  `;
+}
+
+function generateAboutFounderFields(content, tr) {
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || tr('sed.ph_about_us'))}" required>
+    </div>
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+    <div class="form-group">
+      <label for="story">${tr('sed.your_story')}</label>
+      <textarea id="story" name="story" rows="5">${escapeHtml(content.story || '')}</textarea>
+      <small>${tr('sed.story_hint')}</small>
+    </div>
+    <div class="form-group">
+      <label>${tr('sed.image')}</label>
+      <input type="hidden" id="image_url" name="image_url" value="${escapeHtml(content.image_url || '')}">
+      <div class="image-upload-area" onclick="document.getElementById('about-image-input').click()">
+        <p>${tr('sed.click_upload')}</p>
+        <img src="${content.image_url || ''}" class="image-preview" style="display: ${content.image_url ? 'block' : 'none'}">
+        <div class="upload-progress"></div>
+      </div>
+      <input type="file" id="about-image-input" accept="image/*" style="display: none" onchange="uploadImage(this, 'image_url')">
+    </div>
+    <div class="form-group">
+      <label for="founder_name">${tr('sed.founder_name')}</label>
+      <input type="text" id="founder_name" name="founder_name" value="${escapeHtml(content.founder_name || '')}" placeholder="Jane Doe">
+    </div>
+    <div class="form-group">
+      <label for="founder_role">${tr('sed.founder_role')}</label>
+      <input type="text" id="founder_role" name="founder_role" value="${escapeHtml(content.founder_role || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
     </div>
   `;
 }

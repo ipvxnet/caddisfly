@@ -4,7 +4,7 @@
 import { uiText, defaultItems } from '../section-defaults.js';
 
 // Placeholder headshots (language-independent); merged with localized name/role/bio.
-const TEAM_IMAGES = [
+export const TEAM_IMAGES = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&q=70',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&q=70',
   'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&auto=format&q=70',

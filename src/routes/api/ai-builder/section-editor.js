@@ -5,6 +5,7 @@ import { getAIProjectByProjectId } from '../../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../../db/projects.js';
 import { getSectionById, getSectionsByAIProjectId, getSectionsByRegularProjectId } from '../../../db/ai-sections.js';
 import { getPagesByProject } from '../../../db/ai-pages.js';
+import { getProductCategories } from '../../../db/products.js';
 import { generateSectionEditorModal } from '../../../components/section-editor-modal.js';
 import { translator } from '../../../i18n/index.js';
 
@@ -93,7 +94,13 @@ export async function handleGetSectionEditor(ctx) {
     // Generate modal HTML: labels in the viewer's UI language, but placeholder
     // CONTENT seeded in the SITE's language so the editor matches the page.
     const siteLang = (aiProject && aiProject.language) || (regularProject && regularProject.language) || lang;
-    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData, siteLang);
+    // Catalogue sections get a category filter populated with the store's actual
+    // product categories.
+    let catCategories = null;
+    if (section.section_type === 'catalogue') {
+      catCategories = await getProductCategories(env.DB, projectKey, false).catch(() => []);
+    }
+    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData, siteLang, catCategories);
 
     return new Response(html, {
       status: 200,
