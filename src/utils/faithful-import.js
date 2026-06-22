@@ -32,10 +32,12 @@ function imagesIn(html, base) {
   const imgRe = /<img\b[^>]*?>/gi;
   while ((m = imgRe.exec(html))) {
     const t = m[0];
-    const ss = (t.match(/\bsrcset=["']([^"']+)["']/i) || [])[1];
-    if (ss) { const last = ss.split(',').pop().trim().split(/\s+/)[0]; push(last); }
+    // Prefer the plain `src` — it's a single clean URL. srcset is comma-delimited,
+    // but some CDNs (GoDaddy wsimg) put commas INSIDE the URL, so never comma-split:
+    // take the first whitespace-delimited token instead.
     const src = (t.match(/\b(?:data-src|data-lazy-src|src)=["']([^"']+)["']/i) || [])[1];
     if (src) push(src);
+    else { const ss = (t.match(/\bsrcset=["']([^"']+)["']/i) || [])[1]; if (ss) push(ss.trim().split(/\s+/)[0]); }
   }
   const bgRe = /background-image\s*:\s*url\((['"]?)([^'")]+)\1\)/gi;
   while ((m = bgRe.exec(html))) push(m[2]);
@@ -127,13 +129,16 @@ export function buildFaithfulContent(rawBlocks, { profile = {}, photoPool = [], 
   // Every real photo we found (blocks + pool), deduped — the shared image source.
   const allImgs = [...new Set([].concat(...blocks.map((b) => b.images), photoPool.map((p) => p.url)))].filter(Boolean);
 
-  // HERO — first hero-tagged block (or the first block), real headline + a photo.
+  // HERO — first hero-tagged block (or the first block). Use only the first real
+  // sentence as the subheading so a builder's inline nav menu (which flattens into
+  // the same block, e.g. "…Spanish. Home Catalogues PARTS TOOLS…") doesn't leak in.
   const hero = blocks.find((b) => b.type === 'hero') || blocks[0];
   if (hero) {
-    const lines = hero.text.split(/(?<=[.!?])\s+|\s{2,}|\|/).map((s) => s.trim()).filter(Boolean);
+    const sentences = hero.text.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s.length > 3);
+    const sub = sentences.find((l) => l !== name && !/^(home|menu)\b/i.test(l)) || sentences[0] || hero.heading || '';
     content.hero = {
-      heading: name || hero.heading || lines[0] || '',
-      subheading: (hero.heading && hero.text !== hero.heading ? hero.text : lines.slice(name ? 0 : 1).join(' ')).slice(0, 200),
+      heading: name || hero.heading || sentences[0] || '',
+      subheading: sub.slice(0, 200),
       cta_text: 'Contact us', cta_link: '#contact',
       background_image: (hero.images[0] || (photoPool[0] && photoPool[0].url) || allImgs[0] || ''),
     };
