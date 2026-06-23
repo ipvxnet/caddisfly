@@ -5,7 +5,7 @@ import { jsonResponse } from '../../utils/response.js';
 import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
 import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
-import { pluginKeyForPriceId } from '../../plugins/manifest.js';
+import { entitlementKeyForPriceId } from '../../plugins/manifest.js';
 import { getAccountPlugins, upsertAccountPlugin } from '../../db/account-plugins.js';
 import { notifyOpsAsync } from '../../utils/ops-notify.js';
 import { processDomainOrder, processManualRenewal } from './domains-store.js';
@@ -31,7 +31,7 @@ async function syncAccountPlugins(env, email, sub, periodEnd) {
   const items = (sub.items && sub.items.data) || [];
   const present = new Map(); // pluginKey -> stripe item id
   for (const it of items) {
-    const key = pluginKeyForPriceId(env, it.price && it.price.id);
+    const key = entitlementKeyForPriceId(env, it.price && it.price.id);
     if (key) present.set(key, it.id);
   }
   for (const [key, itemId] of present) {

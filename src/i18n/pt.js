@@ -416,6 +416,7 @@ export const pt = {
     vs_small: '— enquanto os grandes te dão <strong>2 GB por $17</strong>. Armazenamento quase não nos custa nada, então também não cobramos muito por ele. Simples assim.',
     note: 'Todos os planos incluem o criador com IA, sites de várias páginas, edição ao vivo, temas e publicação com um clique. Cancele quando quiser.',
     compare_link: 'Veja o lado a lado com o Wix →',
+    plugins_note: 'Precisa de mais? Plugins opcionais — Catálogo, CRM e Loja Avançada — $5/mês cada, ou os três por $10/mês →',
     speed_link: 'Veja a velocidade dos nossos sites →',
     faq_title: 'Perguntas',
     cta_title: 'Comece a criar — grátis', cta_sub: 'O seu primeiro site está a um minuto.', cta_btn: '✨ Criar com IA',
@@ -424,10 +425,10 @@ export const pt = {
     pro_name: 'Pro', pro_tag: 'Para freelancers e negócios em crescimento.', pro_cta: 'Escolher Pro',
     agency_name: 'Agency', agency_tag: 'Para estúdios que criam muitos sites.', agency_cta: 'Escolher Agency',
     features: {
-      free: ['1 site publicado', '1 GB de armazenamento', '50 créditos de IA / mês', 'Subdomínio caddisfly.app', 'Criador com IA + 1 renovação', 'Blog com IA + caixa de contato', '📅 Motor de reservas (1 serviço)',, 'Exportação HTML e 2 versões salvas', 'Suporte da comunidade'],
-      starter: ['3 sites publicados', '<strong>25 GB</strong> de armazenamento', '500 créditos de IA / mês', '<strong>🛍 Loja online</strong> — venda com seu próprio Stripe (10 produtos)', '📅 Reservas — 5 serviços + <strong>💳 reservas pagas</strong>',, '1 domínio próprio', 'Remove “Built with Caddisfly”', 'Geração de imagens com IA', '✨ Gerador de logo com IA', '5 versões salvas', 'Suporte por e-mail'],
-      pro: ['15 sites publicados', '<strong>100 GB</strong> de armazenamento', '2.000 créditos de IA / mês', '🛍 Loja online — 50 produtos', '📅 Reservas — 15 serviços',, '5 domínios próprios', 'Geração de imagens prioritária', '✨ Gerador de logo com IA', '10 versões salvas', 'Tudo do Starter', 'Suporte prioritário'],
-      agency: ['Sites ilimitados', '<strong>500 GB+</strong> de armazenamento', '8.000 créditos de IA / mês', '🛍 Loja online — produtos ilimitados', '📅 Reservas ilimitadas',, 'Domínios próprios ilimitados', 'Renovação em massa', '30 versões salvas', 'Tudo do Pro', 'Suporte prioritário+'],
+      free: ['1 site publicado', '1 GB de armazenamento', '50 créditos de IA / mês', 'Subdomínio caddisfly.app', 'Criador com IA + 1 renovação', 'Blog com IA + caixa de contato', '📅 Motor de reservas (1 serviço)', 'Exportação HTML e 2 versões salvas', 'Suporte da comunidade'],
+      starter: ['3 sites publicados', '<strong>25 GB</strong> de armazenamento', '500 créditos de IA / mês', '<strong>🛍 Loja online</strong> — venda com seu próprio Stripe (<strong>250 produtos</strong>)', '📅 Reservas — <strong>50 serviços</strong> + <strong>💳 reservas pagas</strong>', '1 domínio próprio', 'Remove “Built with Caddisfly”', 'Geração de imagens com IA', '✨ Gerador de logo com IA', '5 versões salvas', 'Suporte por e-mail'],
+      pro: ['15 sites publicados', '<strong>100 GB</strong> de armazenamento', '2.000 créditos de IA / mês', '🛍 Loja online — <strong>1.000 produtos</strong>', '📅 Reservas — <strong>200 serviços</strong>', '5 domínios próprios', 'Geração de imagens prioritária', '✨ Gerador de logo com IA', '10 versões salvas', 'Tudo do Starter', 'Suporte prioritário'],
+      agency: ['Sites ilimitados', '<strong>500 GB+</strong> de armazenamento', '8.000 créditos de IA / mês', '🛍 Loja online — produtos ilimitados', '📅 Reservas ilimitadas', 'Domínios próprios ilimitados', 'Renovação em massa', '30 versões salvas', 'Tudo do Pro', 'Suporte prioritário+'],
     },
     faqs: [
       ['O que é um “crédito de IA”?', 'Os créditos cobrem o trabalho de IA por trás do seu site. Aprox.: criar um site completo ≈ 20 créditos, uma edição de texto com IA ≈ 1, uma imagem gerada por IA ≈ 5, renovar um site existente ≈ 10. A sua cota mensal reinicia a cada ciclo.'],

@@ -47,7 +47,14 @@ export const PLUGINS = {
  * @type {Record<string, {key: string, label: string, plugins: string[], priceVar: string}>}
  */
 export const BUNDLES = {
-  // all_access: { key: 'all_access', label: 'All-Access', plugins: ['catalogue','crm','advanced_store'], priceVar: 'STRIPE_PRICE_BUNDLE_ALL' },
+  all_access: {
+    key: 'all_access',
+    label: 'All-Access',
+    summary: 'Every plugin — Catalogue, CRM and Advanced Store — bundled at one price.',
+    plugins: ['catalogue', 'crm', 'advanced_store'],
+    priceCents: 1000, // vs $15 separately — saves $5/mo
+    priceVar: 'STRIPE_PRICE_BUNDLE_ALL',
+  },
 };
 
 /** All known plugin keys. */
@@ -65,4 +72,27 @@ export function pluginKeyForPriceId(env, priceId) {
     if (env[p.priceVar] && env[p.priceVar] === priceId) return p.key;
   }
   return null;
+}
+
+/** Resolve a Stripe price id (from env) → bundle key, for webhook sync. */
+export function bundleKeyForPriceId(env, priceId) {
+  if (!priceId) return null;
+  for (const b of Object.values(BUNDLES)) {
+    if (env[b.priceVar] && env[b.priceVar] === priceId) return b.key;
+  }
+  return null;
+}
+
+/**
+ * Price id → entitlement key: a plugin key OR a bundle key. The webhook stores
+ * a bundle as one account_plugins row (plugin_key = the bundle key); hasPlugin
+ * expands that to the bundle's member plugins via bundlesIncluding().
+ */
+export function entitlementKeyForPriceId(env, priceId) {
+  return pluginKeyForPriceId(env, priceId) || bundleKeyForPriceId(env, priceId);
+}
+
+/** Bundles whose plugin list includes `pluginKey` (so a bundle entitles it). */
+export function bundlesIncluding(pluginKey) {
+  return Object.values(BUNDLES).filter((b) => b.plugins.includes(pluginKey));
 }
