@@ -101,6 +101,11 @@ export async function deleteLead(db, id) {
   await db.prepare('DELETE FROM leads WHERE id = ?').bind(id).run();
 }
 
+/** One lead by id, or null. */
+export async function getLead(db, id) {
+  return db.prepare('SELECT * FROM leads WHERE id = ?').bind(id).first();
+}
+
 /** All Google place_ids already in the CRM — so the lead-gen script can skip them
  *  BEFORE making a (priced) Place Details call and before counting toward its cap. */
 export async function existingPlaceIds(db) {

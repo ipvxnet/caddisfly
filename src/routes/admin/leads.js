@@ -96,8 +96,9 @@ export async function handleAdminLeads(ctx) {
       <td><select class="l-status">${statusOpts}</select></td>
       <td><input class="l-promo" value="${esc(l.promo_code)}" placeholder="code" size="9"></td>
       <td><input class="l-notes" value="${esc(l.notes)}" placeholder="notes…"></td>
-      <td><button class="lbtn" onclick="save(this)">Save</button> <button class="lbtn del" onclick="del(this)">✕</button></td>
-    </tr>`;
+      <td><button class="lbtn" onclick="toggleQuotes(this)" title="Quotes & orders">📄</button> <button class="lbtn" onclick="save(this)">Save</button> <button class="lbtn del" onclick="del(this)">✕</button></td>
+    </tr>
+    <tr class="qdrawer" id="qd-${l.id}" style="display:none"><td colspan="9"><div class="qpanel" data-loaded="0">Loading…</div></td></tr>`;
   }).join('');
 
   const inner = `
@@ -158,6 +159,63 @@ export async function handleAdminLeads(ctx) {
       try { await api('POST','',{ business:biz, website:document.getElementById('a-web').value.trim(), phone:document.getElementById('a-phone').value.trim(), email:document.getElementById('a-email').value.trim(), area:document.getElementById('a-area').value.trim(), vertical:document.getElementById('a-vert').value.trim() }); location.reload(); }
       catch(e){ alert(e.message); btn.disabled=false; }
     }
+
+    /* --- Quotes & Orders (per-lead drawer; shared engine via /api/admin/leads/:id/quotes) --- */
+    var QSTA=['draft','sent','accepted','rejected','expired'], QFUL=['unfulfilled','fulfilled','cancelled'];
+    function qesc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+    function qmoney(c){ return '$'+((c||0)/100).toFixed(2); }
+    function qpanelOf(id){ return document.getElementById('qd-'+id).querySelector('.qpanel'); }
+    function toggleQuotes(btn){
+      var id=btn.closest('tr').getAttribute('data-id');
+      var dr=document.getElementById('qd-'+id);
+      var open=dr.style.display!=='none';
+      dr.style.display=open?'none':'table-row';
+      if(!open && qpanelOf(id).getAttribute('data-loaded')==='0') loadQuotes(id);
+    }
+    async function loadQuotes(id){
+      var p=qpanelOf(id); p.innerHTML='Loading…';
+      try{ var d=await api('GET','/'+id+'/quotes'); renderQuotes(id, d.quotes||[]); p.setAttribute('data-loaded','1'); }
+      catch(e){ p.innerHTML='Could not load quotes ('+qesc(e.message)+').'; }
+    }
+    function renderQuotes(id, quotes){
+      var body=quotes.map(function(q){
+        var so=QSTA.map(function(s){return '<option'+(q.status===s?' selected':'')+'>'+s+'</option>';}).join('');
+        var fo=q.status==='accepted'
+          ? '<select onchange="qOrder('+id+','+q.id+',this)">'+QFUL.map(function(s){return '<option'+(q.fulfillment===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'
+          : '<span class="muted">—</span>';
+        return '<tr><td>'+qesc(q.title||'(untitled)')+'</td>'
+          +'<td><select onchange="qStatus('+id+','+q.id+',this)">'+so+'</select></td>'
+          +'<td>'+qmoney(q.total_cents)+'</td><td>'+q.item_count+'</td><td>'+fo+'</td>'
+          +'<td><button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button></td></tr>';
+      }).join('');
+      if(!body) body='<tr><td colspan="6" class="muted">No quotes yet.</td></tr>';
+      var item='<div class="qc-item"><input class="qi-d" placeholder="Description"><input class="qi-q" type="number" min="1" value="1"><input class="qi-p" type="number" min="0" step="0.01" placeholder="Unit $"></div>';
+      qpanelOf(id).innerHTML='<table class="qtable"><thead><tr><th>Quote</th><th>Status</th><th>Total</th><th>Items</th><th>Order</th><th></th></tr></thead><tbody>'+body+'</tbody></table>'
+        +'<div class="qcreate"><input class="qc-title" placeholder="Quote title (optional)"><div class="qc-items">'+item+'</div>'
+        +'<div class="qc-actions"><button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary" onclick="qCreate('+id+',this)">Create quote</button></div></div>';
+    }
+    function qAddItem(id){
+      var box=qpanelOf(id).querySelector('.qc-items');
+      var row=document.createElement('div'); row.className='qc-item';
+      row.innerHTML='<input class="qi-d" placeholder="Description"><input class="qi-q" type="number" min="1" value="1"><input class="qi-p" type="number" min="0" step="0.01" placeholder="Unit $">';
+      box.appendChild(row);
+    }
+    async function qCreate(id, btn){
+      var panel=qpanelOf(id), items=[];
+      panel.querySelectorAll('.qc-item').forEach(function(r){
+        var d=r.querySelector('.qi-d').value.trim();
+        var q=parseInt(r.querySelector('.qi-q').value,10);
+        var pr=parseFloat(r.querySelector('.qi-p').value);
+        if(d) items.push({description:d, qty:(q>0?q:1), unit_price_cents:Math.round((pr>0?pr:0)*100)});
+      });
+      if(!items.length){ alert('Add at least one line item with a description.'); return; }
+      btn.disabled=true;
+      try{ await api('POST','/'+id+'/quotes',{ title:panel.querySelector('.qc-title').value.trim(), items:items }); loadQuotes(id); }
+      catch(e){ alert(e.message); btn.disabled=false; }
+    }
+    async function qStatus(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/status',{status:sel.value}); loadQuotes(id); } catch(e){ alert(e.message); } }
+    async function qOrder(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/order-status',{fulfillment:sel.value}); } catch(e){ alert(e.message); } }
+    async function qDel(id, qid){ if(!confirm('Delete this quote?')) return; try{ await api('DELETE','/'+id+'/quotes/'+qid); loadQuotes(id); } catch(e){ alert(e.message); } }
   </script>`;
 
   return htmlResponse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -184,6 +242,17 @@ export async function handleAdminLeads(ctx) {
   .l-link{color:#5a3da8;text-decoration:none;font-weight:600}.l-nosite{color:#15803d;font-weight:800;font-size:.78rem;background:#dcfce7;border-radius:6px;padding:.1rem .4rem;white-space:nowrap}
   .l-notes{width:100%;min-width:150px}.l-meta{color:#4a5568;font-size:.8rem}
   .lempty{text-align:center;color:#94a3b8;border:2px dashed #e2e8f0;border-radius:14px;padding:3rem 1.5rem;background:#fff}
+  .qdrawer>td{background:#faf9ff;padding:0}
+  .qpanel{padding:1rem 1.2rem}
+  .qtable{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:.8rem}
+  .qtable th{font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:.45rem .6rem;border-bottom:1px solid #e2e8f0}
+  .qtable td{padding:.45rem .6rem;border-bottom:1px solid #edf2f7}.qtable tr:last-child td{border-bottom:none}
+  .qtable select{padding:.3rem .4rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;background:#fff}
+  .qcreate{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-start}
+  .qc-title{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:200px}
+  .qc-items{display:flex;flex-direction:column;gap:.4rem}.qc-item{display:flex;gap:.4rem}
+  .qc-item input{padding:.4rem .5rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem}
+  .qi-d{min-width:200px}.qi-q{width:60px}.qi-p{width:90px}.qc-actions{display:flex;gap:.5rem}
   </style></head><body>${nav}${inner}</body></html>`);
 }
 

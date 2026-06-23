@@ -18,6 +18,7 @@ import { handleShowcase } from './routes/public/showcase.js';
 import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich, handleLeadsPlaceIds } from './routes/admin/leads.js';
+import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete } from './routes/admin/lead-quotes.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
@@ -514,6 +515,13 @@ router.get('/admin/leads', handleAdminLeads, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/leads', handleLeadAdd, [authMiddleware, adminMiddleware]);
 router.put('/api/admin/leads/:id', handleLeadUpdate, [authMiddleware, adminMiddleware]);
 router.delete('/api/admin/leads/:id', handleLeadDelete, [authMiddleware, adminMiddleware]);
+// Admin Leads CRM — Quotation & Order Management (shared engine, owner = lead)
+router.get('/api/admin/leads/:id/quotes', handleLeadQuoteList, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/leads/:id/quotes', handleLeadQuoteCreate, [authMiddleware, adminMiddleware]);
+router.get('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteGet, [authMiddleware, adminMiddleware]);
+router.put('/api/admin/leads/:id/quotes/:quote_id/status', handleLeadQuoteStatus, [authMiddleware, adminMiddleware]);
+router.put('/api/admin/leads/:id/quotes/:quote_id/order-status', handleLeadOrderStatus, [authMiddleware, adminMiddleware]);
+router.delete('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteDelete, [authMiddleware, adminMiddleware]);
 
 /**
  * Main fetch handler
