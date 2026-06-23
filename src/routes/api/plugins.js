@@ -6,7 +6,7 @@
 
 import { jsonResponse } from '../../utils/response.js';
 import { getBillingAccount } from '../../db/billing.js';
-import { PLUGINS } from '../../plugins/manifest.js';
+import { PLUGINS, BUNDLES } from '../../plugins/manifest.js';
 import { hasBasePlan } from '../../plugins/entitlements.js';
 import { getAccountPlugin, upsertAccountPlugin } from '../../db/account-plugins.js';
 import {
@@ -30,10 +30,12 @@ function findItem(sub, priceId) {
   return items.find((it) => it.price && it.price.id === priceId) || null;
 }
 
-/** Resolve (plugin, account, priceId, subId) or a Response error. */
+/** Resolve (def, account, priceId, subId) or a Response error. `def` is a
+ *  plugin OR a bundle — both share {key,label,priceVar}; a bundle also has a
+ *  `plugins` array (its members). */
 async function resolve(ctx) {
   const key = ctx.params && ctx.params.key;
-  const plugin = key && PLUGINS[key];
+  const plugin = key && (PLUGINS[key] || BUNDLES[key]);
   if (!plugin) return { error: jsonResponse({ error: 'unknown_plugin' }, 404) };
   const email = ctx.billingEmail;
   if (!email) return { error: jsonResponse({ error: 'sign_in_required' }, 401) };
@@ -68,6 +70,24 @@ export async function handlePluginSubscribe(ctx) {
       stripeItemId: item.id,
       currentPeriodEnd: periodEndOf(sub),
     });
+    // Subscribing to a BUNDLE? Drop any redundant individual plugin items so the
+    // customer isn't double-billed — their content keeps working via the bundle.
+    if (Array.isArray(r.plugin.plugins)) {
+      for (const covered of r.plugin.plugins) {
+        const indPrice = ctx.env[(PLUGINS[covered] || {}).priceVar];
+        const indItem = indPrice && findItem(sub, indPrice);
+        if (!indItem) continue;
+        await deleteSubscriptionItem(ctx.env, indItem.id);
+        const erow = await getAccountPlugin(ctx.env.DB, r.email, covered);
+        await upsertAccountPlugin(ctx.env.DB, {
+          email: r.email,
+          pluginKey: covered,
+          status: 'canceling',
+          stripeItemId: (erow && erow.stripe_item_id) || null,
+          currentPeriodEnd: (erow && erow.current_period_end) || periodEndOf(sub),
+        });
+      }
+    }
     return jsonResponse({ ok: true, plugin: r.key, status: 'active' });
   } catch (err) {
     console.error('Plugin subscribe failed:', err.message);

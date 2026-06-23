@@ -416,6 +416,7 @@ export const en = {
     vs_small: '— where the big builders give you <strong>2 GB for $17</strong>. Storage barely costs us anything, so we don’t charge you much for it. Simple as that.',
     note: 'All plans include the AI builder, multi-page sites, live editing, themes & one-click publish. Cancel anytime.',
     compare_link: 'See the side-by-side vs Wix →',
+    plugins_note: 'Need more? Optional plugins — Catalogue, CRM &amp; Advanced Store — $5/mo each, or all three for $10/mo →',
     speed_link: 'See how fast our sites are →',
     faq_title: 'Questions',
     cta_title: 'Start building — free', cta_sub: 'Your first site is a minute away.', cta_btn: '✨ Build with AI',
@@ -424,10 +425,10 @@ export const en = {
     pro_name: 'Pro', pro_tag: 'For freelancers & growing businesses.', pro_cta: 'Get Pro',
     agency_name: 'Agency', agency_tag: 'For studios building many sites.', agency_cta: 'Get Agency',
     features: {
-      free: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.app subdomain', 'AI builder + 1 refactor', 'AI blog + contact-form inbox', '📅 Booking engine (1 service)',, 'HTML export & 2 saved versions', 'Community support'],
-      starter: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '<strong>🛍 Online store</strong> — sell with your own Stripe (10 products)', '📅 Bookings — 5 services + <strong>💳 paid bookings</strong>',, '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', '✨ AI logo generator', '5 saved versions', 'Email support'],
-      pro: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '🛍 Online store — 50 products', '📅 Bookings — 15 services',, '5 custom domains', 'Priority AI image generation', '✨ AI logo generator', '10 saved versions', 'Everything in Starter', 'Priority support'],
-      agency: ['Unlimited sites', '<strong>500 GB+</strong> storage', '8,000 AI credits / mo', '🛍 Online store — unlimited products', '📅 Unlimited bookings',, 'Unlimited custom domains', 'Bulk refactor', '30 saved versions', 'Everything in Pro', 'Priority+ support'],
+      free: ['1 published site', '1 GB storage', '50 AI credits / mo', 'caddisfly.app subdomain', 'AI builder + 1 refactor', 'AI blog + contact-form inbox', '📅 Booking engine (1 service)', 'HTML export & 2 saved versions', 'Community support'],
+      starter: ['3 published sites', '<strong>25 GB</strong> storage', '500 AI credits / mo', '<strong>🛍 Online store</strong> — sell with your own Stripe (<strong>250 products</strong>)', '📅 Bookings — <strong>50 services</strong> + <strong>💳 paid bookings</strong>', '1 custom domain', 'Remove “Built with Caddisfly”', 'AI image generation', '✨ AI logo generator', '5 saved versions', 'Email support'],
+      pro: ['15 published sites', '<strong>100 GB</strong> storage', '2,000 AI credits / mo', '🛍 Online store — <strong>1,000 products</strong>', '📅 Bookings — <strong>200 services</strong>', '5 custom domains', 'Priority AI image generation', '✨ AI logo generator', '10 saved versions', 'Everything in Starter', 'Priority support'],
+      agency: ['Unlimited sites', '<strong>500 GB+</strong> storage', '8,000 AI credits / mo', '🛍 Online store — unlimited products', '📅 Unlimited bookings', 'Unlimited custom domains', 'Bulk refactor', '30 saved versions', 'Everything in Pro', 'Priority+ support'],
     },
     faqs: [
       ['What’s an “AI credit”?', 'Credits cover the AI work behind your site. Roughly: a full AI site build ≈ 20 credits, an AI text edit ≈ 1, an AI-generated image ≈ 5, refactoring an existing site ≈ 10. Your monthly allotment resets each cycle.'],

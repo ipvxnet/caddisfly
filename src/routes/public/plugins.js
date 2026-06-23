@@ -7,7 +7,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getBillingAccount } from '../../db/billing.js';
 import { getAccountPlugins, isEntitlementValid, PLUGIN_GRACE_SECONDS } from '../../db/account-plugins.js';
 import { hasBasePlan } from '../../plugins/entitlements.js';
-import { PLUGINS } from '../../plugins/manifest.js';
+import { PLUGINS, BUNDLES } from '../../plugins/manifest.js';
 import { isStripeConfigured } from '../../utils/stripe.js';
 
 function fmtDate(ts) {
@@ -35,11 +35,21 @@ export async function handlePluginsMarketplace(ctx) {
     banner = `<div class="notice warn">Plugins are add-ons to a paid plan. <a href="/billing">Upgrade your plan</a> to add them.</div>`;
   }
 
+  // The All-Access bundle entitles all its member plugins via one row.
+  const bundle = BUNDLES.all_access;
+  const bundleConfigured = bundle && env[bundle.priceVar];
+  const bundleActive = bundle ? isEntitlementValid(owned.get(bundle.key), now) : false;
+
   const cards = Object.values(PLUGINS).map((p) => {
     const row = owned.get(p.key);
     const valid = isEntitlementValid(row, now);
+    const coveredByBundle = bundleActive && bundle.plugins.includes(p.key);
     let state, action;
-    if (row && row.status === 'active') {
+    if (coveredByBundle) {
+      // The bundle owns this plugin — manage it from the bundle card.
+      state = `<span class="pill ok">Included</span>`;
+      action = `<span class="muted-link">Part of your All-Access bundle</span>`;
+    } else if (row && row.status === 'active') {
       state = `<span class="pill ok">Active</span>`;
       action = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${p.key}">Cancel</button>`;
     } else if (row && valid) {
@@ -60,11 +70,40 @@ export async function handlePluginsMarketplace(ctx) {
     </div>`;
   }).join('');
 
+  // Bundle banner-card (only when a Stripe price is configured for it).
+  let bundleCard = '';
+  if (bundleConfigured) {
+    const brow = owned.get(bundle.key);
+    const sumIndividual = bundle.plugins.reduce((s, k) => s + ((PLUGINS[k] && PLUGINS[k].priceCents) || 0), 0);
+    const savings = Math.max(0, sumIndividual - bundle.priceCents);
+    let bstate, baction;
+    if (brow && brow.status === 'active') {
+      bstate = `<span class="pill ok">Active</span>`;
+      baction = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${bundle.key}">Cancel</button>`;
+    } else if (isEntitlementValid(brow, now)) {
+      const until = fmtDate((brow.current_period_end || now) + PLUGIN_GRACE_SECONDS);
+      bstate = `<span class="pill warn">Ends ${until}</span>`;
+      baction = `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">Resubscribe</button>`;
+    } else {
+      bstate = `<span class="pill">${money(bundle.priceCents)}/mo</span>`;
+      baction = basePlan
+        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">Get all plugins — ${money(bundle.priceCents)}/mo</button>`
+        : `<a class="btn btn-ghost" href="/billing">Requires a paid plan</a>`;
+    }
+    const saveLine = savings > 0 ? ` <strong>Save ${money(savings)}/mo</strong> vs buying separately.` : '';
+    bundleCard = `<div class="pl-bundle">
+      <div class="pl-head"><h3>✨ ${esc(bundle.label)} — every plugin</h3>${bstate}</div>
+      <p class="pl-sum">${esc(bundle.summary)}${saveLine}</p>
+      <div class="pl-action">${baction}</div>
+    </div>`;
+  }
+
   const inner = `
     <h1>Plugins</h1>
     <p class="sub">Add powerful, optional features to your sites — $5/mo each, cancel anytime.</p>
     ${banner}
     <div id="pl-msg"></div>
+    ${bundleCard}
     <div class="pl-grid">${cards}</div>
     <p class="muted-link" style="margin-top:1.4rem">Canceled plugins keep working for a 7-day grace period, then their sections are hidden on your live site. Your content is kept and restored if you resubscribe.</p>
     <script>
@@ -99,6 +138,9 @@ export async function handlePluginsMarketplace(ctx) {
     .bwrap{max-width:820px;margin:0 auto;padding:3rem 1.5rem}
     .bwrap h1{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:.4rem}
     .sub{color:var(--body);margin-bottom:1.6rem}
+    .pl-bundle{background:linear-gradient(135deg,#faf5ff,#eff6ff);border:1.5px solid var(--p2);border-radius:16px;padding:1.4rem 1.5rem;margin-bottom:1.2rem;display:flex;flex-direction:column;gap:.6rem}
+    .pl-bundle .pl-head h3{font-size:1.2rem}
+    .pl-bundle .pl-action .btn{width:auto}
     .pl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
     .pl-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;display:flex;flex-direction:column;gap:.6rem}
     .pl-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem}

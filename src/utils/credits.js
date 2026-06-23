@@ -28,15 +28,17 @@ export const TEAM_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: 50 };
 // Saved site versions kept per tier (oldest pruned beyond the cap).
 export const SNAPSHOT_LIMITS = { free_trial: 2, starter: 5, pro: 10, agency: 30 };
 
-// Store products per tier (commerce v1 — "sell online for $9" undercuts
-// Wix's $29 commerce floor; caps protect the Pro upsell). Free can browse the
-// store manager but not list products. Enforced in production only.
-export const PRODUCT_LIMITS = { free_trial: 0, starter: 10, pro: 50, agency: Infinity };
+// Store products per tier. Model B (2026-06-22): capacity lives on the TIER —
+// raised the caps so small businesses aren't blocked at 10 products (the old
+// floor was "problematic"); plugins add FEATURES, not headroom. Free can browse
+// the store manager but not list products. Enforced in production only.
+export const PRODUCT_LIMITS = { free_trial: 0, starter: 250, pro: 1000, agency: Infinity };
 
 // Booking engine — free WITH CAPS on every tier (decided 2026-06-10; vs Wix
 // gating bookings behind $29): service types per site, and confirmed bookings
-// per site per calendar month. Enforced in production only (limitsDisabled).
-export const BOOKING_SERVICE_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: Infinity };
+// per site per calendar month. Service-type caps raised under Model B
+// (2026-06-22). Enforced in production only (limitsDisabled).
+export const BOOKING_SERVICE_LIMITS = { free_trial: 1, starter: 50, pro: 200, agency: Infinity };
 export const BOOKING_MONTHLY_LIMITS = { free_trial: 20, starter: 200, pro: 1000, agency: Infinity };
 
 /** Team seat cap for a tier (defaults to free). */
