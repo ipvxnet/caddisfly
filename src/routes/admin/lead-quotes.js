@@ -7,6 +7,7 @@ import { getLead } from '../../db/leads.js';
 import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
   ensureQuoteToken, markQuoteSent, setQuoteIssuer } from '../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../utils/email.js';
+import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../db/quote-templates.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -95,6 +96,17 @@ export async function handleLeadOrderStatus(ctx) {
   }
 }
 
+/** GET /api/admin/leads/quote-template — the global Caddisfly quote template. */
+export async function handleLeadQuoteTemplateGet(ctx) {
+  return json({ success: true, template: await getQuoteTemplate(ctx.env.DB, { global: true }) });
+}
+
+/** PUT /api/admin/leads/quote-template */
+export async function handleLeadQuoteTemplateSave(ctx) {
+  const body = await ctx.request.json().catch(() => ({}));
+  return json({ success: true, template: await saveQuoteTemplate(ctx.env.DB, { global: true }, body) });
+}
+
 /** POST /api/admin/leads/:id/quotes/:quote_id/send — email the lead a link to the
  *  hosted, Caddisfly-branded quote page. */
 export async function handleLeadQuoteSend(ctx) {
@@ -107,7 +119,7 @@ export async function handleLeadQuoteSend(ctx) {
   if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
   if (!quote.contact_email) return json({ success: false, error: 'This quote has no customer email — add one first.' }, 400);
   const origin = url.origin;
-  const issuer = {
+  let issuer = {
     name: 'Caddisfly',
     logo: `${origin}/og.png`,
     contact: ['caddisfly.ai', 'contact@caddisfly.ai'],
@@ -116,6 +128,7 @@ export async function handleLeadQuoteSend(ctx) {
     thankYou: 'Thank you for considering Caddisfly. We would love to build and host your website.',
     terms: '',
   };
+  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, { global: true }));
   await setQuoteIssuer(env.DB, owner, qid, issuer);
   const token = await ensureQuoteToken(env.DB, owner, qid);
   await markQuoteSent(env.DB, owner, qid);

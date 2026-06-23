@@ -182,6 +182,25 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       </div>
     </details>`;
 
+  // Editable Caddisfly quote template (the global branding/copy used on SENT quotes).
+  const qtplGuide = `
+    <details class="lguide" ontoggle="if(this.open) loadQtpl()">
+      <summary>✎ Quote template <span class="muted">— Caddisfly branding on sent quotes</span></summary>
+      <div class="lguide-body">
+        <div class="qtpl-grid">
+          <label>Intro line<textarea id="qt-intro" rows="2" placeholder="Here's the quote we discussed…"></textarea></label>
+          <label>Thank-you message<textarea id="qt-thanks" rows="2" placeholder="Thank you for considering Caddisfly…"></textarea></label>
+          <label>Terms / footer<textarea id="qt-terms" rows="2" placeholder="Valid for 30 days. Prices in USD."></textarea></label>
+          <div class="qtpl-row">
+            <label>Accent color<input id="qt-accent" placeholder="#5a3da8"></label>
+            <label>Logo URL override<input id="qt-logo" placeholder="https://… (blank = default)"></label>
+          </div>
+        </div>
+        <div class="qtpl-actions"><button class="lbtn primary" onclick="saveQtpl(this)">Save template</button><span id="qt-msg" class="muted"></span></div>
+        <p class="lguide-note">Leave a field blank to use the Caddisfly default. These apply to quotes you send from a lead's 📄 drawer.</p>
+      </div>
+    </details>`;
+
   const inner = `
   <div class="lwrap">
     <div class="lhead">
@@ -196,6 +215,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
     </div>
 
     ${guide}
+    ${qtplGuide}
 
     <form class="lfilters" method="get">
       <input name="q" value="${esc(filt.q)}" placeholder="Search business / site / email / phone…">
@@ -318,6 +338,24 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
         alert(d.warning ? d.warning+' '+(d.view_url||'') : 'Quote sent ✓'); loadQuotes(id);
       }catch(e){ alert(e.message); btn.disabled=false; btn.textContent=t; }
     }
+    var qtplLoaded=false;
+    async function loadQtpl(){
+      if(qtplLoaded) return; qtplLoaded=true;
+      try{ var d=await api('GET','/quote-template'); var t=d.template||{};
+        document.getElementById('qt-intro').value=t.intro||'';
+        document.getElementById('qt-thanks').value=t.thank_you||'';
+        document.getElementById('qt-terms').value=t.terms||'';
+        document.getElementById('qt-accent').value=t.accent||'';
+        document.getElementById('qt-logo').value=t.logo||'';
+      }catch(e){ qtplLoaded=false; }
+    }
+    async function saveQtpl(btn){
+      btn.disabled=true; var t=btn.textContent; btn.textContent='…';
+      try{ await api('PUT','/quote-template',{ intro:document.getElementById('qt-intro').value, thank_you:document.getElementById('qt-thanks').value, terms:document.getElementById('qt-terms').value, accent:document.getElementById('qt-accent').value, logo:document.getElementById('qt-logo').value });
+        var m=document.getElementById('qt-msg'); m.textContent='Saved ✓'; setTimeout(function(){m.textContent='';},1600);
+      }catch(e){ alert(e.message); }
+      btn.disabled=false; btn.textContent=t;
+    }
   </script>`;
 
   return htmlResponse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -354,6 +392,11 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
   .lguide code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .lguide-note{color:#64748b;font-size:.8rem;margin-top:.7rem;line-height:1.5}
   .lguide-note code{background:#f1f5f9;color:#334155;padding:.05rem .3rem;border-radius:4px}
+  .qtpl-grid{display:flex;flex-direction:column;gap:.7rem;max-width:620px}
+  .qtpl-grid label{display:flex;flex-direction:column;gap:.25rem;font-size:.8rem;font-weight:700;color:#4a5568}
+  .qtpl-grid textarea,.qtpl-grid input{padding:.5rem .6rem;border:1.5px solid #e2e8f0;border-radius:9px;font-family:inherit;font-size:.85rem;font-weight:400;resize:vertical}
+  .qtpl-row{display:flex;gap:.7rem}.qtpl-row label{flex:1}
+  .qtpl-actions{display:flex;align-items:center;gap:.7rem;margin-top:.8rem}
   .qdrawer>td{background:#faf9ff;padding:0}
   .qpanel{padding:1rem 1.2rem}
   .qtable{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:.8rem}

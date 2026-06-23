@@ -6,6 +6,7 @@ import { resolveStoreProject, getOrCreateConfig } from './store.js';
 import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
   ensureQuoteToken, markQuoteSent, setQuoteIssuer } from '../../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../../utils/email.js';
+import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../../db/quote-templates.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -93,6 +94,21 @@ export async function handleOrderStatus(ctx) {
   }
 }
 
+/** GET /api/ai-builder/:project_id/crm/quote-template */
+export async function handleQuoteTemplateGet(ctx) {
+  const r = await resolveStoreProject(ctx.env, ctx.params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  return json({ success: true, template: await getQuoteTemplate(ctx.env.DB, r.projectKey) });
+}
+
+/** PUT /api/ai-builder/:project_id/crm/quote-template */
+export async function handleQuoteTemplateSave(ctx) {
+  const r = await resolveStoreProject(ctx.env, ctx.params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await ctx.request.json().catch(() => ({}));
+  return json({ success: true, template: await saveQuoteTemplate(ctx.env.DB, r.projectKey, body) });
+}
+
 /** POST /api/ai-builder/:project_id/crm/quotes/:quote_id/send — email the customer
  *  a link to the hosted, branded quote page (issuer = the project's business). */
 export async function handleQuoteSend(ctx) {
@@ -105,7 +121,7 @@ export async function handleQuoteSend(ctx) {
   if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
   if (!quote.contact_email) return json({ success: false, error: 'Add a customer email to the quote first.' }, 400);
   const config = await getOrCreateConfig(env.DB, r.projectKey);
-  const issuer = {
+  let issuer = {
     name: r.businessName,
     logo: config.logo_url || '',
     contact: [config.notify_email].filter(Boolean),
@@ -114,6 +130,7 @@ export async function handleQuoteSend(ctx) {
     thankYou: `Thank you for considering ${r.businessName}. We look forward to working with you.`,
     terms: '',
   };
+  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, r.projectKey));
   await setQuoteIssuer(env.DB, r.projectKey, id, issuer);
   const token = await ensureQuoteToken(env.DB, r.projectKey, id);
   await markQuoteSent(env.DB, r.projectKey, id);
