@@ -7,6 +7,7 @@ import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, dele
   ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail, updateQuote, addQuoteReview } from '../../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../../utils/email.js';
 import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../../db/quote-templates.js';
+import { getProductsByProject } from '../../../db/products.js';
 
 /** Build + freeze the issuer snapshot for THIS project + mint a token. Shared by
  *  Send and Preview so the document is identical either way. */
@@ -110,6 +111,18 @@ export async function handleOrderStatus(ctx) {
     if (e.message === 'invalid_fulfillment') return json({ success: false, error: 'Invalid fulfillment status.' }, 400);
     throw e;
   }
+}
+
+/** GET /api/ai-builder/:project_id/crm/quote-products — the project's store
+ *  products for the quote line-item picker. */
+export async function handleQuoteProducts(ctx) {
+  const r = await resolveStoreProject(ctx.env, ctx.params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const rows = await getProductsByProject(ctx.env.DB, r.projectKey, false);
+  const items = (rows || [])
+    .filter((p) => p.name)
+    .map((p) => ({ name: p.name, price_cents: p.price_cents || 0 }));
+  return json({ success: true, items });
 }
 
 /** GET /api/ai-builder/:project_id/crm/quote-template */

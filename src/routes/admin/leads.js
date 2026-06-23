@@ -281,10 +281,26 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       dr.style.display=open?'none':'table-row';
       if(!open && qpanelOf(id).getAttribute('data-loaded')==='0') loadQuotes(id);
     }
+    var qCatalog=null;
     async function loadQuotes(id){
       var p=qpanelOf(id); p.innerHTML='Loading…';
+      if(qCatalog===null){ try{ var c=await api('GET','/quote-catalog'); qCatalog=c.items||[]; }catch(e){ qCatalog=[]; } }
       try{ var d=await api('GET','/'+id+'/quotes'); renderQuotes(id, d.quotes||[]); p.setAttribute('data-loaded','1'); }
       catch(e){ p.innerHTML='Could not load quotes ('+qesc(e.message)+').'; }
+    }
+    function qPickerHtml(id){
+      if(!qCatalog || !qCatalog.length) return '';
+      var opts=qCatalog.map(function(c){ return '<option value="'+qesc(c.name)+'" data-price="'+(c.price_cents||0)+'">'+qesc(c.name)+' — '+qmoney(c.price_cents)+'</option>'; }).join('');
+      return '<select class="qc-pick" onchange="qPick('+id+',this)"><option value="">＋ Add a plan…</option>'+opts+'</select>';
+    }
+    function qPick(leadId, sel){
+      var opt=sel.options[sel.selectedIndex]; if(!opt||!opt.value){ return; }
+      var price=(parseInt(opt.getAttribute('data-price'),10)||0)/100;
+      var rows=qpanelOf(leadId).querySelectorAll('.qc-item'), target=null;
+      rows.forEach(function(r){ if(!target && !r.querySelector('.qi-d').value.trim()) target=r; });
+      if(target){ target.querySelector('.qi-d').value=opt.value; target.querySelector('.qi-q').value=1; target.querySelector('.qi-p').value=price; }
+      else qAddItemVals(leadId, opt.value, 1, price);
+      sel.selectedIndex=0;
     }
     function renderQuotes(id, quotes){
       var body=quotes.map(function(q){
@@ -316,7 +332,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
         +'<div class="qcreate"><div class="qc-head"><input class="qc-title" placeholder="Quote title"><input class="qc-email" type="email" placeholder="Customer email (defaults to the lead email)"></div>'
         +'<div class="qc-items">'+item+'</div>'
         +'<textarea class="qc-notes" rows="2" placeholder="Comments / notes (optional)"></textarea>'
-        +'<div class="qc-actions"><button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary qc-submit" onclick="qCreate('+id+',this)">Create quote</button><button class="lbtn qc-cancel" style="display:none" onclick="qCancelEdit('+id+')">Cancel</button></div></div>';
+        +'<div class="qc-actions">'+qPickerHtml(id)+'<button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary qc-submit" onclick="qCreate('+id+',this)">Create quote</button><button class="lbtn qc-cancel" style="display:none" onclick="qCancelEdit('+id+')">Cancel</button></div></div>';
     }
     function qAddItem(id){
       var box=qpanelOf(id).querySelector('.qc-items');
@@ -482,7 +498,8 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
   .q-pen{color:#5a3da8;cursor:pointer;text-decoration:none;margin-left:.3rem;font-size:.85rem}.q-pen:hover{text-decoration:underline}
   .qc-items{display:flex;flex-direction:column;gap:.4rem}.qc-item{display:flex;gap:.4rem}
   .qc-item input{padding:.4rem .5rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem}
-  .qi-d{min-width:200px}.qi-q{width:60px}.qi-p{width:90px}.qc-actions{display:flex;gap:.5rem}
+  .qi-d{min-width:200px}.qi-q{width:60px}.qi-p{width:90px}.qc-actions{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .qc-pick{padding:.45rem .55rem;border:1.5px solid #c7b8ea;border-radius:9px;font-size:.82rem;background:#faf9ff;color:#5a3da8;font-weight:600;max-width:240px}
   </style></head><body>${nav}${inner}</body></html>`);
 }
 
