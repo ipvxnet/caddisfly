@@ -4,9 +4,27 @@
 
 import { resolveStoreProject, getOrCreateConfig } from './store.js';
 import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
-  ensureQuoteToken, markQuoteSent, setQuoteIssuer } from '../../../db/crm-quotes.js';
+  ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail, updateQuote, addQuoteReview } from '../../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../../utils/email.js';
 import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../../db/quote-templates.js';
+
+/** Build + freeze the issuer snapshot for THIS project + mint a token. Shared by
+ *  Send and Preview so the document is identical either way. */
+async function snapshotCustomerQuote(env, r, id) {
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  let issuer = {
+    name: r.businessName,
+    logo: config.logo_url || '',
+    contact: [config.notify_email].filter(Boolean),
+    accent: config.primary_color || '#5a3da8',
+    intro: '',
+    thankYou: `Thank you for considering ${r.businessName}. We look forward to working with you.`,
+    terms: '',
+  };
+  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, r.projectKey));
+  await setQuoteIssuer(env.DB, r.projectKey, id, issuer);
+  return ensureQuoteToken(env.DB, r.projectKey, id);
+}
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -120,20 +138,9 @@ export async function handleQuoteSend(ctx) {
   const quote = await getQuote(env.DB, r.projectKey, id);
   if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
   if (!quote.contact_email) return json({ success: false, error: 'Add a customer email to the quote first.' }, 400);
-  const config = await getOrCreateConfig(env.DB, r.projectKey);
-  let issuer = {
-    name: r.businessName,
-    logo: config.logo_url || '',
-    contact: [config.notify_email].filter(Boolean),
-    accent: config.primary_color || '#5a3da8',
-    intro: '',
-    thankYou: `Thank you for considering ${r.businessName}. We look forward to working with you.`,
-    terms: '',
-  };
-  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, r.projectKey));
-  await setQuoteIssuer(env.DB, r.projectKey, id, issuer);
-  const token = await ensureQuoteToken(env.DB, r.projectKey, id);
+  const token = await snapshotCustomerQuote(env, r, id);
   await markQuoteSent(env.DB, r.projectKey, id);
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
   const viewUrl = `${url.origin}/q/${token}`;
   try {
     const sent = await sendQuoteEmail(env, {
@@ -143,6 +150,77 @@ export async function handleQuoteSend(ctx) {
     return json({ success: true, sent, view_url: viewUrl, ...(sent ? {} : { warning: 'Email not configured — share the link.' }) });
   } catch (e) {
     return json({ success: true, sent: false, view_url: viewUrl, warning: 'Email failed: ' + e.message });
+  }
+}
+
+/** PUT /api/ai-builder/:project_id/crm/quotes/:quote_id — edit the quote content
+ *  (title, currency, valid_until, notes, line items). */
+export async function handleQuoteUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const ok = await updateQuote(env.DB, r.projectKey, id, { title: body.title, currency: body.currency, valid_until: body.valid_until, notes: body.notes, items: body.items });
+    if (!ok) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true });
+  } catch (e) {
+    if (e.message === 'items_required') return json({ success: false, error: 'At least one line item is required.' }, 400);
+    throw e;
+  }
+}
+
+/** POST /api/ai-builder/:project_id/crm/quotes/:quote_id/review — add an internal review note. */
+export async function handleQuoteReviewAdd(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const reviews = await addQuoteReview(env.DB, r.projectKey, id, body.body);
+    if (reviews == null) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true, reviews });
+  } catch (e) {
+    if (e.message === 'empty_review') return json({ success: false, error: 'Comment cannot be empty.' }, 400);
+    throw e;
+  }
+}
+
+/** POST /api/ai-builder/:project_id/crm/quotes/:quote_id/preview — snapshot the
+ *  issuer + mint a token (no Send, no email) so the owner can review the doc as
+ *  the customer will see it. Returns the public view_url. */
+export async function handleQuotePreview(ctx) {
+  const { env, params, url } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const quote = await getQuote(env.DB, r.projectKey, id);
+  if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
+  const token = await snapshotCustomerQuote(env, r, id);
+  return json({ success: true, view_url: `${url.origin}/q/${token}` });
+}
+
+/** PUT /api/ai-builder/:project_id/crm/quotes/:quote_id/email — edit the customer
+ *  email on an existing quote (you couldn't change it after creation before). */
+export async function handleQuoteEmailUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const ok = await updateQuoteEmail(env.DB, r.projectKey, id, body.email);
+    if (!ok) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true });
+  } catch (e) {
+    if (e.message === 'email_required') return json({ success: false, error: 'A valid email is required.' }, 400);
+    throw e;
   }
 }
 
