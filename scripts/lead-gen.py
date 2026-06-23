@@ -19,6 +19,7 @@ Usage:
   python3 scripts/lead-gen.py --max-leads 150 --dry-run
   python3 scripts/lead-gen.py --verticals "restaurant,dentist" --areas "Orlando, FL"
   python3 scripts/lead-gen.py --no-email           # skip the per-site email scrape (faster/cheaper)
+  python3 scripts/lead-gen.py --url "https://armdieselsolutions.com" --business "ARM Diesel"  # scrape ONE site (no Places)
 
 Cost: each Places text-search page ~= 1 call; each Place Details ~= 1 call. The
 --max-leads cap bounds how many Details calls (the priced part) you make.
@@ -104,6 +105,33 @@ def scrape_email(website):
     return ""
 
 
+def domain_name(url):
+    """Hostname (sans www) — the --url business-name fallback."""
+    host = urllib.parse.urlparse(url if "://" in url else "http://" + url).netloc
+    return host[4:] if host.startswith("www.") else host
+
+
+def url_to_lead(url, args):
+    """Build ONE lead from a specific URL (no Google Places). Scrapes the site for
+    an email unless --no-email. has_site=1; no place_id (so it won't dedup — a
+    forced URL is intentional)."""
+    if "://" not in url:
+        url = "https://" + url
+    return {
+        "business": args.business or domain_name(url),
+        "website": url,
+        "phone": "",
+        "email": "" if args.no_email else scrape_email(url),
+        "address": "",
+        "area": args.area,
+        "vertical": args.vertical,
+        "place_id": "",
+        "rating": None,
+        "has_site": 1,
+        "source": "url",
+    }
+
+
 def caddisfly_get(path):
     req = urllib.request.Request(BASE + path, headers={"Authorization": "Bearer " + INGEST_TOKEN, "User-Agent": UA})
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -157,6 +185,10 @@ def main():
     ap.add_argument("--enrich-emails", action="store_true", help="2nd pass: scrape emails for EXISTING leads missing one (no Places calls)")
     ap.add_argument("--no-skip", action="store_true", help="don't skip businesses already in the CRM (default: skip them)")
     ap.add_argument("--dry-run", action="store_true", help="collect + print, do NOT post to Caddisfly")
+    ap.add_argument("--url", help="scrape ONE specific site (NO Google Places) and ingest it as a lead")
+    ap.add_argument("--business", default="", help="business name for --url (default: the domain)")
+    ap.add_argument("--vertical", default="", help="vertical tag for --url (e.g. 'auto repair')")
+    ap.add_argument("--area", default="", help="area tag for --url (e.g. 'Melbourne, FL')")
     args = ap.parse_args()
 
     # Enrich pass needs only the ingest token (no Places billing).
@@ -164,6 +196,22 @@ def main():
         if not INGEST_TOKEN:
             sys.exit("Set LEADS_INGEST_TOKEN")
         enrich_emails(args.max_leads)
+        return
+
+    # Single-URL pass: scrape one specific site directly — no Google Places (free,
+    # deterministic). Needs only the ingest token.
+    if args.url:
+        if not args.dry_run and not INGEST_TOKEN:
+            sys.exit("Set LEADS_INGEST_TOKEN (or use --dry-run)")
+        lead = url_to_lead(args.url, args)
+        print(f"Scraped {lead['website']} → {lead['business']}  "
+              f"[{'email ' + lead['email'] if lead['email'] else 'no email found'}]")
+        if args.dry_run:
+            print(json.dumps(lead, indent=2))
+            print("(dry-run — nothing posted)")
+            return
+        r = post_leads([lead])
+        print(f"posted: inserted {r.get('inserted')} / received {r.get('received')}")
         return
 
     if not PLACES_KEY:
