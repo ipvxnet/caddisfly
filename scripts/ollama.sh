@@ -12,8 +12,9 @@
 #
 # Flags:
 #   -s, --system TEXT   system prompt
-#   -m, --model NAME    model (default qwen3:14b)
+#   -m, --model NAME    model (default qwen3:14b; use qwen2.5-coder:14b for code)
 #   -t, --temp N        temperature (default 0.3)
+#   -c, --conventions   prepend repo CONVENTIONS.md (bridge pattern + D1 idioms) — for code tasks
 #   --json              request strict JSON output (Ollama format:json)
 #   --think             enable thinking (default OFF — much slower)
 #   --raw               print the full JSON response instead of just the content
@@ -24,12 +25,13 @@
 # for piping into files or other tools.
 set -euo pipefail
 
-MODEL="qwen3:14b"; SYSTEM=""; TEMP="0.3"; FORMAT=""; THINK="false"; RAW="false"; PROMPT=""
+MODEL="qwen3:14b"; SYSTEM=""; TEMP="0.3"; FORMAT=""; THINK="false"; RAW="false"; CONV="false"; PROMPT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -s|--system) SYSTEM="${2:-}"; shift 2;;
     -m|--model)  MODEL="${2:-}"; shift 2;;
     -t|--temp)   TEMP="${2:-}"; shift 2;;
+    -c|--conventions) CONV="true"; shift;;
     --json)      FORMAT="json"; shift;;
     --think)     THINK="true"; shift;;
     --raw)       RAW="true"; shift;;
@@ -42,6 +44,14 @@ done
 # Prompt from stdin when none given as args (e.g. piped input).
 if [[ -z "$PROMPT" && ! -t 0 ]]; then PROMPT="$(cat)"; fi
 if [[ -z "$PROMPT" ]]; then echo "ollama.sh: no prompt (pass as arg or via stdin)" >&2; exit 2; fi
+
+# -c/--conventions: prepend the repo's CONVENTIONS.md so the model gets the bridge
+# pattern + D1 idioms it otherwise gets wrong. Resolved relative to this script.
+if [[ "$CONV" == "true" ]]; then
+  CONV_FILE="$(cd "$(dirname "$0")/.." && pwd)/CONVENTIONS.md"
+  if [[ -f "$CONV_FILE" ]]; then PROMPT="$(cat "$CONV_FILE")"$'\n\n'"$PROMPT"
+  else echo "ollama.sh: --conventions set but $CONV_FILE not found" >&2; fi
+fi
 
 export OLLAMA_HOST="${OLLAMA_HOST:-http://192.168.1.100:11434}"
 export MODEL SYSTEM TEMP FORMAT THINK RAW PROMPT
