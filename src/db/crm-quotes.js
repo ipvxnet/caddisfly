@@ -3,11 +3,7 @@
 // becomes an "order" via the fulfillment column. Matches src/db/crm.js style.
 // See migration 054_crm_quotes.sql.
 
-function keyCol(projectKey) {
-  return projectKey.aiProjectId != null
-    ? { col: 'ai_project_id', val: projectKey.aiProjectId }
-    : { col: 'project_id', val: projectKey.projectId };
-}
+import { keyCol } from './bridge.js';
 
 const lc = (s) => String(s == null ? '' : s).trim().toLowerCase();
 const clampStr = (s, n) => String(s == null ? '' : s).trim().slice(0, n);

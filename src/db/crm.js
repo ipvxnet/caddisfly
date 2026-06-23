@@ -3,11 +3,7 @@
 // 050) holds only status + notes. Bridge pattern (ai_project_id XOR project_id);
 // form_submissions is keyed by the published-site public_id.
 
-function keyCol(projectKey) {
-  return projectKey.aiProjectId != null
-    ? { col: 'ai_project_id', val: projectKey.aiProjectId }
-    : { col: 'project_id', val: projectKey.projectId };
-}
+import { keyCol } from './bridge.js';
 
 const lc = (s) => String(s == null ? '' : s).trim().toLowerCase();
 const normPhone = (p) => String(p == null ? '' : p).replace(/[^\d+]/g, '');
@@ -86,8 +82,7 @@ export async function addManualCrmContact(db, projectKey, { email, name, phone, 
   const p = (phone || '').toString().replace(/[^\d+\s()\-]/g, '').trim().slice(0, 30);
   const s = ['new', 'contacted', 'qualified', 'won', 'lost'].includes(status) ? status : 'new';
   const nt = (notes || '').toString().trim().slice(0, 5000);
-  const col = projectKey.aiProjectId != null ? 'ai_project_id' : 'project_id';
-  const val = projectKey.aiProjectId != null ? projectKey.aiProjectId : projectKey.projectId;
+  const { col, val } = keyCol(projectKey);
   await db.prepare(
     `INSERT INTO crm_contacts (${col}, email, name, phone, status, notes, source, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, 'manual', unixepoch(), unixepoch())
