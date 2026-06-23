@@ -272,7 +272,8 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
         var fo=q.status==='accepted'
           ? '<select onchange="qOrder('+id+','+q.id+',this)">'+QFUL.map(function(s){return '<option'+(q.fulfillment===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'
           : '<span class="muted">—</span>';
-        return '<tr><td>'+qesc(q.title||'(untitled)')+'</td>'
+        var sub=(q.contact_email?'<div class="q-sub">'+qesc(q.contact_email)+'</div>':'')+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
+        return '<tr><td>'+qesc(q.title||'(untitled)')+sub+'</td>'
           +'<td><select onchange="qStatus('+id+','+q.id+',this)">'+so+'</select></td>'
           +'<td>'+qmoney(q.total_cents)+'</td><td>'+q.item_count+'</td><td>'+fo+'</td>'
           +'<td><button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button></td></tr>';
@@ -280,7 +281,9 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       if(!body) body='<tr><td colspan="6" class="muted">No quotes yet.</td></tr>';
       var item='<div class="qc-item"><input class="qi-d" placeholder="Description"><input class="qi-q" type="number" min="1" value="1"><input class="qi-p" type="number" min="0" step="0.01" placeholder="Unit $"></div>';
       qpanelOf(id).innerHTML='<table class="qtable"><thead><tr><th>Quote</th><th>Status</th><th>Total</th><th>Items</th><th>Order</th><th></th></tr></thead><tbody>'+body+'</tbody></table>'
-        +'<div class="qcreate"><input class="qc-title" placeholder="Quote title (optional)"><div class="qc-items">'+item+'</div>'
+        +'<div class="qcreate"><div class="qc-head"><input class="qc-title" placeholder="Quote title"><input class="qc-email" type="email" placeholder="Customer email (defaults to the lead email)"></div>'
+        +'<div class="qc-items">'+item+'</div>'
+        +'<textarea class="qc-notes" rows="2" placeholder="Comments / notes (optional)"></textarea>'
         +'<div class="qc-actions"><button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary" onclick="qCreate('+id+',this)">Create quote</button></div></div>';
     }
     function qAddItem(id){
@@ -299,7 +302,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       });
       if(!items.length){ alert('Add at least one line item with a description.'); return; }
       btn.disabled=true;
-      try{ await api('POST','/'+id+'/quotes',{ title:panel.querySelector('.qc-title').value.trim(), items:items }); loadQuotes(id); }
+      try{ await api('POST','/'+id+'/quotes',{ title:panel.querySelector('.qc-title').value.trim(), email:panel.querySelector('.qc-email').value.trim(), notes:panel.querySelector('.qc-notes').value.trim(), items:items }); loadQuotes(id); }
       catch(e){ alert(e.message); btn.disabled=false; }
     }
     async function qStatus(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/status',{status:sel.value}); loadQuotes(id); } catch(e){ alert(e.message); } }
@@ -347,8 +350,11 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
   .qtable th{font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:.45rem .6rem;border-bottom:1px solid #e2e8f0}
   .qtable td{padding:.45rem .6rem;border-bottom:1px solid #edf2f7}.qtable tr:last-child td{border-bottom:none}
   .qtable select{padding:.3rem .4rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;background:#fff}
-  .qcreate{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-start}
-  .qc-title{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:200px}
+  .qcreate{display:flex;flex-direction:column;gap:.5rem;align-items:stretch;max-width:680px}
+  .qc-head{display:flex;gap:.5rem;flex-wrap:wrap}
+  .qc-title,.qc-email{flex:1;padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:160px}
+  .qc-notes{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;font-family:inherit;resize:vertical}
+  .q-sub{color:#94a3b8;font-size:.76rem;margin-top:.15rem}
   .qc-items{display:flex;flex-direction:column;gap:.4rem}.qc-item{display:flex;gap:.4rem}
   .qc-item input{padding:.4rem .5rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem}
   .qi-d{min-width:200px}.qi-q{width:60px}.qi-p{width:90px}.qc-actions{display:flex;gap:.5rem}
