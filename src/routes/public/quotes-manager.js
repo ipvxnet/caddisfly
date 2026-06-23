@@ -1,14 +1,51 @@
 // GET /ai-builder/crm/:project_id/quotes — Quotation & Order Management manager.
 // Server-renders the project's quotes; create/status/fulfillment/delete via small
 // fetches. Gated by pluginGate('crm') in index.js. Mirrors crm-manager.js.
+// i18n: local QT dict (en/es/pt), same pattern as catalogue/tiles.js (CAT_T).
 
 import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { resolveStoreProject } from '../api/ai-builder/store.js';
 import { listQuotes, QUOTE_STATUSES, FULFILLMENTS } from '../../db/crm-quotes.js';
 
-const STATUS_LABEL = { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' };
-const FULFILL_LABEL = { unfulfilled: 'Unfulfilled', fulfilled: 'Fulfilled', cancelled: 'Cancelled' };
+const QT = {
+  en: {
+    heading: 'Quotes & Orders',
+    subtitle: 'Create quotes for your contacts, send them, and track accepted ones as orders.',
+    one: 'quote', many: 'quotes',
+    back: '← Back to CRM', newq: '＋ New quote', del: 'Delete', untitled: '(untitled)',
+    empty: 'No quotes yet — create one above. Accepted quotes turn into trackable orders.',
+    th: { quote: 'Quote', status: 'Status', total: 'Total', items: 'Items', order: 'Order', valid: 'Valid until', created: 'Created' },
+    status: { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' },
+    fulfill: { unfulfilled: 'Unfulfilled', fulfilled: 'Fulfilled', cancelled: 'Cancelled' },
+    f: { email: 'Contact email (required)', title: 'Title (e.g. Kitchen remodel)', valid: 'Valid until', desc: 'Line item description', qty: 'Qty', price: 'Unit price ($)', addLine: '＋ Add line', create: 'Create quote' },
+    a: { noItems: 'Add at least one line item with a description.', delConfirm: 'Delete this quote? This cannot be undone.', delErr: 'Could not delete the quote.', createErr: 'Could not create the quote.', statusErr: 'Could not update the status.', fulfillErr: 'Could not update the order status.' },
+  },
+  es: {
+    heading: 'Cotizaciones y pedidos',
+    subtitle: 'Crea cotizaciones para tus contactos, envíalas y haz seguimiento de las aceptadas como pedidos.',
+    one: 'cotización', many: 'cotizaciones',
+    back: '← Volver al CRM', newq: '＋ Nueva cotización', del: 'Eliminar', untitled: '(sin título)',
+    empty: 'Aún no hay cotizaciones — crea una arriba. Las cotizaciones aceptadas se convierten en pedidos con seguimiento.',
+    th: { quote: 'Cotización', status: 'Estado', total: 'Total', items: 'Artículos', order: 'Pedido', valid: 'Válida hasta', created: 'Creada' },
+    status: { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada', expired: 'Caducada' },
+    fulfill: { unfulfilled: 'Pendiente', fulfilled: 'Completada', cancelled: 'Cancelada' },
+    f: { email: 'Correo del contacto (obligatorio)', title: 'Título (ej. Reforma de cocina)', valid: 'Válida hasta', desc: 'Descripción del artículo', qty: 'Cant.', price: 'Precio unitario ($)', addLine: '＋ Agregar artículo', create: 'Crear cotización' },
+    a: { noItems: 'Agrega al menos un artículo con una descripción.', delConfirm: '¿Eliminar esta cotización? Esta acción no se puede deshacer.', delErr: 'No se pudo eliminar la cotización.', createErr: 'No se pudo crear la cotización.', statusErr: 'No se pudo actualizar el estado.', fulfillErr: 'No se pudo actualizar el estado del pedido.' },
+  },
+  pt: {
+    heading: 'Orçamentos e pedidos',
+    subtitle: 'Crie orçamentos para seus contatos, envie-os e acompanhe os aceitos como pedidos.',
+    one: 'orçamento', many: 'orçamentos',
+    back: '← Voltar ao CRM', newq: '＋ Novo orçamento', del: 'Excluir', untitled: '(sem título)',
+    empty: 'Ainda não há orçamentos — crie um acima. Orçamentos aceitos viram pedidos com acompanhamento.',
+    th: { quote: 'Orçamento', status: 'Status', total: 'Total', items: 'Itens', order: 'Pedido', valid: 'Válido até', created: 'Criado' },
+    status: { draft: 'Rascunho', sent: 'Enviado', accepted: 'Aceito', rejected: 'Recusado', expired: 'Expirado' },
+    fulfill: { unfulfilled: 'Pendente', fulfilled: 'Concluído', cancelled: 'Cancelado' },
+    f: { email: 'E-mail do contato (obrigatório)', title: 'Título (ex. Reforma da cozinha)', valid: 'Válido até', desc: 'Descrição do item', qty: 'Qtd.', price: 'Preço unitário ($)', addLine: '＋ Adicionar item', create: 'Criar orçamento' },
+    a: { noItems: 'Adicione pelo menos um item com uma descrição.', delConfirm: 'Excluir este orçamento? Esta ação não pode ser desfeita.', delErr: 'Não foi possível excluir o orçamento.', createErr: 'Não foi possível criar o orçamento.', statusErr: 'Não foi possível atualizar o status.', fulfillErr: 'Não foi possível atualizar o status do pedido.' },
+  },
+};
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -18,72 +55,80 @@ function money(cents) { return '$' + ((cents || 0) / 100).toFixed(2); }
 
 export async function handleQuotesManager(ctx) {
   const { env, params, url } = ctx;
+  const lang = (ctx && ctx.lang) || 'en';
+  const tr = QT[lang] || QT.en;
   const origin = env.APP_URL || (url ? new URL(url).origin : '');
   const r = await resolveStoreProject(env, params.project_id);
   if (!r) return redirect('/dashboard', 303);
   const quotes = await listQuotes(env.DB, r.projectKey, '');
 
   const rows = quotes.map((q) => {
-    const statusOpts = QUOTE_STATUSES.map((s) => `<option value="${s}"${q.status === s ? ' selected' : ''}>${STATUS_LABEL[s]}</option>`).join('');
+    const statusOpts = QUOTE_STATUSES.map((s) => `<option value="${s}"${q.status === s ? ' selected' : ''}>${tr.status[s]}</option>`).join('');
     const fulfillCell = q.status === 'accepted'
-      ? `<select class="q-fulfill" onchange="updateFulfillment(this)">${FULFILLMENTS.map((s) => `<option value="${s}"${q.fulfillment === s ? ' selected' : ''}>${FULFILL_LABEL[s]}</option>`).join('')}</select>`
+      ? `<select class="q-fulfill" onchange="updateFulfillment(this)">${FULFILLMENTS.map((s) => `<option value="${s}"${q.fulfillment === s ? ' selected' : ''}>${tr.fulfill[s]}</option>`).join('')}</select>`
       : '<span class="muted">—</span>';
     return `<tr class="quote-row" data-id="${esc(q.id)}">
-      <td><div class="q-title">${esc(q.title || '(untitled)')}</div><div class="q-email">${esc(q.contact_email)}</div></td>
+      <td><div class="q-title">${esc(q.title || tr.untitled)}</div><div class="q-email">${esc(q.contact_email)}</div></td>
       <td><select class="q-status" onchange="updateStatus(this)">${statusOpts}</select></td>
       <td class="q-total">${money(q.total_cents)}</td>
       <td>${q.item_count}</td>
       <td>${fulfillCell}</td>
       <td>${fmtDate(q.valid_until)}</td>
       <td>${fmtDate(q.created_at)}</td>
-      <td><button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">Delete</button></td>
+      <td><button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">${tr.del}</button></td>
     </tr>`;
   }).join('');
 
+  const countLabel = `${quotes.length} ${quotes.length === 1 ? tr.one : tr.many}`;
   const inner = `
     <div class="crm-head">
-      <h1>Quotes &amp; Orders <span class="muted">— ${esc(r.businessName)}</span></h1>
-      <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}">← Back to CRM</a>
+      <h1>${tr.heading} <span class="muted">— ${esc(r.businessName)}</span></h1>
+      <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}">${tr.back}</a>
     </div>
-    <p class="sub">Create quotes for your contacts, send them, and track accepted ones as orders. ${quotes.length} quote${quotes.length === 1 ? '' : 's'}.</p>
+    <p class="sub">${tr.subtitle} ${countLabel}.</p>
 
     <div class="crm-toolbar">
-      <button class="btn" type="button" onclick="toggleAdd()">＋ New quote</button>
+      <button class="btn" type="button" onclick="toggleAdd()">${tr.newq}</button>
     </div>
 
     <div class="crm-addform" id="q-addform">
       <div class="q-addgrid">
-        <input id="q-email" type="email" placeholder="Contact email (required)">
-        <input id="q-title" placeholder="Title (e.g. Kitchen remodel)">
+        <input id="q-email" type="email" placeholder="${tr.f.email}">
+        <input id="q-title" placeholder="${tr.f.title}">
         <select id="q-currency"><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="BRL">BRL</option></select>
-        <label class="q-validlbl">Valid until <input id="q-valid" type="date"></label>
+        <label class="q-validlbl">${tr.f.valid} <input id="q-valid" type="date"></label>
       </div>
       <div class="q-items" id="q-items">
         <div class="q-item">
-          <input class="qi-desc" placeholder="Line item description">
-          <input class="qi-qty" type="number" min="1" step="1" value="1" placeholder="Qty">
-          <input class="qi-price" type="number" min="0" step="0.01" placeholder="Unit price ($)">
+          <input class="qi-desc" placeholder="${tr.f.desc}">
+          <input class="qi-qty" type="number" min="1" step="1" value="1" placeholder="${tr.f.qty}">
+          <input class="qi-price" type="number" min="0" step="0.01" placeholder="${tr.f.price}">
           <button class="btn ghost qi-rm" type="button" onclick="rmItem(this)">✕</button>
         </div>
       </div>
       <div class="q-addactions">
-        <button class="btn ghost" type="button" onclick="addItem()">＋ Add line</button>
-        <button class="btn" type="button" onclick="submitQuote(this)">Create quote</button>
+        <button class="btn ghost" type="button" onclick="addItem()">${tr.f.addLine}</button>
+        <button class="btn" type="button" onclick="submitQuote(this)">${tr.f.create}</button>
       </div>
     </div>
 
     ${quotes.length ? `<div class="crm-tablewrap"><table class="crm-table">
-      <thead><tr><th>Quote</th><th>Status</th><th>Total</th><th>Items</th><th>Order</th><th>Valid until</th><th>Created</th><th></th></tr></thead>
+      <thead><tr><th>${tr.th.quote}</th><th>${tr.th.status}</th><th>${tr.th.total}</th><th>${tr.th.items}</th><th>${tr.th.order}</th><th>${tr.th.valid}</th><th>${tr.th.created}</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>` : `<div class="crm-empty">No quotes yet — create one above. Accepted quotes turn into trackable orders.</div>`}
+    </table></div>` : `<div class="crm-empty">${tr.empty}</div>`}
     <div id="q-msg"></div>
     <script>
       var BASE = '/api/ai-builder/' + ${JSON.stringify(params.project_id)} + '/crm/quotes';
+      var T = ${JSON.stringify(tr.a)};
+      var DEL_LABEL = ${JSON.stringify(tr.del)}, ITEM = ${JSON.stringify({ desc: tr.f.desc, qty: tr.f.qty, price: tr.f.price })};
       function toggleAdd(){ var f = document.getElementById('q-addform'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; if (f.style.display==='block') document.getElementById('q-email').focus(); }
       function addItem(){
         var row = document.createElement('div');
         row.className = 'q-item';
-        row.innerHTML = '<input class="qi-desc" placeholder="Line item description"><input class="qi-qty" type="number" min="1" step="1" value="1" placeholder="Qty"><input class="qi-price" type="number" min="0" step="0.01" placeholder="Unit price ($)"><button class="btn ghost qi-rm" type="button" onclick="rmItem(this)">✕</button>';
+        row.innerHTML = '<input class="qi-desc"><input class="qi-qty" type="number" min="1" step="1" value="1"><input class="qi-price" type="number" min="0" step="0.01"><button class="btn ghost qi-rm" type="button" onclick="rmItem(this)">✕</button>';
+        row.querySelector('.qi-desc').placeholder = ITEM.desc;
+        row.querySelector('.qi-qty').placeholder = ITEM.qty;
+        row.querySelector('.qi-price').placeholder = ITEM.price;
         document.getElementById('q-items').appendChild(row);
       }
       function rmItem(btn){ var rows = document.querySelectorAll('.q-item'); if (rows.length > 1) btn.closest('.q-item').remove(); }
@@ -98,7 +143,7 @@ export async function handleQuotesManager(ctx) {
           var price = parseFloat(row.querySelector('.qi-price').value);
           if (desc) items.push({ description: desc, qty: (qty > 0 ? qty : 1), unit_price_cents: Math.round((price > 0 ? price : 0) * 100) });
         });
-        if (!items.length) { alert('Add at least one line item with a description.'); return; }
+        if (!items.length) { alert(T.noItems); return; }
         btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
         var payload = {
           email: email, title: document.getElementById('q-title').value.trim(),
@@ -109,8 +154,8 @@ export async function handleQuotesManager(ctx) {
           var res = await fetch(BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
           var d = await res.json();
           if (d && d.success) { location.reload(); return; }
-          alert((d && d.error) || 'Could not create the quote.');
-        } catch(e){ alert('Could not create the quote.'); }
+          alert((d && d.error) || T.createErr);
+        } catch(e){ alert(T.createErr); }
         btn.disabled = false; btn.textContent = old;
       }
       async function updateStatus(sel){
@@ -120,8 +165,8 @@ export async function handleQuotesManager(ctx) {
           var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/status', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: sel.value }) });
           var d = await res.json();
           if (d && d.success) { location.reload(); return; } // reload to show/hide the order (fulfillment) control
-          alert((d && d.error) || 'Could not update the status.'); sel.disabled = false;
-        } catch(e){ alert('Could not update the status.'); sel.disabled = false; }
+          alert((d && d.error) || T.statusErr); sel.disabled = false;
+        } catch(e){ alert(T.statusErr); sel.disabled = false; }
       }
       async function updateFulfillment(sel){
         var id = sel.closest('.quote-row').getAttribute('data-id');
@@ -129,30 +174,30 @@ export async function handleQuotesManager(ctx) {
         try {
           var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/order-status', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ fulfillment: sel.value }) });
           var d = await res.json();
-          if (!d || !d.success) alert((d && d.error) || 'Could not update the order status.');
-        } catch(e){ alert('Could not update the order status.'); }
+          if (!d || !d.success) alert((d && d.error) || T.fulfillErr);
+        } catch(e){ alert(T.fulfillErr); }
         sel.disabled = false;
       }
       async function deleteQuote(btn){
-        if (!confirm('Delete this quote? This cannot be undone.')) return;
+        if (!confirm(T.delConfirm)) return;
         var id = btn.closest('.quote-row').getAttribute('data-id');
         btn.disabled = true; btn.textContent = '…';
         try {
           var res = await fetch(BASE + '/' + encodeURIComponent(id), { method:'DELETE' });
           var d = await res.json();
           if (d && d.success) { location.reload(); return; }
-          alert('Could not delete the quote.');
-        } catch(e){ alert('Could not delete the quote.'); }
-        btn.disabled = false; btn.textContent = 'Delete';
+          alert(T.delErr);
+        } catch(e){ alert(T.delErr); }
+        btn.disabled = false; btn.textContent = DEL_LABEL;
       }
     </script>`;
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${esc(lang)}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Quotes & Orders — Caddisfly', description: 'Create and track quotes for your contacts.', origin, path: '/ai-builder/crm/quotes' })}
+  ${headTags({ title: `${tr.heading} — Caddisfly`, description: tr.subtitle, origin, path: '/ai-builder/crm/quotes' })}
   <meta name="robots" content="noindex">
   <style>
     ${baseCss()}
@@ -188,7 +233,7 @@ export async function handleQuotesManager(ctx) {
 <body>
   ${siteHeader('/dashboard', {})}
   <main><div class="cwrap">${inner}</div></main>
-  ${siteFooter({ lang: 'en' })}
+  ${siteFooter({ lang })}
 </body>
 </html>`;
 
