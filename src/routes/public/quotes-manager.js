@@ -13,7 +13,7 @@ const QT = {
     heading: 'Quotes & Orders',
     subtitle: 'Create quotes for your contacts, send them, and track accepted ones as orders.',
     one: 'quote', many: 'quotes',
-    back: '← Back to CRM', newq: '＋ New quote', del: 'Delete', send: 'Send', sent: 'Sent', viewed: 'Viewed', untitled: '(untitled)',
+    back: '← Back to CRM', newq: '＋ New quote', del: 'Delete', send: 'Send', sent: 'Sent', viewed: 'Viewed', untitled: '(untitled)', preview: 'Preview', editEmail: 'Edit email', addEmail: '+ add email', emailPrompt: 'Customer email:', emailRequired: 'Email is required.', sendConfirm: 'Send this quote to the customer by email?',
     empty: 'No quotes yet — create one above. Accepted quotes turn into trackable orders.',
     th: { quote: 'Quote', status: 'Status', total: 'Total', items: 'Items', order: 'Order', valid: 'Valid until', created: 'Created' },
     status: { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' },
@@ -26,7 +26,7 @@ const QT = {
     heading: 'Cotizaciones y pedidos',
     subtitle: 'Crea cotizaciones para tus contactos, envíalas y haz seguimiento de las aceptadas como pedidos.',
     one: 'cotización', many: 'cotizaciones',
-    back: '← Volver al CRM', newq: '＋ Nueva cotización', del: 'Eliminar', send: 'Enviar', sent: 'Enviada', viewed: 'Vista', untitled: '(sin título)',
+    back: '← Volver al CRM', newq: '＋ Nueva cotización', del: 'Eliminar', send: 'Enviar', sent: 'Enviada', viewed: 'Vista', untitled: '(sin título)', preview: 'Vista previa', editEmail: 'Editar correo', addEmail: '+ agregar correo', emailPrompt: 'Correo del cliente:', emailRequired: 'El correo es obligatorio.', sendConfirm: '¿Enviar esta cotización al cliente por correo?',
     empty: 'Aún no hay cotizaciones — crea una arriba. Las cotizaciones aceptadas se convierten en pedidos con seguimiento.',
     th: { quote: 'Cotización', status: 'Estado', total: 'Total', items: 'Artículos', order: 'Pedido', valid: 'Válida hasta', created: 'Creada' },
     status: { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada', expired: 'Caducada' },
@@ -39,7 +39,7 @@ const QT = {
     heading: 'Orçamentos e pedidos',
     subtitle: 'Crie orçamentos para seus contatos, envie-os e acompanhe os aceitos como pedidos.',
     one: 'orçamento', many: 'orçamentos',
-    back: '← Voltar ao CRM', newq: '＋ Novo orçamento', del: 'Excluir', send: 'Enviar', sent: 'Enviado', viewed: 'Visto', untitled: '(sem título)',
+    back: '← Voltar ao CRM', newq: '＋ Novo orçamento', del: 'Excluir', send: 'Enviar', sent: 'Enviado', viewed: 'Visto', untitled: '(sem título)', preview: 'Pré-visualizar', editEmail: 'Editar e-mail', addEmail: '+ adicionar e-mail', emailPrompt: 'E-mail do cliente:', emailRequired: 'O e-mail é obrigatório.', sendConfirm: 'Enviar este orçamento ao cliente por e-mail?',
     empty: 'Ainda não há orçamentos — crie um acima. Orçamentos aceitos viram pedidos com acompanhamento.',
     th: { quote: 'Orçamento', status: 'Status', total: 'Total', items: 'Itens', order: 'Pedido', valid: 'Válido até', created: 'Criado' },
     status: { draft: 'Rascunho', sent: 'Enviado', accepted: 'Aceito', rejected: 'Recusado', expired: 'Expirado' },
@@ -71,8 +71,11 @@ export async function handleQuotesManager(ctx) {
       ? `<select class="q-fulfill" onchange="updateFulfillment(this)">${FULFILLMENTS.map((s) => `<option value="${s}"${q.fulfillment === s ? ' selected' : ''}>${tr.fulfill[s]}</option>`).join('')}</select>`
       : '<span class="muted">—</span>';
     const sentBadge = q.viewed_at ? `<span class="q-sent">👁 ${tr.viewed}</span>` : (q.sent_at ? `<span class="q-sent">✓ ${tr.sent}</span>` : '');
+    const emailLine = q.contact_email
+      ? `<div class="q-email">${esc(q.contact_email)} <a class="q-pen" title="${tr.editEmail}" onclick="editEmail(this, '${esc(q.contact_email)}')">✎</a></div>`
+      : `<div class="q-email"><a class="q-pen" onclick="editEmail(this, '')">${tr.addEmail}</a></div>`;
     return `<tr class="quote-row" data-id="${esc(q.id)}">
-      <td><div class="q-title">${esc(q.title || tr.untitled)}</div><div class="q-email">${esc(q.contact_email)}</div>${sentBadge}</td>
+      <td><div class="q-title">${esc(q.title || tr.untitled)}</div>${emailLine}${sentBadge}</td>
       <td><select class="q-status" onchange="updateStatus(this)">${statusOpts}</select></td>
       <td class="q-total">${money(q.total_cents)}</td>
       <td>${q.item_count}</td>
@@ -80,6 +83,7 @@ export async function handleQuotesManager(ctx) {
       <td>${fmtDate(q.valid_until)}</td>
       <td>${fmtDate(q.created_at)}</td>
       <td class="q-actions">
+        <button class="btn ghost q-prev" type="button" onclick="previewQuote(this)" title="${tr.preview}">👁 ${tr.preview}</button>
         <button class="btn ghost q-send" type="button" onclick="sendQuote(this)">✉ ${tr.send}</button>
         ${q.public_token ? `<a class="btn ghost" href="/q/${esc(q.public_token)}" target="_blank" rel="noopener" title="Open hosted quote">↗</a>` : ''}
         <button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">${tr.del}</button>
@@ -173,6 +177,7 @@ export async function handleQuotesManager(ctx) {
         btn.disabled = false; btn.textContent = o;
       }
       var T = ${JSON.stringify(tr.a)};
+      var L = ${JSON.stringify({ emailPrompt: tr.emailPrompt, emailRequired: tr.emailRequired, sendConfirm: tr.sendConfirm })};
       var DEL_LABEL = ${JSON.stringify(tr.del)}, ITEM = ${JSON.stringify({ desc: tr.f.desc, qty: tr.f.qty, price: tr.f.price })};
       function toggleAdd(){ var f = document.getElementById('q-addform'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; if (f.style.display==='block') document.getElementById('q-email').focus(); }
       function addItem(){
@@ -244,6 +249,7 @@ export async function handleQuotesManager(ctx) {
         btn.disabled = false; btn.textContent = DEL_LABEL;
       }
       async function sendQuote(btn){
+        if (!confirm(L.sendConfirm)) return;
         var id = btn.closest('.quote-row').getAttribute('data-id');
         btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
         try {
@@ -253,6 +259,28 @@ export async function handleQuotesManager(ctx) {
           alert((d && d.error === 'Add a customer email to the quote first.') ? T.noEmail : ((d && d.error) || T.sendErr));
         } catch(e){ alert(T.sendErr); }
         btn.disabled = false; btn.textContent = old;
+      }
+      async function previewQuote(btn){
+        var id = btn.closest('.quote-row').getAttribute('data-id');
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/preview', { method:'POST', headers:{'Content-Type':'application/json'} });
+          var d = await res.json();
+          if (d && d.view_url) { window.open(d.view_url, '_blank', 'noopener'); location.reload(); return; }
+          alert((d && d.error) || 'Error');
+        } catch(e){ alert('Error'); }
+        btn.disabled = false; btn.textContent = old;
+      }
+      async function editEmail(anchor, current){
+        var id = anchor.closest('.quote-row').getAttribute('data-id');
+        var v = prompt(L.emailPrompt, current || ''); if (v == null) return;
+        v = v.trim(); if (!v) { alert(L.emailRequired); return; }
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/email', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: v }) });
+          var d = await res.json();
+          if (d && d.success) { location.reload(); return; }
+          alert((d && d.error) || 'Error');
+        } catch(e){ alert('Error'); }
       }
     </script>`;
 
@@ -277,6 +305,7 @@ export async function handleQuotesManager(ctx) {
     .crm-table tr:last-child td{border-bottom:none}
     .q-title{font-weight:700;color:var(--ink)}
     .q-email{color:var(--muted);font-size:.82rem}
+    .q-pen{color:var(--p2);cursor:pointer;text-decoration:none;margin-left:.25rem;font-size:.85rem}.q-pen:hover{text-decoration:underline}
     .q-total{font-weight:700;color:var(--p2)}
     .q-status,.q-fulfill{padding:.4rem .55rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.85rem;background:#fff}
     .q-del{font-size:.8rem;padding:.4rem .7rem;white-space:nowrap}

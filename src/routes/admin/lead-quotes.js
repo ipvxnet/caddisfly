@@ -5,9 +5,26 @@
 
 import { getLead } from '../../db/leads.js';
 import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
-  ensureQuoteToken, markQuoteSent, setQuoteIssuer } from '../../db/crm-quotes.js';
+  ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail } from '../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../utils/email.js';
 import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../db/quote-templates.js';
+
+/** Build + freeze the issuer snapshot for Caddisfly + mint a token. Shared by
+ *  Send and Preview so the document is identical either way. */
+async function snapshotLeadQuote(env, owner, qid, origin) {
+  let issuer = {
+    name: 'Caddisfly',
+    logo: `${origin}/og.png`,
+    contact: ['caddisfly.ai', 'contact@caddisfly.ai'],
+    accent: '#5a3da8',
+    intro: '',
+    thankYou: 'Thank you for considering Caddisfly. We would love to build and host your website.',
+    terms: '',
+  };
+  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, { global: true }));
+  await setQuoteIssuer(env.DB, owner, qid, issuer);
+  return ensureQuoteToken(env.DB, owner, qid);
+}
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -119,18 +136,7 @@ export async function handleLeadQuoteSend(ctx) {
   if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
   if (!quote.contact_email) return json({ success: false, error: 'This quote has no customer email — add one first.' }, 400);
   const origin = url.origin;
-  let issuer = {
-    name: 'Caddisfly',
-    logo: `${origin}/og.png`,
-    contact: ['caddisfly.ai', 'contact@caddisfly.ai'],
-    accent: '#5a3da8',
-    intro: '',
-    thankYou: 'Thank you for considering Caddisfly. We would love to build and host your website.',
-    terms: '',
-  };
-  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, { global: true }));
-  await setQuoteIssuer(env.DB, owner, qid, issuer);
-  const token = await ensureQuoteToken(env.DB, owner, qid);
+  const token = await snapshotLeadQuote(env, owner, qid, origin);
   await markQuoteSent(env.DB, owner, qid);
   const viewUrl = `${origin}/q/${token}`;
   try {
@@ -141,6 +147,39 @@ export async function handleLeadQuoteSend(ctx) {
     return json({ success: true, sent, view_url: viewUrl, ...(sent ? {} : { warning: 'Email not configured — share the link.' }) });
   } catch (e) {
     return json({ success: true, sent: false, view_url: viewUrl, warning: 'Email failed: ' + e.message });
+  }
+}
+
+/** POST /api/admin/leads/:id/quotes/:quote_id/preview — snapshot the issuer +
+ *  mint a token (no Send, no email) so the operator can review the doc. */
+export async function handleLeadQuotePreview(ctx) {
+  const { env, params, url } = ctx;
+  const owner = leadOwner(params);
+  if (!owner) return json({ success: false, error: 'Invalid lead id' }, 400);
+  const qid = Number(params.quote_id);
+  if (!Number.isInteger(qid)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const quote = await getQuote(env.DB, owner, qid);
+  if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
+  const token = await snapshotLeadQuote(env, owner, qid, url.origin);
+  return json({ success: true, view_url: `${url.origin}/q/${token}` });
+}
+
+/** PUT /api/admin/leads/:id/quotes/:quote_id/email — edit the customer email
+ *  on an existing quote. */
+export async function handleLeadQuoteEmailUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const owner = leadOwner(params);
+  if (!owner) return json({ success: false, error: 'Invalid lead id' }, 400);
+  const qid = Number(params.quote_id);
+  if (!Number.isInteger(qid)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const ok = await updateQuoteEmail(env.DB, owner, qid, body.email);
+    if (!ok) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true });
+  } catch (e) {
+    if (e.message === 'email_required') return json({ success: false, error: 'A valid email is required.' }, 400);
+    throw e;
   }
 }
 

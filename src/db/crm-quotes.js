@@ -176,9 +176,22 @@ export async function getQuoteByToken(db, token) {
   return quote;
 }
 
-/** Record the customer's first view of a sent quote. */
+/** Record the customer's first view of a SENT quote (so previewing your own
+ *  draft doesn't trip the viewed badge). */
 export async function markQuoteViewed(db, token) {
-  await db.prepare(`UPDATE crm_quotes SET viewed_at = unixepoch() WHERE public_token = ? AND viewed_at IS NULL`).bind(token).run();
+  await db.prepare(`UPDATE crm_quotes SET viewed_at = unixepoch()
+                    WHERE public_token = ? AND viewed_at IS NULL AND sent_at IS NOT NULL`).bind(token).run();
+}
+
+/** Update the customer email on an existing quote. Lowercased + length-clamped.
+ *  @returns true if a row changed. */
+export async function updateQuoteEmail(db, owner, id, email) {
+  const k = keyCol(owner);
+  const e = lc(email);
+  if (!e) throw new Error('email_required');
+  const res = await db.prepare(`UPDATE crm_quotes SET contact_email = ?, updated_at = unixepoch() WHERE ${k.col} = ? AND id = ?`)
+    .bind(e, k.val, id).run();
+  return res.meta.changes > 0;
 }
 
 /** Freeze the issuer branding snapshot (JSON) onto the quote at send time. */

@@ -292,9 +292,13 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
         var fo=q.status==='accepted'
           ? '<select onchange="qOrder('+id+','+q.id+',this)">'+QFUL.map(function(s){return '<option'+(q.fulfillment===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'
           : '<span class="muted">—</span>';
-        var sub=(q.contact_email?'<div class="q-sub">'+qesc(q.contact_email)+'</div>':'')+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
+        var emailLine=q.contact_email
+          ? '<div class="q-sub">'+qesc(q.contact_email)+' <a class="q-pen" title="Edit email" onclick="qEditEmail('+id+','+q.id+',\''+qesc(q.contact_email)+'\')">✎</a></div>'
+          : '<div class="q-sub"><a class="q-pen" onclick="qEditEmail('+id+','+q.id+',\'\')">+ add email</a></div>';
+        var sub=emailLine+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
         var sentState=q.viewed_at?'<span class="q-sub" title="Viewed">👁 viewed</span>':(q.sent_at?'<span class="q-sub">✓ sent</span>':'');
-        var actions='<button class="lbtn" onclick="qSend('+id+','+q.id+',this)" title="Email this quote">✉</button>'
+        var actions='<button class="lbtn" onclick="qPreview('+id+','+q.id+',this)" title="Preview as the customer will see it">👁</button>'
+          +' <button class="lbtn" onclick="qSend('+id+','+q.id+',this)" title="Email this quote">✉</button>'
           +(q.public_token?' <a class="lbtn" href="/q/'+q.public_token+'" target="_blank" rel="noopener" title="Open hosted quote">↗</a>':'')
           +' <button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button>';
         return '<tr><td>'+qesc(q.title||'(untitled)')+sub+'</td>'
@@ -333,10 +337,25 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
     async function qOrder(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/order-status',{fulfillment:sel.value}); } catch(e){ alert(e.message); } }
     async function qDel(id, qid){ if(!confirm('Delete this quote?')) return; try{ await api('DELETE','/'+id+'/quotes/'+qid); loadQuotes(id); } catch(e){ alert(e.message); } }
     async function qSend(id, qid, btn){
+      if(!confirm('Send this quote to the customer by email?')) return;
       btn.disabled=true; var t=btn.textContent; btn.textContent='…';
       try{ var d=await api('POST','/'+id+'/quotes/'+qid+'/send',{});
         alert(d.warning ? d.warning+' '+(d.view_url||'') : 'Quote sent ✓'); loadQuotes(id);
       }catch(e){ alert(e.message); btn.disabled=false; btn.textContent=t; }
+    }
+    async function qPreview(id, qid, btn){
+      btn.disabled=true; var t=btn.textContent; btn.textContent='…';
+      try{ var d=await api('POST','/'+id+'/quotes/'+qid+'/preview',{});
+        if(d && d.view_url) window.open(d.view_url, '_blank', 'noopener');
+        loadQuotes(id);
+      }catch(e){ alert(e.message); }
+      btn.disabled=false; btn.textContent=t;
+    }
+    async function qEditEmail(id, qid, current){
+      var v=prompt('Customer email:', current || ''); if(v==null) return;
+      v=v.trim(); if(!v){ alert('Email is required.'); return; }
+      try{ await api('PUT','/'+id+'/quotes/'+qid+'/email',{ email:v }); loadQuotes(id); }
+      catch(e){ alert(e.message); }
     }
     var qtplLoaded=false;
     async function loadQtpl(){
@@ -408,6 +427,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
   .qc-title,.qc-email{flex:1;padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:160px}
   .qc-notes{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;font-family:inherit;resize:vertical}
   .q-sub{color:#94a3b8;font-size:.76rem;margin-top:.15rem}
+  .q-pen{color:#5a3da8;cursor:pointer;text-decoration:none;margin-left:.3rem;font-size:.85rem}.q-pen:hover{text-decoration:underline}
   .qc-items{display:flex;flex-direction:column;gap:.4rem}.qc-item{display:flex;gap:.4rem}
   .qc-item input{padding:.4rem .5rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem}
   .qi-d{min-width:200px}.qi-q{width:60px}.qi-p{width:90px}.qc-actions{display:flex;gap:.5rem}
