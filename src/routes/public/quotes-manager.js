@@ -13,37 +13,37 @@ const QT = {
     heading: 'Quotes & Orders',
     subtitle: 'Create quotes for your contacts, send them, and track accepted ones as orders.',
     one: 'quote', many: 'quotes',
-    back: '← Back to CRM', newq: '＋ New quote', del: 'Delete', untitled: '(untitled)',
+    back: '← Back to CRM', newq: '＋ New quote', del: 'Delete', send: 'Send', sent: 'Sent', viewed: 'Viewed', untitled: '(untitled)',
     empty: 'No quotes yet — create one above. Accepted quotes turn into trackable orders.',
     th: { quote: 'Quote', status: 'Status', total: 'Total', items: 'Items', order: 'Order', valid: 'Valid until', created: 'Created' },
     status: { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' },
     fulfill: { unfulfilled: 'Unfulfilled', fulfilled: 'Fulfilled', cancelled: 'Cancelled' },
     f: { email: 'Contact email (required)', title: 'Title (e.g. Kitchen remodel)', valid: 'Valid until', desc: 'Line item description', qty: 'Qty', price: 'Unit price ($)', addLine: '＋ Add line', create: 'Create quote' },
-    a: { noItems: 'Add at least one line item with a description.', delConfirm: 'Delete this quote? This cannot be undone.', delErr: 'Could not delete the quote.', createErr: 'Could not create the quote.', statusErr: 'Could not update the status.', fulfillErr: 'Could not update the order status.' },
+    a: { noItems: 'Add at least one line item with a description.', delConfirm: 'Delete this quote? This cannot be undone.', delErr: 'Could not delete the quote.', createErr: 'Could not create the quote.', statusErr: 'Could not update the status.', fulfillErr: 'Could not update the order status.', sendErr: 'Could not send the quote.', sentOk: 'Quote sent ✓', noEmail: 'Add a customer email to this quote first.' },
   },
   es: {
     heading: 'Cotizaciones y pedidos',
     subtitle: 'Crea cotizaciones para tus contactos, envíalas y haz seguimiento de las aceptadas como pedidos.',
     one: 'cotización', many: 'cotizaciones',
-    back: '← Volver al CRM', newq: '＋ Nueva cotización', del: 'Eliminar', untitled: '(sin título)',
+    back: '← Volver al CRM', newq: '＋ Nueva cotización', del: 'Eliminar', send: 'Enviar', sent: 'Enviada', viewed: 'Vista', untitled: '(sin título)',
     empty: 'Aún no hay cotizaciones — crea una arriba. Las cotizaciones aceptadas se convierten en pedidos con seguimiento.',
     th: { quote: 'Cotización', status: 'Estado', total: 'Total', items: 'Artículos', order: 'Pedido', valid: 'Válida hasta', created: 'Creada' },
     status: { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada', expired: 'Caducada' },
     fulfill: { unfulfilled: 'Pendiente', fulfilled: 'Completada', cancelled: 'Cancelada' },
     f: { email: 'Correo del contacto (obligatorio)', title: 'Título (ej. Reforma de cocina)', valid: 'Válida hasta', desc: 'Descripción del artículo', qty: 'Cant.', price: 'Precio unitario ($)', addLine: '＋ Agregar artículo', create: 'Crear cotización' },
-    a: { noItems: 'Agrega al menos un artículo con una descripción.', delConfirm: '¿Eliminar esta cotización? Esta acción no se puede deshacer.', delErr: 'No se pudo eliminar la cotización.', createErr: 'No se pudo crear la cotización.', statusErr: 'No se pudo actualizar el estado.', fulfillErr: 'No se pudo actualizar el estado del pedido.' },
+    a: { noItems: 'Agrega al menos un artículo con una descripción.', delConfirm: '¿Eliminar esta cotización? Esta acción no se puede deshacer.', delErr: 'No se pudo eliminar la cotización.', createErr: 'No se pudo crear la cotización.', statusErr: 'No se pudo actualizar el estado.', fulfillErr: 'No se pudo actualizar el estado del pedido.', sendErr: 'No se pudo enviar la cotización.', sentOk: 'Cotización enviada ✓', noEmail: 'Agrega el correo del cliente a esta cotización primero.' },
   },
   pt: {
     heading: 'Orçamentos e pedidos',
     subtitle: 'Crie orçamentos para seus contatos, envie-os e acompanhe os aceitos como pedidos.',
     one: 'orçamento', many: 'orçamentos',
-    back: '← Voltar ao CRM', newq: '＋ Novo orçamento', del: 'Excluir', untitled: '(sem título)',
+    back: '← Voltar ao CRM', newq: '＋ Novo orçamento', del: 'Excluir', send: 'Enviar', sent: 'Enviado', viewed: 'Visto', untitled: '(sem título)',
     empty: 'Ainda não há orçamentos — crie um acima. Orçamentos aceitos viram pedidos com acompanhamento.',
     th: { quote: 'Orçamento', status: 'Status', total: 'Total', items: 'Itens', order: 'Pedido', valid: 'Válido até', created: 'Criado' },
     status: { draft: 'Rascunho', sent: 'Enviado', accepted: 'Aceito', rejected: 'Recusado', expired: 'Expirado' },
     fulfill: { unfulfilled: 'Pendente', fulfilled: 'Concluído', cancelled: 'Cancelado' },
     f: { email: 'E-mail do contato (obrigatório)', title: 'Título (ex. Reforma da cozinha)', valid: 'Válido até', desc: 'Descrição do item', qty: 'Qtd.', price: 'Preço unitário ($)', addLine: '＋ Adicionar item', create: 'Criar orçamento' },
-    a: { noItems: 'Adicione pelo menos um item com uma descrição.', delConfirm: 'Excluir este orçamento? Esta ação não pode ser desfeita.', delErr: 'Não foi possível excluir o orçamento.', createErr: 'Não foi possível criar o orçamento.', statusErr: 'Não foi possível atualizar o status.', fulfillErr: 'Não foi possível atualizar o status do pedido.' },
+    a: { noItems: 'Adicione pelo menos um item com uma descrição.', delConfirm: 'Excluir este orçamento? Esta ação não pode ser desfeita.', delErr: 'Não foi possível excluir o orçamento.', createErr: 'Não foi possível criar o orçamento.', statusErr: 'Não foi possível atualizar o status.', fulfillErr: 'Não foi possível atualizar o status do pedido.', sendErr: 'Não foi possível enviar o orçamento.', sentOk: 'Orçamento enviado ✓', noEmail: 'Adicione o e-mail do cliente a este orçamento primeiro.' },
   },
 };
 
@@ -67,15 +67,20 @@ export async function handleQuotesManager(ctx) {
     const fulfillCell = q.status === 'accepted'
       ? `<select class="q-fulfill" onchange="updateFulfillment(this)">${FULFILLMENTS.map((s) => `<option value="${s}"${q.fulfillment === s ? ' selected' : ''}>${tr.fulfill[s]}</option>`).join('')}</select>`
       : '<span class="muted">—</span>';
+    const sentBadge = q.viewed_at ? `<span class="q-sent">👁 ${tr.viewed}</span>` : (q.sent_at ? `<span class="q-sent">✓ ${tr.sent}</span>` : '');
     return `<tr class="quote-row" data-id="${esc(q.id)}">
-      <td><div class="q-title">${esc(q.title || tr.untitled)}</div><div class="q-email">${esc(q.contact_email)}</div></td>
+      <td><div class="q-title">${esc(q.title || tr.untitled)}</div><div class="q-email">${esc(q.contact_email)}</div>${sentBadge}</td>
       <td><select class="q-status" onchange="updateStatus(this)">${statusOpts}</select></td>
       <td class="q-total">${money(q.total_cents)}</td>
       <td>${q.item_count}</td>
       <td>${fulfillCell}</td>
       <td>${fmtDate(q.valid_until)}</td>
       <td>${fmtDate(q.created_at)}</td>
-      <td><button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">${tr.del}</button></td>
+      <td class="q-actions">
+        <button class="btn ghost q-send" type="button" onclick="sendQuote(this)">✉ ${tr.send}</button>
+        ${q.public_token ? `<a class="btn ghost" href="/q/${esc(q.public_token)}" target="_blank" rel="noopener" title="Open hosted quote">↗</a>` : ''}
+        <button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">${tr.del}</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -190,6 +195,17 @@ export async function handleQuotesManager(ctx) {
         } catch(e){ alert(T.delErr); }
         btn.disabled = false; btn.textContent = DEL_LABEL;
       }
+      async function sendQuote(btn){
+        var id = btn.closest('.quote-row').getAttribute('data-id');
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/send', { method:'POST', headers:{'Content-Type':'application/json'} });
+          var d = await res.json();
+          if (d && d.success) { alert(d.warning ? d.warning + ' ' + (d.view_url||'') : T.sentOk); location.reload(); return; }
+          alert((d && d.error === 'Add a customer email to the quote first.') ? T.noEmail : ((d && d.error) || T.sendErr));
+        } catch(e){ alert(T.sendErr); }
+        btn.disabled = false; btn.textContent = old;
+      }
     </script>`;
 
   const html = `<!DOCTYPE html>
@@ -216,6 +232,9 @@ export async function handleQuotesManager(ctx) {
     .q-total{font-weight:700;color:var(--p2)}
     .q-status,.q-fulfill{padding:.4rem .55rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.85rem;background:#fff}
     .q-del{font-size:.8rem;padding:.4rem .7rem;white-space:nowrap}
+    .q-actions{display:flex;gap:.35rem;align-items:center;white-space:nowrap}
+    .q-actions .btn{font-size:.8rem;padding:.4rem .6rem}
+    .q-sent{display:inline-block;margin-top:.2rem;font-size:.74rem;color:#15803d;font-weight:700}
     .crm-empty{text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:14px;padding:3rem 1.5rem}
     .crm-toolbar{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
     .crm-addform{display:none;border:1px solid var(--line);border-radius:14px;background:#fff;padding:1rem 1.1rem;margin-bottom:1.2rem}

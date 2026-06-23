@@ -273,10 +273,14 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
           ? '<select onchange="qOrder('+id+','+q.id+',this)">'+QFUL.map(function(s){return '<option'+(q.fulfillment===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'
           : '<span class="muted">—</span>';
         var sub=(q.contact_email?'<div class="q-sub">'+qesc(q.contact_email)+'</div>':'')+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
+        var sentState=q.viewed_at?'<span class="q-sub" title="Viewed">👁 viewed</span>':(q.sent_at?'<span class="q-sub">✓ sent</span>':'');
+        var actions='<button class="lbtn" onclick="qSend('+id+','+q.id+',this)" title="Email this quote">✉</button>'
+          +(q.public_token?' <a class="lbtn" href="/q/'+q.public_token+'" target="_blank" rel="noopener" title="Open hosted quote">↗</a>':'')
+          +' <button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button>';
         return '<tr><td>'+qesc(q.title||'(untitled)')+sub+'</td>'
-          +'<td><select onchange="qStatus('+id+','+q.id+',this)">'+so+'</select></td>'
+          +'<td><select onchange="qStatus('+id+','+q.id+',this)">'+so+'</select>'+sentState+'</td>'
           +'<td>'+qmoney(q.total_cents)+'</td><td>'+q.item_count+'</td><td>'+fo+'</td>'
-          +'<td><button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button></td></tr>';
+          +'<td>'+actions+'</td></tr>';
       }).join('');
       if(!body) body='<tr><td colspan="6" class="muted">No quotes yet.</td></tr>';
       var item='<div class="qc-item"><input class="qi-d" placeholder="Description"><input class="qi-q" type="number" min="1" value="1"><input class="qi-p" type="number" min="0" step="0.01" placeholder="Unit $"></div>';
@@ -308,6 +312,12 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
     async function qStatus(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/status',{status:sel.value}); loadQuotes(id); } catch(e){ alert(e.message); } }
     async function qOrder(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/order-status',{fulfillment:sel.value}); } catch(e){ alert(e.message); } }
     async function qDel(id, qid){ if(!confirm('Delete this quote?')) return; try{ await api('DELETE','/'+id+'/quotes/'+qid); loadQuotes(id); } catch(e){ alert(e.message); } }
+    async function qSend(id, qid, btn){
+      btn.disabled=true; var t=btn.textContent; btn.textContent='…';
+      try{ var d=await api('POST','/'+id+'/quotes/'+qid+'/send',{});
+        alert(d.warning ? d.warning+' '+(d.view_url||'') : 'Quote sent ✓'); loadQuotes(id);
+      }catch(e){ alert(e.message); btn.disabled=false; btn.textContent=t; }
+    }
   </script>`;
 
   return htmlResponse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">

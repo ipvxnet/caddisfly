@@ -57,6 +57,24 @@ async function deliverEmail(env, { to, subject, html, replyTo, fromName, attachm
   return false;
 }
 
+/** Email a customer a link to their hosted quote page (/q/:token). */
+export async function sendQuoteEmail(env, { to, issuerName, quoteTitle, totalLabel, viewUrl, replyTo }) {
+  const e = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const name = issuerName || 'A business';
+  const subject = `Your quote from ${name}${quoteTitle ? ` — ${quoteTitle}` : ''}`;
+  const html = `<!DOCTYPE html><html><body style="margin:0;background:#f4f5f8;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#1f2733">
+    <div style="max-width:520px;margin:0 auto;padding:32px 20px">
+      <div style="background:#fff;border-radius:12px;padding:28px;border:1px solid #e2e8f0">
+        <h1 style="font-size:1.2rem;margin:0 0 .6rem">You've received a quote from ${e(name)}</h1>
+        ${quoteTitle ? `<p style="color:#4a5568;margin:.2rem 0">${e(quoteTitle)}</p>` : ''}
+        ${totalLabel ? `<p style="font-size:1.35rem;font-weight:800;margin:.5rem 0">${e(totalLabel)}</p>` : ''}
+        <a href="${e(viewUrl)}" style="display:inline-block;background:#5a3da8;color:#fff;text-decoration:none;font-weight:700;padding:.8rem 1.4rem;border-radius:999px;margin-top:.8rem">View your quote →</a>
+        <p style="color:#8a94a6;font-size:.78rem;margin-top:1.4rem;word-break:break-all">Or open this link:<br>${e(viewUrl)}</p>
+      </div>
+    </div></body></html>`;
+  return deliverEmail(env, { to, subject, html, fromName: name, replyTo });
+}
+
 /**
  * Sends preview link email to customer
  * @param {Object} env - Environment bindings
