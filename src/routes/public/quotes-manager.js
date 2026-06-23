@@ -1,0 +1,196 @@
+// GET /ai-builder/crm/:project_id/quotes — Quotation & Order Management manager.
+// Server-renders the project's quotes; create/status/fulfillment/delete via small
+// fetches. Gated by pluginGate('crm') in index.js. Mirrors crm-manager.js.
+
+import { htmlResponse, redirect } from '../../utils/response.js';
+import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
+import { resolveStoreProject } from '../api/ai-builder/store.js';
+import { listQuotes, QUOTE_STATUSES, FULFILLMENTS } from '../../db/crm-quotes.js';
+
+const STATUS_LABEL = { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' };
+const FULFILL_LABEL = { unfulfilled: 'Unfulfilled', fulfilled: 'Fulfilled', cancelled: 'Cancelled' };
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function fmtDate(ts) { if (!ts) return ''; try { return new Date(ts * 1000).toISOString().slice(0, 10); } catch { return ''; } }
+function money(cents) { return '$' + ((cents || 0) / 100).toFixed(2); }
+
+export async function handleQuotesManager(ctx) {
+  const { env, params, url } = ctx;
+  const origin = env.APP_URL || (url ? new URL(url).origin : '');
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return redirect('/dashboard', 303);
+  const quotes = await listQuotes(env.DB, r.projectKey, '');
+
+  const rows = quotes.map((q) => {
+    const statusOpts = QUOTE_STATUSES.map((s) => `<option value="${s}"${q.status === s ? ' selected' : ''}>${STATUS_LABEL[s]}</option>`).join('');
+    const fulfillCell = q.status === 'accepted'
+      ? `<select class="q-fulfill" onchange="updateFulfillment(this)">${FULFILLMENTS.map((s) => `<option value="${s}"${q.fulfillment === s ? ' selected' : ''}>${FULFILL_LABEL[s]}</option>`).join('')}</select>`
+      : '<span class="muted">—</span>';
+    return `<tr class="quote-row" data-id="${esc(q.id)}">
+      <td><div class="q-title">${esc(q.title || '(untitled)')}</div><div class="q-email">${esc(q.contact_email)}</div></td>
+      <td><select class="q-status" onchange="updateStatus(this)">${statusOpts}</select></td>
+      <td class="q-total">${money(q.total_cents)}</td>
+      <td>${q.item_count}</td>
+      <td>${fulfillCell}</td>
+      <td>${fmtDate(q.valid_until)}</td>
+      <td>${fmtDate(q.created_at)}</td>
+      <td><button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">Delete</button></td>
+    </tr>`;
+  }).join('');
+
+  const inner = `
+    <div class="crm-head">
+      <h1>Quotes &amp; Orders <span class="muted">— ${esc(r.businessName)}</span></h1>
+      <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}">← Back to CRM</a>
+    </div>
+    <p class="sub">Create quotes for your contacts, send them, and track accepted ones as orders. ${quotes.length} quote${quotes.length === 1 ? '' : 's'}.</p>
+
+    <div class="crm-toolbar">
+      <button class="btn" type="button" onclick="toggleAdd()">＋ New quote</button>
+    </div>
+
+    <div class="crm-addform" id="q-addform">
+      <div class="q-addgrid">
+        <input id="q-email" type="email" placeholder="Contact email (required)">
+        <input id="q-title" placeholder="Title (e.g. Kitchen remodel)">
+        <select id="q-currency"><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="BRL">BRL</option></select>
+        <label class="q-validlbl">Valid until <input id="q-valid" type="date"></label>
+      </div>
+      <div class="q-items" id="q-items">
+        <div class="q-item">
+          <input class="qi-desc" placeholder="Line item description">
+          <input class="qi-qty" type="number" min="1" step="1" value="1" placeholder="Qty">
+          <input class="qi-price" type="number" min="0" step="0.01" placeholder="Unit price ($)">
+          <button class="btn ghost qi-rm" type="button" onclick="rmItem(this)">✕</button>
+        </div>
+      </div>
+      <div class="q-addactions">
+        <button class="btn ghost" type="button" onclick="addItem()">＋ Add line</button>
+        <button class="btn" type="button" onclick="submitQuote(this)">Create quote</button>
+      </div>
+    </div>
+
+    ${quotes.length ? `<div class="crm-tablewrap"><table class="crm-table">
+      <thead><tr><th>Quote</th><th>Status</th><th>Total</th><th>Items</th><th>Order</th><th>Valid until</th><th>Created</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>` : `<div class="crm-empty">No quotes yet — create one above. Accepted quotes turn into trackable orders.</div>`}
+    <div id="q-msg"></div>
+    <script>
+      var BASE = '/api/ai-builder/' + ${JSON.stringify(params.project_id)} + '/crm/quotes';
+      function toggleAdd(){ var f = document.getElementById('q-addform'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; if (f.style.display==='block') document.getElementById('q-email').focus(); }
+      function addItem(){
+        var row = document.createElement('div');
+        row.className = 'q-item';
+        row.innerHTML = '<input class="qi-desc" placeholder="Line item description"><input class="qi-qty" type="number" min="1" step="1" value="1" placeholder="Qty"><input class="qi-price" type="number" min="0" step="0.01" placeholder="Unit price ($)"><button class="btn ghost qi-rm" type="button" onclick="rmItem(this)">✕</button>';
+        document.getElementById('q-items').appendChild(row);
+      }
+      function rmItem(btn){ var rows = document.querySelectorAll('.q-item'); if (rows.length > 1) btn.closest('.q-item').remove(); }
+      function dateToTs(v){ if (!v) return null; var ms = Date.parse(v + 'T00:00:00Z'); return isNaN(ms) ? null : Math.floor(ms/1000); }
+      async function submitQuote(btn){
+        var email = document.getElementById('q-email').value.trim();
+        if (!email) { document.getElementById('q-email').focus(); return; }
+        var items = [];
+        document.querySelectorAll('.q-item').forEach(function(row){
+          var desc = row.querySelector('.qi-desc').value.trim();
+          var qty = parseInt(row.querySelector('.qi-qty').value, 10);
+          var price = parseFloat(row.querySelector('.qi-price').value);
+          if (desc) items.push({ description: desc, qty: (qty > 0 ? qty : 1), unit_price_cents: Math.round((price > 0 ? price : 0) * 100) });
+        });
+        if (!items.length) { alert('Add at least one line item with a description.'); return; }
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
+        var payload = {
+          email: email, title: document.getElementById('q-title').value.trim(),
+          currency: document.getElementById('q-currency').value, valid_until: dateToTs(document.getElementById('q-valid').value),
+          items: items
+        };
+        try {
+          var res = await fetch(BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          var d = await res.json();
+          if (d && d.success) { location.reload(); return; }
+          alert((d && d.error) || 'Could not create the quote.');
+        } catch(e){ alert('Could not create the quote.'); }
+        btn.disabled = false; btn.textContent = old;
+      }
+      async function updateStatus(sel){
+        var id = sel.closest('.quote-row').getAttribute('data-id');
+        sel.disabled = true;
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/status', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: sel.value }) });
+          var d = await res.json();
+          if (d && d.success) { location.reload(); return; } // reload to show/hide the order (fulfillment) control
+          alert((d && d.error) || 'Could not update the status.'); sel.disabled = false;
+        } catch(e){ alert('Could not update the status.'); sel.disabled = false; }
+      }
+      async function updateFulfillment(sel){
+        var id = sel.closest('.quote-row').getAttribute('data-id');
+        sel.disabled = true;
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/order-status', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ fulfillment: sel.value }) });
+          var d = await res.json();
+          if (!d || !d.success) alert((d && d.error) || 'Could not update the order status.');
+        } catch(e){ alert('Could not update the order status.'); }
+        sel.disabled = false;
+      }
+      async function deleteQuote(btn){
+        if (!confirm('Delete this quote? This cannot be undone.')) return;
+        var id = btn.closest('.quote-row').getAttribute('data-id');
+        btn.disabled = true; btn.textContent = '…';
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id), { method:'DELETE' });
+          var d = await res.json();
+          if (d && d.success) { location.reload(); return; }
+          alert('Could not delete the quote.');
+        } catch(e){ alert('Could not delete the quote.'); }
+        btn.disabled = false; btn.textContent = 'Delete';
+      }
+    </script>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${headTags({ title: 'Quotes & Orders — Caddisfly', description: 'Create and track quotes for your contacts.', origin, path: '/ai-builder/crm/quotes' })}
+  <meta name="robots" content="noindex">
+  <style>
+    ${baseCss()}
+    main{min-height:60vh}
+    .cwrap{max-width:1100px;margin:0 auto;padding:2.5rem 1.5rem}
+    .crm-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .crm-head h1{font-size:clamp(1.6rem,3.5vw,2.1rem);font-weight:900;color:var(--ink)}
+    .sub{color:var(--body);margin:.3rem 0 1.6rem}
+    .crm-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+    .crm-table{width:100%;border-collapse:collapse;font-size:.9rem}
+    .crm-table th{text-align:left;padding:.7rem .8rem;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line)}
+    .crm-table td{padding:.65rem .8rem;border-bottom:1px solid var(--line);vertical-align:middle}
+    .crm-table tr:last-child td{border-bottom:none}
+    .q-title{font-weight:700;color:var(--ink)}
+    .q-email{color:var(--muted);font-size:.82rem}
+    .q-total{font-weight:700;color:var(--p2)}
+    .q-status,.q-fulfill{padding:.4rem .55rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.85rem;background:#fff}
+    .q-del{font-size:.8rem;padding:.4rem .7rem;white-space:nowrap}
+    .crm-empty{text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:14px;padding:3rem 1.5rem}
+    .crm-toolbar{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+    .crm-addform{display:none;border:1px solid var(--line);border-radius:14px;background:#fff;padding:1rem 1.1rem;margin-bottom:1.2rem}
+    .q-addgrid{display:grid;grid-template-columns:1.3fr 1.3fr .8fr 1fr;gap:.6rem;align-items:center;margin-bottom:.7rem}
+    .q-addgrid input,.q-addgrid select{padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.88rem;background:#fff;min-width:0}
+    .q-validlbl{color:var(--muted);font-size:.82rem;display:flex;align-items:center;gap:.4rem}
+    .q-validlbl input{flex:1}
+    .q-item{display:grid;grid-template-columns:2.2fr .6fr .9fr auto;gap:.6rem;align-items:center;margin-bottom:.5rem}
+    .q-item input{padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.88rem;background:#fff;min-width:0}
+    .qi-rm{padding:.4rem .6rem}
+    .q-addactions{display:flex;justify-content:space-between;gap:.6rem;margin-top:.4rem}
+    @media (max-width:720px){ .q-addgrid{grid-template-columns:1fr 1fr} .q-item{grid-template-columns:1fr 1fr} }
+  </style>
+</head>
+<body>
+  ${siteHeader('/dashboard', {})}
+  <main><div class="cwrap">${inner}</div></main>
+  ${siteFooter({ lang: 'en' })}
+</body>
+</html>`;
+
+  return htmlResponse(html);
+}

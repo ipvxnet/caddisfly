@@ -56,6 +56,7 @@ export async function handleCrmManager(ctx) {
 
     <div class="crm-toolbar">
       <button class="btn" type="button" onclick="toggleAdd()">＋ Add contact</button>
+      <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}/quotes">📄 Quotes &amp; Orders</a>
       <label class="crm-dedup">Merge duplicates by
         <select id="crm-dedupkey" onchange="setDedup(this.value)">${dedupOpts}</select>
       </label>
