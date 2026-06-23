@@ -2,11 +2,19 @@
 // with items, set quote status + order fulfillment, delete. Gated by
 // pluginGate('crm', { json: true }) in index.js. Mirrors api/ai-builder/crm.js.
 
-import { resolveStoreProject } from './store.js';
-import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote } from '../../../db/crm-quotes.js';
+import { resolveStoreProject, getOrCreateConfig } from './store.js';
+import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
+  ensureQuoteToken, markQuoteSent, setQuoteIssuer } from '../../../db/crm-quotes.js';
+import { sendQuoteEmail } from '../../../utils/email.js';
+import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../../db/quote-templates.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+function money(cents, currency) {
+  try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format((cents || 0) / 100); }
+  catch { return '$' + ((cents || 0) / 100).toFixed(2); }
 }
 
 /** GET /api/ai-builder/:project_id/crm/quotes?email= */
@@ -83,6 +91,58 @@ export async function handleOrderStatus(ctx) {
   } catch (e) {
     if (e.message === 'invalid_fulfillment') return json({ success: false, error: 'Invalid fulfillment status.' }, 400);
     throw e;
+  }
+}
+
+/** GET /api/ai-builder/:project_id/crm/quote-template */
+export async function handleQuoteTemplateGet(ctx) {
+  const r = await resolveStoreProject(ctx.env, ctx.params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  return json({ success: true, template: await getQuoteTemplate(ctx.env.DB, r.projectKey) });
+}
+
+/** PUT /api/ai-builder/:project_id/crm/quote-template */
+export async function handleQuoteTemplateSave(ctx) {
+  const r = await resolveStoreProject(ctx.env, ctx.params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await ctx.request.json().catch(() => ({}));
+  return json({ success: true, template: await saveQuoteTemplate(ctx.env.DB, r.projectKey, body) });
+}
+
+/** POST /api/ai-builder/:project_id/crm/quotes/:quote_id/send — email the customer
+ *  a link to the hosted, branded quote page (issuer = the project's business). */
+export async function handleQuoteSend(ctx) {
+  const { env, params, url } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const quote = await getQuote(env.DB, r.projectKey, id);
+  if (!quote) return json({ success: false, error: 'Quote not found' }, 404);
+  if (!quote.contact_email) return json({ success: false, error: 'Add a customer email to the quote first.' }, 400);
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  let issuer = {
+    name: r.businessName,
+    logo: config.logo_url || '',
+    contact: [config.notify_email].filter(Boolean),
+    accent: config.primary_color || '#5a3da8',
+    intro: '',
+    thankYou: `Thank you for considering ${r.businessName}. We look forward to working with you.`,
+    terms: '',
+  };
+  issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, r.projectKey));
+  await setQuoteIssuer(env.DB, r.projectKey, id, issuer);
+  const token = await ensureQuoteToken(env.DB, r.projectKey, id);
+  await markQuoteSent(env.DB, r.projectKey, id);
+  const viewUrl = `${url.origin}/q/${token}`;
+  try {
+    const sent = await sendQuoteEmail(env, {
+      to: quote.contact_email, issuerName: r.businessName, quoteTitle: quote.title,
+      totalLabel: money(quote.total_cents, quote.currency), viewUrl, replyTo: config.notify_email || undefined,
+    });
+    return json({ success: true, sent, view_url: viewUrl, ...(sent ? {} : { warning: 'Email not configured — share the link.' }) });
+  } catch (e) {
+    return json({ success: true, sent: false, view_url: viewUrl, warning: 'Email failed: ' + e.message });
   }
 }
 

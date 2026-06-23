@@ -18,7 +18,7 @@ import { handleShowcase } from './routes/public/showcase.js';
 import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich, handleLeadsPlaceIds, handleLeadsScrape } from './routes/admin/leads.js';
-import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete } from './routes/admin/lead-quotes.js';
+import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete, handleLeadQuoteSend, handleLeadQuoteTemplateGet, handleLeadQuoteTemplateSave } from './routes/admin/lead-quotes.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
@@ -91,7 +91,8 @@ import { pluginGate } from './plugins/entitlements.js';
 import { handleCrmManager } from './routes/public/crm-manager.js';
 import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrmContactAdd, handleCrmDedupKey } from './routes/api/ai-builder/crm.js';
 import { handleQuotesManager } from './routes/public/quotes-manager.js';
-import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete } from './routes/api/ai-builder/crm-quotes.js';
+import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave } from './routes/api/ai-builder/crm-quotes.js';
+import { handleQuoteView, handleQuotePdf } from './routes/public/quote-view.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete, handleFormTest, handleFormSettings } from './routes/api/forms.js';
@@ -275,12 +276,18 @@ router.put('/api/ai-builder/:project_id/crm/contacts/:email', handleCrmContactUp
 router.get('/api/ai-builder/:project_id/crm/contacts/:email/activity', handleCrmActivity, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 // CRM — Quotation & Order Management
 router.get('/ai-builder/crm/:project_id/quotes', handleQuotesManager, [billingAuth, projectAccess, pluginGate('crm')]);
+router.get('/api/ai-builder/:project_id/crm/quote-template', handleQuoteTemplateGet, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.put('/api/ai-builder/:project_id/crm/quote-template', handleQuoteTemplateSave, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.get('/api/ai-builder/:project_id/crm/quotes', handleQuoteList, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.post('/api/ai-builder/:project_id/crm/quotes', handleQuoteCreate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.get('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteGet, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id/status', handleQuoteStatus, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id/order-status', handleOrderStatus, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.post('/api/ai-builder/:project_id/crm/quotes/:quote_id/send', handleQuoteSend, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.delete('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteDelete, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+// Public hosted quote page + PDF (token-authed, no session)
+router.get('/q/:token', handleQuoteView);
+router.get('/q/:token/pdf', handleQuotePdf);
 
 // Customer dashboard (websites + team) and team management
 router.get('/dashboard', handleDashboard, [billingAuth]);
@@ -514,6 +521,9 @@ router.post('/api/admin/leads/enrich', handleLeadsEnrich);
 router.post('/api/admin/leads/scrape', handleLeadsScrape);
 router.get('/admin/leads', handleAdminLeads, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/leads', handleLeadAdd, [authMiddleware, adminMiddleware]);
+// Global Caddisfly quote template (MUST precede /:id so ':id' doesn't capture "quote-template")
+router.get('/api/admin/leads/quote-template', handleLeadQuoteTemplateGet, [authMiddleware, adminMiddleware]);
+router.put('/api/admin/leads/quote-template', handleLeadQuoteTemplateSave, [authMiddleware, adminMiddleware]);
 router.put('/api/admin/leads/:id', handleLeadUpdate, [authMiddleware, adminMiddleware]);
 router.delete('/api/admin/leads/:id', handleLeadDelete, [authMiddleware, adminMiddleware]);
 // Admin Leads CRM — Quotation & Order Management (shared engine, owner = lead)
@@ -522,6 +532,7 @@ router.post('/api/admin/leads/:id/quotes', handleLeadQuoteCreate, [authMiddlewar
 router.get('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteGet, [authMiddleware, adminMiddleware]);
 router.put('/api/admin/leads/:id/quotes/:quote_id/status', handleLeadQuoteStatus, [authMiddleware, adminMiddleware]);
 router.put('/api/admin/leads/:id/quotes/:quote_id/order-status', handleLeadOrderStatus, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/leads/:id/quotes/:quote_id/send', handleLeadQuoteSend, [authMiddleware, adminMiddleware]);
 router.delete('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteDelete, [authMiddleware, adminMiddleware]);
 
 /**

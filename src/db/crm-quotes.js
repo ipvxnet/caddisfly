@@ -66,6 +66,7 @@ export async function listQuotes(db, projectKey, email = '') {
   const { results } = await db
     .prepare(`SELECT q.id, q.contact_email, q.title, q.currency, q.status, q.fulfillment,
                      q.valid_until, q.notes, q.created_at, q.updated_at,
+                     q.public_token, q.sent_at, q.viewed_at,
                      COALESCE(SUM(i.qty * i.unit_price_cents), 0) AS total_cents,
                      COUNT(i.id) AS item_count
               FROM crm_quotes q
@@ -136,4 +137,53 @@ export async function deleteQuote(db, projectKey, id) {
     .bind(k.val, id)
     .run();
   return res.meta.changes > 0;
+}
+
+/** Generate + persist a public token for the quote if it lacks one. The token is
+ *  the unguessable id for the hosted quote page (/q/:token). @returns the token, or null. */
+export async function ensureQuoteToken(db, owner, id) {
+  const k = keyCol(owner);
+  const row = await db.prepare(`SELECT public_token FROM crm_quotes WHERE ${k.col} = ? AND id = ?`).bind(k.val, id).first();
+  if (!row) return null;
+  if (row.public_token) return row.public_token;
+  const token = crypto.randomUUID().replace(/-/g, '');
+  await db.prepare(`UPDATE crm_quotes SET public_token = ?, updated_at = unixepoch() WHERE ${k.col} = ? AND id = ?`).bind(token, k.val, id).run();
+  return token;
+}
+
+/** Mark a quote as sent (sets sent_at; promotes draft→sent). */
+export async function markQuoteSent(db, owner, id) {
+  const k = keyCol(owner);
+  await db.prepare(
+    `UPDATE crm_quotes SET sent_at = unixepoch(),
+       status = CASE WHEN status = 'draft' THEN 'sent' ELSE status END,
+       updated_at = unixepoch()
+     WHERE ${k.col} = ? AND id = ?`
+  ).bind(k.val, id).run();
+}
+
+/** Public lookup by token (the token IS the auth — no owner scope). Returns the
+ *  quote with items + total + its owner columns (so the caller resolves branding), or null. */
+export async function getQuoteByToken(db, token) {
+  if (!token) return null;
+  const quote = await db.prepare(`SELECT * FROM crm_quotes WHERE public_token = ?`).bind(token).first();
+  if (!quote) return null;
+  const { results } = await db
+    .prepare(`SELECT id, description, qty, unit_price_cents FROM crm_quote_items WHERE quote_id = ? ORDER BY sort, id`)
+    .bind(quote.id).all();
+  quote.items = results || [];
+  quote.total_cents = quote.items.reduce((s, it) => s + it.qty * it.unit_price_cents, 0);
+  return quote;
+}
+
+/** Record the customer's first view of a sent quote. */
+export async function markQuoteViewed(db, token) {
+  await db.prepare(`UPDATE crm_quotes SET viewed_at = unixepoch() WHERE public_token = ? AND viewed_at IS NULL`).bind(token).run();
+}
+
+/** Freeze the issuer branding snapshot (JSON) onto the quote at send time. */
+export async function setQuoteIssuer(db, owner, id, issuer) {
+  const k = keyCol(owner);
+  await db.prepare(`UPDATE crm_quotes SET issuer_json = ?, updated_at = unixepoch() WHERE ${k.col} = ? AND id = ?`)
+    .bind(JSON.stringify(issuer || {}), k.val, id).run();
 }

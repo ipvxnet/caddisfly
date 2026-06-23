@@ -182,6 +182,25 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       </div>
     </details>`;
 
+  // Editable Caddisfly quote template (the global branding/copy used on SENT quotes).
+  const qtplGuide = `
+    <details class="lguide" ontoggle="if(this.open) loadQtpl()">
+      <summary>✎ Quote template <span class="muted">— Caddisfly branding on sent quotes</span></summary>
+      <div class="lguide-body">
+        <div class="qtpl-grid">
+          <label>Intro line<textarea id="qt-intro" rows="2" placeholder="Here's the quote we discussed…"></textarea></label>
+          <label>Thank-you message<textarea id="qt-thanks" rows="2" placeholder="Thank you for considering Caddisfly…"></textarea></label>
+          <label>Terms / footer<textarea id="qt-terms" rows="2" placeholder="Valid for 30 days. Prices in USD."></textarea></label>
+          <div class="qtpl-row">
+            <label>Accent color<input id="qt-accent" placeholder="#5a3da8"></label>
+            <label>Logo URL override<input id="qt-logo" placeholder="https://… (blank = default)"></label>
+          </div>
+        </div>
+        <div class="qtpl-actions"><button class="lbtn primary" onclick="saveQtpl(this)">Save template</button><span id="qt-msg" class="muted"></span></div>
+        <p class="lguide-note">Leave a field blank to use the Caddisfly default. These apply to quotes you send from a lead's 📄 drawer.</p>
+      </div>
+    </details>`;
+
   const inner = `
   <div class="lwrap">
     <div class="lhead">
@@ -196,6 +215,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
     </div>
 
     ${guide}
+    ${qtplGuide}
 
     <form class="lfilters" method="get">
       <input name="q" value="${esc(filt.q)}" placeholder="Search business / site / email / phone…">
@@ -272,15 +292,22 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
         var fo=q.status==='accepted'
           ? '<select onchange="qOrder('+id+','+q.id+',this)">'+QFUL.map(function(s){return '<option'+(q.fulfillment===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'
           : '<span class="muted">—</span>';
-        return '<tr><td>'+qesc(q.title||'(untitled)')+'</td>'
-          +'<td><select onchange="qStatus('+id+','+q.id+',this)">'+so+'</select></td>'
+        var sub=(q.contact_email?'<div class="q-sub">'+qesc(q.contact_email)+'</div>':'')+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
+        var sentState=q.viewed_at?'<span class="q-sub" title="Viewed">👁 viewed</span>':(q.sent_at?'<span class="q-sub">✓ sent</span>':'');
+        var actions='<button class="lbtn" onclick="qSend('+id+','+q.id+',this)" title="Email this quote">✉</button>'
+          +(q.public_token?' <a class="lbtn" href="/q/'+q.public_token+'" target="_blank" rel="noopener" title="Open hosted quote">↗</a>':'')
+          +' <button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button>';
+        return '<tr><td>'+qesc(q.title||'(untitled)')+sub+'</td>'
+          +'<td><select onchange="qStatus('+id+','+q.id+',this)">'+so+'</select>'+sentState+'</td>'
           +'<td>'+qmoney(q.total_cents)+'</td><td>'+q.item_count+'</td><td>'+fo+'</td>'
-          +'<td><button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button></td></tr>';
+          +'<td>'+actions+'</td></tr>';
       }).join('');
       if(!body) body='<tr><td colspan="6" class="muted">No quotes yet.</td></tr>';
       var item='<div class="qc-item"><input class="qi-d" placeholder="Description"><input class="qi-q" type="number" min="1" value="1"><input class="qi-p" type="number" min="0" step="0.01" placeholder="Unit $"></div>';
       qpanelOf(id).innerHTML='<table class="qtable"><thead><tr><th>Quote</th><th>Status</th><th>Total</th><th>Items</th><th>Order</th><th></th></tr></thead><tbody>'+body+'</tbody></table>'
-        +'<div class="qcreate"><input class="qc-title" placeholder="Quote title (optional)"><div class="qc-items">'+item+'</div>'
+        +'<div class="qcreate"><div class="qc-head"><input class="qc-title" placeholder="Quote title"><input class="qc-email" type="email" placeholder="Customer email (defaults to the lead email)"></div>'
+        +'<div class="qc-items">'+item+'</div>'
+        +'<textarea class="qc-notes" rows="2" placeholder="Comments / notes (optional)"></textarea>'
         +'<div class="qc-actions"><button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary" onclick="qCreate('+id+',this)">Create quote</button></div></div>';
     }
     function qAddItem(id){
@@ -299,12 +326,36 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       });
       if(!items.length){ alert('Add at least one line item with a description.'); return; }
       btn.disabled=true;
-      try{ await api('POST','/'+id+'/quotes',{ title:panel.querySelector('.qc-title').value.trim(), items:items }); loadQuotes(id); }
+      try{ await api('POST','/'+id+'/quotes',{ title:panel.querySelector('.qc-title').value.trim(), email:panel.querySelector('.qc-email').value.trim(), notes:panel.querySelector('.qc-notes').value.trim(), items:items }); loadQuotes(id); }
       catch(e){ alert(e.message); btn.disabled=false; }
     }
     async function qStatus(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/status',{status:sel.value}); loadQuotes(id); } catch(e){ alert(e.message); } }
     async function qOrder(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/order-status',{fulfillment:sel.value}); } catch(e){ alert(e.message); } }
     async function qDel(id, qid){ if(!confirm('Delete this quote?')) return; try{ await api('DELETE','/'+id+'/quotes/'+qid); loadQuotes(id); } catch(e){ alert(e.message); } }
+    async function qSend(id, qid, btn){
+      btn.disabled=true; var t=btn.textContent; btn.textContent='…';
+      try{ var d=await api('POST','/'+id+'/quotes/'+qid+'/send',{});
+        alert(d.warning ? d.warning+' '+(d.view_url||'') : 'Quote sent ✓'); loadQuotes(id);
+      }catch(e){ alert(e.message); btn.disabled=false; btn.textContent=t; }
+    }
+    var qtplLoaded=false;
+    async function loadQtpl(){
+      if(qtplLoaded) return; qtplLoaded=true;
+      try{ var d=await api('GET','/quote-template'); var t=d.template||{};
+        document.getElementById('qt-intro').value=t.intro||'';
+        document.getElementById('qt-thanks').value=t.thank_you||'';
+        document.getElementById('qt-terms').value=t.terms||'';
+        document.getElementById('qt-accent').value=t.accent||'';
+        document.getElementById('qt-logo').value=t.logo||'';
+      }catch(e){ qtplLoaded=false; }
+    }
+    async function saveQtpl(btn){
+      btn.disabled=true; var t=btn.textContent; btn.textContent='…';
+      try{ await api('PUT','/quote-template',{ intro:document.getElementById('qt-intro').value, thank_you:document.getElementById('qt-thanks').value, terms:document.getElementById('qt-terms').value, accent:document.getElementById('qt-accent').value, logo:document.getElementById('qt-logo').value });
+        var m=document.getElementById('qt-msg'); m.textContent='Saved ✓'; setTimeout(function(){m.textContent='';},1600);
+      }catch(e){ alert(e.message); }
+      btn.disabled=false; btn.textContent=t;
+    }
   </script>`;
 
   return htmlResponse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -341,14 +392,22 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
   .lguide code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .lguide-note{color:#64748b;font-size:.8rem;margin-top:.7rem;line-height:1.5}
   .lguide-note code{background:#f1f5f9;color:#334155;padding:.05rem .3rem;border-radius:4px}
+  .qtpl-grid{display:flex;flex-direction:column;gap:.7rem;max-width:620px}
+  .qtpl-grid label{display:flex;flex-direction:column;gap:.25rem;font-size:.8rem;font-weight:700;color:#4a5568}
+  .qtpl-grid textarea,.qtpl-grid input{padding:.5rem .6rem;border:1.5px solid #e2e8f0;border-radius:9px;font-family:inherit;font-size:.85rem;font-weight:400;resize:vertical}
+  .qtpl-row{display:flex;gap:.7rem}.qtpl-row label{flex:1}
+  .qtpl-actions{display:flex;align-items:center;gap:.7rem;margin-top:.8rem}
   .qdrawer>td{background:#faf9ff;padding:0}
   .qpanel{padding:1rem 1.2rem}
   .qtable{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:.8rem}
   .qtable th{font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:.45rem .6rem;border-bottom:1px solid #e2e8f0}
   .qtable td{padding:.45rem .6rem;border-bottom:1px solid #edf2f7}.qtable tr:last-child td{border-bottom:none}
   .qtable select{padding:.3rem .4rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;background:#fff}
-  .qcreate{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-start}
-  .qc-title{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:200px}
+  .qcreate{display:flex;flex-direction:column;gap:.5rem;align-items:stretch;max-width:680px}
+  .qc-head{display:flex;gap:.5rem;flex-wrap:wrap}
+  .qc-title,.qc-email{flex:1;padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:160px}
+  .qc-notes{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;font-family:inherit;resize:vertical}
+  .q-sub{color:#94a3b8;font-size:.76rem;margin-top:.15rem}
   .qc-items{display:flex;flex-direction:column;gap:.4rem}.qc-item{display:flex;gap:.4rem}
   .qc-item input{padding:.4rem .5rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem}
   .qi-d{min-width:200px}.qi-q{width:60px}.qi-p{width:90px}.qc-actions{display:flex;gap:.5rem}
