@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Delegate a small task to the LAN Ollama (default qwen3:14b). Fast path: native
-# /api/chat with think:false — Qwen3's default thinking mode makes trivial tasks
-# take 50-60s, so it's OFF here (~2-12s instead). See memory/lan-ollama.md.
+# Delegate a small task to the LAN Ollama. Default qwen3-32k (Qwen3 14B, 32k ctx);
+# for code use qwen2.5-coder-32k. Both bake num_ctx 32768 so context packs don't
+# silently truncate (the base :14b tags default to only 4096). Fast path: native
+# /api/chat with think:false — Qwen3's thinking mode makes trivial tasks take
+# 50-60s, so it's OFF here (~2-12s instead). See memory/lan-ollama.md.
 #
 # Usage:
 #   scripts/ollama.sh "your prompt"
 #   echo "your prompt" | scripts/ollama.sh
 #   scripts/ollama.sh -s "system prompt" --json "user prompt"
-#   scripts/ollama.sh -m gemma4:12b --think -t 0.7 "prompt"
+#   scripts/ollama.sh -m qwen2.5-coder-32k:latest -c "code task"   # code + conventions
 #   scripts/ollama.sh --raw "prompt"        # full JSON response, not just .content
 #
 # Flags:
 #   -s, --system TEXT   system prompt
-#   -m, --model NAME    model (default qwen3:14b)
+#   -m, --model NAME    model (default qwen3-32k; code → qwen2.5-coder-32k:latest)
 #   -t, --temp N        temperature (default 0.3)
+#   -c, --conventions   prepend repo CONVENTIONS.md (bridge pattern + D1 idioms) — for code tasks
+#   --ctx N             override context window (sets options.num_ctx; default = model's Modelfile)
 #   --json              request strict JSON output (Ollama format:json)
 #   --think             enable thinking (default OFF — much slower)
 #   --raw               print the full JSON response instead of just the content
@@ -24,16 +28,18 @@
 # for piping into files or other tools.
 set -euo pipefail
 
-MODEL="qwen3:14b"; SYSTEM=""; TEMP="0.3"; FORMAT=""; THINK="false"; RAW="false"; PROMPT=""
+MODEL="qwen3-32k:latest"; SYSTEM=""; TEMP="0.3"; FORMAT=""; THINK="false"; RAW="false"; CONV="false"; CTX=""; PROMPT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -s|--system) SYSTEM="${2:-}"; shift 2;;
     -m|--model)  MODEL="${2:-}"; shift 2;;
     -t|--temp)   TEMP="${2:-}"; shift 2;;
+    -c|--conventions) CONV="true"; shift;;
+    --ctx)       CTX="${2:-}"; shift 2;;
     --json)      FORMAT="json"; shift;;
     --think)     THINK="true"; shift;;
     --raw)       RAW="true"; shift;;
-    -h|--help)   sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help)   sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     --) shift; PROMPT="${PROMPT:+$PROMPT }$*"; break;;
     *)  PROMPT="${PROMPT:+$PROMPT }$1"; shift;;
   esac
@@ -43,8 +49,16 @@ done
 if [[ -z "$PROMPT" && ! -t 0 ]]; then PROMPT="$(cat)"; fi
 if [[ -z "$PROMPT" ]]; then echo "ollama.sh: no prompt (pass as arg or via stdin)" >&2; exit 2; fi
 
+# -c/--conventions: prepend the repo's CONVENTIONS.md so the model gets the bridge
+# pattern + D1 idioms it otherwise gets wrong. Resolved relative to this script.
+if [[ "$CONV" == "true" ]]; then
+  CONV_FILE="$(cd "$(dirname "$0")/.." && pwd)/CONVENTIONS.md"
+  if [[ -f "$CONV_FILE" ]]; then PROMPT="$(cat "$CONV_FILE")"$'\n\n'"$PROMPT"
+  else echo "ollama.sh: --conventions set but $CONV_FILE not found" >&2; fi
+fi
+
 export OLLAMA_HOST="${OLLAMA_HOST:-http://192.168.1.100:11434}"
-export MODEL SYSTEM TEMP FORMAT THINK RAW PROMPT
+export MODEL SYSTEM TEMP FORMAT THINK RAW CTX PROMPT
 python3 - <<'PY'
 import os, sys, json, time, urllib.request, urllib.error
 host = os.environ['OLLAMA_HOST'].rstrip('/')
@@ -52,11 +66,14 @@ msgs = []
 if os.environ.get('SYSTEM'):
     msgs.append({'role': 'system', 'content': os.environ['SYSTEM']})
 msgs.append({'role': 'user', 'content': os.environ['PROMPT']})
+opts = {'temperature': float(os.environ['TEMP'])}
+if os.environ.get('CTX'):
+    opts['num_ctx'] = int(os.environ['CTX'])  # override the model's Modelfile window
 body = {
     'model': os.environ['MODEL'],
     'think': os.environ['THINK'] == 'true',
     'stream': False,
-    'options': {'temperature': float(os.environ['TEMP'])},
+    'options': opts,
     'messages': msgs,
 }
 if os.environ.get('FORMAT') == 'json':
