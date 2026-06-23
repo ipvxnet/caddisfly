@@ -293,8 +293,8 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
           ? '<select onchange="qOrder('+id+','+q.id+',this)">'+QFUL.map(function(s){return '<option'+(q.fulfillment===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'
           : '<span class="muted">—</span>';
         var emailLine=q.contact_email
-          ? '<div class="q-sub">'+qesc(q.contact_email)+' <a class="q-pen" title="Edit email" onclick="qEditEmail('+id+','+q.id+',\''+qesc(q.contact_email)+'\')">✎</a></div>'
-          : '<div class="q-sub"><a class="q-pen" onclick="qEditEmail('+id+','+q.id+',\'\')">+ add email</a></div>';
+          ? '<div class="q-sub">'+qesc(q.contact_email)+' <a class="q-pen" title="Edit email" data-email="'+qesc(q.contact_email)+'" onclick="qEditEmail('+id+','+q.id+',this)">✎</a></div>'
+          : '<div class="q-sub"><a class="q-pen" data-email="" onclick="qEditEmail('+id+','+q.id+',this)">+ add email</a></div>';
         var sub=emailLine+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
         var sentState=q.viewed_at?'<span class="q-sub" title="Viewed">👁 viewed</span>':(q.sent_at?'<span class="q-sub">✓ sent</span>':'');
         var revs=[]; try{ revs=JSON.parse(q.reviews_json||'[]'); if(!Array.isArray(revs)) revs=[]; }catch(e){}
@@ -401,8 +401,9 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       }catch(e){ alert(e.message); }
       btn.disabled=false; btn.textContent=t;
     }
-    async function qEditEmail(id, qid, current){
-      var v=prompt('Customer email:', current || ''); if(v==null) return;
+    async function qEditEmail(id, qid, el){
+      var current=(el && el.getAttribute('data-email')) || '';
+      var v=prompt('Customer email:', current); if(v==null) return;
       v=v.trim(); if(!v){ alert('Email is required.'); return; }
       try{ await api('PUT','/'+id+'/quotes/'+qid+'/email',{ email:v }); loadQuotes(id); }
       catch(e){ alert(e.message); }
