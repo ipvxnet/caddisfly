@@ -67,7 +67,9 @@ export async function handleLeadsEnrich(ctx) {
 // ---- contact-info extraction (browser-rendered) ---------------------------
 const EMAIL_RE = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g;
 const EMAIL_JUNK = /(example\.|sentry|wixpress|\.png|\.jpg|@sentry|godaddy|@2x|no-?reply|@.*\.wix)/i;
-const PHONE_RE = /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/g;
+// Require real phone formatting (parens or separators) — a bare 10-digit run is
+// usually a ZIP/id concatenation, not a phone.
+const PHONE_RE = /\(\d{3}\)\s*\d{3}[\s.\-]\d{4}|\b\d{3}[\s.\-]\d{3}[\s.\-]\d{4}\b/g;
 
 function pickEmail(html) {
   const mailto = html.match(/mailto:([^"'?>\s]+)/i);
