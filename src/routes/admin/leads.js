@@ -101,6 +101,41 @@ export async function handleAdminLeads(ctx) {
     <tr class="qdrawer" id="qd-${l.id}" style="display:none"><td colspan="9"><div class="qpanel" data-loaded="0">Loading…</div></td></tr>`;
   }).join('');
 
+  // How-to panel: a runnable lead-gen reference. Origin + ingest token are read at
+  // render so the values match THIS environment (prod vs preview). Admin-gated page;
+  // the token is masked on screen and only handed out via the Copy button.
+  const origin = url.origin;
+  const ingestToken = env.LEADS_INGEST_TOKEN || '';
+  const tokMask = ingestToken ? `${ingestToken.slice(0, 9)}…${ingestToken.slice(-4)}` : '«LEADS_INGEST_TOKEN not set on this env»';
+  const setupBlock = `export CADDISFLY_BASE="${origin}"\nexport LEADS_INGEST_TOKEN="${ingestToken}"\nexport GOOGLE_PLACES_API_KEY="<your Google Places key>"`;
+  const guide = `
+    <details class="lguide">
+      <summary>▸ How to run the lead-gen script (scripts/lead-gen.py)</summary>
+      <div class="lguide-body">
+        <div class="lguide-row"><strong>1 · Set up your shell</strong> <span class="muted">— values match this environment (${esc(origin)})</span>
+          <button class="lbtn" type="button" onclick="copySetup(this)">📋 Copy setup</button></div>
+        <pre><code>export CADDISFLY_BASE="${esc(origin)}"
+export LEADS_INGEST_TOKEN="${esc(tokMask)}"   # full value via 📋 Copy setup
+export GOOGLE_PLACES_API_KEY="&lt;your Google Places key&gt;"   # only for the Places search modes</code></pre>
+        <div class="lguide-row"><strong>2 · Run it</strong></div>
+        <pre><code># Collect leads via Google Places (defaults: Orlando + Melbourne FL, target verticals); --max-leads caps the priced calls
+python3 scripts/lead-gen.py --max-leads 50
+
+# Preview only — collect + print, post nothing
+python3 scripts/lead-gen.py --max-leads 20 --dry-run
+
+# Narrow the search
+python3 scripts/lead-gen.py --verticals "restaurant,dentist" --areas "Orlando, FL"
+
+# Scrape ONE specific site — no Google Places (free, deterministic)
+python3 scripts/lead-gen.py --url "https://example.com" --business "Example Co"
+
+# 2nd pass — fill emails for leads that have a site but no email (no Places calls)
+python3 scripts/lead-gen.py --enrich-emails</code></pre>
+        <p class="lguide-note">Already-collected businesses are skipped automatically (<code>--no-skip</code> to override). <code>GOOGLE_PLACES_API_KEY</code> is only needed for the Places search modes — <code>--url</code> and <code>--enrich-emails</code> don't use it. Keep sending <strong>manually</strong> (CAN-SPAM).</p>
+      </div>
+    </details>`;
+
   const inner = `
   <div class="lwrap">
     <div class="lhead">
@@ -113,6 +148,8 @@ export async function handleAdminLeads(ctx) {
       <span class="lstat ghost">No site<b>${stats.no_site || 0}</b></span>
       <span class="lstat ghost">Has email<b>${stats.with_email || 0}</b></span>
     </div>
+
+    ${guide}
 
     <form class="lfilters" method="get">
       <input name="q" value="${esc(filt.q)}" placeholder="Search business / site / email / phone…">
@@ -139,6 +176,12 @@ export async function handleAdminLeads(ctx) {
       var d = await r.json().catch(function(){return {};});
       if(!r.ok || d.success===false) throw new Error((d&&d.error)||'Failed');
       return d;
+    }
+    var SETUP_CMD = ${JSON.stringify(setupBlock)};
+    function copySetup(btn){
+      navigator.clipboard.writeText(SETUP_CMD).then(function(){
+        var t=btn.textContent; btn.textContent='✓ Copied'; setTimeout(function(){ btn.textContent=t; }, 1300);
+      }).catch(function(){ alert('Copy failed — select the text manually.'); });
     }
     function toggleAdd(){ var f=document.getElementById('laddform'); f.style.display = f.style.display==='flex'?'none':'flex'; if(f.style.display==='flex') document.getElementById('a-biz').focus(); }
     async function save(btn){
@@ -242,6 +285,16 @@ export async function handleAdminLeads(ctx) {
   .l-link{color:#5a3da8;text-decoration:none;font-weight:600}.l-nosite{color:#15803d;font-weight:800;font-size:.78rem;background:#dcfce7;border-radius:6px;padding:.1rem .4rem;white-space:nowrap}
   .l-notes{width:100%;min-width:150px}.l-meta{color:#4a5568;font-size:.8rem}
   .lempty{text-align:center;color:#94a3b8;border:2px dashed #e2e8f0;border-radius:14px;padding:3rem 1.5rem;background:#fff}
+  .lguide{background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:1rem;font-size:.85rem}
+  .lguide>summary{cursor:pointer;padding:.7rem 1rem;font-weight:700;color:#5a3da8;list-style:none}
+  .lguide>summary::-webkit-details-marker{display:none}
+  .lguide[open]>summary{border-bottom:1px solid #edf2f7}
+  .lguide-body{padding:.6rem 1rem 1rem}
+  .lguide-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.7rem 0 .3rem;color:#2d3748}
+  .lguide pre{background:#0f172a;color:#e2e8f0;border-radius:9px;padding:.7rem .9rem;overflow-x:auto;font-size:.79rem;line-height:1.5;margin:.2rem 0}
+  .lguide code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .lguide-note{color:#64748b;font-size:.8rem;margin-top:.7rem;line-height:1.5}
+  .lguide-note code{background:#f1f5f9;color:#334155;padding:.05rem .3rem;border-radius:4px}
   .qdrawer>td{background:#faf9ff;padding:0}
   .qpanel{padding:1rem 1.2rem}
   .qtable{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:.8rem}
