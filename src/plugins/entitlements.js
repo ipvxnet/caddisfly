@@ -4,7 +4,7 @@
 
 import { getBillingAccount } from '../db/billing.js';
 import { getAccountPlugin, isEntitlementValid } from '../db/account-plugins.js';
-import { PLUGINS, pluginForSectionType } from './manifest.js';
+import { PLUGINS, pluginForSectionType, bundlesIncluding } from './manifest.js';
 import { redirect, jsonResponse } from '../utils/response.js';
 
 // Subscription statuses that mean the base plan is NOT usable. A null status
@@ -27,8 +27,16 @@ export async function hasPlugin(env, email, pluginKey) {
   if (!email || !PLUGINS[pluginKey]) return false;
   const acct = await getBillingAccount(env.DB, email);
   if (!hasBasePlan(acct)) return false;
+  const now = Math.floor(Date.now() / 1000);
   const row = await getAccountPlugin(env.DB, email, pluginKey);
-  return isEntitlementValid(row, Math.floor(Date.now() / 1000));
+  if (isEntitlementValid(row, now)) return true;
+  // A bundle that includes this plugin entitles it too (one bundle row covers
+  // several plugins — see BUNDLES.all_access).
+  for (const b of bundlesIncluding(pluginKey)) {
+    const brow = await getAccountPlugin(env.DB, email, b.key);
+    if (isEntitlementValid(brow, now)) return true;
+  }
+  return false;
 }
 
 /**

@@ -416,6 +416,7 @@ export const es = {
     vs_small: '— mientras que los grandes te dan <strong>2 GB por $17</strong>. El almacenamiento apenas nos cuesta nada, así que tampoco te cobramos mucho por él. Así de simple.',
     note: 'Todos los planes incluyen el creador con IA, sitios de varias páginas, edición en vivo, temas y publicación con un clic. Cancela cuando quieras.',
     compare_link: 'Mira el cara a cara con Wix →',
+    plugins_note: '¿Necesitas más? Plugins opcionales — Catálogo, CRM y Tienda Avanzada — $5/mes cada uno, o los tres por $10/mes →',
     speed_link: 'Mira lo rápidos que son nuestros sitios →',
     faq_title: 'Preguntas',
     cta_title: 'Empieza a crear — gratis', cta_sub: 'Tu primer sitio está a un minuto.', cta_btn: '✨ Crear con IA',
@@ -424,10 +425,10 @@ export const es = {
     pro_name: 'Pro', pro_tag: 'Para autónomos y negocios en crecimiento.', pro_cta: 'Elegir Pro',
     agency_name: 'Agency', agency_tag: 'Para estudios que crean muchos sitios.', agency_cta: 'Elegir Agency',
     features: {
-      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', '📅 Motor de reservas (1 servicio)',, 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
-      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (10 productos)', '📅 Reservas — 5 servicios + <strong>💳 reservas de pago</strong>',, '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '✨ Generador de logos con IA', '5 versiones guardadas', 'Soporte por correo'],
-      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — 50 productos', '📅 Reservas — 15 servicios',, '5 dominios propios', 'Generación de imágenes prioritaria', '✨ Generador de logos con IA', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
-      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', '📅 Reservas ilimitadas',, 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
+      free: ['1 sitio publicado', '1 GB de almacenamiento', '50 créditos de IA / mes', 'Subdominio caddisfly.app', 'Creador con IA + 1 renovación', 'Blog con IA + bandeja de contacto', '📅 Motor de reservas (1 servicio)', 'Exportación HTML y 2 versiones guardadas', 'Soporte de la comunidad'],
+      starter: ['3 sitios publicados', '<strong>25 GB</strong> de almacenamiento', '500 créditos de IA / mes', '<strong>🛍 Tienda online</strong> — vende con tu propio Stripe (<strong>250 productos</strong>)', '📅 Reservas — <strong>50 servicios</strong> + <strong>💳 reservas de pago</strong>', '1 dominio propio', 'Quita “Built with Caddisfly”', 'Generación de imágenes con IA', '✨ Generador de logos con IA', '5 versiones guardadas', 'Soporte por correo'],
+      pro: ['15 sitios publicados', '<strong>100 GB</strong> de almacenamiento', '2.000 créditos de IA / mes', '🛍 Tienda online — <strong>1.000 productos</strong>', '📅 Reservas — <strong>200 servicios</strong>', '5 dominios propios', 'Generación de imágenes prioritaria', '✨ Generador de logos con IA', '10 versiones guardadas', 'Todo lo de Starter', 'Soporte prioritario'],
+      agency: ['Sitios ilimitados', '<strong>500 GB+</strong> de almacenamiento', '8.000 créditos de IA / mes', '🛍 Tienda online — productos ilimitados', '📅 Reservas ilimitadas', 'Dominios propios ilimitados', 'Renovación masiva', '30 versiones guardadas', 'Todo lo de Pro', 'Soporte prioritario+'],
     },
     faqs: [
       ['¿Qué es un “crédito de IA”?', 'Los créditos cubren el trabajo de IA detrás de tu sitio. Aprox.: crear un sitio completo ≈ 20 créditos, una edición de texto con IA ≈ 1, una imagen generada con IA ≈ 5, renovar un sitio existente ≈ 10. Tu asignación mensual se reinicia cada ciclo.'],
