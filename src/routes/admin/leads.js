@@ -9,6 +9,7 @@ import {
   bulkInsertLeads, listLeads, leadStats, leadFacets, updateLead, deleteLead, addManualLead, LEAD_STATUSES,
   leadsNeedingEmail, setLeadEmails, existingPlaceIds,
 } from '../../db/leads.js';
+import { zyteBrowserHtml } from '../../utils/zyte-scraper.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -61,6 +62,51 @@ export async function handleLeadsEnrich(ctx) {
   if (!updates.length) return json({ success: false, error: 'No updates provided' }, 400);
   const updated = await setLeadEmails(ctx.env.DB, updates);
   return json({ success: true, updated, received: updates.length });
+}
+
+// ---- contact-info extraction (browser-rendered) ---------------------------
+const EMAIL_RE = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g;
+const EMAIL_JUNK = /(example\.|sentry|wixpress|\.png|\.jpg|@sentry|godaddy|@2x|no-?reply|@.*\.wix)/i;
+// Require real phone formatting (parens or separators) — a bare 10-digit run is
+// usually a ZIP/id concatenation, not a phone.
+const PHONE_RE = /\(\d{3}\)\s*\d{3}[\s.\-]\d{4}|\b\d{3}[\s.\-]\d{3}[\s.\-]\d{4}\b/g;
+
+function pickEmail(html) {
+  const mailto = html.match(/mailto:([^"'?>\s]+)/i);
+  if (mailto && !EMAIL_JUNK.test(mailto[1]) && mailto[1].length < 80) return mailto[1].toLowerCase();
+  for (const m of html.match(EMAIL_RE) || []) {
+    if (!EMAIL_JUNK.test(m) && m.length < 80) return m.toLowerCase();
+  }
+  return '';
+}
+function pickPhone(html) {
+  const tel = html.match(/tel:([+\d][\d\s().\-]{6,})/i);
+  if (tel && tel[1].replace(/\D/g, '').length >= 10) return tel[1].trim();
+  const m = (html.match(PHONE_RE) || []).find((p) => p.replace(/\D/g, '').length === 10);
+  return m ? m.trim() : '';
+}
+
+/** POST /api/admin/leads/scrape — token-auth; { url }. Browser-renders the page
+ *  via Zyte (handles JS-rendered builder sites like GoDaddy/Wix/Duda that a
+ *  static fetch can't read) and extracts email + phone. Falls back to a static
+ *  fetch when Zyte is off/unavailable. */
+export async function handleLeadsScrape(ctx) {
+  if (!ingestTokenOk(ctx)) return json({ success: false, error: 'Unauthorized' }, 401);
+  const body = await ctx.request.json().catch(() => ({}));
+  let url = (body.url || '').trim();
+  if (!url) return json({ success: false, error: 'No url provided' }, 400);
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+  let html = await zyteBrowserHtml(ctx.env, url);
+  let rendered = !!html;
+  if (!html) {
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/124 Safari/537.36' } });
+      if (r.ok) html = await r.text();
+    } catch { /* static fallback failed too */ }
+  }
+  if (!html) return json({ success: true, email: '', phone: '', rendered });
+  return json({ success: true, email: pickEmail(html), phone: pickPhone(html), rendered });
 }
 
 // ---- admin UI (session + admin gated in index.js) -------------------------

@@ -111,17 +111,17 @@ def domain_name(url):
     return host[4:] if host.startswith("www.") else host
 
 
-def url_to_lead(url, args):
-    """Build ONE lead from a specific URL (no Google Places). Scrapes the site for
-    an email unless --no-email. has_site=1; no place_id (so it won't dedup — a
-    forced URL is intentional)."""
+def url_to_lead(url, args, email="", phone=""):
+    """Build ONE lead from a specific URL (no Google Places). email/phone come from
+    the caller (browser-rendered scrape). has_site=1; no place_id (so a forced URL
+    won't dedup — intentional)."""
     if "://" not in url:
         url = "https://" + url
     return {
         "business": args.business or domain_name(url),
         "website": url,
-        "phone": "",
-        "email": "" if args.no_email else scrape_email(url),
+        "phone": phone,
+        "email": email,
         "address": "",
         "area": args.area,
         "vertical": args.vertical,
@@ -142,8 +142,21 @@ def caddisfly_post(path, payload):
     req = urllib.request.Request(BASE + path, data=json.dumps(payload).encode(), headers={
         "Content-Type": "application/json", "Authorization": "Bearer " + INGEST_TOKEN, "User-Agent": UA,
     })
-    with urllib.request.urlopen(req, timeout=30) as r:
+    with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read())
+
+
+def remote_scrape(url):
+    """Ask the Worker to browser-render the page (Zyte) and extract email + phone.
+    This is what makes --url work on JS-rendered builder sites (GoDaddy/Wix/Duda)
+    that a local static fetch can't read. Needs the ingest token. Returns
+    (email, phone, rendered)."""
+    try:
+        d = caddisfly_post("/api/admin/leads/scrape", {"url": url})
+        return d.get("email", ""), d.get("phone", ""), bool(d.get("rendered"))
+    except Exception as e:
+        print(f"  ! browser-render scrape failed ({e}); falling back to static", file=sys.stderr)
+        return "", "", False
 
 
 def enrich_emails(limit):
@@ -198,14 +211,24 @@ def main():
         enrich_emails(args.max_leads)
         return
 
-    # Single-URL pass: scrape one specific site directly — no Google Places (free,
-    # deterministic). Needs only the ingest token.
+    # Single-URL pass: scrape one specific site directly — no Google Places.
+    # Browser-renders via the Worker (Zyte) so JS-rendered builder sites work,
+    # with a local static fallback. Needs the ingest token (for the render call).
     if args.url:
         if not args.dry_run and not INGEST_TOKEN:
             sys.exit("Set LEADS_INGEST_TOKEN (or use --dry-run)")
-        lead = url_to_lead(args.url, args)
-        print(f"Scraped {lead['website']} → {lead['business']}  "
-              f"[{'email ' + lead['email'] if lead['email'] else 'no email found'}]")
+        url = args.url if "://" in args.url else "https://" + args.url
+        email, phone = "", ""
+        if not args.no_email:
+            if INGEST_TOKEN:
+                email, phone, rendered = remote_scrape(url)
+                if rendered:
+                    print("  (browser-rendered via Zyte)")
+            if not email:               # static fallback (or when no token set)
+                email = scrape_email(url)
+        lead = url_to_lead(url, args, email=email, phone=phone)
+        found = [("email " + email) if email else "no email"] + ([("phone " + phone)] if phone else [])
+        print(f"Scraped {lead['website']} → {lead['business']}  [{', '.join(found)}]")
         if args.dry_run:
             print(json.dumps(lead, indent=2))
             print("(dry-run — nothing posted)")
