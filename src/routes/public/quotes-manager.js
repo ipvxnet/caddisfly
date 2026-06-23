@@ -18,7 +18,8 @@ const QT = {
     th: { quote: 'Quote', status: 'Status', total: 'Total', items: 'Items', order: 'Order', valid: 'Valid until', created: 'Created' },
     status: { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' },
     fulfill: { unfulfilled: 'Unfulfilled', fulfilled: 'Fulfilled', cancelled: 'Cancelled' },
-    f: { email: 'Contact email (required)', title: 'Title (e.g. Kitchen remodel)', valid: 'Valid until', desc: 'Line item description', qty: 'Qty', price: 'Unit price ($)', addLine: '＋ Add line', create: 'Create quote' },
+    f: { email: 'Contact email (required)', title: 'Title (e.g. Kitchen remodel)', valid: 'Valid until', desc: 'Line item description', qty: 'Qty', price: 'Unit price ($)', addLine: '＋ Add line', create: 'Create quote', notes: 'Comments / notes (optional)', save: 'Save changes', cancel: 'Cancel' },
+    edit: 'Edit', reviewPrompt: 'Add an internal review comment (not shown to the customer):', reviewTip: 'Add an internal review comment',
     a: { noItems: 'Add at least one line item with a description.', delConfirm: 'Delete this quote? This cannot be undone.', delErr: 'Could not delete the quote.', createErr: 'Could not create the quote.', statusErr: 'Could not update the status.', fulfillErr: 'Could not update the order status.', sendErr: 'Could not send the quote.', sentOk: 'Quote sent ✓', noEmail: 'Add a customer email to this quote first.' },
     tpl: { btn: '✎ Template', intro: 'Intro line', thanks: 'Thank-you message', terms: 'Terms / footer', accent: 'Accent color', logo: 'Logo URL override', save: 'Save template', saved: 'Saved ✓', hint: 'Leave blank to use your site branding and defaults.' },
   },
@@ -31,7 +32,8 @@ const QT = {
     th: { quote: 'Cotización', status: 'Estado', total: 'Total', items: 'Artículos', order: 'Pedido', valid: 'Válida hasta', created: 'Creada' },
     status: { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada', expired: 'Caducada' },
     fulfill: { unfulfilled: 'Pendiente', fulfilled: 'Completada', cancelled: 'Cancelada' },
-    f: { email: 'Correo del contacto (obligatorio)', title: 'Título (ej. Reforma de cocina)', valid: 'Válida hasta', desc: 'Descripción del artículo', qty: 'Cant.', price: 'Precio unitario ($)', addLine: '＋ Agregar artículo', create: 'Crear cotización' },
+    f: { email: 'Correo del contacto (obligatorio)', title: 'Título (ej. Reforma de cocina)', valid: 'Válida hasta', desc: 'Descripción del artículo', qty: 'Cant.', price: 'Precio unitario ($)', addLine: '＋ Agregar artículo', create: 'Crear cotización', notes: 'Comentarios / notas (opcional)', save: 'Guardar cambios', cancel: 'Cancelar' },
+    edit: 'Editar', reviewPrompt: 'Agrega un comentario de revisión interno (no se muestra al cliente):', reviewTip: 'Agregar un comentario de revisión interno',
     a: { noItems: 'Agrega al menos un artículo con una descripción.', delConfirm: '¿Eliminar esta cotización? Esta acción no se puede deshacer.', delErr: 'No se pudo eliminar la cotización.', createErr: 'No se pudo crear la cotización.', statusErr: 'No se pudo actualizar el estado.', fulfillErr: 'No se pudo actualizar el estado del pedido.', sendErr: 'No se pudo enviar la cotización.', sentOk: 'Cotización enviada ✓', noEmail: 'Agrega el correo del cliente a esta cotización primero.' },
     tpl: { btn: '✎ Plantilla', intro: 'Línea de introducción', thanks: 'Mensaje de agradecimiento', terms: 'Términos / pie', accent: 'Color de acento', logo: 'URL del logo (reemplazo)', save: 'Guardar plantilla', saved: 'Guardado ✓', hint: 'Déjalo en blanco para usar la marca y los valores de tu sitio.' },
   },
@@ -44,7 +46,8 @@ const QT = {
     th: { quote: 'Orçamento', status: 'Status', total: 'Total', items: 'Itens', order: 'Pedido', valid: 'Válido até', created: 'Criado' },
     status: { draft: 'Rascunho', sent: 'Enviado', accepted: 'Aceito', rejected: 'Recusado', expired: 'Expirado' },
     fulfill: { unfulfilled: 'Pendente', fulfilled: 'Concluído', cancelled: 'Cancelado' },
-    f: { email: 'E-mail do contato (obrigatório)', title: 'Título (ex. Reforma da cozinha)', valid: 'Válido até', desc: 'Descrição do item', qty: 'Qtd.', price: 'Preço unitário ($)', addLine: '＋ Adicionar item', create: 'Criar orçamento' },
+    f: { email: 'E-mail do contato (obrigatório)', title: 'Título (ex. Reforma da cozinha)', valid: 'Válido até', desc: 'Descrição do item', qty: 'Qtd.', price: 'Preço unitário ($)', addLine: '＋ Adicionar item', create: 'Criar orçamento', notes: 'Comentários / notas (opcional)', save: 'Salvar alterações', cancel: 'Cancelar' },
+    edit: 'Editar', reviewPrompt: 'Adicione um comentário de revisão interno (não mostrado ao cliente):', reviewTip: 'Adicionar um comentário de revisão interno',
     a: { noItems: 'Adicione pelo menos um item com uma descrição.', delConfirm: 'Excluir este orçamento? Esta ação não pode ser desfeita.', delErr: 'Não foi possível excluir o orçamento.', createErr: 'Não foi possível criar o orçamento.', statusErr: 'Não foi possível atualizar o status.', fulfillErr: 'Não foi possível atualizar o status do pedido.', sendErr: 'Não foi possível enviar o orçamento.', sentOk: 'Orçamento enviado ✓', noEmail: 'Adicione o e-mail do cliente a este orçamento primeiro.' },
     tpl: { btn: '✎ Modelo', intro: 'Linha de introdução', thanks: 'Mensagem de agradecimento', terms: 'Termos / rodapé', accent: 'Cor de destaque', logo: 'URL do logo (substituição)', save: 'Salvar modelo', saved: 'Salvo ✓', hint: 'Deixe em branco para usar a marca e os padrões do seu site.' },
   },
@@ -71,6 +74,8 @@ export async function handleQuotesManager(ctx) {
       ? `<select class="q-fulfill" onchange="updateFulfillment(this)">${FULFILLMENTS.map((s) => `<option value="${s}"${q.fulfillment === s ? ' selected' : ''}>${tr.fulfill[s]}</option>`).join('')}</select>`
       : '<span class="muted">—</span>';
     const sentBadge = q.viewed_at ? `<span class="q-sent">👁 ${tr.viewed}</span>` : (q.sent_at ? `<span class="q-sent">✓ ${tr.sent}</span>` : '');
+    const reviews = (() => { try { const a = JSON.parse(q.reviews_json || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } })();
+    const revTip = reviews.length ? reviews.map((rv, i) => `#${i + 1} ${fmtDate(rv.at)} — ${rv.body || ''}`).join('\n') : tr.reviewTip;
     const emailLine = q.contact_email
       ? `<div class="q-email">${esc(q.contact_email)} <a class="q-pen" title="${tr.editEmail}" onclick="editEmail(this, '${esc(q.contact_email)}')">✎</a></div>`
       : `<div class="q-email"><a class="q-pen" onclick="editEmail(this, '')">${tr.addEmail}</a></div>`;
@@ -83,7 +88,9 @@ export async function handleQuotesManager(ctx) {
       <td>${fmtDate(q.valid_until)}</td>
       <td>${fmtDate(q.created_at)}</td>
       <td class="q-actions">
-        <button class="btn ghost q-prev" type="button" onclick="previewQuote(this)" title="${tr.preview}">👁 ${tr.preview}</button>
+        <button class="btn ghost q-editbtn" type="button" onclick="editQuote(this)" title="${tr.edit}">✏️</button>
+        <button class="btn ghost q-revbtn" type="button" onclick="addReview(this)" title="${esc(revTip)}">💬${reviews.length ? ' ' + reviews.length : ''}</button>
+        <button class="btn ghost q-prev" type="button" onclick="previewQuote(this)" title="${tr.preview}">👁</button>
         <button class="btn ghost q-send" type="button" onclick="sendQuote(this)">✉ ${tr.send}</button>
         ${q.public_token ? `<a class="btn ghost" href="/q/${esc(q.public_token)}" target="_blank" rel="noopener" title="Open hosted quote">↗</a>` : ''}
         <button class="btn ghost q-del" type="button" onclick="deleteQuote(this)">${tr.del}</button>
@@ -133,9 +140,11 @@ export async function handleQuotesManager(ctx) {
           <button class="btn ghost qi-rm" type="button" onclick="rmItem(this)">✕</button>
         </div>
       </div>
+      <textarea id="q-notes" rows="2" placeholder="${tr.f.notes}"></textarea>
       <div class="q-addactions">
         <button class="btn ghost" type="button" onclick="addItem()">${tr.f.addLine}</button>
-        <button class="btn" type="button" onclick="submitQuote(this)">${tr.f.create}</button>
+        <button class="btn q-save" type="button" onclick="submitQuote(this)">${tr.f.create}</button>
+        <button class="btn ghost q-canceledit" type="button" style="display:none" onclick="cancelEdit()">${tr.f.cancel}</button>
       </div>
     </div>
 
@@ -178,6 +187,8 @@ export async function handleQuotesManager(ctx) {
       }
       var T = ${JSON.stringify(tr.a)};
       var L = ${JSON.stringify({ emailPrompt: tr.emailPrompt, emailRequired: tr.emailRequired, sendConfirm: tr.sendConfirm })};
+      var FB = ${JSON.stringify({ create: tr.f.create, save: tr.f.save })}, RVP = ${JSON.stringify(tr.reviewPrompt)};
+      var editingId = null;
       var DEL_LABEL = ${JSON.stringify(tr.del)}, ITEM = ${JSON.stringify({ desc: tr.f.desc, qty: tr.f.qty, price: tr.f.price })};
       function toggleAdd(){ var f = document.getElementById('q-addform'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; if (f.style.display==='block') document.getElementById('q-email').focus(); }
       function addItem(){
@@ -192,8 +203,6 @@ export async function handleQuotesManager(ctx) {
       function rmItem(btn){ var rows = document.querySelectorAll('.q-item'); if (rows.length > 1) btn.closest('.q-item').remove(); }
       function dateToTs(v){ if (!v) return null; var ms = Date.parse(v + 'T00:00:00Z'); return isNaN(ms) ? null : Math.floor(ms/1000); }
       async function submitQuote(btn){
-        var email = document.getElementById('q-email').value.trim();
-        if (!email) { document.getElementById('q-email').focus(); return; }
         var items = [];
         document.querySelectorAll('.q-item').forEach(function(row){
           var desc = row.querySelector('.qi-desc').value.trim();
@@ -202,19 +211,72 @@ export async function handleQuotesManager(ctx) {
           if (desc) items.push({ description: desc, qty: (qty > 0 ? qty : 1), unit_price_cents: Math.round((price > 0 ? price : 0) * 100) });
         });
         if (!items.length) { alert(T.noItems); return; }
-        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
         var payload = {
-          email: email, title: document.getElementById('q-title').value.trim(),
+          title: document.getElementById('q-title').value.trim(),
           currency: document.getElementById('q-currency').value, valid_until: dateToTs(document.getElementById('q-valid').value),
-          items: items
+          notes: document.getElementById('q-notes').value.trim(), items: items
         };
+        btn.disabled = true; var old = btn.textContent; btn.textContent = '…';
         try {
-          var res = await fetch(BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-          var d = await res.json();
+          var res, d;
+          if (editingId) {
+            res = await fetch(BASE + '/' + encodeURIComponent(editingId), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          } else {
+            var email = document.getElementById('q-email').value.trim();
+            if (!email) { document.getElementById('q-email').focus(); btn.disabled=false; btn.textContent=old; return; }
+            payload.email = email;
+            res = await fetch(BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          }
+          d = await res.json();
           if (d && d.success) { location.reload(); return; }
           alert((d && d.error) || T.createErr);
         } catch(e){ alert(T.createErr); }
         btn.disabled = false; btn.textContent = old;
+      }
+      function addItemVals(desc, qty, price){
+        addItem();
+        var rows = document.querySelectorAll('.q-item'); var row = rows[rows.length - 1];
+        row.querySelector('.qi-desc').value = desc || '';
+        row.querySelector('.qi-qty').value = qty || 1;
+        row.querySelector('.qi-price').value = (price || 0);
+      }
+      async function editQuote(btn){
+        var id = btn.closest('.quote-row').getAttribute('data-id');
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id)); var d = await res.json();
+          if (!d || !d.quote) { alert(T.createErr); return; }
+          var q = d.quote, f = document.getElementById('q-addform');
+          f.style.display = 'block'; f.classList.add('editing');
+          document.getElementById('q-title').value = q.title || '';
+          document.getElementById('q-currency').value = q.currency || 'USD';
+          document.getElementById('q-valid').value = q.valid_until ? new Date(q.valid_until * 1000).toISOString().slice(0,10) : '';
+          document.getElementById('q-notes').value = q.notes || '';
+          var box = document.getElementById('q-items'); box.innerHTML = '';
+          (q.items || []).forEach(function(it){ addItemVals(it.description, it.qty, it.unit_price_cents / 100); });
+          if (!(q.items || []).length) addItem();
+          editingId = id;
+          document.querySelector('.q-save').textContent = FB.save;
+          document.querySelector('.q-canceledit').style.display = '';
+          document.getElementById('q-title').scrollIntoView({ block:'nearest' }); document.getElementById('q-title').focus();
+        } catch(e){ alert(T.createErr); }
+      }
+      function cancelEdit(){
+        editingId = null;
+        var f = document.getElementById('q-addform'); f.classList.remove('editing');
+        document.querySelector('.q-save').textContent = FB.create;
+        document.querySelector('.q-canceledit').style.display = 'none';
+        document.getElementById('q-title').value=''; document.getElementById('q-notes').value=''; document.getElementById('q-valid').value='';
+        var box = document.getElementById('q-items'); box.innerHTML=''; addItem();
+      }
+      async function addReview(btn){
+        var id = btn.closest('.quote-row').getAttribute('data-id');
+        var v = prompt(RVP); if (v == null) return; v = v.trim(); if (!v) return;
+        try {
+          var res = await fetch(BASE + '/' + encodeURIComponent(id) + '/review', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ body: v }) });
+          var d = await res.json();
+          if (d && d.success) { location.reload(); return; }
+          alert((d && d.error) || 'Error');
+        } catch(e){ alert('Error'); }
       }
       async function updateStatus(sel){
         var id = sel.closest('.quote-row').getAttribute('data-id');
@@ -306,6 +368,9 @@ export async function handleQuotesManager(ctx) {
     .q-title{font-weight:700;color:var(--ink)}
     .q-email{color:var(--muted);font-size:.82rem}
     .q-pen{color:var(--p2);cursor:pointer;text-decoration:none;margin-left:.25rem;font-size:.85rem}.q-pen:hover{text-decoration:underline}
+    .crm-addform.editing #q-email{display:none}
+    #q-notes{width:100%;padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.88rem;margin-top:.7rem;resize:vertical}
+    .q-actions .btn{font-size:.8rem;padding:.4rem .55rem}
     .q-total{font-weight:700;color:var(--p2)}
     .q-status,.q-fulfill{padding:.4rem .55rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.85rem;background:#fff}
     .q-del{font-size:.8rem;padding:.4rem .7rem;white-space:nowrap}

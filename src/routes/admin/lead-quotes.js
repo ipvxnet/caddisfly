@@ -5,7 +5,7 @@
 
 import { getLead } from '../../db/leads.js';
 import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
-  ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail } from '../../db/crm-quotes.js';
+  ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail, updateQuote, addQuoteReview } from '../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../utils/email.js';
 import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../db/quote-templates.js';
 
@@ -147,6 +147,42 @@ export async function handleLeadQuoteSend(ctx) {
     return json({ success: true, sent, view_url: viewUrl, ...(sent ? {} : { warning: 'Email not configured — share the link.' }) });
   } catch (e) {
     return json({ success: true, sent: false, view_url: viewUrl, warning: 'Email failed: ' + e.message });
+  }
+}
+
+/** PUT /api/admin/leads/:id/quotes/:quote_id — edit the quote content. */
+export async function handleLeadQuoteUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const owner = leadOwner(params);
+  if (!owner) return json({ success: false, error: 'Invalid lead id' }, 400);
+  const qid = Number(params.quote_id);
+  if (!Number.isInteger(qid)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const ok = await updateQuote(env.DB, owner, qid, { title: body.title, currency: body.currency, valid_until: body.valid_until, notes: body.notes, items: body.items });
+    if (!ok) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true });
+  } catch (e) {
+    if (e.message === 'items_required') return json({ success: false, error: 'At least one line item is required.' }, 400);
+    throw e;
+  }
+}
+
+/** POST /api/admin/leads/:id/quotes/:quote_id/review — add an internal review note. */
+export async function handleLeadQuoteReviewAdd(ctx) {
+  const { env, request, params } = ctx;
+  const owner = leadOwner(params);
+  if (!owner) return json({ success: false, error: 'Invalid lead id' }, 400);
+  const qid = Number(params.quote_id);
+  if (!Number.isInteger(qid)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const reviews = await addQuoteReview(env.DB, owner, qid, body.body);
+    if (reviews == null) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true, reviews });
+  } catch (e) {
+    if (e.message === 'empty_review') return json({ success: false, error: 'Comment cannot be empty.' }, 400);
+    throw e;
   }
 }
 

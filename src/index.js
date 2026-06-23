@@ -18,7 +18,7 @@ import { handleShowcase } from './routes/public/showcase.js';
 import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich, handleLeadsPlaceIds, handleLeadsScrape } from './routes/admin/leads.js';
-import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete, handleLeadQuoteSend, handleLeadQuoteTemplateGet, handleLeadQuoteTemplateSave, handleLeadQuotePreview, handleLeadQuoteEmailUpdate } from './routes/admin/lead-quotes.js';
+import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete, handleLeadQuoteSend, handleLeadQuoteTemplateGet, handleLeadQuoteTemplateSave, handleLeadQuotePreview, handleLeadQuoteEmailUpdate, handleLeadQuoteUpdate, handleLeadQuoteReviewAdd } from './routes/admin/lead-quotes.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
 import { handleLogin } from './routes/admin/login.js';
@@ -91,7 +91,7 @@ import { pluginGate } from './plugins/entitlements.js';
 import { handleCrmManager } from './routes/public/crm-manager.js';
 import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrmContactAdd, handleCrmDedupKey } from './routes/api/ai-builder/crm.js';
 import { handleQuotesManager } from './routes/public/quotes-manager.js';
-import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate } from './routes/api/ai-builder/crm-quotes.js';
+import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate, handleQuoteUpdate, handleQuoteReviewAdd } from './routes/api/ai-builder/crm-quotes.js';
 import { handleQuoteView, handleQuotePdf } from './routes/public/quote-view.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
@@ -286,6 +286,8 @@ router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id/order-status', hand
 router.post('/api/ai-builder/:project_id/crm/quotes/:quote_id/send', handleQuoteSend, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.post('/api/ai-builder/:project_id/crm/quotes/:quote_id/preview', handleQuotePreview, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id/email', handleQuoteEmailUpdate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteUpdate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.post('/api/ai-builder/:project_id/crm/quotes/:quote_id/review', handleQuoteReviewAdd, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.delete('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteDelete, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 // Public hosted quote page + PDF (token-authed, no session)
 router.get('/q/:token', handleQuoteView);
@@ -537,6 +539,8 @@ router.put('/api/admin/leads/:id/quotes/:quote_id/order-status', handleLeadOrder
 router.post('/api/admin/leads/:id/quotes/:quote_id/send', handleLeadQuoteSend, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/leads/:id/quotes/:quote_id/preview', handleLeadQuotePreview, [authMiddleware, adminMiddleware]);
 router.put('/api/admin/leads/:id/quotes/:quote_id/email', handleLeadQuoteEmailUpdate, [authMiddleware, adminMiddleware]);
+router.put('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteUpdate, [authMiddleware, adminMiddleware]);
+router.post('/api/admin/leads/:id/quotes/:quote_id/review', handleLeadQuoteReviewAdd, [authMiddleware, adminMiddleware]);
 router.delete('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteDelete, [authMiddleware, adminMiddleware]);
 
 /**

@@ -297,7 +297,11 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
           : '<div class="q-sub"><a class="q-pen" onclick="qEditEmail('+id+','+q.id+',\'\')">+ add email</a></div>';
         var sub=emailLine+(q.notes?'<div class="q-sub" title="'+qesc(q.notes)+'">💬 '+qesc(q.notes.slice(0,40))+(q.notes.length>40?'…':'')+'</div>':'');
         var sentState=q.viewed_at?'<span class="q-sub" title="Viewed">👁 viewed</span>':(q.sent_at?'<span class="q-sub">✓ sent</span>':'');
-        var actions='<button class="lbtn" onclick="qPreview('+id+','+q.id+',this)" title="Preview as the customer will see it">👁</button>'
+        var revs=[]; try{ revs=JSON.parse(q.reviews_json||'[]'); if(!Array.isArray(revs)) revs=[]; }catch(e){}
+        var revTitle=revs.length ? revs.map(function(r,i){ return '#'+(i+1)+' '+new Date((r.at||0)*1000).toISOString().slice(0,10)+' — '+qesc(r.body||''); }).join('\\n') : 'Add an internal review comment';
+        var actions='<button class="lbtn" onclick="qEdit('+id+','+q.id+')" title="Edit quote">✏️</button>'
+          +' <button class="lbtn" onclick="qReview('+id+','+q.id+')" title="'+revTitle+'">💬'+(revs.length?' '+revs.length:'')+'</button>'
+          +' <button class="lbtn" onclick="qPreview('+id+','+q.id+',this)" title="Preview as the customer will see it">👁</button>'
           +' <button class="lbtn" onclick="qSend('+id+','+q.id+',this)" title="Email this quote">✉</button>'
           +(q.public_token?' <a class="lbtn" href="/q/'+q.public_token+'" target="_blank" rel="noopener" title="Open hosted quote">↗</a>':'')
           +' <button class="lbtn del" onclick="qDel('+id+','+q.id+')">✕</button>';
@@ -312,7 +316,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
         +'<div class="qcreate"><div class="qc-head"><input class="qc-title" placeholder="Quote title"><input class="qc-email" type="email" placeholder="Customer email (defaults to the lead email)"></div>'
         +'<div class="qc-items">'+item+'</div>'
         +'<textarea class="qc-notes" rows="2" placeholder="Comments / notes (optional)"></textarea>'
-        +'<div class="qc-actions"><button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary" onclick="qCreate('+id+',this)">Create quote</button></div></div>';
+        +'<div class="qc-actions"><button class="lbtn" onclick="qAddItem('+id+')">＋ line</button><button class="lbtn primary qc-submit" onclick="qCreate('+id+',this)">Create quote</button><button class="lbtn qc-cancel" style="display:none" onclick="qCancelEdit('+id+')">Cancel</button></div></div>';
     }
     function qAddItem(id){
       var box=qpanelOf(id).querySelector('.qc-items');
@@ -330,8 +334,54 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
       });
       if(!items.length){ alert('Add at least one line item with a description.'); return; }
       btn.disabled=true;
-      try{ await api('POST','/'+id+'/quotes',{ title:panel.querySelector('.qc-title').value.trim(), email:panel.querySelector('.qc-email').value.trim(), notes:panel.querySelector('.qc-notes').value.trim(), items:items }); loadQuotes(id); }
-      catch(e){ alert(e.message); btn.disabled=false; }
+      var title=panel.querySelector('.qc-title').value.trim(), notes=panel.querySelector('.qc-notes').value.trim();
+      try{
+        if(qEditing && qEditing.leadId===id){
+          await api('PUT','/'+id+'/quotes/'+qEditing.qid,{ title:title, notes:notes, currency:qEditing.currency, valid_until:qEditing.valid_until, items:items });
+          qEditing=null;
+        } else {
+          await api('POST','/'+id+'/quotes',{ title:title, email:panel.querySelector('.qc-email').value.trim(), notes:notes, items:items });
+        }
+        loadQuotes(id);
+      }catch(e){ alert(e.message); btn.disabled=false; }
+    }
+    var qEditing=null;
+    async function qEdit(leadId, qid){
+      try{
+        var d=await api('GET','/'+leadId+'/quotes/'+qid); var q=d.quote;
+        var p=qpanelOf(leadId);
+        qEditing={ leadId:leadId, qid:qid, currency:q.currency, valid_until:q.valid_until };
+        p.querySelector('.qc-title').value=q.title||'';
+        p.querySelector('.qc-notes').value=q.notes||'';
+        p.querySelector('.qc-head').classList.add('editmode');
+        var box=p.querySelector('.qc-items'); box.innerHTML='';
+        (q.items||[]).forEach(function(it){ qAddItemVals(leadId, it.description, it.qty, (it.unit_price_cents/100)); });
+        if(!(q.items||[]).length) qAddItem(leadId);
+        p.querySelector('.qc-submit').textContent='Save changes';
+        p.querySelector('.qc-cancel').style.display='';
+        p.querySelector('.qc-title').scrollIntoView({block:'nearest'}); p.querySelector('.qc-title').focus();
+      }catch(e){ alert(e.message); }
+    }
+    function qAddItemVals(leadId, desc, qty, price){
+      var box=qpanelOf(leadId).querySelector('.qc-items');
+      var row=document.createElement('div'); row.className='qc-item';
+      row.innerHTML='<input class="qi-d" placeholder="Description"><input class="qi-q" type="number" min="1" value="1"><input class="qi-p" type="number" min="0" step="0.01" placeholder="Unit $">';
+      row.querySelector('.qi-d').value=desc||''; row.querySelector('.qi-q').value=qty||1; row.querySelector('.qi-p').value=(price||0);
+      box.appendChild(row);
+    }
+    function qCancelEdit(leadId){
+      qEditing=null; var p=qpanelOf(leadId);
+      p.querySelector('.qc-head').classList.remove('editmode');
+      p.querySelector('.qc-submit').textContent='Create quote';
+      p.querySelector('.qc-cancel').style.display='none';
+      p.querySelector('.qc-title').value=''; p.querySelector('.qc-notes').value='';
+      var box=p.querySelector('.qc-items'); box.innerHTML=''; qAddItem(leadId);
+    }
+    async function qReview(leadId, qid){
+      var v=prompt('Add an internal review comment (not shown to the customer):'); if(v==null) return;
+      v=v.trim(); if(!v) return;
+      try{ await api('POST','/'+leadId+'/quotes/'+qid+'/review',{ body:v }); loadQuotes(leadId); }
+      catch(e){ alert(e.message); }
     }
     async function qStatus(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/status',{status:sel.value}); loadQuotes(id); } catch(e){ alert(e.message); } }
     async function qOrder(id, qid, sel){ try{ await api('PUT','/'+id+'/quotes/'+qid+'/order-status',{fulfillment:sel.value}); } catch(e){ alert(e.message); } }
@@ -424,6 +474,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
   .qtable select{padding:.3rem .4rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;background:#fff}
   .qcreate{display:flex;flex-direction:column;gap:.5rem;align-items:stretch;max-width:680px}
   .qc-head{display:flex;gap:.5rem;flex-wrap:wrap}
+  .qc-head.editmode .qc-email{display:none}
   .qc-title,.qc-email{flex:1;padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;min-width:160px}
   .qc-notes{padding:.45rem .55rem;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.84rem;font-family:inherit;resize:vertical}
   .q-sub{color:#94a3b8;font-size:.76rem;margin-top:.15rem}

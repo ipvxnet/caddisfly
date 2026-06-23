@@ -4,7 +4,7 @@
 
 import { resolveStoreProject, getOrCreateConfig } from './store.js';
 import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, deleteQuote,
-  ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail } from '../../../db/crm-quotes.js';
+  ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail, updateQuote, addQuoteReview } from '../../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../../utils/email.js';
 import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../../db/quote-templates.js';
 
@@ -150,6 +150,43 @@ export async function handleQuoteSend(ctx) {
     return json({ success: true, sent, view_url: viewUrl, ...(sent ? {} : { warning: 'Email not configured — share the link.' }) });
   } catch (e) {
     return json({ success: true, sent: false, view_url: viewUrl, warning: 'Email failed: ' + e.message });
+  }
+}
+
+/** PUT /api/ai-builder/:project_id/crm/quotes/:quote_id — edit the quote content
+ *  (title, currency, valid_until, notes, line items). */
+export async function handleQuoteUpdate(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const ok = await updateQuote(env.DB, r.projectKey, id, { title: body.title, currency: body.currency, valid_until: body.valid_until, notes: body.notes, items: body.items });
+    if (!ok) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true });
+  } catch (e) {
+    if (e.message === 'items_required') return json({ success: false, error: 'At least one line item is required.' }, 400);
+    throw e;
+  }
+}
+
+/** POST /api/ai-builder/:project_id/crm/quotes/:quote_id/review — add an internal review note. */
+export async function handleQuoteReviewAdd(ctx) {
+  const { env, request, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const id = Number(params.quote_id);
+  if (!Number.isInteger(id)) return json({ success: false, error: 'Invalid quote id' }, 400);
+  const body = await request.json().catch(() => ({}));
+  try {
+    const reviews = await addQuoteReview(env.DB, r.projectKey, id, body.body);
+    if (reviews == null) return json({ success: false, error: 'Quote not found' }, 404);
+    return json({ success: true, reviews });
+  } catch (e) {
+    if (e.message === 'empty_review') return json({ success: false, error: 'Comment cannot be empty.' }, 400);
+    throw e;
   }
 }
 

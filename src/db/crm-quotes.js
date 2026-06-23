@@ -66,7 +66,7 @@ export async function listQuotes(db, projectKey, email = '') {
   const { results } = await db
     .prepare(`SELECT q.id, q.contact_email, q.title, q.currency, q.status, q.fulfillment,
                      q.valid_until, q.notes, q.created_at, q.updated_at,
-                     q.public_token, q.sent_at, q.viewed_at,
+                     q.public_token, q.sent_at, q.viewed_at, q.reviews_json,
                      COALESCE(SUM(i.qty * i.unit_price_cents), 0) AS total_cents,
                      COUNT(i.id) AS item_count
               FROM crm_quotes q
@@ -94,7 +94,53 @@ export async function getQuote(db, projectKey, id) {
   const items = results || [];
   quote.items = items;
   quote.total_cents = items.reduce((s, it) => s + it.qty * it.unit_price_cents, 0);
+  quote.reviews = parseReviews(quote.reviews_json);
   return quote;
+}
+
+/** Parse the reviews_json array safely → [{at, body}]. */
+function parseReviews(raw) {
+  try { const a = JSON.parse(raw || '[]'); return Array.isArray(a) ? a : []; } catch { return []; }
+}
+
+/**
+ * Replace a quote's editable content (title, currency, valid_until, notes) and its
+ * line items. Does NOT touch contact_email/status/send state. @returns true if found.
+ */
+export async function updateQuote(db, owner, id, { title, currency, valid_until, notes, items }) {
+  const rows = cleanItems(items);
+  if (rows.length === 0) throw new Error('items_required');
+  const k = keyCol(owner);
+  const cur = clampStr(currency, 3).toUpperCase() || 'USD';
+  const validTs = Number.isFinite(Number(valid_until)) && Number(valid_until) > 0 ? Math.floor(Number(valid_until)) : null;
+  const res = await db
+    .prepare(`UPDATE crm_quotes SET title=?, currency=?, valid_until=?, notes=?, updated_at=unixepoch() WHERE ${k.col}=? AND id=?`)
+    .bind(clampStr(title, 200), cur, validTs, clampStr(notes, 5000), k.val, id)
+    .run();
+  if (res.meta.changes === 0) return false;
+  // Replace items (scoped subquery defends against a stray id).
+  await db.prepare(`DELETE FROM crm_quote_items WHERE quote_id IN (SELECT id FROM crm_quotes WHERE ${k.col}=? AND id=?)`).bind(k.val, id).run();
+  for (let i = 0; i < rows.length; i++) {
+    const it = rows[i];
+    await db.prepare(`INSERT INTO crm_quote_items (quote_id, description, qty, unit_price_cents, sort) VALUES (?,?,?,?,?)`)
+      .bind(id, it.description, it.qty, it.unit_price_cents, i).run();
+  }
+  return true;
+}
+
+/** Append an INTERNAL review comment ({at, body}) to a quote. @returns the new
+ *  list, or null if the quote isn't found. Throws Error('empty_review') if blank. */
+export async function addQuoteReview(db, owner, id, body, atSec) {
+  const k = keyCol(owner);
+  const text = String(body == null ? '' : body).trim().slice(0, 2000);
+  if (!text) throw new Error('empty_review');
+  const row = await db.prepare(`SELECT reviews_json FROM crm_quotes WHERE ${k.col}=? AND id=?`).bind(k.val, id).first();
+  if (!row) return null;
+  const list = parseReviews(row.reviews_json);
+  list.push({ at: atSec || Math.floor(Date.now() / 1000), body: text });
+  await db.prepare(`UPDATE crm_quotes SET reviews_json=?, updated_at=unixepoch() WHERE ${k.col}=? AND id=?`)
+    .bind(JSON.stringify(list), k.val, id).run();
+  return list;
 }
 
 /** Set quote status (whitelisted). @returns true if a row was updated. */
