@@ -215,13 +215,12 @@ function validPrice(cents) {
   return n;
 }
 
-// The Catalogue plugin raises the product/item cap (a key part of its value).
-const CATALOGUE_PRODUCT_LIMIT = 1000;
+// Model B (2026-06-22): product capacity is a TIER concern (Starter 250 / Pro
+// 1000 / Agency unlimited). Plugins add FEATURES (catalogue layouts, inventory,
+// discounts, variants) — not product headroom — so the cap no longer keys off a
+// plugin. (kept async: callers await it.)
 async function effectiveProductLimit(env, email, tier) {
-  const base = PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
-  if (!Number.isFinite(base)) return base; // already unlimited (agency)
-  if (await hasPlugin(env, email, 'catalogue')) return Math.max(base, CATALOGUE_PRODUCT_LIMIT);
-  return base;
+  return PRODUCT_LIMITS[tier] != null ? PRODUCT_LIMITS[tier] : PRODUCT_LIMITS.free_trial;
 }
 
 /** GET /api/ai-builder/:project_id/store/products — list + cap info. */
