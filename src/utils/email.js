@@ -75,23 +75,44 @@ export async function sendQuoteEmail(env, { to, issuerName, quoteTitle, totalLab
   return deliverEmail(env, { to, subject, html, fromName: name, replyTo });
 }
 
-/** Invite someone to accept a website transfer. */
-export async function sendTransferInviteEmail(env, { to, fromEmail, siteName, acceptUrl, requirements }) {
+/** Invite someone to accept a website transfer. Localized by `lang` (en/es/pt). */
+const TRANSFER_EMAIL = {
+  en: {
+    subject: '{from} wants to transfer a website to you', h1: "You've been offered a website",
+    body: '{from} wants to transfer the website {site} to your account.',
+    reqs_intro: 'To take it over, your account will need:', cta: 'Review &amp; accept →',
+    expiry: "This invitation expires in 7 days. If you weren't expecting it, you can ignore this email.",
+  },
+  es: {
+    subject: '{from} quiere transferir un sitio web a tu cuenta', h1: 'Te han ofrecido un sitio web',
+    body: '{from} quiere transferir el sitio web {site} a tu cuenta.',
+    reqs_intro: 'Para aceptarlo, tu cuenta necesitará:', cta: 'Revisa y acepta →',
+    expiry: 'Esta invitación expira en 7 días. Si no esperabas esto, puedes ignorar este correo.',
+  },
+  pt: {
+    subject: '{from} quer transferir um site para sua conta', h1: 'Um site foi oferecido a você',
+    body: '{from} quer transferir o site {site} para sua conta.',
+    reqs_intro: 'Para aceitá-lo, sua conta precisará de:', cta: 'Revise e aceite →',
+    expiry: 'Este convite expira em 7 dias. Se você não esperava isso, pode ignorar este e-mail.',
+  },
+};
+export async function sendTransferInviteEmail(env, { to, fromEmail, siteName, acceptUrl, requirements, lang = 'en' }) {
   const e = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const subject = `${fromEmail} wants to transfer a website to you`;
+  const T = TRANSFER_EMAIL[lang] || TRANSFER_EMAIL.en;
+  const subject = T.subject.replace('{from}', fromEmail);
   const reqs = (requirements || []).filter(Boolean);
   const reqHtml = reqs.length
-    ? `<p style="color:#4a5568;margin:.6rem 0 .2rem;font-size:.9rem">To take it over, your account will need:</p>
+    ? `<p style="color:#4a5568;margin:.6rem 0 .2rem;font-size:.9rem">${T.reqs_intro}</p>
        <ul style="color:#4a5568;font-size:.88rem;margin:.2rem 0 0;padding-left:1.1rem">${reqs.map((r) => `<li>${e(r)}</li>`).join('')}</ul>`
     : '';
   const html = `<!DOCTYPE html><html><body style="margin:0;background:#f4f5f8;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#1f2733">
     <div style="max-width:540px;margin:0 auto;padding:32px 20px">
       <div style="background:#fff;border-radius:12px;padding:28px;border:1px solid #e2e8f0">
-        <h1 style="font-size:1.25rem;margin:0 0 .6rem">You've been offered a website</h1>
-        <p style="color:#4a5568;margin:.2rem 0 .8rem"><strong>${e(fromEmail)}</strong> wants to transfer the website <strong>${e(siteName)}</strong> to your account.</p>
+        <h1 style="font-size:1.25rem;margin:0 0 .6rem">${T.h1}</h1>
+        <p style="color:#4a5568;margin:.2rem 0 .8rem">${T.body.replace('{from}', `<strong>${e(fromEmail)}</strong>`).replace('{site}', `<strong>${e(siteName)}</strong>`)}</p>
         ${reqHtml}
-        <a href="${e(acceptUrl)}" style="display:inline-block;background:#5a3da8;color:#fff;text-decoration:none;font-weight:700;padding:.8rem 1.4rem;border-radius:999px;margin-top:1.1rem">Review &amp; accept →</a>
-        <p style="color:#8a94a6;font-size:.78rem;margin-top:1.4rem">This invitation expires in 7 days. If you weren't expecting it, you can ignore this email.</p>
+        <a href="${e(acceptUrl)}" style="display:inline-block;background:#5a3da8;color:#fff;text-decoration:none;font-weight:700;padding:.8rem 1.4rem;border-radius:999px;margin-top:1.1rem">${T.cta}</a>
+        <p style="color:#8a94a6;font-size:.78rem;margin-top:1.4rem">${T.expiry}</p>
       </div>
     </div></body></html>`;
   return deliverEmail(env, { to, subject, html, replyTo: fromEmail });
