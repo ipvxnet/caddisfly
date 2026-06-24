@@ -95,7 +95,7 @@ import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, 
 import { handleQuoteView, handleQuotePdf } from './routes/public/quote-view.js';
 import { handleTransferInitiate, handleTransferCancel } from './routes/api/transfer.js';
 import { handleTransferPage } from './routes/public/transfer-page.js';
-import { handleTransferAcceptPage, handleTransferAcceptExecute, handleTransferDecline } from './routes/public/transfer-accept.js';
+import { handleTransferAcceptPage, handleTransferAcceptExecute, handleTransferDecline, handleTransferSubscribe } from './routes/public/transfer-accept.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete, handleFormTest, handleFormSettings } from './routes/api/forms.js';
@@ -302,6 +302,7 @@ router.post('/api/ai-builder/:project_id/transfer', handleTransferInitiate, [bil
 router.post('/api/ai-builder/:project_id/transfer/cancel', handleTransferCancel, [billingAuth, projectAccess]);
 router.get('/transfer/accept/:token', handleTransferAcceptPage, [billingAuth]);
 router.post('/transfer/accept/:token', handleTransferAcceptExecute, [billingAuth]);
+router.post('/transfer/accept/:token/subscribe', handleTransferSubscribe, [billingAuth]);
 router.post('/transfer/decline/:token', handleTransferDecline, [billingAuth]);
 
 // Customer dashboard (websites + team) and team management
