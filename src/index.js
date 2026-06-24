@@ -18,6 +18,7 @@ import { handleShowcase } from './routes/public/showcase.js';
 import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich, handleLeadsPlaceIds, handleLeadsScrape } from './routes/admin/leads.js';
+import { handlePreviewAccess } from './routes/admin/preview-access.js';
 import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete, handleLeadQuoteSend, handleLeadQuoteTemplateGet, handleLeadQuoteTemplateSave, handleLeadQuotePreview, handleLeadQuoteEmailUpdate, handleLeadQuoteUpdate, handleLeadQuoteReviewAdd, handleLeadQuoteCatalog } from './routes/admin/lead-quotes.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
@@ -148,6 +149,7 @@ import { processBookingReminders } from './routes/api/bookings-remind.js';
 import { handleHolidayThemesSave, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
 import { processPluginGraceHides } from './plugins/grace-cron.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
+import { handleListManagers, handleRemoveManager } from './routes/api/ai-builder/managers.js';
 import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
 /** GET /api/admin/domains/renew?dry=1&now=<unix> — manual renewal run
@@ -416,6 +418,8 @@ router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.get('/api/ai-builder/:project_id/offboard', handleOffboardStatus, PROJ);
 router.post('/api/ai-builder/:project_id/unpublish', handleUnpublish, PROJ);
 router.post('/api/ai-builder/:project_id/delete', handleDeleteSite, PROJ);
+router.get('/api/ai-builder/:project_id/managers', handleListManagers, PROJ);
+router.post('/api/ai-builder/:project_id/managers/remove', handleRemoveManager, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);
@@ -535,6 +539,8 @@ router.get('/api/admin/leads/place-ids', handleLeadsPlaceIds);
 router.get('/api/admin/leads/need-email', handleLeadsNeedEmail);
 router.post('/api/admin/leads/enrich', handleLeadsEnrich);
 router.post('/api/admin/leads/scrape', handleLeadsScrape);
+router.get('/admin/preview-access', handlePreviewAccess, [authMiddleware, adminMiddleware]);
+router.post('/admin/preview-access', handlePreviewAccess, [authMiddleware, adminMiddleware]);
 router.get('/admin/leads', handleAdminLeads, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/leads', handleLeadAdd, [authMiddleware, adminMiddleware]);
 // Global Caddisfly quote template + catalog (MUST precede /:id so ':id' doesn't capture them)

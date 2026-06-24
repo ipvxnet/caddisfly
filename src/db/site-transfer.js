@@ -114,17 +114,30 @@ export async function getSiteManagerRole(db, projectKey, email) {
   return row ? row.role : null;
 }
 
+/** Everyone who manages this specific site (the Builder/Designer kept on after
+ *  a transfer). Shown to the owner so they can Disconnect the relationship. */
+export async function listSiteManagers(db, projectKey) {
+  const k = keyCol(projectKey);
+  const { results } = await db
+    .prepare(`SELECT manager_email, role, created_at FROM site_managers WHERE ${k.col} = ? ORDER BY created_at`)
+    .bind(k.val)
+    .all();
+  return results || [];
+}
+
 /** All sites `email` manages (joined to the project for display + publish state).
  *  `published` = the canonical status='deployed' (matches countPublishedSites). */
 export async function listManagedSites(db, email) {
   const e = lc(email);
   const ai = await db.prepare(
     `SELECT 'ai' AS kind, p.id, p.project_id AS public_id, p.project_name AS name, p.customer_email AS owner_email,
+            p.subdomain AS subdomain, p.status AS status,
             CASE WHEN p.status='deployed' THEN 1 ELSE 0 END AS published
        FROM site_managers m JOIN ai_projects p ON p.id = m.ai_project_id WHERE m.manager_email = ?`
   ).bind(e).all();
   const rg = await db.prepare(
     `SELECT 'project' AS kind, p.id, p.preview_id AS public_id, p.website_url AS name, p.customer_email AS owner_email,
+            p.subdomain AS subdomain, p.status AS status,
             CASE WHEN p.status='deployed' THEN 1 ELSE 0 END AS published
        FROM site_managers m JOIN projects p ON p.id = m.project_id WHERE m.manager_email = ?`
   ).bind(e).all();

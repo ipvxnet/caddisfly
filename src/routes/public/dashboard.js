@@ -7,6 +7,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getAIProjectsByEmail } from '../../db/ai-projects.js';
 import { getAllProjects } from '../../db/projects.js';
 import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
+import { listManagedSites, listSiteManagers } from '../../db/site-transfer.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { countUnread } from '../../db/form-submissions.js';
@@ -64,7 +65,7 @@ function statusPill(s, tr) {
   return `<span class="pill ${ok ? 'ok' : ''}">${ok ? tr('dash.live') : esc(s)}</span>`;
 }
 
-function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
+function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '', managersBlock = '') {
   const live = site.subdomain ? `https://${site.subdomain}${hostSuffix}.${SITES_BASE}` : '';
   // Live home-page thumbnail via the same embed preview the editor uses. Projects
   // still generating have no page to show yet, so render a placeholder instead.
@@ -94,6 +95,54 @@ function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
           <button class="btn ghost danger" data-id="${esc(site.id)}" data-name="${esc(site.name)}" onclick="openOffboard(this)">${tr('dash.delete_site')}</button>
         </div>
         ${domainsBlock}
+        ${managersBlock}
+      </div>
+    </div>`;
+}
+
+// Owner-facing "Builder access" panel: lists the Builder/Designer(s) kept on
+// after a transfer + a Disconnect button to end the relationship. `managers`
+// is rows from listSiteManagers(); empty → renders nothing.
+function managersBlockFor(site, managers, tr) {
+  if (!managers || !managers.length) return '';
+  const rows = managers.map((m) => `
+    <div class="mgr-row">
+      <span class="mgr-email">${esc(m.manager_email)}</span>
+      <button class="link-btn danger" data-pid="${esc(site.id)}" data-email="${esc(m.manager_email)}" onclick="disconnectManager(this)">${tr('dash.mgr_disconnect')}</button>
+    </div>`).join('');
+  return `<details class="site-managers"><summary>👤 ${tr('dash.mgr_builder_access')} <span class="pill warn">${managers.length}</span></summary>
+    <div class="mgr-list">${rows}</div>
+    <p class="muted mgr-note">${tr('dash.mgr_note')}</p></details>`;
+}
+
+// A site the viewer MANAGES (not owns) — they got a Manager grant via a site
+// transfer. Same look as siteCard but no owner-only controls (delete) and a
+// "managed for <owner>" line. `m` is a row from listManagedSites().
+function managedCard(m, tr, hostSuffix = '') {
+  const pubId = m.public_id;
+  const status = m.status || (m.published ? 'deployed' : 'draft');
+  const live = m.subdomain ? `https://${m.subdomain}${hostSuffix}.${SITES_BASE}` : '';
+  const previewable = status !== 'conversation' && status !== 'content_generation';
+  const thumb = previewable
+    ? `<iframe class="thumb-frame" src="/ai-preview/${esc(pubId)}?embed=1" loading="lazy" scrolling="no" tabindex="-1" title="${esc(m.name)}"></iframe>`
+    : `<div class="thumb-ph">${tr('dash.thumb_building')}</div>`;
+  return `
+    <div class="site-card">
+      <div class="site-thumb">
+        ${thumb}
+        <a class="thumb-link" href="/ai-builder/customize/${esc(pubId)}" aria-label="${esc(m.name)}"></a>
+      </div>
+      <div class="site-card-body">
+        <div class="site-name">${esc(m.name || 'Untitled site')} ${statusPill(status, tr)}</div>
+        <span class="site-url muted">${tr('dash.managed_for', { owner: esc(m.owner_email) })}</span>
+        <div class="site-actions">
+          <a class="btn ghost" href="/ai-builder/customize/${esc(pubId)}">${tr('dash.customize')}</a>
+          <a class="btn ghost" href="/ai-builder/analytics/${esc(pubId)}">${tr('dash.analytics')}</a>
+          <a class="btn ghost" href="/ai-builder/forms/${esc(pubId)}">${tr('dash.inbox')}</a>
+          <a class="btn ghost" href="/ai-builder/store/${esc(pubId)}">${tr('dash.store')}</a>
+          <a class="btn ghost" href="/ai-builder/bookings/${esc(pubId)}">${tr('dash.bookings')}</a>
+          ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
+        </div>
       </div>
     </div>`;
 }
@@ -209,7 +258,9 @@ export async function handleDashboard(ctx) {
           ${renderDomainsPanel({ projectId: s.id, domains: ds, subdomain: s.subdomain, saasOn, sitesBase, lang })}</details>`;
       }
       const unread = await countUnread(env.DB, s.id);
-      return siteCard(s, block, tr, unread, env.SITES_PREVIEW_SUFFIX || '');
+      const managers = await listSiteManagers(env.DB, projectKeyFor(s)).catch(() => []);
+      const mblock = managersBlockFor(s, managers, tr);
+      return siteCard(s, block, tr, unread, env.SITES_PREVIEW_SUFFIX || '', mblock);
     })
   );
   const ownCardsHtml = ownCards.join('');
@@ -220,6 +271,15 @@ export async function handleDashboard(ctx) {
   // joined (active membership of someone else's account).
   const joined = await getTeamsForMember(env.DB, email);
   const teamRefs = [{ owner: email, role: 'owner' }, ...joined.map((t) => ({ owner: t.owner_email, role: t.role }))];
+
+  // Sites the viewer MANAGES (Manager grant from a site transfer). Lets a
+  // manager discover + open a transferred site without the direct editor URL.
+  const managed = await listManagedSites(env.DB, email).catch(() => []);
+  const managedHtml = managed.length
+    ? `<div class="panel"><h2>${tr('dash.sites_you_manage')}</h2>
+        <p class="muted" style="margin:-.4rem 0 1rem">${tr('dash.sites_you_manage_sub')}</p>
+        <div class="site-grid">${managed.map((m) => managedCard(m, tr, env.SITES_PREVIEW_SUFFIX || '')).join('')}</div></div>`
+    : '';
 
   // One panel per team, and (for joined teams) a "shared websites" panel.
   let teamsHtml = '';
@@ -264,6 +324,7 @@ export async function handleDashboard(ctx) {
         : `<p class="muted">${tr('dash.no_sites')} <a href="/ai-builder">${tr('dash.build_one')}</a></p>`}
     </div>
 
+    ${managedHtml}
     ${sharedHtml}
     ${teamsHtml}
   `;
@@ -318,6 +379,16 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .site-domains > summary::before{content:'▸ ';color:#a0aec0}
     .site-domains[open] > summary::before{content:'▾ '}
     .site-domains[open] > summary{margin-bottom:.6rem}
+    .site-managers{margin-top:.7rem;background:var(--soft,#f8f9fc);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem}
+    .site-managers > summary{cursor:pointer;font-size:.85rem;font-weight:700;color:var(--p2);list-style:none}
+    .site-managers > summary::-webkit-details-marker{display:none}
+    .site-managers > summary::before{content:'▸ ';color:#a0aec0}
+    .site-managers[open] > summary::before{content:'▾ '}
+    .site-managers[open] > summary{margin-bottom:.6rem}
+    .mgr-row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.4rem 0;border-bottom:1px solid var(--line)}
+    .mgr-row:last-of-type{border-bottom:none}
+    .mgr-email{font-size:.85rem;color:#2d3748;word-break:break-all}
+    .mgr-note{font-size:.78rem;margin:.5rem 0 0}
     ${DOMAINS_CSS}
     .btn{display:inline-flex;align-items:center;gap:.3rem;background:var(--grad);color:#fff;border:none;border-radius:10px;padding:.5rem .9rem;font-size:.85rem;font-weight:700;cursor:pointer;text-decoration:none}
     .btn.ghost{background:#fff;color:var(--p2);border:1px solid var(--line)}
@@ -400,6 +471,17 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
       if (!confirm(${JSON.stringify(tr('dash.remove_confirm', { email: '%E%' }))}.replace('%E%', email))) return;
       try { await postTeam('/api/team/remove', { owner, email }); location.reload(); }
       catch (e) { alert(e.message); }
+    }
+    async function disconnectManager(btn) {
+      const pid = btn.dataset.pid, email = btn.dataset.email;
+      if (!confirm(${JSON.stringify(tr('dash.mgr_disconnect_confirm', { email: '%E%' }))}.replace('%E%', email))) return;
+      btn.disabled = true;
+      try {
+        const r = await fetch('/api/ai-builder/'+encodeURIComponent(pid)+'/managers/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || !d.success) throw new Error((d && d.error) || 'Request failed');
+        location.reload();
+      } catch (e) { alert(e.message); btn.disabled = false; }
     }
     ${domainsJs(lang)}
 
