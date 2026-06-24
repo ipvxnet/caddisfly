@@ -40,6 +40,15 @@ jobs:
           # [env.preview] above.
           command: deploy --config wrangler.sites.toml
 
+      - name: Deploy MCP worker (inventory MCP server)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Top-level wrangler.mcp.toml config = production (no --env). Preview
+          # uses [env.preview].
+          command: deploy --config wrangler.mcp.toml
+
       - name: Deployment summary
         run: |
           echo "✅ Deployed to production: https://caddisfly.ai"
