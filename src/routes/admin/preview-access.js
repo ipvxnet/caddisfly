@@ -11,9 +11,13 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 /** GET + POST /admin/preview-access */
 export async function handlePreviewAccess(ctx) {
   const { env, request } = ctx;
+  // The allowlist + its table only exist on the preview worker (migration 060 is
+  // preview-only). On prod there is no table to read/write, so skip all DB work
+  // there — the gate itself is already ENVIRONMENT-gated in deploy.js.
+  const isPreview = env.ENVIRONMENT === 'preview';
   if (request.method === 'POST') {
     const form = await request.formData().catch(() => null);
-    if (form) {
+    if (isPreview && form) {
       const action = form.get('action');
       if (action === 'add') { try { await addPreviewAllowlistEntry(env.DB, form.get('entry')); } catch { /* ignore bad entry */ } }
       else if (action === 'remove') { await removePreviewAllowlistEntry(env.DB, Number(form.get('id'))); }
@@ -22,8 +26,7 @@ export async function handlePreviewAccess(ctx) {
   }
 
   const nav = await renderAdminNav(ctx, '/admin/preview-access');
-  const entries = await listPreviewAllowlist(env.DB);
-  const isPreview = env.ENVIRONMENT === 'preview';
+  const entries = isPreview ? await listPreviewAllowlist(env.DB) : [];
 
   const rows = entries.length
     ? entries.map((e) => `<tr>
