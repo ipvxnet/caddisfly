@@ -61,11 +61,15 @@ function fmtMoney(cents, currency) {
 }
 
 async function callInventory(env, auth, method, payload) {
-  const res = await fetch(`${env.INVENTORY_API_BASE}/api/inventory/products`, {
+  const url = `${env.INVENTORY_API_BASE || 'https://caddisfly.ai'}/api/inventory/products`;
+  const init = {
     method,
     headers: { Authorization: auth, 'Content-Type': 'application/json' },
     ...(payload ? { body: JSON.stringify(payload) } : {}),
-  });
+  };
+  // Prefer the direct service binding to the app worker; fall back to the public
+  // URL (a Worker can't reliably reach another Worker over *.workers.dev).
+  const res = env.APP ? await env.APP.fetch(new Request(url, init)) : await fetch(url, init);
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, data };
 }

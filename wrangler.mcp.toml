@@ -18,7 +18,18 @@ compatibility_date = "2024-11-01"
 workers_dev = true
 vars = { INVENTORY_API_BASE = "https://caddisfly.ai", MCP_SERVER_NAME = "caddisfly-inventory" }
 
+# Direct worker-to-worker call to the app worker (avoids the *.workers.dev
+# subrequest quirk). The MCP worker hits the inventory route via env.APP.fetch;
+# INVENTORY_API_BASE stays as a fallback.
+[[services]]
+binding = "APP"
+service = "caddisfly"
+
 [env.preview]
 name = "caddisfly-mcp-preview"
 workers_dev = true
 vars = { INVENTORY_API_BASE = "https://caddisfly-preview.fabianodevtools.workers.dev", MCP_SERVER_NAME = "caddisfly-inventory-preview" }
+
+[[env.preview.services]]
+binding = "APP"
+service = "caddisfly-preview"
