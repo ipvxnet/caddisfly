@@ -101,6 +101,56 @@ export async function deleteAccount(db, projectKey, accountId) {
 }
 
 /**
+ * Phase 2 — financial rollup for an account, matched by its contact + general
+ * emails. Sources: this project's store_orders (real purchases) + ACCEPTED
+ * crm_quotes (won deals; total summed from line items). Returns metrics + a
+ * merged, dated transaction history. (Subscriptions run in the merchant's own
+ * Stripe and aren't stored here, so they're not included.)
+ */
+export async function getAccountFinancials(db, projectKey, emails) {
+  const list = [...new Set((emails || []).map((e) => String(e || '').trim().toLowerCase()).filter(Boolean))];
+  const empty = { orderCount: 0, ordersTotal: 0, lastPurchase: 0, avgOrder: 0, quoteCount: 0, quotesTotal: 0, totalValue: 0, currency: 'USD', txns: [], emailCount: 0 };
+  if (!list.length) return empty;
+  const k = keyCol(projectKey);
+  const ph = list.map(() => '?').join(',');
+
+  const orders = (await db.prepare(
+    `SELECT id, amount_total, currency, status, created_at FROM store_orders
+       WHERE ${k.col} = ? AND lower(customer_email) IN (${ph}) ORDER BY created_at DESC`
+  ).bind(k.val, ...list).all()).results || [];
+
+  const quotes = (await db.prepare(
+    `SELECT q.id, q.title, q.currency, q.updated_at AS ts,
+            COALESCE(SUM(i.qty * i.unit_price_cents), 0) AS total_cents
+       FROM crm_quotes q LEFT JOIN crm_quote_items i ON i.quote_id = q.id
+      WHERE q.${k.col} = ? AND q.status = 'accepted' AND lower(q.contact_email) IN (${ph})
+      GROUP BY q.id ORDER BY q.updated_at DESC`
+  ).bind(k.val, ...list).all()).results || [];
+
+  // Dominant currency across all transactions (uppercased; default USD).
+  const freq = {};
+  for (const o of orders) { const c = (o.currency || 'usd').toUpperCase(); freq[c] = (freq[c] || 0) + 1; }
+  for (const q of quotes) { const c = (q.currency || 'USD').toUpperCase(); freq[c] = (freq[c] || 0) + 1; }
+  const currency = Object.keys(freq).sort((a, b) => freq[b] - freq[a])[0] || 'USD';
+
+  const ordersTotal = orders.reduce((s, o) => s + (o.amount_total || 0), 0);
+  const quotesTotal = quotes.reduce((s, q) => s + (q.total_cents || 0), 0);
+  const lastPurchase = orders.reduce((m, o) => Math.max(m, o.created_at || 0), 0);
+
+  const txns = [
+    ...orders.map((o) => ({ type: 'order', id: o.id, title: '', amount: o.amount_total || 0, currency: (o.currency || 'usd').toUpperCase(), status: o.status, date: o.created_at || 0 })),
+    ...quotes.map((q) => ({ type: 'quote', id: q.id, title: q.title || '', amount: q.total_cents || 0, currency: (q.currency || 'USD').toUpperCase(), status: 'accepted', date: q.ts || 0 })),
+  ].sort((a, b) => b.date - a.date);
+
+  return {
+    orderCount: orders.length, ordersTotal,
+    lastPurchase, avgOrder: orders.length ? Math.round(ordersTotal / orders.length) : 0,
+    quoteCount: quotes.length, quotesTotal,
+    totalValue: ordersTotal + quotesTotal, currency, txns, emailCount: list.length,
+  };
+}
+
+/**
  * Replace an account's contacts with the given list (atomic). Each contact:
  * { name, title, email, phone, is_primary }. Empty rows (no name+email+phone) are
  * dropped. Caller must have verified the account belongs to the project first.
