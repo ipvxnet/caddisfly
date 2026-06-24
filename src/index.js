@@ -92,7 +92,8 @@ import { pluginGate } from './plugins/entitlements.js';
 import { handleCrmManager } from './routes/public/crm-manager.js';
 import { handleAccountsManager, handleAccountEditPage, handleAccountCreate, handleAccountSave, handleAccountDelete } from './routes/public/crm-accounts.js';
 import { handleStockView, handleStockUpdate } from './routes/public/crm-stock.js';
-import { handleStockImportPage, handleStockImport, handleStockImportTemplate } from './routes/public/crm-stock-import.js';
+import { handleStockImportPage, handleStockImport, handleStockImportTemplate, handleInventoryTokenRotate, handleInventoryTokenRevoke } from './routes/public/crm-stock-import.js';
+import { handleInventoryList, handleInventoryUpsert, handleInventoryOptions } from './routes/api/inventory.js';
 import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrmContactAdd, handleCrmDedupKey } from './routes/api/ai-builder/crm.js';
 import { handleQuotesManager } from './routes/public/quotes-manager.js';
 import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate, handleQuoteUpdate, handleQuoteReviewAdd, handleQuoteProducts } from './routes/api/ai-builder/crm-quotes.js';
@@ -294,6 +295,12 @@ router.put('/api/ai-builder/:project_id/crm/stock', handleStockUpdate, [billingA
 router.get('/ai-builder/crm/:project_id/stock/import', handleStockImportPage, [billingAuth, projectAccess, pluginGate('crm')]);
 router.get('/ai-builder/crm/:project_id/stock/import/template', handleStockImportTemplate, [billingAuth, projectAccess, pluginGate('crm')]);
 router.post('/api/ai-builder/:project_id/crm/stock/import', handleStockImport, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.post('/api/ai-builder/:project_id/crm/inventory-token', handleInventoryTokenRotate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.delete('/api/ai-builder/:project_id/crm/inventory-token', handleInventoryTokenRevoke, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+// Public inventory REST API (Phase 3) — token-authed (Bearer), NO session.
+router.get('/api/inventory/products', handleInventoryList);
+router.post('/api/inventory/products', handleInventoryUpsert);
+router.register('OPTIONS', '/api/inventory/products', handleInventoryOptions);
 // CRM — Quotation & Order Management
 router.get('/ai-builder/crm/:project_id/quotes', handleQuotesManager, [billingAuth, projectAccess, pluginGate('crm')]);
 router.get('/api/ai-builder/:project_id/crm/quote-products', handleQuoteProducts, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);

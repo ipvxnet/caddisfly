@@ -11,6 +11,7 @@ import { upsertProductsBulk, countProducts } from '../../db/products.js';
 import { hasPlugin } from '../../plugins/entitlements.js';
 import { getUserTier } from '../../utils/rate-limiter.js';
 import { PRODUCT_LIMITS } from '../../utils/credits.js';
+import { getInventoryToken, rotateInventoryToken, revokeInventoryToken } from '../../db/inventory-tokens.js';
 
 const MAX_ROWS = 1000;
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -82,6 +83,12 @@ const IMP = {
     sum_preview: '{create} to create · {update} to update · {error} error(s) · {skip} skipped',
     sum_done: 'Imported: {create} created · {update} updated · {error} error(s) · {skip} skipped',
     err_limit: 'Product limit reached for your plan.', err_name: 'Missing product name.', err: 'Something went wrong.',
+    api_h: 'API access', api_desc: 'Push inventory from any system. Send this token in the Authorization header as a Bearer token.',
+    api_none: 'No API token yet — generate one to enable the inventory API.', api_generate: 'Generate token', api_rotate: 'Regenerate', api_revoke: 'Revoke',
+    api_token_label: 'Your token', api_copy: 'Copy', api_copied: 'Copied ✓',
+    api_warn: 'Treat this token like a password — anyone with it can read and change your inventory.',
+    api_revoke_confirm: 'Revoke this token? Any integration using it will stop working.',
+    api_endpoints: 'Endpoints', api_eg_list: 'List products', api_eg_upsert: 'Add or update products',
   },
   es: {
     meta_title: 'Importar inventario — CRM', title: 'Importar inventario', back_stock: '← Volver al inventario',
@@ -99,6 +106,12 @@ const IMP = {
     sum_preview: '{create} para crear · {update} para actualizar · {error} error(es) · {skip} omitido(s)',
     sum_done: 'Importado: {create} creados · {update} actualizados · {error} error(es) · {skip} omitido(s)',
     err_limit: 'Se alcanzó el límite de productos para tu plan.', err_name: 'Falta el nombre del producto.', err: 'Algo salió mal.',
+    api_h: 'Acceso a la API', api_desc: 'Envía el inventario desde cualquier sistema. Envía este token en el encabezado de Authorization como un token Bearer.',
+    api_none: 'Aún no hay token de API — genera uno para habilitar la API de inventario.', api_generate: 'Generar token', api_rotate: 'Regenerar', api_revoke: 'Revocar',
+    api_token_label: 'Tu token', api_copy: 'Copiar', api_copied: 'Copiado ✓',
+    api_warn: 'Trata este token como una contraseña — cualquiera que lo tenga podrá leer y modificar tu inventario.',
+    api_revoke_confirm: '¿Revocar este token? Cualquier integración que lo utilice dejará de funcionar.',
+    api_endpoints: 'Endpoints', api_eg_list: 'Listar productos', api_eg_upsert: 'Agregar o actualizar productos',
   },
   pt: {
     meta_title: 'Importar estoque — CRM', title: 'Importar estoque', back_stock: '← Voltar para estoque',
@@ -116,6 +129,12 @@ const IMP = {
     sum_preview: '{create} para criar · {update} para atualizar · {error} erro(s) · {skip} ignorado(s)',
     sum_done: 'Importado: {create} criados · {update} atualizados · {error} erro(s) · {skip} ignorado(s)',
     err_limit: 'Limite de produtos atingido para seu plano.', err_name: 'Nome do produto ausente.', err: 'Algo deu errado.',
+    api_h: 'Acesso à API', api_desc: 'Envie o estoque de qualquer sistema. Envie este token no cabeçalho de Authorization como um token Bearer.',
+    api_none: 'Ainda não há token de API — gere um para habilitar a API de estoque.', api_generate: 'Gerar token', api_rotate: 'Regenerar', api_revoke: 'Revogar',
+    api_token_label: 'Seu token', api_copy: 'Copiar', api_copied: 'Copiado ✓',
+    api_warn: 'Trate este token como uma senha — qualquer pessoa que o tenha poderá ler e alterar seu estoque.',
+    api_revoke_confirm: 'Revogar este token? Qualquer integração que o use deixará de funcionar.',
+    api_endpoints: 'Endpoints', api_eg_list: 'Listar produtos', api_eg_upsert: 'Adicionar ou atualizar produtos',
   },
 };
 const pick = (lang) => IMP[lang] || IMP.en;
@@ -137,6 +156,32 @@ export async function handleStockImportPage(ctx) {
   if (!r) return redirect('/dashboard', 303);
   const hasAdv = await hasPlugin(env, r.email, 'advanced_store');
   const base = `/ai-builder/crm/${esc(params.project_id)}`;
+  const tok = await getInventoryToken(env.DB, r.projectKey);
+  const apiEp = `${url.origin}/api/inventory/products`;
+  const tokenForCurl = tok ? tok.token : 'YOUR_TOKEN';
+
+  const apiBody = tok
+    ? `<div class="api-tokrow"><code id="api-token">${esc(tok.token)}</code><button class="btn ghost" type="button" id="api-copy">${T.api_copy}</button></div>
+       <p class="api-warn">⚠️ ${T.api_warn}</p>
+       <div class="api-acts"><button class="btn ghost" type="button" id="api-rotate">${T.api_rotate}</button><button class="btn ghost danger" type="button" id="api-revoke">${T.api_revoke}</button></div>`
+    : `<p class="muted">${T.api_none}</p><button class="btn" type="button" id="api-generate">${T.api_generate}</button>`;
+
+  const apiPanel = `
+    <div class="icard apicard">
+      <h3 class="api-h">🔌 ${T.api_h}</h3>
+      <p class="api-desc">${T.api_desc}</p>
+      <div id="api-body">${apiBody}</div>
+      <div class="api-eps">
+        <p class="api-eps-h">${T.api_endpoints}</p>
+        <p class="api-ep">${T.api_eg_list}</p>
+        <pre>curl -H "Authorization: Bearer ${esc(tokenForCurl)}" \\
+  ${esc(apiEp)}</pre>
+        <p class="api-ep">${T.api_eg_upsert}</p>
+        <pre>curl -X POST ${esc(apiEp)} \\
+  -H "Authorization: Bearer ${esc(tokenForCurl)}" -H "Content-Type: application/json" \\
+  -d '{"products":[{"name":"Widget","price":19.99,"stock":25}]}'</pre>
+      </div>
+    </div>`;
 
   const inner = `
     <div class="ahead"><h1>⬆ ${T.title}</h1><a class="btn ghost" href="${base}/stock">${T.back_stock}</a></div>
@@ -158,6 +203,22 @@ export async function handleStockImportPage(ctx) {
       </div>
     </div>
     <div id="imp-result"></div>
+    ${apiPanel}
+    <script>
+      var TOKBASE = '/api/ai-builder/' + ${JSON.stringify(params.project_id)} + '/crm/inventory-token';
+      var TOK = ${JSON.stringify({ copy: T.api_copy, copied: T.api_copied, revokeConfirm: T.api_revoke_confirm, err: T.err })};
+      function bindTok(){
+        var gen = document.getElementById('api-generate');
+        if(gen) gen.addEventListener('click', async function(){ this.disabled=true; try{ var d=await (await fetch(TOKBASE,{method:'POST'})).json(); if(d.success){ location.reload(); return; } alert(d.error||TOK.err); this.disabled=false; }catch(e){ alert(TOK.err); this.disabled=false; } });
+        var rot = document.getElementById('api-rotate');
+        if(rot) rot.addEventListener('click', async function(){ this.disabled=true; try{ var d=await (await fetch(TOKBASE,{method:'POST'})).json(); if(d.success){ location.reload(); return; } alert(d.error||TOK.err); this.disabled=false; }catch(e){ alert(TOK.err); this.disabled=false; } });
+        var rev = document.getElementById('api-revoke');
+        if(rev) rev.addEventListener('click', async function(){ if(!confirm(TOK.revokeConfirm)) return; this.disabled=true; try{ var d=await (await fetch(TOKBASE,{method:'DELETE'})).json(); if(d.success){ location.reload(); return; } alert(d.error||TOK.err); this.disabled=false; }catch(e){ alert(TOK.err); this.disabled=false; } });
+        var cp = document.getElementById('api-copy');
+        if(cp) cp.addEventListener('click', function(){ var t=document.getElementById('api-token'); navigator.clipboard.writeText(t.textContent).then(function(){ cp.textContent=TOK.copied; setTimeout(function(){ cp.textContent=TOK.copy; }, 1500); }); });
+      }
+      bindTok();
+    </script>
     <script>
       var BASE = '/api/ai-builder/' + ${JSON.stringify(params.project_id)} + '/crm/stock/import';
       var T = ${JSON.stringify({ empty: T.empty_csv, err: T.err, sumPreview: T.sum_preview, sumDone: T.sum_done, truncated: T.truncated,
@@ -223,6 +284,15 @@ export async function handleStockImportPage(ctx) {
     .itable td{padding:.45rem .7rem;border-bottom:1px solid var(--line)}.itable tr:last-child td{border-bottom:none}
     .ibadge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700}
     .ibadge.create{background:#ecfdf5;color:#065f46}.ibadge.update{background:#eff6ff;color:#1e40af}.ibadge.skipped{background:#fffbeb;color:#92400e}.ibadge.error{background:#fef2f2;color:#991b1b}
+    .api-h{margin:0 0 .3rem;font-size:1.05rem;color:var(--ink)}.api-desc{color:var(--body);font-size:.88rem;margin:0 0 .9rem}
+    .api-tokrow{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+    .api-tokrow code{flex:1;min-width:200px;background:#0f172a;color:#a5b4fc;padding:.55rem .7rem;border-radius:9px;font-family:ui-monospace,Menlo,monospace;font-size:.82rem;word-break:break-all}
+    .api-warn{color:#92400e;font-size:.8rem;margin:.6rem 0}.api-acts{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn.danger{color:#b91c1c;border-color:#fca5a5}
+    .api-eps{margin-top:1rem;border-top:1px solid var(--line);padding-top:.9rem}
+    .api-eps-h{font-weight:700;color:var(--ink);font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;margin:0 0 .5rem}
+    .api-ep{font-weight:600;color:var(--p2);font-size:.85rem;margin:.7rem 0 .25rem}
+    .api-eps pre{background:#0f172a;color:#e2e8f0;padding:.7rem .8rem;border-radius:9px;overflow-x:auto;font-size:.78rem;margin:0}
   </style></head><body>${siteHeader('/dashboard', {})}<main><div class="awrap">${inner}</div></main>${siteFooter({ lang })}</body></html>`);
 }
 
@@ -246,4 +316,22 @@ export async function handleStockImport(ctx) {
 
   const res = await upsertProductsBulk(env.DB, r.projectKey, rows, { setStock: hasAdv, dryRun, maxCreate });
   return json({ success: true, hasAdv, dryRun, truncated, read: MAX_ROWS, ...res });
+}
+
+/** POST /api/ai-builder/:project_id/crm/inventory-token — generate/rotate (owner). */
+export async function handleInventoryTokenRotate(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const token = await rotateInventoryToken(env.DB, r.projectKey);
+  return json({ success: true, token });
+}
+
+/** DELETE /api/ai-builder/:project_id/crm/inventory-token — revoke. */
+export async function handleInventoryTokenRevoke(ctx) {
+  const { env, params } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  await revokeInventoryToken(env.DB, r.projectKey);
+  return json({ success: true });
 }
