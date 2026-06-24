@@ -23,7 +23,7 @@ const STK = {
     th_product: 'Product', th_sku: 'SKU', th_type: 'Type', th_price: 'Price', th_stock: 'Stock', th_state: 'State',
     s_products: 'Products', s_tracked: 'Tracked', s_low: 'Low stock', s_out: 'Out of stock',
     badge_out: 'Out', badge_low: 'Low', badge_ok: 'In stock', badge_untracked: 'Untracked',
-    save_all: 'Save stock', saved: 'Saved', empty: 'No products yet — add products in your Store to track their stock here.',
+    import_btn: '⬆ Import', save_all: 'Save stock', saved: 'Saved', empty: 'No products yet — add products in your Store to track their stock here.',
     err: 'Something went wrong.', low_hint: 'Highlighted as low at {n} or fewer.', untracked_hint: 'Leave blank for untracked (unlimited).',
   },
   es: {
@@ -33,7 +33,7 @@ const STK = {
     th_product: 'Producto', th_sku: 'SKU', th_type: 'Tipo', th_price: 'Precio', th_stock: 'Inventario', th_state: 'Estado',
     s_products: 'Productos', s_tracked: 'Seguimiento activo', s_low: 'Bajo inventario', s_out: 'Agotado',
     badge_out: 'Agotado', badge_low: 'Bajo', badge_ok: 'Disponible', badge_untracked: 'Sin seguimiento',
-    save_all: 'Guardar inventario', saved: 'Guardado', empty: 'No hay productos aún — añade productos en tu Tienda para seguir su inventario aquí.',
+    import_btn: '⬆ Importar', save_all: 'Guardar inventario', saved: 'Guardado', empty: 'No hay productos aún — añade productos en tu Tienda para seguir su inventario aquí.',
     err: 'Algo salió mal.', low_hint: 'Resaltado como bajo cuando es {n} o menos.', untracked_hint: 'Dejar en blanco para sin seguimiento (ilimitado).',
   },
   pt: {
@@ -43,7 +43,7 @@ const STK = {
     th_product: 'Produto', th_sku: 'SKU', th_type: 'Tipo', th_price: 'Preço', th_stock: 'Estoque', th_state: 'Estado',
     s_products: 'Produtos', s_tracked: 'Em acompanhamento', s_low: 'Estoque baixo', s_out: 'Fora de estoque',
     badge_out: 'Fora', badge_low: 'Baixo', badge_ok: 'Disponível', badge_untracked: 'Sem acompanhamento',
-    save_all: 'Salvar estoque', saved: 'Salvo', empty: 'Ainda não há produtos — adicione produtos em sua Loja para acompanhar o estoque aqui.',
+    import_btn: '⬆ Importar', save_all: 'Salvar estoque', saved: 'Salvo', empty: 'Ainda não há produtos — adicione produtos em sua Loja para acompanhar o estoque aqui.',
     err: 'Algo deu errado.', low_hint: 'Destacado como baixo quando é {n} ou menos.', untracked_hint: 'Deixe em branco para sem acompanhamento (ilimitado).',
   },
 };
@@ -101,7 +101,7 @@ export async function handleStockView(ctx) {
   const stat = (k, v, cls = '') => `<div class="sstat ${cls}"><div class="sk">${k}</div><div class="sv">${v}</div></div>`;
 
   const inner = `
-    <div class="ahead"><h1>📦 ${T.title}</h1><a class="btn ghost" href="${base}">${T.back_crm}</a></div>
+    <div class="ahead"><h1>📦 ${T.title}</h1><div style="display:flex;gap:.5rem;flex-wrap:wrap"><a class="btn ghost" href="${base}/stock/import">${T.import_btn}</a><a class="btn ghost" href="${base}">${T.back_crm}</a></div></div>
     <p class="sub">${T.sub.replace('{count}', products.length).replace('{label}', countLabel)}</p>
     ${advBanner}
     ${products.length ? `
