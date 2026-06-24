@@ -92,6 +92,7 @@ import { pluginGate } from './plugins/entitlements.js';
 import { handleCrmManager } from './routes/public/crm-manager.js';
 import { handleAccountsManager, handleAccountEditPage, handleAccountCreate, handleAccountSave, handleAccountDelete } from './routes/public/crm-accounts.js';
 import { handleStockView, handleStockUpdate } from './routes/public/crm-stock.js';
+import { handleStockImportPage, handleStockImport, handleStockImportTemplate } from './routes/public/crm-stock-import.js';
 import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrmContactAdd, handleCrmDedupKey } from './routes/api/ai-builder/crm.js';
 import { handleQuotesManager } from './routes/public/quotes-manager.js';
 import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate, handleQuoteUpdate, handleQuoteReviewAdd, handleQuoteProducts } from './routes/api/ai-builder/crm-quotes.js';
@@ -290,6 +291,9 @@ router.delete('/api/ai-builder/:project_id/crm/accounts/:account_id', handleAcco
 // CRM Stock — inventory view connected to the Advanced Store (edits gated by advanced_store).
 router.get('/ai-builder/crm/:project_id/stock', handleStockView, [billingAuth, projectAccess, pluginGate('crm')]);
 router.put('/api/ai-builder/:project_id/crm/stock', handleStockUpdate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.get('/ai-builder/crm/:project_id/stock/import', handleStockImportPage, [billingAuth, projectAccess, pluginGate('crm')]);
+router.get('/ai-builder/crm/:project_id/stock/import/template', handleStockImportTemplate, [billingAuth, projectAccess, pluginGate('crm')]);
+router.post('/api/ai-builder/:project_id/crm/stock/import', handleStockImport, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 // CRM — Quotation & Order Management
 router.get('/ai-builder/crm/:project_id/quotes', handleQuotesManager, [billingAuth, projectAccess, pluginGate('crm')]);
 router.get('/api/ai-builder/:project_id/crm/quote-products', handleQuoteProducts, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);

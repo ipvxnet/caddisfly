@@ -100,6 +100,65 @@ export async function setProductStock(db, projectKey, productId, stock) {
   return r.meta.changes > 0;
 }
 
+const BULK_TYPES = ['physical', 'digital', 'service'];
+function priceToCents(v) { const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0; }
+function normStockVal(v) { const s = String(v == null ? '' : v).trim(); if (s === '') return null; const n = parseInt(s, 10); return Number.isFinite(n) ? Math.max(0, n) : null; }
+
+/**
+ * Bulk create-or-update products from normalized rows — the SHARED CORE for
+ * spreadsheet import (Phase 2) and the future inventory API/MCP (Phases 3-4).
+ * Each row: { name (required), price, stock, category, type, description }.
+ * Matched to an existing product by slug(name): found → partial update of the
+ * provided fields, else → create. `setStock` gates writing the stock column
+ * (advanced_store). `dryRun` classifies without writing (for a preview).
+ * Returns { created, updated, errors, rows:[{rowNum, name, action, error, price_cents, stock}] }.
+ */
+export async function upsertProductsBulk(db, projectKey, rows, { setStock = false, dryRun = false, maxCreate = Infinity } = {}) {
+  const k = keyWhere(projectKey);
+  const out = { created: 0, updated: 0, errors: 0, skipped: 0, rows: [] };
+  for (let i = 0; i < rows.length; i++) {
+    const raw = rows[i] || {};
+    const name = String(raw.name == null ? '' : raw.name).trim();
+    const rec = { rowNum: i + 1, name, action: '', error: '' };
+    if (!name) { rec.action = 'error'; rec.error = 'missing_name'; out.errors++; out.rows.push(rec); continue; }
+    const slug = slugify(name);
+    const hasPrice = raw.price != null && String(raw.price).trim() !== '';
+    const price_cents = hasPrice ? priceToCents(raw.price) : null;
+    const type = BULK_TYPES.includes(String(raw.type || '').toLowerCase()) ? String(raw.type).toLowerCase() : '';
+    const category = raw.category != null ? String(raw.category).trim().slice(0, 100) : '';
+    const description = raw.description != null ? String(raw.description).trim().slice(0, 5000) : '';
+    const stockVal = setStock ? normStockVal(raw.stock) : undefined;
+    rec.price_cents = price_cents; rec.stock = stockVal;
+    let existing;
+    try { existing = await db.prepare(`SELECT id FROM products WHERE ${k.sql} AND slug = ?`).bind(k.val, slug).first(); }
+    catch (e) { rec.action = 'error'; rec.error = e.message; out.errors++; out.rows.push(rec); continue; }
+    rec.action = existing ? 'update' : 'create';
+    // Respect the plan's product cap — new products beyond the limit are skipped.
+    if (rec.action === 'create' && out.created >= maxCreate) {
+      rec.action = 'skipped'; rec.error = 'limit_reached'; out.skipped++; out.rows.push(rec); continue;
+    }
+    if (!dryRun) {
+      try {
+        if (existing) {
+          const sets = [], binds = [];
+          if (hasPrice) { sets.push('price_cents = ?'); binds.push(price_cents); }
+          if (type) { sets.push('product_type = ?'); binds.push(type); }
+          if (category) { sets.push('category = ?'); binds.push(category); }
+          if (description) { sets.push('description = ?'); binds.push(description); }
+          if (setStock && stockVal !== undefined) { sets.push('stock = ?'); binds.push(stockVal); }
+          if (sets.length) { sets.push('updated_at = ?'); binds.push(nowSec()); await db.prepare(`UPDATE products SET ${sets.join(', ')} WHERE ${k.sql} AND id = ?`).bind(...binds, k.val, existing.id).run(); }
+        } else {
+          const uslug = await uniqueProductSlug(db, projectKey, name);
+          await createProduct(db, projectKey, { slug: uslug, name, description, price_cents: price_cents || 0, image: '', product_type: type || 'physical', category, body: '', media_json: '', for_sale: 1, stock: setStock ? stockVal : null });
+        }
+      } catch (e) { rec.action = 'error'; rec.error = e.message; out.errors++; out.rows.push(rec); continue; }
+    }
+    if (rec.action === 'create') out.created++; else out.updated++;
+    out.rows.push(rec);
+  }
+  return out;
+}
+
 export async function updateProduct(db, projectKey, id, updates) {
   const k = keyWhere(projectKey);
   const fields = [];
