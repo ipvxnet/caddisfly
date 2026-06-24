@@ -90,6 +90,7 @@ import { billingAuth } from './middleware/billing-auth.js';
 import { projectAccess } from './middleware/project-access.js';
 import { pluginGate } from './plugins/entitlements.js';
 import { handleCrmManager } from './routes/public/crm-manager.js';
+import { handleAccountsManager, handleAccountEditPage, handleAccountCreate, handleAccountSave, handleAccountDelete } from './routes/public/crm-accounts.js';
 import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrmContactAdd, handleCrmDedupKey } from './routes/api/ai-builder/crm.js';
 import { handleQuotesManager } from './routes/public/quotes-manager.js';
 import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate, handleQuoteUpdate, handleQuoteReviewAdd, handleQuoteProducts } from './routes/api/ai-builder/crm-quotes.js';
@@ -279,6 +280,12 @@ router.post('/api/ai-builder/:project_id/crm/contacts', handleCrmContactAdd, [bi
 router.put('/api/ai-builder/:project_id/crm/dedup-key', handleCrmDedupKey, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.put('/api/ai-builder/:project_id/crm/contacts/:email', handleCrmContactUpdate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.get('/api/ai-builder/:project_id/crm/contacts/:email/activity', handleCrmActivity, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+// CRM Accounts (Phase 1) — structured company records with multiple contacts.
+router.get('/ai-builder/crm/:project_id/accounts', handleAccountsManager, [billingAuth, projectAccess, pluginGate('crm')]);
+router.get('/ai-builder/crm/:project_id/accounts/:account_id', handleAccountEditPage, [billingAuth, projectAccess, pluginGate('crm')]);
+router.post('/api/ai-builder/:project_id/crm/accounts', handleAccountCreate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.put('/api/ai-builder/:project_id/crm/accounts/:account_id', handleAccountSave, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+router.delete('/api/ai-builder/:project_id/crm/accounts/:account_id', handleAccountDelete, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 // CRM — Quotation & Order Management
 router.get('/ai-builder/crm/:project_id/quotes', handleQuotesManager, [billingAuth, projectAccess, pluginGate('crm')]);
 router.get('/api/ai-builder/:project_id/crm/quote-products', handleQuoteProducts, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
