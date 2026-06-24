@@ -57,6 +57,34 @@ export const BUNDLES = {
   },
 };
 
+// Localized label + summary per plugin/bundle key (en falls back to the manifest
+// `label`/`summary` above). Used by the marketplace + transfer requirement list.
+const PLUGIN_I18N = {
+  es: {
+    catalogue: { label: 'Catálogo', summary: 'Catálogos ricos de productos/servicios — categorías, galería, video, PDFs y compra opcional.' },
+    crm: { label: 'CRM', summary: 'Toda persona que contacte, reserve o compre — leads, pipeline y notas en un solo lugar.' },
+    advanced_store: { label: 'Tienda avanzada', summary: 'Seguimiento de inventario, alertas de stock bajo y códigos de descuento para tu tienda.' },
+    all_access: { label: 'Acceso total', summary: 'Todos los plugins — Catálogo, CRM y Tienda avanzada — en un solo precio.' },
+  },
+  pt: {
+    catalogue: { label: 'Catálogo', summary: 'Catálogos ricos de produtos/serviços — categorias, galeria, vídeo, PDFs e compra opcional.' },
+    crm: { label: 'CRM', summary: 'Todo mundo que entra em contato, reserva ou compra — leads, pipeline e notas em um único lugar.' },
+    advanced_store: { label: 'Loja avançada', summary: 'Rastreamento de estoque, alertas de estoque baixo e códigos de desconto para sua loja.' },
+    all_access: { label: 'Acesso total', summary: 'Todos os plugins — Catálogo, CRM e Loja avançada — em um único preço.' },
+  },
+};
+
+/** Localized display label for a plugin/bundle key (falls back to English). */
+export function pluginLabel(key, lang = 'en') {
+  const loc = PLUGIN_I18N[lang] && PLUGIN_I18N[lang][key];
+  return (loc && loc.label) || (PLUGINS[key] || BUNDLES[key] || {}).label || key;
+}
+/** Localized one-line summary for a plugin/bundle key (falls back to English). */
+export function pluginSummary(key, lang = 'en') {
+  const loc = PLUGIN_I18N[lang] && PLUGIN_I18N[lang][key];
+  return (loc && loc.summary) || (PLUGINS[key] || BUNDLES[key] || {}).summary || '';
+}
+
 /** All known plugin keys. */
 export const PLUGIN_KEYS = Object.keys(PLUGINS);
 

@@ -1261,7 +1261,7 @@ export const en = {
       ['performance', 'Speed & performance'],
       ['buy-domain', 'Buying a domain'],
       ['custom-domains', 'Custom domains & DNS'], ['plans', 'Plans, credits & billing'],
-      ['team', 'Team members'], ['faq', 'FAQ'],
+      ['team', 'Team members'], ['transfer', 'Transferring a site & access'], ['faq', 'FAQ'],
     ],
     sections: [
       ['getting-started', 'Getting started', `
@@ -1389,7 +1389,9 @@ export const en = {
         <ul>
           <li><strong>Roles</strong> — the owner is admin; admins can invite, promote (member ↔ admin), and remove members.</li>
           <li><strong>Seats</strong> (including you): Starter 5 · Pro 15 · Agency 50.</li>
+          <li><strong>Per-site access</strong> — when you invite someone, choose <strong>All sites</strong> or pick <strong>specific sites</strong> they can work on, and set their role. Change it anytime from the member's row. Members only see and edit the sites you give them.</li>
         </ul>`],
+      ['transfer', 'Transferring a site & access', `<p>Move a whole website to someone else's account — handy for agencies handing a finished site to a client. Open the site in <strong>Customize</strong> and click <strong>⇄ Transfer</strong> (Pro and Agency plans).</p><ul><li><strong>How it works</strong> — enter the recipient's email; they get an invite with a sign-in link. Once they accept, <strong>they own the site</strong> — it's billed and gated entirely by <em>their</em> plan (plugins, AI credits, limits). Nothing carries over from your account.</li><li><strong>Requirements</strong> — if the site uses a custom domain or paid plugins, the recipient needs a matching plan. The accept page lists exactly what's needed and offers <strong>one combined checkout</strong> to set it all up before finishing.</li><li><strong>Keep Builder access</strong> — tick this to stay on as a <strong>Manager</strong> after the transfer: you can still edit and publish the site (it appears under <strong>Sites you manage</strong> on your dashboard) and it counts toward your own plan's site limit. The new owner can remove you anytime from their site's <strong>Builder access</strong> panel.</li><li><strong>Over your plan's limit?</strong> — if a downgrade or an incoming transfer leaves you with more published sites than your plan allows, your live sites stay online but you can't publish more until you're back within the limit. A banner shows what to do — unpublish a site or upgrade.</li></ul>`],
     ],
     faqs: [
       ['Is Caddisfly free to use?', 'Yes — you can build and preview a site for free, and publish one site on a free <code>*.caddisfly.app</code> subdomain. Paid plans add more sites, AI credits, custom domains, and team seats.'],
@@ -1417,6 +1419,9 @@ export const en = {
       ['Can I undo changes or go back to an earlier version?', 'Yes — open <strong>🕘 Versions</strong> in Customize. Save versions manually before big changes, and Caddisfly also auto-saves hourly while you edit. Restoring backs up your current state first, and your live site only changes when you publish. See <a href="#versions">Versions, backups &amp; export</a>.'],
       ['Can I export my website?', 'Yes, on every plan — click <strong>⬇ Export</strong> on your Dashboard to download your published site as a ZIP of plain HTML you can host anywhere. No lock-in: your contact form and analytics keep working from the exported copy.'],
       ['Can I get a refund?', 'Subscriptions can be cancelled anytime from <strong>Billing</strong> (you keep access until the period ends). For-convenience terminations are pro-rated per our <a href="/terms">Terms</a>.'],
+      ['Can I transfer a website to a client or another account?', 'Yes, on Pro and Agency plans. Open the site in <strong>Customize → ⇄ Transfer</strong>, enter the recipient’s email, and they accept via an emailed link. Once accepted they fully own the site — it’s billed and gated by their plan, with nothing inherited from yours. You can optionally <strong>keep Builder access</strong> to keep editing it as a Manager. See <a href="#transfer">Transferring a site &amp; access</a>.'],
+      ['Can I limit a team member to certain sites?', 'Yes. When you invite someone (Dashboard → Team), choose <strong>All sites</strong> or pick <strong>specific sites</strong>, and set their role. You can change which sites they can access anytime from their row. See <a href="#team">Team members</a>.'],
+      ['What happens if I have more published sites than my new plan allows?', 'Your live sites stay online — we never take them down automatically — but you can’t publish additional sites until you’re within your plan’s limit. You’ll see a banner prompting you to unpublish a site or upgrade. This can happen after a downgrade or after accepting a site transfer.'],
       ['I need help or found a bug.', 'Open a ticket from <a href="/support">Support</a> — describe the issue or request and we’ll get back to you by email.'],
     ],
   },

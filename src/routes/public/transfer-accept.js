@@ -2,6 +2,7 @@
 // execute-on-accept, and decline. The recipient must be signed in AS the
 // recipient email and meet the site's requirements (their plan, not the
 // sender's). Accepting flips ownership. See db/site-transfer.js + api/transfer.js.
+// i18n: local TA dict (en/es/pt), resolved by ctx.lang.
 
 import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
@@ -18,9 +19,73 @@ import { getTransferByToken, setTransferStatus, executeTransfer, countManagedPub
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const keyOf = (t) => (t.ai_project_id != null ? { aiProjectId: t.ai_project_id } : { projectId: t.project_id });
 
-function shell(inner, origin) {
-  return htmlResponse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Accept a website — Caddisfly', description: 'Accept a website transfer.', origin, path: '/transfer/accept' })}<meta name="robots" content="noindex">
+const TA = {
+  en: {
+    meta_title: 'Accept a website — Caddisfly', meta_desc: 'Accept a website transfer.',
+    invalid_title: "This transfer link isn't valid",
+    invalid_body: 'It may have been accepted, cancelled, or expired. Ask the sender to start a new transfer.',
+    go_dashboard: 'Go to dashboard', site_fallback: 'this website',
+    accept_title: 'Accept "{name}"',
+    signin_body: '{from} wants to transfer this website to {to}. Sign in to that email to continue.',
+    email_link_btn: 'Email me a sign-in link', onetime: 'A one-time link goes to {email}.',
+    wrong_title: 'Wrong account', wrong_body: "This transfer is for {to}, but you're signed in as {you}.",
+    signout: 'Sign out', reopen_tail: ', then open the link from your email again.',
+    needed: 'needed', tier_domain: 'Starter+ (this site has a custom domain)', tier_base: 'Starter or higher',
+    paid_plan: 'Paid plan — {tier}', plugin_suffix: '{label} plugin',
+    room_limit: "You're at your published-site limit ({used}/{limit}). Free a slot or upgrade before accepting.",
+    subscribe_btn: 'Subscribe & continue',
+    finishing: 'Finishing your subscription… give it a few seconds and refresh this page.',
+    one_checkout: "One checkout covers everything above. After you pay, you'll land back here to finish the transfer.",
+    accept_btn: 'Accept transfer',
+    accept_intro: "{from} is transferring this website to you. Once you accept it's yours — billed and gated by your plan{keep}.",
+    keep_clause: ', and {from} keeps Builder access', no_special: 'No special requirements', decline: 'Decline',
+  },
+  es: {
+    meta_title: 'Acepta un sitio web — Caddisfly', meta_desc: 'Acepta una transferencia de sitio web.',
+    invalid_title: 'Este enlace de transferencia no es válido',
+    invalid_body: 'Puede haber sido aceptado, cancelado o expirado. Pide al remitente que inicie una nueva transferencia.',
+    go_dashboard: 'Ir al panel', site_fallback: 'este sitio web',
+    accept_title: 'Acepta "{name}"',
+    signin_body: '{from} quiere transferir este sitio web a {to}. Inicia sesión en ese correo para continuar.',
+    email_link_btn: 'Envíame un enlace para iniciar sesión', onetime: 'Un enlace único se envía a {email}.',
+    wrong_title: 'Cuenta incorrecta', wrong_body: 'Esta transferencia es para {to}, pero has iniciado sesión como {you}.',
+    signout: 'Cerrar sesión', reopen_tail: ', luego abre el enlace de tu correo nuevamente.',
+    needed: 'necesario', tier_domain: 'Starter+ (este sitio tiene un dominio personalizado)', tier_base: 'Starter o superior',
+    paid_plan: 'Plan de pago — {tier}', plugin_suffix: 'plugin {label}',
+    room_limit: 'Estás en tu límite de sitios publicados ({used}/{limit}). Libera un espacio o mejora tu plan antes de aceptar.',
+    subscribe_btn: 'Suscríbete y continúa',
+    finishing: 'Finalizando tu suscripción… espera unos segundos y recarga esta página.',
+    one_checkout: 'Una única compra cubre todo lo anterior. Después de pagar, regresarás aquí para terminar la transferencia.',
+    accept_btn: 'Aceptar transferencia',
+    accept_intro: '{from} te está transfiriendo este sitio web. Una vez que lo aceptes, será tuyo — facturado y gestionado según tu plan{keep}.',
+    keep_clause: ', y {from} mantiene el acceso del creador', no_special: 'No hay requisitos especiales', decline: 'Rechazar',
+  },
+  pt: {
+    meta_title: 'Aceite um site — Caddisfly', meta_desc: 'Aceite uma transferência de site.',
+    invalid_title: 'Este link de transferência não é válido',
+    invalid_body: 'Ele pode ter sido aceito, cancelado ou expirado. Peça ao remetente para iniciar uma nova transferência.',
+    go_dashboard: 'Ir para o painel', site_fallback: 'este site',
+    accept_title: 'Aceite "{name}"',
+    signin_body: '{from} quer transferir este site para {to}. Faça login nesse e-mail para continuar.',
+    email_link_btn: 'Envie-me um link para fazer login', onetime: 'Um link único é enviado para {email}.',
+    wrong_title: 'Conta incorreta', wrong_body: 'Esta transferência é para {to}, mas você está conectado como {you}.',
+    signout: 'Sair', reopen_tail: ', depois abra o link do seu e-mail novamente.',
+    needed: 'necessário', tier_domain: 'Starter+ (este site tem um domínio personalizado)', tier_base: 'Starter ou superior',
+    paid_plan: 'Plano pago — {tier}', plugin_suffix: 'plugin {label}',
+    room_limit: 'Você atingiu seu limite de sites publicados ({used}/{limit}). Libere uma vaga ou faça upgrade antes de aceitar.',
+    subscribe_btn: 'Assine e continue',
+    finishing: 'Finalizando sua assinatura… espere alguns segundos e recarregue esta página.',
+    one_checkout: 'Um único checkout cobre tudo acima. Após o pagamento, você voltará aqui para concluir a transferência.',
+    accept_btn: 'Aceitar transferência',
+    accept_intro: '{from} está transferindo este site para você. Assim que você aceitar, ele será seu — cobrado e gerenciado de acordo com o seu plano{keep}.',
+    keep_clause: ', e {from} mantém o acesso do criador', no_special: 'Nenhuma exigência especial', decline: 'Recusar',
+  },
+};
+const ta = (lang) => TA[lang] || TA.en;
+
+function shell(inner, origin, T, lang = 'en') {
+  return htmlResponse(`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${headTags({ title: T.meta_title, description: T.meta_desc, origin, path: '/transfer/accept' })}<meta name="robots" content="noindex">
   <style>${baseCss()}
     main{min-height:60vh}.twrap{max-width:560px;margin:0 auto;padding:3rem 1.5rem}
     .tcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.8rem}
@@ -29,7 +94,7 @@ function shell(inner, origin) {
     .req li{padding:.6rem 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:.6rem;font-size:.92rem}
     .ok{color:#15803d;font-weight:800}.miss{color:#b91c1c;font-weight:700;text-decoration:none}
     .btn-full{width:100%;justify-content:center;margin-top:.6rem}.muted{color:var(--muted);font-size:.84rem}
-  </style></head><body>${siteHeader('/', {})}<main><div class="twrap"><div class="tcard">${inner}</div></div></main>${siteFooter({ lang: 'en' })}</body></html>`);
+  </style></head><body>${siteHeader('/', {})}<main><div class="twrap"><div class="tcard">${inner}</div></div></main>${siteFooter({ lang })}</body></html>`);
 }
 
 async function siteInfo(env, projectKey) {
@@ -45,40 +110,43 @@ async function siteInfo(env, projectKey) {
 export async function handleTransferAcceptPage(ctx) {
   const { env, params, url } = ctx;
   const origin = url.origin;
+  const lang = (ctx && ctx.lang) || 'en';
+  const T = ta(lang);
   const t = await getTransferByToken(env.DB, params.token);
   const now = Math.floor(Date.now() / 1000);
   if (!t || t.status !== 'pending' || t.expires_at <= now) {
-    return shell(`<h1>This transfer link isn't valid</h1><p class="sub">It may have been accepted, cancelled, or expired. Ask the sender to start a new transfer.</p>
-      <p style="margin-top:1.2rem"><a class="btn btn-ghost" href="/dashboard">Go to dashboard</a></p>`, origin);
+    return shell(`<h1>${T.invalid_title}</h1><p class="sub">${T.invalid_body}</p>
+      <p style="margin-top:1.2rem"><a class="btn btn-ghost" href="/dashboard">${T.go_dashboard}</a></p>`, origin, T, lang);
   }
   const site = await siteInfo(env, keyOf(t));
+  const siteName = esc(site ? site.name : T.site_fallback);
   const reqs = (() => { try { return JSON.parse(t.requirements_json || '{}'); } catch { return {}; } })();
   const next = `/transfer/accept/${params.token}`;
 
   if (!ctx.billingEmail) {
-    return shell(`<h1>Accept "${esc(site ? site.name : 'this website')}"</h1>
-      <p class="sub"><strong>${esc(t.from_email)}</strong> wants to transfer this website to <strong>${esc(t.to_email)}</strong>. Sign in to that email to continue.</p>
+    return shell(`<h1>${T.accept_title.replace('{name}', siteName)}</h1>
+      <p class="sub">${T.signin_body.replace('{from}', `<strong>${esc(t.from_email)}</strong>`).replace('{to}', `<strong>${esc(t.to_email)}</strong>`)}</p>
       <form method="POST" action="/api/billing/login" style="margin-top:1.2rem">
         <input type="hidden" name="email" value="${esc(t.to_email)}"><input type="hidden" name="next" value="${esc(next)}">
-        <button class="btn btn-primary btn-full" type="submit">Email me a sign-in link</button>
-      </form><p class="muted" style="margin-top:.8rem">A one-time link goes to ${esc(t.to_email)}.</p>`, origin);
+        <button class="btn btn-primary btn-full" type="submit">${T.email_link_btn}</button>
+      </form><p class="muted" style="margin-top:.8rem">${T.onetime.replace('{email}', esc(t.to_email))}</p>`, origin, T, lang);
   }
   if (String(ctx.billingEmail).toLowerCase() !== String(t.to_email).toLowerCase()) {
-    return shell(`<h1>Wrong account</h1>
-      <p class="sub">This transfer is for <strong>${esc(t.to_email)}</strong>, but you're signed in as <strong>${esc(ctx.billingEmail)}</strong>.</p>
-      <p style="margin-top:1.2rem"><a class="btn btn-ghost" href="/billing/logout">Sign out</a>, then open the link from your email again.</p>`, origin);
+    return shell(`<h1>${T.wrong_title}</h1>
+      <p class="sub">${T.wrong_body.replace('{to}', `<strong>${esc(t.to_email)}</strong>`).replace('{you}', `<strong>${esc(ctx.billingEmail)}</strong>`)}</p>
+      <p style="margin-top:1.2rem"><a class="btn btn-ghost" href="/billing/logout">${T.signout}</a>${T.reopen_tail}</p>`, origin, T, lang);
   }
 
   const missing = await unmetRequirements(env, ctx.billingEmail, reqs);
   const met = isMet(missing);
   const subscribed = url.searchParams.get('subscribed') === '1';
-  const reqRow = (label, ok) => `<li><span>${esc(label)}</span><span class="${ok ? 'ok' : 'miss'}">${ok ? '✓' : '• needed'}</span></li>`;
+  const reqRow = (label, ok) => `<li><span>${esc(label)}</span><span class="${ok ? 'ok' : 'miss'}">${ok ? '✓' : '• ' + T.needed}</span></li>`;
   let rows = '';
   if (reqs.base || reqs.domain) {
-    const tierLabel = reqs.domain ? 'Starter+ (this site has a custom domain)' : 'Starter or higher';
-    rows += reqRow('Paid plan — ' + tierLabel, !missing.base && !missing.domain);
+    const tierLabel = reqs.domain ? T.tier_domain : T.tier_base;
+    rows += reqRow(T.paid_plan.replace('{tier}', tierLabel), !missing.base && !missing.domain);
   }
-  for (const pk of reqs.plugins || []) rows += reqRow(`${(PLUGINS[pk] || {}).label || pk} plugin`, !missing.plugins.includes(pk));
+  for (const pk of reqs.plugins || []) rows += reqRow(T.plugin_suffix.replace('{label}', (PLUGINS[pk] || {}).label || pk), !missing.plugins.includes(pk));
 
   let roomNote = '';
   if (site && site.published) {
@@ -86,7 +154,7 @@ export async function handleTransferAcceptPage(ctx) {
     const limit = PUBLISH_LIMITS[tier];
     if (limit !== Infinity) {
       const used = (await countPublishedSites(env.DB, ctx.billingEmail)) + (await countManagedPublishedSites(env.DB, ctx.billingEmail));
-      if (used >= limit) roomNote = `<p class="miss" style="margin:.4rem 0">You're at your published-site limit (${used}/${limit}). Free a slot or upgrade before accepting.</p>`;
+      if (used >= limit) roomNote = `<p class="miss" style="margin:.4rem 0">${T.room_limit.replace('{used}', used).replace('{limit}', limit)}</p>`;
     }
   }
 
@@ -94,20 +162,19 @@ export async function handleTransferAcceptPage(ctx) {
   if (!met) {
     // ONE checkout for everything the recipient is missing (plan + plugins).
     action = `<form method="POST" action="/transfer/accept/${esc(params.token)}/subscribe">
-        <button class="btn btn-primary btn-full" type="submit">Subscribe &amp; continue</button></form>
-      <p class="muted" style="margin-top:.6rem">${subscribed
-        ? 'Finishing your subscription… give it a few seconds and refresh this page.'
-        : 'One checkout covers everything above. After you pay, you\'ll land back here to finish the transfer.'}</p>`;
+        <button class="btn btn-primary btn-full" type="submit">${T.subscribe_btn}</button></form>
+      <p class="muted" style="margin-top:.6rem">${subscribed ? T.finishing : T.one_checkout}</p>`;
   } else if (roomNote) {
-    action = `<button class="btn btn-primary btn-full" disabled style="opacity:.5;cursor:not-allowed">Accept transfer</button>`;
+    action = `<button class="btn btn-primary btn-full" disabled style="opacity:.5;cursor:not-allowed">${T.accept_btn}</button>`;
   } else {
-    action = `<form method="POST" action="/transfer/accept/${esc(params.token)}"><button class="btn btn-primary btn-full" type="submit">Accept transfer</button></form>`;
+    action = `<form method="POST" action="/transfer/accept/${esc(params.token)}"><button class="btn btn-primary btn-full" type="submit">${T.accept_btn}</button></form>`;
   }
-  return shell(`<h1>Accept "${esc(site ? site.name : 'website')}"</h1>
-    <p class="sub"><strong>${esc(t.from_email)}</strong> is transferring this website to you. Once you accept it's yours — billed and gated by <strong>your</strong> plan${t.keep_builder_access ? `, and ${esc(t.from_email)} keeps Builder access` : ''}.</p>
-    <ul class="req">${rows || '<li><span>No special requirements</span><span class="ok">✓</span></li>'}</ul>
+  const keepClause = t.keep_builder_access ? T.keep_clause.replace('{from}', esc(t.from_email)) : '';
+  return shell(`<h1>${T.accept_title.replace('{name}', siteName)}</h1>
+    <p class="sub">${T.accept_intro.replace('{from}', `<strong>${esc(t.from_email)}</strong>`).replace('{keep}', keepClause)}</p>
+    <ul class="req">${rows || `<li><span>${T.no_special}</span><span class="ok">✓</span></li>`}</ul>
     ${roomNote}${action}
-    <form method="POST" action="/transfer/decline/${esc(params.token)}" style="margin-top:.4rem"><button class="btn btn-ghost btn-full" type="submit">Decline</button></form>`, origin);
+    <form method="POST" action="/transfer/decline/${esc(params.token)}" style="margin-top:.4rem"><button class="btn btn-ghost btn-full" type="submit">${T.decline}</button></form>`, origin, T, lang);
 }
 
 /** POST /transfer/accept/:token — execute the ownership move. */

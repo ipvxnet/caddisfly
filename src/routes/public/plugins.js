@@ -1,14 +1,59 @@
 // GET /plugins — the plugin marketplace. Browse/subscribe/manage $5/mo feature
 // add-ons. Calls POST /api/plugins/:key/{subscribe,cancel} (A2). See
-// PLUGIN_PLATFORM_DESIGN.md §9.
+// PLUGIN_PLATFORM_DESIGN.md §9. i18n: local PL dict (en/es/pt), by ctx.lang.
 
 import { htmlResponse } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getBillingAccount } from '../../db/billing.js';
 import { getAccountPlugins, isEntitlementValid, PLUGIN_GRACE_SECONDS } from '../../db/account-plugins.js';
 import { hasBasePlan } from '../../plugins/entitlements.js';
-import { PLUGINS, BUNDLES } from '../../plugins/manifest.js';
+import { PLUGINS, BUNDLES, pluginLabel, pluginSummary } from '../../plugins/manifest.js';
 import { isStripeConfigured } from '../../utils/stripe.js';
+
+const PL = {
+  en: {
+    meta_title: 'Plugins — Caddisfly', meta_desc: 'Add optional features to your sites.',
+    h1: 'Plugins', sub: 'Add powerful, optional features to your sites — $5/mo each, cancel anytime.',
+    signin_banner: 'Please {signin} to manage plugins.', signin: 'sign in',
+    billing_unavail: 'Billing is temporarily unavailable.',
+    need_plan: 'Plugins are add-ons to a paid plan. {upgrade} to add them.', upgrade_link: 'Upgrade your plan',
+    included: 'Included', part_bundle: 'Part of your All-Access bundle',
+    active: 'Active', cancel: 'Cancel', ends: 'Ends {date}', resubscribe: 'Resubscribe',
+    add_price: 'Add — {price}/mo', requires_plan: 'Requires a paid plan',
+    get_all: 'Get all plugins — {price}/mo', bundle_suffix: '— every plugin', save_line: 'Save {amt}/mo vs buying separately.',
+    grace: 'Canceled plugins keep working for a 7-day grace period, then their sections are hidden on your live site. Your content is kept and restored if you resubscribe.',
+    err_base: 'A paid plan is required for plugins.', err_not_avail: "This plugin isn't available yet — check back soon.",
+    err_no_sub: 'No active subscription to attach to.', err_generic: 'Something went wrong ({e}).', err_net: 'Network error. Please try again.',
+  },
+  es: {
+    meta_title: 'Plugins — Caddisfly', meta_desc: 'Añade funciones opcionales a tus sitios.',
+    h1: 'Plugins', sub: 'Añade funciones poderosas y opcionales a tus sitios — $5/mes cada uno, cancela cuando quieras.',
+    signin_banner: 'Por favor {signin} para gestionar los plugins.', signin: 'inicia sesión',
+    billing_unavail: 'El cobro está temporalmente no disponible.',
+    need_plan: 'Los plugins son complementos de un plan de pago. {upgrade} para agregarlos.', upgrade_link: 'Mejora tu plan',
+    included: 'Incluido', part_bundle: 'Parte de tu paquete Acceso total',
+    active: 'Activo', cancel: 'Cancelar', ends: 'Finaliza {date}', resubscribe: 'Volver a suscribirse',
+    add_price: 'Añadir — {price}/mes', requires_plan: 'Requiere un plan de pago',
+    get_all: 'Obtén todos los plugins — {price}/mes', bundle_suffix: '— todos los plugins', save_line: 'Ahorra {amt}/mes frente a comprarlos por separado.',
+    grace: 'Los plugins cancelados siguen funcionando durante un período de gracia de 7 días, después sus secciones se ocultan en tu sitio publicado. Tu contenido se conserva y se restaura si vuelves a suscribirte.',
+    err_base: 'Se requiere un plan de pago para los plugins.', err_not_avail: 'Este plugin aún no está disponible — vuelve pronto.',
+    err_no_sub: 'No hay una suscripción activa a la que añadirlo.', err_generic: 'Algo salió mal ({e}).', err_net: 'Error de red. Inténtalo de nuevo.',
+  },
+  pt: {
+    meta_title: 'Plugins — Caddisfly', meta_desc: 'Adicione funcionalidades opcionais aos seus sites.',
+    h1: 'Plugins', sub: 'Adicione funcionalidades poderosas e opcionais aos seus sites — $5/mês cada um, cancele quando quiser.',
+    signin_banner: 'Por favor {signin} para gerenciar os plugins.', signin: 'entre',
+    billing_unavail: 'A cobrança está temporariamente indisponível.',
+    need_plan: 'Plugins são complementos de um plano pago. {upgrade} para adicioná-los.', upgrade_link: 'Faça upgrade do seu plano',
+    included: 'Incluído', part_bundle: 'Parte do seu pacote Acesso total',
+    active: 'Ativo', cancel: 'Cancelar', ends: 'Encerra em {date}', resubscribe: 'Assinar novamente',
+    add_price: 'Adicionar — {price}/mês', requires_plan: 'Requer um plano pago',
+    get_all: 'Obtenha todos os plugins — {price}/mês', bundle_suffix: '— todos os plugins', save_line: 'Economize {amt}/mês em vez de comprar separadamente.',
+    grace: 'Plugins cancelados continuam funcionando por um período de carência de 7 dias, depois suas seções ficam ocultas no seu site publicado. Seu conteúdo é mantido e restaurado se você assinar novamente.',
+    err_base: 'Um plano pago é necessário para os plugins.', err_not_avail: 'Este plugin ainda não está disponível — volte em breve.',
+    err_no_sub: 'Nenhuma assinatura ativa para anexar.', err_generic: 'Algo deu errado ({e}).', err_net: 'Erro de rede. Tente novamente.',
+  },
+};
 
 function fmtDate(ts) {
   if (!ts) return '';
@@ -20,6 +65,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': 
 export async function handlePluginsMarketplace(ctx) {
   const { env, billingEmail, url } = ctx;
   const origin = env.APP_URL || (url ? new URL(url).origin : '');
+  const lang = (ctx && ctx.lang) || 'en';
+  const T = PL[lang] || PL.en;
   const acct = billingEmail ? await getBillingAccount(env.DB, billingEmail) : null;
   const basePlan = hasBasePlan(acct);
   const ownedRows = billingEmail ? await getAccountPlugins(env.DB, billingEmail) : [];
@@ -28,11 +75,11 @@ export async function handlePluginsMarketplace(ctx) {
 
   let banner = '';
   if (!billingEmail) {
-    banner = `<div class="notice warn">Please <a href="/billing">sign in</a> to manage plugins.</div>`;
+    banner = `<div class="notice warn">${T.signin_banner.replace('{signin}', `<a href="/billing">${T.signin}</a>`)}</div>`;
   } else if (!isStripeConfigured(env)) {
-    banner = `<div class="notice warn">Billing is temporarily unavailable.</div>`;
+    banner = `<div class="notice warn">${T.billing_unavail}</div>`;
   } else if (!basePlan) {
-    banner = `<div class="notice warn">Plugins are add-ons to a paid plan. <a href="/billing">Upgrade your plan</a> to add them.</div>`;
+    banner = `<div class="notice warn">${T.need_plan.replace('{upgrade}', `<a href="/billing">${T.upgrade_link}</a>`)}</div>`;
   }
 
   // The All-Access bundle entitles all its member plugins via one row.
@@ -47,25 +94,25 @@ export async function handlePluginsMarketplace(ctx) {
     let state, action;
     if (coveredByBundle) {
       // The bundle owns this plugin — manage it from the bundle card.
-      state = `<span class="pill ok">Included</span>`;
-      action = `<span class="muted-link">Part of your All-Access bundle</span>`;
+      state = `<span class="pill ok">${T.included}</span>`;
+      action = `<span class="muted-link">${T.part_bundle}</span>`;
     } else if (row && row.status === 'active') {
-      state = `<span class="pill ok">Active</span>`;
-      action = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${p.key}">Cancel</button>`;
+      state = `<span class="pill ok">${T.active}</span>`;
+      action = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${p.key}">${T.cancel}</button>`;
     } else if (row && valid) {
       // canceling/canceled but still in grace
       const until = fmtDate((row.current_period_end || now) + PLUGIN_GRACE_SECONDS);
-      state = `<span class="pill warn">Ends ${until}</span>`;
-      action = `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${p.key}">Resubscribe</button>`;
+      state = `<span class="pill warn">${T.ends.replace('{date}', until)}</span>`;
+      action = `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${p.key}">${T.resubscribe}</button>`;
     } else {
       state = `<span class="pill">${money(p.priceCents)}/mo</span>`;
       action = basePlan
-        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${p.key}">Add — ${money(p.priceCents)}/mo</button>`
-        : `<a class="btn btn-ghost" href="/billing">Requires a paid plan</a>`;
+        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${p.key}">${T.add_price.replace('{price}', money(p.priceCents))}</button>`
+        : `<a class="btn btn-ghost" href="/billing">${T.requires_plan}</a>`;
     }
     return `<div class="pl-card">
-      <div class="pl-head"><h3>${esc(p.label)}</h3>${state}</div>
-      <p class="pl-sum">${esc(p.summary)}</p>
+      <div class="pl-head"><h3>${esc(pluginLabel(p.key, lang))}</h3>${state}</div>
+      <p class="pl-sum">${esc(pluginSummary(p.key, lang))}</p>
       <div class="pl-action">${action}</div>
     </div>`;
   }).join('');
@@ -78,36 +125,37 @@ export async function handlePluginsMarketplace(ctx) {
     const savings = Math.max(0, sumIndividual - bundle.priceCents);
     let bstate, baction;
     if (brow && brow.status === 'active') {
-      bstate = `<span class="pill ok">Active</span>`;
-      baction = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${bundle.key}">Cancel</button>`;
+      bstate = `<span class="pill ok">${T.active}</span>`;
+      baction = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${bundle.key}">${T.cancel}</button>`;
     } else if (isEntitlementValid(brow, now)) {
       const until = fmtDate((brow.current_period_end || now) + PLUGIN_GRACE_SECONDS);
-      bstate = `<span class="pill warn">Ends ${until}</span>`;
-      baction = `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">Resubscribe</button>`;
+      bstate = `<span class="pill warn">${T.ends.replace('{date}', until)}</span>`;
+      baction = `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">${T.resubscribe}</button>`;
     } else {
       bstate = `<span class="pill">${money(bundle.priceCents)}/mo</span>`;
       baction = basePlan
-        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">Get all plugins — ${money(bundle.priceCents)}/mo</button>`
-        : `<a class="btn btn-ghost" href="/billing">Requires a paid plan</a>`;
+        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">${T.get_all.replace('{price}', money(bundle.priceCents))}</button>`
+        : `<a class="btn btn-ghost" href="/billing">${T.requires_plan}</a>`;
     }
-    const saveLine = savings > 0 ? ` <strong>Save ${money(savings)}/mo</strong> vs buying separately.` : '';
+    const saveLine = savings > 0 ? ` <strong>${T.save_line.replace('{amt}', money(savings))}</strong>` : '';
     bundleCard = `<div class="pl-bundle">
-      <div class="pl-head"><h3>✨ ${esc(bundle.label)} — every plugin</h3>${bstate}</div>
-      <p class="pl-sum">${esc(bundle.summary)}${saveLine}</p>
+      <div class="pl-head"><h3>✨ ${esc(pluginLabel(bundle.key, lang))} ${T.bundle_suffix}</h3>${bstate}</div>
+      <p class="pl-sum">${esc(pluginSummary(bundle.key, lang))}${saveLine}</p>
       <div class="pl-action">${baction}</div>
     </div>`;
   }
 
   const inner = `
-    <h1>Plugins</h1>
-    <p class="sub">Add powerful, optional features to your sites — $5/mo each, cancel anytime.</p>
+    <h1>${T.h1}</h1>
+    <p class="sub">${T.sub}</p>
     ${banner}
     <div id="pl-msg"></div>
     ${bundleCard}
     <div class="pl-grid">${cards}</div>
-    <p class="muted-link" style="margin-top:1.4rem">Canceled plugins keep working for a 7-day grace period, then their sections are hidden on your live site. Your content is kept and restored if you resubscribe.</p>
+    <p class="muted-link" style="margin-top:1.4rem">${T.grace}</p>
     <script>
       (function(){
+        var S = ${JSON.stringify({ base: T.err_base, notAvail: T.err_not_avail, noSub: T.err_no_sub, generic: T.err_generic, net: T.err_net })};
         document.querySelectorAll('.cf-plug').forEach(function(b){
           b.addEventListener('click', async function(){
             var key=b.dataset.key, act=b.dataset.act;
@@ -117,8 +165,9 @@ export async function handlePluginsMarketplace(ctx) {
               var res=await fetch('/api/plugins/'+key+'/'+act,{method:'POST',headers:{'Content-Type':'application/json'}});
               var data=await res.json();
               if(data.ok){ location.reload(); return; }
-              msg.innerHTML='<div class="notice err">'+ (data.error==='base_plan_required'?'A paid plan is required for plugins.':data.error==='plugin_not_configured'?'This plugin isn\\'t available yet — check back soon.':data.error==='no_subscription'?'No active subscription to attach to.':'Something went wrong ('+(data.error||res.status)+').') +'</div>';
-            }catch(e){ msg.innerHTML='<div class="notice err">Network error. Please try again.</div>'; }
+              var m = data.error==='base_plan_required'?S.base:data.error==='plugin_not_configured'?S.notAvail:data.error==='no_subscription'?S.noSub:S.generic.replace('{e}', (data.error||res.status));
+              msg.innerHTML='<div class="notice err">'+m+'</div>';
+            }catch(e){ msg.innerHTML='<div class="notice err">'+S.net+'</div>'; }
             b.disabled=false; b.textContent=old;
           });
         });
@@ -126,11 +175,11 @@ export async function handlePluginsMarketplace(ctx) {
     </script>`;
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${headTags({ title: 'Plugins — Caddisfly', description: 'Add optional features to your sites.', origin, path: '/plugins' })}
+  ${headTags({ title: T.meta_title, description: T.meta_desc, origin, path: '/plugins' })}
   <meta name="robots" content="noindex">
   <style>
     ${baseCss()}
@@ -161,7 +210,7 @@ export async function handlePluginsMarketplace(ctx) {
 <body>
   ${siteHeader('/pricing', {})}
   <main><div class="bwrap">${inner}</div></main>
-  ${siteFooter({ lang: 'en' })}
+  ${siteFooter({ lang })}
 </body>
 </html>`;
 
