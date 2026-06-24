@@ -37,6 +37,13 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config wrangler.sites.toml --env preview
 
+      - name: Deploy MCP worker (inventory MCP server)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.mcp.toml --env preview
+
       - name: Comment on commit (optional)
         if: github.event_name == 'push'
         run: |

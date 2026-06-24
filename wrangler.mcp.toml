@@ -1,0 +1,24 @@
+# caddisfly-mcp — standalone MCP server exposing the inventory REST API (Phase 3)
+# as MCP tools. NO DB/secrets: it only proxies tool calls to
+# ${INVENTORY_API_BASE}/api/inventory/products, forwarding the caller's
+# `Authorization: Bearer inv_…` token. Separate from the app worker for a clean,
+# minimal surface (mirrors wrangler.sites.toml: top-level = production,
+# [env.preview] = preview).
+#
+#   Preview:    npx wrangler deploy -c wrangler.mcp.toml --env preview
+#   Production: npx wrangler deploy -c wrangler.mcp.toml
+#
+# URLs (workers.dev):
+#   prod    → https://caddisfly-mcp.fabianodevtools.workers.dev
+#   preview → https://caddisfly-mcp-preview.fabianodevtools.workers.dev
+
+name = "caddisfly-mcp"
+main = "src/mcp-worker.js"
+compatibility_date = "2024-11-01"
+workers_dev = true
+vars = { INVENTORY_API_BASE = "https://caddisfly.ai", MCP_SERVER_NAME = "caddisfly-inventory" }
+
+[env.preview]
+name = "caddisfly-mcp-preview"
+workers_dev = true
+vars = { INVENTORY_API_BASE = "https://caddisfly-preview.fabianodevtools.workers.dev", MCP_SERVER_NAME = "caddisfly-inventory-preview" }
