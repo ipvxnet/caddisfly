@@ -187,6 +187,7 @@ python3 scripts/lead-gen.py --enrich-emails</code></pre>
     <details class="lguide" ontoggle="if(this.open) loadQtpl()">
       <summary>✎ Quote template <span class="muted">— Caddisfly branding on sent quotes</span></summary>
       <div class="lguide-body">
+        <p class="muted" style="margin:0 0 .6rem">Variables (filled from the lead when you send): <code>{customer}</code> = business name · <code>{website}</code> = their site URL. The intro keeps line breaks, so a multi-line scope works there.</p>
         <div class="qtpl-grid">
           <label>Intro line<textarea id="qt-intro" rows="2" placeholder="Here's the quote we discussed…"></textarea></label>
           <label>Thank-you message<textarea id="qt-thanks" rows="2" placeholder="Thank you for considering Caddisfly…"></textarea></label>

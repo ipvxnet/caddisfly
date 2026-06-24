@@ -23,8 +23,15 @@ function caddisflyCatalog() {
   return items;
 }
 
+// Fill {customer} / {website} placeholders from the lead. Runs on the template
+// text BEFORE it's frozen onto the quote, so the sent document shows real values.
+function fillVars(str, vars) {
+  return String(str == null ? '' : str).replace(/\{(customer|website)\}/g, (m, k) => (vars[k] != null && vars[k] !== '' ? vars[k] : m));
+}
+
 /** Build + freeze the issuer snapshot for Caddisfly + mint a token. Shared by
- *  Send and Preview so the document is identical either way. */
+ *  Send and Preview so the document is identical either way. The global quote
+ *  template may use {customer} / {website}, filled from this lead. */
 async function snapshotLeadQuote(env, owner, qid, origin) {
   let issuer = {
     name: 'Caddisfly',
@@ -36,6 +43,11 @@ async function snapshotLeadQuote(env, owner, qid, origin) {
     terms: '',
   };
   issuer = applyTemplate(issuer, await getQuoteTemplate(env.DB, { global: true }));
+  const lead = await getLead(env.DB, owner.leadId).catch(() => null);
+  const vars = { customer: (lead && lead.business) || '', website: (lead && lead.website) || '' };
+  issuer.intro = fillVars(issuer.intro, vars);
+  issuer.thankYou = fillVars(issuer.thankYou, vars);
+  issuer.terms = fillVars(issuer.terms, vars);
   await setQuoteIssuer(env.DB, owner, qid, issuer);
   return ensureQuoteToken(env.DB, owner, qid);
 }
