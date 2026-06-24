@@ -65,7 +65,7 @@ export function renderQuoteHtml({ quote, items, issuer, pdfUrl, lang = 'en' }) {
   .for { color: #6b7280; font-size: .82rem; text-transform: uppercase; letter-spacing: .05em; margin: 0; }
   .for b { color: #1f2733; font-size: 1rem; text-transform: none; letter-spacing: 0; }
   h1.title { font-size: 1.35rem; margin: .2rem 0 1rem; color: #111827; }
-  .intro { color: #4a5568; line-height: 1.6; margin: 0 0 1.4rem; }
+  .intro { color: #4a5568; line-height: 1.6; margin: 0 0 1.4rem; white-space: pre-wrap; }
   table { width: 100%; border-collapse: collapse; margin: .4rem 0 1.2rem; font-size: .9rem; }
   thead th { background: var(--accent); color: #fff; text-align: left; padding: 9px 12px; font-size: .76rem; text-transform: uppercase; letter-spacing: .04em; }
   tbody td { padding: 9px 12px; border-bottom: 1px solid #edf0f4; }

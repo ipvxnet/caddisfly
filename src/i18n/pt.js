@@ -442,7 +442,7 @@ export const pt = {
   dash: {
     meta_title: 'Painel — Caddisfly',
     title: 'Os seus sites',
-    plan_billing: 'Plano e faturação →',
+    plan_billing: 'Plano e Faturamento →',
     buy_domain: '🌐 Domínios',
     admin: 'Admin',
     signed_in_as: 'Sessão iniciada como',
@@ -518,7 +518,7 @@ export const pt = {
     n_credits_cancel: 'Compra de créditos cancelada. Nenhuma cobrança foi feita.',
     n_sent: '✓ Verifique o seu e-mail para o link de acesso (expira em 15 min).',
     n_expired: 'Esse link de acesso é inválido ou expirou. Solicite um novo abaixo.',
-    your_billing: 'A sua faturação',
+    your_billing: 'Seu Faturamento',
     your_sites_team: '← Os seus sites e equipe', sign_out: 'Sair',
     not_configured: 'A faturação ainda não está habilitada neste ambiente. As mudanças de plano estão temporariamente indisponíveis.',
     two_months_free: '(2 meses grátis)', continue_checkout: 'Continuar ao pagamento →',
