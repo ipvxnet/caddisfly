@@ -149,6 +149,7 @@ import { processBookingReminders } from './routes/api/bookings-remind.js';
 import { handleHolidayThemesSave, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
 import { processPluginGraceHides } from './plugins/grace-cron.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
+import { handleListManagers, handleRemoveManager } from './routes/api/ai-builder/managers.js';
 import { handleInboundEmail } from './routes/email/inbound-blog.js';
 
 /** GET /api/admin/domains/renew?dry=1&now=<unix> — manual renewal run
@@ -417,6 +418,8 @@ router.post('/api/ai-builder/:project_id/deploy', handleAIBuilderDeploy, PROJ);
 router.get('/api/ai-builder/:project_id/offboard', handleOffboardStatus, PROJ);
 router.post('/api/ai-builder/:project_id/unpublish', handleUnpublish, PROJ);
 router.post('/api/ai-builder/:project_id/delete', handleDeleteSite, PROJ);
+router.get('/api/ai-builder/:project_id/managers', handleListManagers, PROJ);
+router.post('/api/ai-builder/:project_id/managers/remove', handleRemoveManager, PROJ);
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);

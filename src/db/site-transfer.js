@@ -114,6 +114,17 @@ export async function getSiteManagerRole(db, projectKey, email) {
   return row ? row.role : null;
 }
 
+/** Everyone who manages this specific site (the Builder/Designer kept on after
+ *  a transfer). Shown to the owner so they can Disconnect the relationship. */
+export async function listSiteManagers(db, projectKey) {
+  const k = keyCol(projectKey);
+  const { results } = await db
+    .prepare(`SELECT manager_email, role, created_at FROM site_managers WHERE ${k.col} = ? ORDER BY created_at`)
+    .bind(k.val)
+    .all();
+  return results || [];
+}
+
 /** All sites `email` manages (joined to the project for display + publish state).
  *  `published` = the canonical status='deployed' (matches countPublishedSites). */
 export async function listManagedSites(db, email) {
