@@ -129,3 +129,11 @@ export async function decrementVariantStock(db, projectKey, variantId, qty) {
   await db.prepare(`UPDATE product_variants SET stock = ? WHERE ${k.sql} AND id = ?`).bind(next, k.val, variantId).run();
   return next;
 }
+
+/** Set a variant's stock directly (scoped). '' / null = untracked. Returns true if changed. */
+export async function setVariantStock(db, projectKey, variantId, stock) {
+  const k = keyWhere(projectKey);
+  const v = stock === '' || stock == null ? null : Math.max(0, Math.round(Number(stock)) || 0);
+  const r = await db.prepare(`UPDATE product_variants SET stock = ? WHERE ${k.sql} AND id = ?`).bind(v, k.val, variantId).run();
+  return r.meta.changes > 0;
+}
