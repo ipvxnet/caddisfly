@@ -8,14 +8,20 @@
 #   Preview:    npx wrangler deploy -c wrangler.mcp.toml --env preview
 #   Production: npx wrangler deploy -c wrangler.mcp.toml
 #
-# URLs (workers.dev):
-#   prod    → https://caddisfly-mcp.fabianodevtools.workers.dev
-#   preview → https://caddisfly-mcp-preview.fabianodevtools.workers.dev
+# URLs:
+#   prod    → https://mcp.caddisfly.ai            (zone route, workers.dev OFF)
+#   preview → https://caddisfly-mcp-preview.fabianodevtools.workers.dev  (still .dev)
 
+# Production serves on mcp.caddisfly.ai (a zone route); the workers.dev URL is
+# DISABLED. Requires a PROXIED DNS record for mcp.caddisfly.ai in the caddisfly.ai
+# zone (e.g. CNAME mcp → caddisfly.ai, orange-cloud ON) — added by the operator.
 name = "caddisfly-mcp"
 main = "src/mcp-worker.js"
 compatibility_date = "2024-11-01"
-workers_dev = true
+workers_dev = false
+routes = [
+  { pattern = "mcp.caddisfly.ai", zone_name = "caddisfly.ai" },
+]
 vars = { INVENTORY_API_BASE = "https://caddisfly.ai", MCP_SERVER_NAME = "caddisfly-inventory" }
 
 # Direct worker-to-worker call to the app worker (avoids the *.workers.dev
