@@ -7,11 +7,15 @@
 import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { resolveStoreProject } from '../api/ai-builder/store.js';
-import { listAccounts, getAccount, createAccount, updateAccount, deleteAccount, setAccountContacts } from '../../db/crm-accounts.js';
+import { listAccounts, getAccount, createAccount, updateAccount, deleteAccount, setAccountContacts, getAccountFinancials } from '../../db/crm-accounts.js';
 
 const STATUSES = ['new', 'contacted', 'qualified', 'won', 'lost'];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = (ts) => { if (!ts) return ''; try { return new Date(ts * 1000).toISOString().slice(0, 10); } catch { return ''; } };
+const money = (cents, currency) => {
+  try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format((cents || 0) / 100); }
+  catch { return '$' + ((cents || 0) / 100).toFixed(2); }
+};
 
 const AC = {
   en: {
@@ -26,7 +30,12 @@ const AC = {
     contacts_h: 'Contacts', c_name: 'Name', c_title: 'Title / role', c_email: 'Email', c_phone: 'Phone', c_primary: 'Primary',
     add_contact: '＋ Add contact', remove: 'Remove', save: 'Save account', saved: 'Saved', delete: 'Delete account',
     delete_confirm: 'Delete this account and its contacts? This cannot be undone.',
-    fin_h: 'Purchase history & financials', fin_soon: "Purchase history and financial metrics for this account's contacts are coming next.",
+    fin_h: 'Purchase history & financials',
+    fin_total_spent: 'Total spent', fin_orders: 'Orders', fin_avg: 'Avg order', fin_last: 'Last purchase',
+    fin_won: 'Won quotes', fin_total_value: 'Total value', fin_history: 'Transaction history',
+    fin_none: "No purchases or accepted quotes yet for this account's contacts.",
+    fin_matched: 'Matched by contact email.', th_date: 'Date', th_type: 'Type', th_amount: 'Amount',
+    t_order: 'Order', t_quote: 'Quote',
     name_required: 'Enter an account name.', err: 'Something went wrong.',
     st: { new: 'New', contacted: 'Contacted', qualified: 'Qualified', won: 'Won', lost: 'Lost' },
   },
@@ -42,7 +51,12 @@ const AC = {
     contacts_h: 'Contactos', c_name: 'Nombre', c_title: 'Título / rol', c_email: 'Correo electrónico', c_phone: 'Teléfono', c_primary: 'Principal',
     add_contact: '＋ Añadir contacto', remove: 'Eliminar', save: 'Guardar cuenta', saved: 'Guardado', delete: 'Eliminar cuenta',
     delete_confirm: '¿Eliminar esta cuenta y sus contactos? Esto no se puede deshacer.',
-    fin_h: 'Historial de compras y finanzas', fin_soon: 'El historial de compras y las métricas financieras para los contactos de esta cuenta llegarán pronto.',
+    fin_h: 'Historial de compras y finanzas',
+    fin_total_spent: 'Total gastado', fin_orders: 'Pedidos', fin_avg: 'Pedido prom.', fin_last: 'Última compra',
+    fin_won: 'Cotizaciones ganadas', fin_total_value: 'Valor total', fin_history: 'Historial de transacciones',
+    fin_none: 'Aún no hay compras ni cotizaciones aceptadas para los contactos de esta cuenta.',
+    fin_matched: 'Coincidencia por correo de contacto.', th_date: 'Fecha', th_type: 'Tipo', th_amount: 'Importe',
+    t_order: 'Pedido', t_quote: 'Cotización',
     name_required: 'Ingresa un nombre de cuenta.', err: 'Algo salió mal.',
     st: { new: 'Nuevo', contacted: 'Contactado', qualified: 'Calificado', won: 'Ganado', lost: 'Perdido' },
   },
@@ -58,7 +72,12 @@ const AC = {
     contacts_h: 'Contatos', c_name: 'Nome', c_title: 'Título / cargo', c_email: 'E-mail', c_phone: 'Telefone', c_primary: 'Principal',
     add_contact: '＋ Adicionar contato', remove: 'Remover', save: 'Salvar conta', saved: 'Salvo', delete: 'Excluir conta',
     delete_confirm: 'Excluir esta conta e seus contatos? Isso não pode ser desfeito.',
-    fin_h: 'Histórico de compras e finanças', fin_soon: 'O histórico de compras e as métricas financeiras para os contatos desta conta virão em breve.',
+    fin_h: 'Histórico de compras e finanças',
+    fin_total_spent: 'Total gasto', fin_orders: 'Pedidos', fin_avg: 'Pedido méd.', fin_last: 'Última compra',
+    fin_won: 'Orçamentos ganhos', fin_total_value: 'Valor total', fin_history: 'Histórico de transações',
+    fin_none: 'Ainda não há compras ou orçamentos aceitos para os contatos desta conta.',
+    fin_matched: 'Correspondência por e-mail de contato.', th_date: 'Data', th_type: 'Tipo', th_amount: 'Valor',
+    t_order: 'Pedido', t_quote: 'Orçamento',
     name_required: 'Digite um nome da conta.', err: 'Algo deu errado.',
     st: { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', won: 'Ganho', lost: 'Perdido' },
   },
@@ -95,8 +114,17 @@ function shell(T, lang, origin, inner, extraCss = '') {
     .acrow input{padding:.45rem .55rem;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:.85rem;min-width:0}
     .acrow .prim{display:flex;align-items:center;gap:.3rem;font-size:.78rem;font-weight:600;color:var(--muted);white-space:nowrap}
     .acrow .ac-remove{background:none;border:none;color:#b91c1c;cursor:pointer;font-size:.8rem;font-weight:600}
-    .afin{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.2rem}
-    .afin h3{margin:0 0 .3rem;font-size:.95rem;color:var(--ink)}.afin p{margin:0;color:var(--muted);font-size:.85rem}
+    .afstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.7rem;margin-bottom:1rem}
+    .afstat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:.65rem .8rem}
+    .afk{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+    .afv{font-size:1.05rem;font-weight:800;color:var(--ink);margin-top:.15rem}
+    .afhwrap{overflow-x:auto}
+    .afhist{width:100%;border-collapse:collapse;font-size:.85rem}
+    .afhist th{text-align:left;padding:.45rem .6rem;color:var(--muted);font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--line)}
+    .afhist td{padding:.45rem .6rem;border-bottom:1px solid var(--line)}.afhist td.r,.afhist th.r{text-align:right}.afhist td.r{font-weight:700}
+    .afhist tr:last-child td{border-bottom:none}
+    .afnone{color:var(--muted);font-size:.9rem;margin:0}
+    .afmatch{color:var(--muted);font-size:.76rem;margin:.6rem 0 0}
     .aacts{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
     .btn.danger{background:#fff;color:#b91c1c;border:1.5px solid #fca5a5}
     .amsg{font-size:.85rem;color:var(--muted)}
@@ -182,6 +210,26 @@ export async function handleAccountEditPage(ctx) {
   </div>`;
   const contactRows = (acct.contacts.length ? acct.contacts : [{}]).map(contactRow).join('');
 
+  // Phase 2 — financials rolled up from store orders + accepted quotes matched by
+  // this account's contact + general emails.
+  const fin = await getAccountFinancials(env.DB, r.projectKey, [...acct.contacts.map((c) => c.email), acct.email]);
+  const stat = (label, val) => `<div class="afstat"><div class="afk">${label}</div><div class="afv">${val}</div></div>`;
+  const finBody = fin.txns.length
+    ? `<div class="afstats">
+        ${stat(T.fin_total_value, money(fin.totalValue, fin.currency))}
+        ${stat(T.fin_total_spent, money(fin.ordersTotal, fin.currency))}
+        ${stat(T.fin_orders, fin.orderCount)}
+        ${stat(T.fin_avg, money(fin.avgOrder, fin.currency))}
+        ${stat(T.fin_last, fmtDate(fin.lastPurchase) || '—')}
+        ${stat(T.fin_won, `${money(fin.quotesTotal, fin.currency)} · ${fin.quoteCount}`)}
+      </div>
+      <div class="afhwrap"><table class="afhist"><thead><tr><th>${T.th_date}</th><th>${T.th_type}</th><th class="r">${T.th_amount}</th></tr></thead><tbody>
+        ${fin.txns.map((t) => `<tr><td>${esc(fmtDate(t.date))}</td><td>${t.type === 'order' ? `${T.t_order} #${t.id}` : esc(T.t_quote + (t.title ? `: ${t.title}` : ''))}</td><td class="r">${money(t.amount, t.currency)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="afmatch">${T.fin_matched}</p>`
+    : `<p class="afnone">${T.fin_none}</p>`;
+  const finHtml = `<div class="acard"><h3 style="margin:0 0 .8rem;color:var(--ink)">${T.fin_h}</h3>${finBody}</div>`;
+
   const inner = `
     <div class="ahead"><h1>🏢 ${esc(acct.account_name || T.acct_label)} <span class="pill">#${acct.id}</span></h1>
       <a class="btn ghost" href="${base}/accounts">${T.back_crm.replace('CRM', T.title)}</a></div>
@@ -207,7 +255,7 @@ export async function handleAccountEditPage(ctx) {
       <div id="ac-contacts">${contactRows}</div>
       <button type="button" class="btn ghost" id="ac-add">${T.add_contact}</button>
     </div>
-    <div class="afin"><h3>${T.fin_h}</h3><p>${T.fin_soon}</p></div>
+    ${finHtml}
     <div class="aacts">
       <button class="btn" type="button" id="ac-save">${T.save}</button>
       <span id="ac-msg" class="amsg"></span>
