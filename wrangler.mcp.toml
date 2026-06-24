@@ -34,6 +34,9 @@ service = "caddisfly"
 [env.preview]
 name = "caddisfly-mcp-preview"
 workers_dev = true
+# Must be EXPLICIT — wrangler otherwise inherits the top-level mcp.caddisfly.ai
+# route into this env, so the preview worker would steal the prod route.
+routes = []
 vars = { INVENTORY_API_BASE = "https://caddisfly-preview.fabianodevtools.workers.dev", MCP_SERVER_NAME = "caddisfly-inventory-preview" }
 
 [[env.preview.services]]
