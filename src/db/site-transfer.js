@@ -72,20 +72,23 @@ export async function executeTransfer(db, projectKey, { fromEmail, toEmail, keep
   const k = keyCol(projectKey);
   const to = lc(toEmail);
 
-  await db.prepare(`UPDATE ${o.table} SET customer_email = ? WHERE id = ?`).bind(to, o.id).run();
-
-  // Domains purchased through us that are bound to this site → bill the new owner.
-  await db.prepare(
-    `UPDATE domain_orders SET customer_email = ?, stripe_customer_id = ? WHERE ${k.col} = ?`
-  ).bind(to, recipientStripeCustomerId || null, k.val).run();
-
-  // Clear owner-specific operational config (payout/notify/syndication).
-  await db.prepare(
-    `UPDATE ai_website_configs SET stripe_account_id = NULL, social_connections_json = NULL, notify_email = NULL, updated_at = unixepoch()
-     WHERE ${k.col} = ?`
-  ).bind(k.val).run();
-
-  if (keepBuilder) await addSiteManager(db, projectKey, fromEmail);
+  // Run as ONE atomic batch (D1 batch = transaction) so a mid-way failure can't
+  // leave a half-transferred site.
+  const stmts = [
+    db.prepare(`UPDATE ${o.table} SET customer_email = ? WHERE id = ?`).bind(to, o.id),
+    // Domains purchased through us bound to this site → bill the new owner.
+    db.prepare(`UPDATE domain_orders SET customer_email = ?, stripe_customer_id = ? WHERE ${k.col} = ?`).bind(to, recipientStripeCustomerId || null, k.val),
+    // Clear owner-specific operational config (payout/notify/syndication).
+    db.prepare(`UPDATE ai_website_configs SET stripe_account_id = NULL, social_connections_json = NULL, notify_email = NULL, updated_at = unixepoch() WHERE ${k.col} = ?`).bind(k.val),
+  ];
+  if (keepBuilder) {
+    // NOTE: the unique index is PARTIAL, so the conflict target must repeat its WHERE.
+    stmts.push(db.prepare(
+      `INSERT INTO site_managers (${k.col}, manager_email, role) VALUES (?, ?, 'manager')
+       ON CONFLICT(${k.col}, manager_email) WHERE ${k.col} IS NOT NULL DO UPDATE SET role = excluded.role`
+    ).bind(k.val, lc(fromEmail)));
+  }
+  await db.batch(stmts);
 }
 
 // ---- per-site Manager delegate grants --------------------------------------
@@ -94,7 +97,7 @@ export async function addSiteManager(db, projectKey, managerEmail, role = 'manag
   const k = keyCol(projectKey);
   await db.prepare(
     `INSERT INTO site_managers (${k.col}, manager_email, role) VALUES (?, ?, ?)
-     ON CONFLICT(${k.col}, manager_email) DO UPDATE SET role = excluded.role`
+     ON CONFLICT(${k.col}, manager_email) WHERE ${k.col} IS NOT NULL DO UPDATE SET role = excluded.role`
   ).bind(k.val, lc(managerEmail), role).run();
 }
 
