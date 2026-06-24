@@ -75,6 +75,28 @@ export async function sendQuoteEmail(env, { to, issuerName, quoteTitle, totalLab
   return deliverEmail(env, { to, subject, html, fromName: name, replyTo });
 }
 
+/** Invite someone to accept a website transfer. */
+export async function sendTransferInviteEmail(env, { to, fromEmail, siteName, acceptUrl, requirements }) {
+  const e = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const subject = `${fromEmail} wants to transfer a website to you`;
+  const reqs = (requirements || []).filter(Boolean);
+  const reqHtml = reqs.length
+    ? `<p style="color:#4a5568;margin:.6rem 0 .2rem;font-size:.9rem">To take it over, your account will need:</p>
+       <ul style="color:#4a5568;font-size:.88rem;margin:.2rem 0 0;padding-left:1.1rem">${reqs.map((r) => `<li>${e(r)}</li>`).join('')}</ul>`
+    : '';
+  const html = `<!DOCTYPE html><html><body style="margin:0;background:#f4f5f8;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#1f2733">
+    <div style="max-width:540px;margin:0 auto;padding:32px 20px">
+      <div style="background:#fff;border-radius:12px;padding:28px;border:1px solid #e2e8f0">
+        <h1 style="font-size:1.25rem;margin:0 0 .6rem">You've been offered a website</h1>
+        <p style="color:#4a5568;margin:.2rem 0 .8rem"><strong>${e(fromEmail)}</strong> wants to transfer the website <strong>${e(siteName)}</strong> to your account.</p>
+        ${reqHtml}
+        <a href="${e(acceptUrl)}" style="display:inline-block;background:#5a3da8;color:#fff;text-decoration:none;font-weight:700;padding:.8rem 1.4rem;border-radius:999px;margin-top:1.1rem">Review &amp; accept →</a>
+        <p style="color:#8a94a6;font-size:.78rem;margin-top:1.4rem">This invitation expires in 7 days. If you weren't expecting it, you can ignore this email.</p>
+      </div>
+    </div></body></html>`;
+  return deliverEmail(env, { to, subject, html, replyTo: fromEmail });
+}
+
 /**
  * Sends preview link email to customer
  * @param {Object} env - Environment bindings

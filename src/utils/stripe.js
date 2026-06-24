@@ -106,6 +106,27 @@ export async function createCheckoutSession(env, { email, priceId, successUrl, c
   return stripeRequest(env, '/checkout/sessions', body);
 }
 
+/**
+ * Create a subscription Checkout Session with SEVERAL prices in one go (a base
+ * plan + plugin add-ons). One card entry → one subscription carrying all items.
+ * @param {string[]} priceIds
+ */
+export async function createBundleCheckoutSession(env, { email, priceIds, successUrl, cancelUrl, customerId }) {
+  const body = {
+    mode: 'subscription',
+    line_items: (priceIds || []).filter(Boolean).map((price) => ({ price, quantity: 1 })),
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    client_reference_id: email,
+    allow_promotion_codes: true,
+    subscription_data: { metadata: { email } },
+    metadata: { email },
+  };
+  if (customerId) body.customer = customerId;
+  else body.customer_email = email;
+  return stripeRequest(env, '/checkout/sessions', body);
+}
+
 // ---- Subscription items (plugin add-ons ride the account's existing sub) ----
 
 /** Fetch a subscription (incl. items + current_period_end). */
