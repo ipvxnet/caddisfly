@@ -1254,7 +1254,7 @@ export const pt = {
       ['performance', 'Velocidade e desempenho'],
       ['buy-domain', 'Comprar um domínio'],
       ['custom-domains', 'Domínios próprios e DNS'], ['plans', 'Planos, créditos e faturação'],
-      ['team', 'Membros da equipe'], ['faq', 'Perguntas frequentes'],
+      ['team', 'Membros da equipe'], ['transfer', 'Transferir um site e o acesso'], ['faq', 'Perguntas frequentes'],
     ],
     sections: [
       ['getting-started', 'Primeiros passos', `
@@ -1382,7 +1382,9 @@ export const pt = {
         <ul>
           <li><strong>Funções</strong> — o proprietário é administrador; administradores podem convidar, promover (membro ↔ administrador) e remover membros.</li>
           <li><strong>Vagas</strong> (incluindo você): Starter 5 · Pro 15 · Agency 50.</li>
+          <li><strong>Acesso por site</strong> — quando você convida alguém, escolha <strong>Todos os sites</strong> ou selecione <strong>sites específicos</strong> em que eles podem trabalhar e defina seu papel. Você pode mudar isso a qualquer momento na linha do membro. Os membros só veem e editam os sites que você lhes dá.</li>
         </ul>`],
+      ['transfer', 'Transferir um site e o acesso', `<p>Mova um site inteiro para outra conta — útil para agências que entregam um site concluído a um cliente. Abra o site em <strong>Personalizar</strong> e clique em <strong>⇄ Transferir</strong> (planos Pro e Agency).</p><ul><li><strong>Como funciona</strong> — insira o e-mail do destinatário; eles receberão um convite com um link para fazer login. Uma vez aceito, <strong>eles possuem o site</strong> — será cobrado e controlado completamente pelo <em>seu</em> plano (plugins, créditos de IA, limites). Nada é transferido da sua conta.</li><li><strong>Requisitos</strong> — se o site usa um domínio personalizado ou plugins pagos, o destinatário precisa de um plano compatível. A página de aceitação lista exatamente o que é necessário e oferece <strong>uma compra combinada</strong> para configurar tudo antes de finalizar.</li><li><strong>Manter o acesso do criador</strong> — marque esta opção para continuar como <strong>Gerente</strong> após a transferência: você ainda poderá editar e publicar o site (ele aparecerá sob <strong>Sites que você gerencia</strong> no seu painel) e contará para o limite de sites do seu próprio plano. O novo proprietário pode remover você a qualquer momento do painel de <strong>Acesso do criador</strong> do site dele.</li><li><strong>Acima do limite do seu plano?</strong> — se uma redução de plano ou uma transferência recebida deixar você com mais sites publicados do que o seu plano permite, seus sites publicados permanecem online, mas você não poderá publicar mais até voltar a ficar dentro do limite. Um banner mostra o que fazer — despublicar um site ou fazer upgrade.</li></ul>`],
     ],
     faqs: [
       ['A Caddisfly é grátis?', 'Sim — você pode criar e pré-visualizar um site de graça e publicar um site num subdomínio gratuito <code>*.caddisfly.app</code>. Planos pagos adicionam mais sites, créditos de IA, domínios próprios e vagas de equipe.'],
@@ -1410,6 +1412,9 @@ export const pt = {
       ['Posso desfazer mudanças ou voltar a uma versão anterior?', 'Sim — abra <strong>🕘 Versões</strong> no Personalizar. Salve versões manualmente antes de grandes mudanças, e a Caddisfly também salva automaticamente a cada hora enquanto você edita. Ao restaurar, seu estado atual é salvo primeiro, e o site no ar só muda quando você publica. Ver <a href="#versions">Versões, backups e exportação</a>.'],
       ['Posso exportar o meu site?', 'Sim, em todos os planos — clique em <strong>⬇ Exportar</strong> no seu Painel para baixar o site publicado como um ZIP de HTML que você pode hospedar onde quiser. Sem amarras: o formulário de contato e as estatísticas continuam funcionando na cópia exportada.'],
       ['Posso pedir reembolso?', 'As assinaturas podem ser canceladas quando quiser em <strong>Faturação</strong> (você mantém o acesso até o fim do período). Cancelamentos por conveniência são proporcionais conforme os nossos <a href="/terms">Termos</a>.'],
+      ['Posso transferir um site para um cliente ou outra conta?', 'Sim, nos planos Pro e Agency. Abra o site em <strong>Personalizar → ⇄ Transferir</strong>, insira o e-mail do destinatário e eles aceitarão por meio de um link por e-mail. Uma vez aceito, eles possuem completamente o site — será cobrado e gerido conforme o plano deles, sem nada herdado da sua conta. Você pode optar por <strong>manter o acesso do criador</strong> para continuar editando-o como Gerente. Veja <a href="#transfer">Transferir um site e o acesso</a>.'],
+      ['Posso limitar um membro da equipe a certos sites?', 'Sim. Quando você convida alguém (Painel → Equipe), escolha <strong>Todos os sites</strong> ou selecione <strong>sites específicos</strong> e defina seu papel. Você pode alterar quais sites eles podem acessar a qualquer momento na linha dele. Veja <a href="#team">Membros da equipe</a>.'],
+      ['O que acontece se eu tiver mais sites publicados do que o meu novo plano permite?', 'Seus sites publicados permanecem online — nunca os desligamos automaticamente — mas você não poderá publicar mais sites até voltar a ficar dentro do limite do seu plano. Você verá um banner indicando que deve despublicar um site ou fazer upgrade. Isso pode acontecer após uma redução de plano ou após aceitar uma transferência de site.'],
       ['Preciso de ajuda ou encontrei um erro.', 'Abra um ticket em <a href="/support">Suporte</a> — descreva o problema ou pedido e responderemos por e-mail.'],
     ],
   },

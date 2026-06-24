@@ -24,20 +24,22 @@ function issuerOf(quote) {
 /** GET /q/:token — the branded hosted quote page. */
 export async function handleQuoteView(ctx) {
   const { env, params, url } = ctx;
+  const lang = (ctx && ctx.lang) || 'en';
   const quote = await getQuoteByToken(env.DB, params.token);
   if (!quote) return new Response('Quote not found', { status: 404 });
   await markQuoteViewed(env.DB, params.token);
   const pdfUrl = `${url.origin}/q/${encodeURIComponent(params.token)}/pdf`;
-  return htmlResponse(renderQuoteHtml({ quote, items: quote.items, issuer: issuerOf(quote), pdfUrl }));
+  return htmlResponse(renderQuoteHtml({ quote, items: quote.items, issuer: issuerOf(quote), pdfUrl, lang }));
 }
 
 /** GET /q/:token/pdf — the same document rendered to PDF via Browser Rendering. */
 export async function handleQuotePdf(ctx) {
   const { env, params } = ctx;
+  const lang = (ctx && ctx.lang) || 'en';
   const quote = await getQuoteByToken(env.DB, params.token);
   if (!quote) return new Response('Quote not found', { status: 404 });
   if (!env.BROWSER) return new Response('PDF rendering unavailable', { status: 503 });
-  const html = renderQuoteHtml({ quote, items: quote.items, issuer: issuerOf(quote), pdfUrl: '' });
+  const html = renderQuoteHtml({ quote, items: quote.items, issuer: issuerOf(quote), pdfUrl: '', lang });
   const browser = await puppeteer.launch(env.BROWSER);
   try {
     const page = await browser.newPage();

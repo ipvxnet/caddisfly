@@ -7,9 +7,17 @@ const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
-function money(cents, currency) {
+// Fixed-label dict (en/es/pt). The issuer's own copy (intro/title/notes/terms)
+// is already in their language; only these chrome labels are localized.
+const QD = {
+  en: { quote: 'QUOTE', no: 'No.', valid_until: 'Valid until {d}', prepared_for: 'Prepared for', th_desc: 'Description', th_qty: 'Qty', th_unit: 'Unit', th_amount: 'Amount', no_items: 'No items.', total: 'Total', download: '⬇ Download PDF', locale: 'en-US' },
+  es: { quote: 'COTIZACIÓN', no: 'N.º', valid_until: 'Válida hasta {d}', prepared_for: 'Preparado para', th_desc: 'Descripción', th_qty: 'Cant.', th_unit: 'Unitario', th_amount: 'Importe', no_items: 'Sin artículos.', total: 'Total', download: '⬇ Descargar PDF', locale: 'es-ES' },
+  pt: { quote: 'ORÇAMENTO', no: 'N.º', valid_until: 'Válido até {d}', prepared_for: 'Preparado para', th_desc: 'Descrição', th_qty: 'Qtd.', th_unit: 'Unitário', th_amount: 'Valor', no_items: 'Sem itens.', total: 'Total', download: '⬇ Baixar PDF', locale: 'pt-BR' },
+};
+
+function money(cents, currency, locale = 'en-US') {
   try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format((cents || 0) / 100);
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: (currency || 'USD').toUpperCase() }).format((cents || 0) / 100);
   } catch {
     return '$' + ((cents || 0) / 100).toFixed(2);
   }
@@ -21,24 +29,25 @@ const fmtDate = (ts) => (ts ? new Date(ts * 1000).toISOString().slice(0, 10) : '
  * issuer = { name, logo, contact:string[], accent, intro, thankYou, terms }
  * @returns {string} a complete HTML document
  */
-export function renderQuoteHtml({ quote, items, issuer, pdfUrl }) {
+export function renderQuoteHtml({ quote, items, issuer, pdfUrl, lang = 'en' }) {
+  const T = QD[lang] || QD.en;
   const accent = /^#[0-9a-fA-F]{3,8}$/.test(issuer.accent || '') ? issuer.accent : '#5a3da8';
   const rows = (items || []).map((it, i) => `
         <tr>
           <td class="c">${i + 1}</td>
           <td>${esc(it.description)}</td>
           <td class="c">${esc(it.qty)}</td>
-          <td class="r">${money(it.unit_price_cents, quote.currency)}</td>
-          <td class="r">${money(it.qty * it.unit_price_cents, quote.currency)}</td>
+          <td class="r">${money(it.unit_price_cents, quote.currency, T.locale)}</td>
+          <td class="r">${money(it.qty * it.unit_price_cents, quote.currency, T.locale)}</td>
         </tr>`).join('');
   const contact = (issuer.contact || []).filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ');
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quote No. ${esc(quote.id)} — ${esc(issuer.name)}</title>
+<title>${T.quote} ${T.no} ${esc(quote.id)} — ${esc(issuer.name)}</title>
 <style>
   :root { --accent: ${accent}; }
   * { box-sizing: border-box; }
@@ -83,26 +92,26 @@ export function renderQuoteHtml({ quote, items, issuer, pdfUrl }) {
         <h2>${esc(issuer.name)}</h2>
       </div>
       <div class="qmeta">
-        <div class="big">QUOTE</div>
-        <small>No. ${esc(quote.id)}<br>${fmtDate(quote.created_at)}${quote.valid_until ? `<br>Valid until ${fmtDate(quote.valid_until)}` : ''}</small>
+        <div class="big">${T.quote}</div>
+        <small>${T.no} ${esc(quote.id)}<br>${fmtDate(quote.created_at)}${quote.valid_until ? `<br>${T.valid_until.replace('{d}', fmtDate(quote.valid_until))}` : ''}</small>
       </div>
     </div>
     <div class="body">
       ${contact ? `<p class="contact">${contact}</p>` : ''}
-      <p class="for">Prepared for<br><b>${esc(quote.contact_email)}</b></p>
+      <p class="for">${T.prepared_for}<br><b>${esc(quote.contact_email)}</b></p>
       ${quote.title ? `<h1 class="title">${esc(quote.title)}</h1>` : ''}
       ${issuer.intro ? `<p class="intro">${esc(issuer.intro)}</p>` : ''}
       <table>
-        <thead><tr><th>#</th><th>Description</th><th class="c">Qty</th><th class="r">Unit</th><th class="r">Amount</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" class="c">No items.</td></tr>'}</tbody>
-        <tfoot><tr><td class="lbl" colspan="4">Total</td><td class="r">${money(quote.total_cents, quote.currency)}</td></tr></tfoot>
+        <thead><tr><th>#</th><th>${T.th_desc}</th><th class="c">${T.th_qty}</th><th class="r">${T.th_unit}</th><th class="r">${T.th_amount}</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="5" class="c">${T.no_items}</td></tr>`}</tbody>
+        <tfoot><tr><td class="lbl" colspan="4">${T.total}</td><td class="r">${money(quote.total_cents, quote.currency, T.locale)}</td></tr></tfoot>
       </table>
       ${quote.notes ? `<div class="notes">${esc(quote.notes)}</div>` : ''}
       ${issuer.thankYou ? `<div class="thanks">${esc(issuer.thankYou)}</div>` : ''}
       ${issuer.terms ? `<div class="terms">${esc(issuer.terms)}</div>` : ''}
     </div>
   </div>
-  ${pdfUrl ? `<a class="dl no-print" href="${esc(pdfUrl)}">⬇ Download PDF</a>` : ''}
+  ${pdfUrl ? `<a class="dl no-print" href="${esc(pdfUrl)}">${T.download}</a>` : ''}
 </body>
 </html>`;
 }
