@@ -92,6 +92,14 @@ export async function decrementStock(db, projectKey, productId, qty) {
   return next;
 }
 
+/** Set a product's stock directly (scoped). '' / null = untracked. Returns true if changed. */
+export async function setProductStock(db, projectKey, productId, stock) {
+  const k = keyWhere(projectKey);
+  const v = stock === '' || stock == null ? null : Math.max(0, Math.round(Number(stock)) || 0);
+  const r = await db.prepare(`UPDATE products SET stock = ?, updated_at = ? WHERE ${k.sql} AND id = ?`).bind(v, nowSec(), k.val, productId).run();
+  return r.meta.changes > 0;
+}
+
 export async function updateProduct(db, projectKey, id, updates) {
   const k = keyWhere(projectKey);
   const fields = [];

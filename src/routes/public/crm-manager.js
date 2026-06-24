@@ -14,7 +14,7 @@ const CRM = {
     meta_title: 'CRM — Caddisfly', meta_desc: 'Your leads and contacts.', title: 'CRM', back: '← Back to editor',
     sub: "Everyone who has messaged, booked, bought from — or that you've added to — your site. {count} {label}.",
     contact_one: 'contact', contact_many: 'contacts',
-    add_contact: '＋ Add contact', quotes_link: '📄 Quotes &amp; Orders', accounts_link: '🏢 Accounts', merge_by: 'Merge duplicates by',
+    add_contact: '＋ Add contact', quotes_link: '📄 Quotes &amp; Orders', accounts_link: '🏢 Accounts', stock_link: '📦 Stock', merge_by: 'Merge duplicates by',
     ph_email: 'Email (required)', ph_name: 'Name', ph_phone: 'Phone', add: 'Add',
     th_contact: 'Contact', th_sources: 'Sources', th_interactions: 'Interactions', th_spent: 'Spent', th_last: 'Last seen', th_status: 'Status', th_notes: 'Notes',
     notes_ph: 'notes…', save: 'Save', saved: '✓ Saved', error: 'Error',
@@ -27,7 +27,7 @@ const CRM = {
     meta_title: 'CRM — Caddisfly', meta_desc: 'Tus leads y contactos.', title: 'CRM', back: '← Volver al editor',
     sub: 'Todo aquel que ha contactado, reservado, comprado en — o que has añadido a — tu sitio. {count} {label}.',
     contact_one: 'contacto', contact_many: 'contactos',
-    add_contact: '＋ Añadir contacto', quotes_link: '📄 Cotizaciones y pedidos', accounts_link: '🏢 Cuentas', merge_by: 'Unir duplicados por',
+    add_contact: '＋ Añadir contacto', quotes_link: '📄 Cotizaciones y pedidos', accounts_link: '🏢 Cuentas', stock_link: '📦 Inventario', merge_by: 'Unir duplicados por',
     ph_email: 'Correo electrónico (obligatorio)', ph_name: 'Nombre', ph_phone: 'Teléfono', add: 'Añadir',
     th_contact: 'Contacto', th_sources: 'Fuentes', th_interactions: 'Interacciones', th_spent: 'Gastado', th_last: 'Última vez', th_status: 'Estado', th_notes: 'Notas',
     notes_ph: 'notas…', save: 'Guardar', saved: '✓ Guardado', error: 'Error',
@@ -40,7 +40,7 @@ const CRM = {
     meta_title: 'CRM — Caddisfly', meta_desc: 'Seus leads e contatos.', title: 'CRM', back: '← Voltar ao editor',
     sub: 'Todo aquele que enviou uma mensagem, reservou, comprou em — ou que você adicionou ao — seu site. {count} {label}.',
     contact_one: 'contato', contact_many: 'contatos',
-    add_contact: '＋ Adicionar contato', quotes_link: '📄 Orçamentos e pedidos', accounts_link: '🏢 Contas', merge_by: 'Mesclar duplicatas por',
+    add_contact: '＋ Adicionar contato', quotes_link: '📄 Orçamentos e pedidos', accounts_link: '🏢 Contas', stock_link: '📦 Estoque', merge_by: 'Mesclar duplicatas por',
     ph_email: 'Email (obrigatório)', ph_name: 'Nome', ph_phone: 'Telefone', add: 'Adicionar',
     th_contact: 'Contato', th_sources: 'Fontes', th_interactions: 'Interações', th_spent: 'Gasto', th_last: 'Última vez', th_status: 'Status', th_notes: 'Notas',
     notes_ph: 'notas…', save: 'Salvar', saved: '✓ Salvo', error: 'Erro',
@@ -101,6 +101,7 @@ export async function handleCrmManager(ctx) {
       <button class="btn" type="button" onclick="toggleAdd()">${T.add_contact}</button>
       <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}/quotes">${T.quotes_link}</a>
       <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}/accounts">${T.accounts_link}</a>
+      <a class="btn ghost" href="/ai-builder/crm/${esc(params.project_id)}/stock">${T.stock_link}</a>
       <label class="crm-dedup">${T.merge_by}
         <select id="crm-dedupkey" onchange="setDedup(this.value)">${dedupOpts}</select>
       </label>
