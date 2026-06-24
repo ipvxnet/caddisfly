@@ -7,6 +7,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getAIProjectsByEmail } from '../../db/ai-projects.js';
 import { getAllProjects } from '../../db/projects.js';
 import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
+import { listManagedSites } from '../../db/site-transfer.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { countUnread } from '../../db/form-submissions.js';
@@ -94,6 +95,38 @@ function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '') {
           <button class="btn ghost danger" data-id="${esc(site.id)}" data-name="${esc(site.name)}" onclick="openOffboard(this)">${tr('dash.delete_site')}</button>
         </div>
         ${domainsBlock}
+      </div>
+    </div>`;
+}
+
+// A site the viewer MANAGES (not owns) — they got a Manager grant via a site
+// transfer. Same look as siteCard but no owner-only controls (delete) and a
+// "managed for <owner>" line. `m` is a row from listManagedSites().
+function managedCard(m, tr, hostSuffix = '') {
+  const pubId = m.public_id;
+  const status = m.status || (m.published ? 'deployed' : 'draft');
+  const live = m.subdomain ? `https://${m.subdomain}${hostSuffix}.${SITES_BASE}` : '';
+  const previewable = status !== 'conversation' && status !== 'content_generation';
+  const thumb = previewable
+    ? `<iframe class="thumb-frame" src="/ai-preview/${esc(pubId)}?embed=1" loading="lazy" scrolling="no" tabindex="-1" title="${esc(m.name)}"></iframe>`
+    : `<div class="thumb-ph">${tr('dash.thumb_building')}</div>`;
+  return `
+    <div class="site-card">
+      <div class="site-thumb">
+        ${thumb}
+        <a class="thumb-link" href="/ai-builder/customize/${esc(pubId)}" aria-label="${esc(m.name)}"></a>
+      </div>
+      <div class="site-card-body">
+        <div class="site-name">${esc(m.name || 'Untitled site')} ${statusPill(status, tr)}</div>
+        <span class="site-url muted">${tr('dash.managed_for', { owner: esc(m.owner_email) })}</span>
+        <div class="site-actions">
+          <a class="btn ghost" href="/ai-builder/customize/${esc(pubId)}">${tr('dash.customize')}</a>
+          <a class="btn ghost" href="/ai-builder/analytics/${esc(pubId)}">${tr('dash.analytics')}</a>
+          <a class="btn ghost" href="/ai-builder/forms/${esc(pubId)}">${tr('dash.inbox')}</a>
+          <a class="btn ghost" href="/ai-builder/store/${esc(pubId)}">${tr('dash.store')}</a>
+          <a class="btn ghost" href="/ai-builder/bookings/${esc(pubId)}">${tr('dash.bookings')}</a>
+          ${live ? `<a class="btn ghost" href="${live}" target="_blank" rel="noopener">${tr('dash.open')}</a>` : ''}
+        </div>
       </div>
     </div>`;
 }
@@ -221,6 +254,15 @@ export async function handleDashboard(ctx) {
   const joined = await getTeamsForMember(env.DB, email);
   const teamRefs = [{ owner: email, role: 'owner' }, ...joined.map((t) => ({ owner: t.owner_email, role: t.role }))];
 
+  // Sites the viewer MANAGES (Manager grant from a site transfer). Lets a
+  // manager discover + open a transferred site without the direct editor URL.
+  const managed = await listManagedSites(env.DB, email).catch(() => []);
+  const managedHtml = managed.length
+    ? `<div class="panel"><h2>${tr('dash.sites_you_manage')}</h2>
+        <p class="muted" style="margin:-.4rem 0 1rem">${tr('dash.sites_you_manage_sub')}</p>
+        <div class="site-grid">${managed.map((m) => managedCard(m, tr, env.SITES_PREVIEW_SUFFIX || '')).join('')}</div></div>`
+    : '';
+
   // One panel per team, and (for joined teams) a "shared websites" panel.
   let teamsHtml = '';
   let sharedHtml = '';
@@ -264,6 +306,7 @@ export async function handleDashboard(ctx) {
         : `<p class="muted">${tr('dash.no_sites')} <a href="/ai-builder">${tr('dash.build_one')}</a></p>`}
     </div>
 
+    ${managedHtml}
     ${sharedHtml}
     ${teamsHtml}
   `;

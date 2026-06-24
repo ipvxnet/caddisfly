@@ -458,6 +458,8 @@ export const pt = {
     delete_site: 'Excluir',
     custom_domain: 'Domínio próprio',
     shared_by: 'Sites compartilhados por {owner}', no_sites_yet: 'Ainda não há sites.',
+    sites_you_manage: 'Sites que você gerencia', sites_you_manage_sub: 'Sites transferidos para outro proprietário que você ainda ajuda a gerenciar.',
+    managed_for: 'Gerenciado para {owner}',
     your_team: 'A sua equipe', team_owned_by: 'Equipe · de {owner}',
     seats: '{seats} / {limit} vagas',
     you_are_owner: 'Você é o <strong>proprietário</strong> (administrador) desta equipe.',
