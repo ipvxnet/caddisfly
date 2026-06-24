@@ -463,6 +463,7 @@ export const en = {
     mgr_builder_access: 'Builder access', mgr_disconnect: 'Disconnect',
     mgr_note: 'This person can edit and publish this site. Disconnect to end the relationship — you can always invite them back as a team member later.',
     mgr_disconnect_confirm: 'Disconnect {email}? They will immediately lose access to this site.',
+    all_sites: 'All sites', specific_sites: 'Specific sites', n_sites: '{n} sites', save_access: 'Save access',
     your_team: 'Your team', team_owned_by: 'Team · owned by {owner}',
     seats: '{seats} / {limit} seats',
     you_are_owner: 'You’re the <strong>owner</strong> (admin) of this team.',
@@ -476,6 +477,12 @@ export const en = {
     seats_full: 'All seats are in use.', upgrade_more: 'Upgrade for more.',
     roles_legend: 'Roles — <strong>member</strong>: edit content · <strong>publisher</strong>: edit + publish · <strong>admin</strong>: manage team &amp; domains',
     remove_confirm: 'Remove {email} from the team?',
+  },
+
+  limit: {
+    over_title: 'You have {count} published sites — your {plan} plan allows {limit}.',
+    over_body: 'Your live sites stay online, but you can’t publish more until you’re within the limit. Unpublish {overBy} site(s) or upgrade your plan.',
+    over_cta: 'Manage plan',
   },
 
   sup: {

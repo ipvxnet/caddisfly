@@ -15,7 +15,7 @@
 
 import { getAIProjectByProjectId } from '../db/ai-projects.js';
 import { getProjectByPreviewId } from '../db/projects.js';
-import { getMember } from '../db/teams.js';
+import { getMember, memberHasSiteAccess } from '../db/teams.js';
 import { parseCookies } from '../utils/crypto.js';
 import { hasBuildGrant, BUILD_COOKIE } from '../db/build-grants.js';
 import { getSiteManagerRole } from '../db/site-transfer.js';
@@ -116,6 +116,13 @@ export async function projectAccess(ctx) {
     hasGrant = await hasBuildGrant(ctx.env.DB, publicId, token);
   }
   let role = await getViewerRole(ctx.env, ctx.billingEmail, owner, hasGrant);
+  // Per-site member scope: a team member (not the owner) who was invited to only
+  // specific sites is blocked on every other site. Unscoped members are unaffected.
+  if (role && owner && ctx.billingEmail && ctx.billingEmail !== owner
+      && ['member', 'publisher', 'admin'].includes(role) && ownerInfo.projectKey) {
+    const ok = await memberHasSiteAccess(ctx.env.DB, owner, ctx.billingEmail, ownerInfo.projectKey);
+    if (!ok) role = null;
+  }
   // Per-site Manager delegate: a signed-in viewer who isn't the owner or an active
   // team member, but holds a manager grant for THIS specific site.
   if (role === null && ctx.billingEmail && ownerInfo && ownerInfo.projectKey) {

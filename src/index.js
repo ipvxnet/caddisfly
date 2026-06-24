@@ -76,7 +76,7 @@ import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.
 import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
-import { handleTeamInvite, handleTeamRole, handleTeamRemove } from './routes/api/team.js';
+import { handleTeamInvite, handleTeamRole, handleTeamRemove, handleTeamSites } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
 import { handleSupport } from './routes/public/support.js';
 import { handleActivity } from './routes/public/activity.js';
@@ -513,6 +513,7 @@ router.post('/api/billing/portal', handleBillingPortal, [billingAuth]);
 router.post('/api/team/invite', handleTeamInvite, [billingAuth]);
 router.post('/api/team/role', handleTeamRole, [billingAuth]);
 router.post('/api/team/remove', handleTeamRemove, [billingAuth]);
+router.post('/api/team/sites', handleTeamSites, [billingAuth]);
 router.post('/api/stripe/webhook', handleStripeWebhook);
 
 // Protected admin routes
