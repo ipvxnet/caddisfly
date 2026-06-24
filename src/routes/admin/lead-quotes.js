@@ -8,6 +8,20 @@ import { createQuote, listQuotes, getQuote, setQuoteStatus, setOrderStatus, dele
   ensureQuoteToken, markQuoteSent, setQuoteIssuer, updateQuoteEmail, updateQuote, addQuoteReview } from '../../db/crm-quotes.js';
 import { sendQuoteEmail } from '../../utils/email.js';
 import { getQuoteTemplate, applyTemplate, saveQuoteTemplate } from '../../db/quote-templates.js';
+import { PLANS } from '../public/pricing.js';
+import { PLUGINS, BUNDLES } from '../../plugins/manifest.js';
+
+/** Caddisfly's own sellable catalog (plans + plugins) for the admin quote picker. */
+function caddisflyCatalog() {
+  const items = [];
+  for (const p of PLANS) {
+    if (p.mo > 0) items.push({ name: `${p.name} plan — monthly`, price_cents: p.mo * 100 });
+    if (p.yr > 0) items.push({ name: `${p.name} plan — annual`, price_cents: p.yr * 100 });
+  }
+  for (const pl of Object.values(PLUGINS)) items.push({ name: `${pl.label} plugin — monthly`, price_cents: pl.priceCents });
+  for (const b of Object.values(BUNDLES)) items.push({ name: `${b.label} — monthly`, price_cents: b.priceCents });
+  return items;
+}
 
 /** Build + freeze the issuer snapshot for Caddisfly + mint a token. Shared by
  *  Send and Preview so the document is identical either way. */
@@ -111,6 +125,11 @@ export async function handleLeadOrderStatus(ctx) {
     if (e.message === 'invalid_fulfillment') return json({ success: false, error: 'Invalid fulfillment status.' }, 400);
     throw e;
   }
+}
+
+/** GET /api/admin/leads/quote-catalog — Caddisfly plans + plugins for the picker. */
+export async function handleLeadQuoteCatalog() {
+  return json({ success: true, items: caddisflyCatalog() });
 }
 
 /** GET /api/admin/leads/quote-template — the global Caddisfly quote template. */

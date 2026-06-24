@@ -18,7 +18,7 @@ const QT = {
     th: { quote: 'Quote', status: 'Status', total: 'Total', items: 'Items', order: 'Order', valid: 'Valid until', created: 'Created' },
     status: { draft: 'Draft', sent: 'Sent', accepted: 'Accepted', rejected: 'Rejected', expired: 'Expired' },
     fulfill: { unfulfilled: 'Unfulfilled', fulfilled: 'Fulfilled', cancelled: 'Cancelled' },
-    f: { email: 'Contact email (required)', title: 'Title (e.g. Kitchen remodel)', valid: 'Valid until', desc: 'Line item description', qty: 'Qty', price: 'Unit price ($)', addLine: '＋ Add line', create: 'Create quote', notes: 'Comments / notes (optional)', save: 'Save changes', cancel: 'Cancel' },
+    f: { email: 'Contact email (required)', title: 'Title (e.g. Kitchen remodel)', valid: 'Valid until', desc: 'Line item description', qty: 'Qty', price: 'Unit price ($)', addLine: '＋ Add line', create: 'Create quote', notes: 'Comments / notes (optional)', save: 'Save changes', cancel: 'Cancel', pick: '＋ Add from your store…' },
     edit: 'Edit', reviewPrompt: 'Add an internal review comment (not shown to the customer):', reviewTip: 'Add an internal review comment',
     a: { noItems: 'Add at least one line item with a description.', delConfirm: 'Delete this quote? This cannot be undone.', delErr: 'Could not delete the quote.', createErr: 'Could not create the quote.', statusErr: 'Could not update the status.', fulfillErr: 'Could not update the order status.', sendErr: 'Could not send the quote.', sentOk: 'Quote sent ✓', noEmail: 'Add a customer email to this quote first.' },
     tpl: { btn: '✎ Template', intro: 'Intro line', thanks: 'Thank-you message', terms: 'Terms / footer', accent: 'Accent color', logo: 'Logo URL override', save: 'Save template', saved: 'Saved ✓', hint: 'Leave blank to use your site branding and defaults.' },
@@ -32,7 +32,7 @@ const QT = {
     th: { quote: 'Cotización', status: 'Estado', total: 'Total', items: 'Artículos', order: 'Pedido', valid: 'Válida hasta', created: 'Creada' },
     status: { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada', expired: 'Caducada' },
     fulfill: { unfulfilled: 'Pendiente', fulfilled: 'Completada', cancelled: 'Cancelada' },
-    f: { email: 'Correo del contacto (obligatorio)', title: 'Título (ej. Reforma de cocina)', valid: 'Válida hasta', desc: 'Descripción del artículo', qty: 'Cant.', price: 'Precio unitario ($)', addLine: '＋ Agregar artículo', create: 'Crear cotización', notes: 'Comentarios / notas (opcional)', save: 'Guardar cambios', cancel: 'Cancelar' },
+    f: { email: 'Correo del contacto (obligatorio)', title: 'Título (ej. Reforma de cocina)', valid: 'Válida hasta', desc: 'Descripción del artículo', qty: 'Cant.', price: 'Precio unitario ($)', addLine: '＋ Agregar artículo', create: 'Crear cotización', notes: 'Comentarios / notas (opcional)', save: 'Guardar cambios', cancel: 'Cancelar', pick: '＋ Agregar de tu tienda…' },
     edit: 'Editar', reviewPrompt: 'Agrega un comentario de revisión interno (no se muestra al cliente):', reviewTip: 'Agregar un comentario de revisión interno',
     a: { noItems: 'Agrega al menos un artículo con una descripción.', delConfirm: '¿Eliminar esta cotización? Esta acción no se puede deshacer.', delErr: 'No se pudo eliminar la cotización.', createErr: 'No se pudo crear la cotización.', statusErr: 'No se pudo actualizar el estado.', fulfillErr: 'No se pudo actualizar el estado del pedido.', sendErr: 'No se pudo enviar la cotización.', sentOk: 'Cotización enviada ✓', noEmail: 'Agrega el correo del cliente a esta cotización primero.' },
     tpl: { btn: '✎ Plantilla', intro: 'Línea de introducción', thanks: 'Mensaje de agradecimiento', terms: 'Términos / pie', accent: 'Color de acento', logo: 'URL del logo (reemplazo)', save: 'Guardar plantilla', saved: 'Guardado ✓', hint: 'Déjalo en blanco para usar la marca y los valores de tu sitio.' },
@@ -46,7 +46,7 @@ const QT = {
     th: { quote: 'Orçamento', status: 'Status', total: 'Total', items: 'Itens', order: 'Pedido', valid: 'Válido até', created: 'Criado' },
     status: { draft: 'Rascunho', sent: 'Enviado', accepted: 'Aceito', rejected: 'Recusado', expired: 'Expirado' },
     fulfill: { unfulfilled: 'Pendente', fulfilled: 'Concluído', cancelled: 'Cancelado' },
-    f: { email: 'E-mail do contato (obrigatório)', title: 'Título (ex. Reforma da cozinha)', valid: 'Válido até', desc: 'Descrição do item', qty: 'Qtd.', price: 'Preço unitário ($)', addLine: '＋ Adicionar item', create: 'Criar orçamento', notes: 'Comentários / notas (opcional)', save: 'Salvar alterações', cancel: 'Cancelar' },
+    f: { email: 'E-mail do contato (obrigatório)', title: 'Título (ex. Reforma da cozinha)', valid: 'Válido até', desc: 'Descrição do item', qty: 'Qtd.', price: 'Preço unitário ($)', addLine: '＋ Adicionar item', create: 'Criar orçamento', notes: 'Comentários / notas (opcional)', save: 'Salvar alterações', cancel: 'Cancelar', pick: '＋ Adicionar da sua loja…' },
     edit: 'Editar', reviewPrompt: 'Adicione um comentário de revisão interno (não mostrado ao cliente):', reviewTip: 'Adicionar um comentário de revisão interno',
     a: { noItems: 'Adicione pelo menos um item com uma descrição.', delConfirm: 'Excluir este orçamento? Esta ação não pode ser desfeita.', delErr: 'Não foi possível excluir o orçamento.', createErr: 'Não foi possível criar o orçamento.', statusErr: 'Não foi possível atualizar o status.', fulfillErr: 'Não foi possível atualizar o status do pedido.', sendErr: 'Não foi possível enviar o orçamento.', sentOk: 'Orçamento enviado ✓', noEmail: 'Adicione o e-mail do cliente a este orçamento primeiro.' },
     tpl: { btn: '✎ Modelo', intro: 'Linha de introdução', thanks: 'Mensagem de agradecimento', terms: 'Termos / rodapé', accent: 'Cor de destaque', logo: 'URL do logo (substituição)', save: 'Salvar modelo', saved: 'Salvo ✓', hint: 'Deixe em branco para usar a marca e os padrões do seu site.' },
@@ -142,6 +142,7 @@ export async function handleQuotesManager(ctx) {
       </div>
       <textarea id="q-notes" rows="2" placeholder="${tr.f.notes}"></textarea>
       <div class="q-addactions">
+        <select id="q-pick" class="q-pick" onchange="pickProduct(this)" style="display:none"></select>
         <button class="btn ghost" type="button" onclick="addItem()">${tr.f.addLine}</button>
         <button class="btn q-save" type="button" onclick="submitQuote(this)">${tr.f.create}</button>
         <button class="btn ghost q-canceledit" type="button" style="display:none" onclick="cancelEdit()">${tr.f.cancel}</button>
@@ -189,6 +190,30 @@ export async function handleQuotesManager(ctx) {
       var L = ${JSON.stringify({ emailPrompt: tr.emailPrompt, emailRequired: tr.emailRequired, sendConfirm: tr.sendConfirm })};
       var FB = ${JSON.stringify({ create: tr.f.create, save: tr.f.save })}, RVP = ${JSON.stringify(tr.reviewPrompt)};
       var editingId = null;
+      var PROD_BASE = '/api/ai-builder/' + ${JSON.stringify(params.project_id)} + '/crm/quote-products', PICK_LABEL = ${JSON.stringify(tr.f.pick)};
+      (async function loadCatalog(){
+        try {
+          var r = await fetch(PROD_BASE); var d = await r.json(); var items = (d && d.items) || [];
+          if (!items.length) return;
+          var sel = document.getElementById('q-pick');
+          var ph = document.createElement('option'); ph.value=''; ph.textContent = PICK_LABEL; sel.appendChild(ph);
+          items.forEach(function(c){
+            var o = document.createElement('option'); o.value = c.name; o.setAttribute('data-price', c.price_cents || 0);
+            o.textContent = c.name + ' — $' + ((c.price_cents || 0) / 100).toFixed(2);
+            sel.appendChild(o);
+          });
+          sel.style.display = '';
+        } catch(e) {}
+      })();
+      function pickProduct(sel){
+        var opt = sel.options[sel.selectedIndex]; if (!opt || !opt.value) return;
+        var price = (parseInt(opt.getAttribute('data-price'), 10) || 0) / 100;
+        var rows = document.querySelectorAll('.q-item'), target = null;
+        rows.forEach(function(r){ if (!target && !r.querySelector('.qi-desc').value.trim()) target = r; });
+        if (target) { target.querySelector('.qi-desc').value = opt.value; target.querySelector('.qi-qty').value = 1; target.querySelector('.qi-price').value = price; }
+        else addItemVals(opt.value, 1, price);
+        sel.selectedIndex = 0;
+      }
       var DEL_LABEL = ${JSON.stringify(tr.del)}, ITEM = ${JSON.stringify({ desc: tr.f.desc, qty: tr.f.qty, price: tr.f.price })};
       function toggleAdd(){ var f = document.getElementById('q-addform'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; if (f.style.display==='block') document.getElementById('q-email').focus(); }
       function addItem(){
@@ -370,6 +395,7 @@ export async function handleQuotesManager(ctx) {
     .q-pen{color:var(--p2);cursor:pointer;text-decoration:none;margin-left:.25rem;font-size:.85rem}.q-pen:hover{text-decoration:underline}
     .crm-addform.editing #q-email{display:none}
     #q-notes{width:100%;padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.88rem;margin-top:.7rem;resize:vertical}
+    .q-pick{padding:.5rem .6rem;border:1.5px solid var(--p2);border-radius:9px;font-family:inherit;font-size:.85rem;background:#faf9ff;color:var(--p2);font-weight:600;max-width:260px}
     .q-actions .btn{font-size:.8rem;padding:.4rem .55rem}
     .q-total{font-weight:700;color:var(--p2)}
     .q-status,.q-fulfill{padding:.4rem .55rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.85rem;background:#fff}

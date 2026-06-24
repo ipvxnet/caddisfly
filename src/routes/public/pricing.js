@@ -5,7 +5,7 @@ import { htmlResponse } from '../../utils/response.js';
 import { brandMark, headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { translator, tArr } from '../../i18n/index.js';
 
-const PLANS = [
+export const PLANS = [
   {
     key: 'free', name: 'Free', mo: 0, yr: 0, tagline: 'Try it, ship a site.',
     cta: 'Start free', highlight: false,
