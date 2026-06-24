@@ -6,8 +6,10 @@ import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { getAIProjectsByEmail } from '../../db/ai-projects.js';
 import { getAllProjects } from '../../db/projects.js';
-import { getTeamMembers, getTeamsForMember } from '../../db/teams.js';
+import { getTeamMembers, getTeamsForMember, getScopePublicIdMap, getMemberScopePublicIds } from '../../db/teams.js';
 import { listManagedSites, listSiteManagers } from '../../db/site-transfer.js';
+import { accountLimitStatus } from '../../utils/account-limits.js';
+import { overLimitBannerHtml, LIMIT_BANNER_CSS } from '../../components/limit-banner.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
 import { countUnread } from '../../db/form-submissions.js';
@@ -151,18 +153,53 @@ function managedCard(m, tr, hostSuffix = '') {
 // an admin can manage a team they don't own). `canManage` toggles the controls.
 const ROLES = ['member', 'publisher', 'admin'];
 
-function memberRow(m, owner, canManage, viewer, tr) {
+// Checkboxes for the owner's sites (value = public id). `checked` is a Set of
+// public ids to pre-tick (the member's current scope), or null for none.
+function siteCheckboxes(sites, checked) {
+  return sites
+    .map((s) => `<label class="scope-ck"><input type="checkbox" value="${esc(s.id)}" ${checked && checked.has(s.id) ? 'checked' : ''}> ${esc(s.name)}</label>`)
+    .join('');
+}
+
+// Collapsible "All sites / specific sites" picker. `group` makes the radio name
+// unique; `checked` (Set | null) pre-selects sites and flips the default to
+// "specific" when non-empty. Used in the invite row and per-member editor.
+function scopePicker(group, sites, checked, tr, extraClass = '', saveBtn = '') {
+  if (!sites.length) return '';
+  const scoped = !!(checked && checked.size);
+  return `<details class="scope-picker ${extraClass}">
+    <summary>🌐 <span class="scope-sum">${scoped ? tr('dash.n_sites', { n: checked.size }) : tr('dash.all_sites')}</span></summary>
+    <div class="scope-opts">
+      <label class="scope-opt"><input type="radio" name="${esc(group)}" value="all" ${scoped ? '' : 'checked'} onchange="scopeMode(this)"> ${tr('dash.all_sites')}</label>
+      <label class="scope-opt"><input type="radio" name="${esc(group)}" value="some" ${scoped ? 'checked' : ''} onchange="scopeMode(this)"> ${tr('dash.specific_sites')}</label>
+    </div>
+    <div class="scope-list" ${scoped ? '' : 'hidden'}>${siteCheckboxes(sites, checked)}</div>
+    ${saveBtn}
+  </details>`;
+}
+
+function memberRow(m, owner, canManage, viewer, tr, ownerSites = [], checked = null) {
   const isSelf = m.member_email === viewer;
   const roleCtl = canManage
     ? `<select class="role-select" onchange="setRole('${esc(owner)}','${esc(m.member_email)}', this.value)">
          ${ROLES.map((r) => `<option value="${r}" ${m.role === r ? 'selected' : ''}>${tr('dash.role_' + r)}</option>`).join('')}
        </select>`
     : `<span class="pill ${m.role === 'admin' ? 'ok' : ''}">${tr('dash.role_' + m.role)}</span>`;
+  // Owner/admin can edit which sites this member reaches; everyone else sees a
+  // read-only scope summary.
+  let scopeCtl = '';
+  if (canManage && ownerSites.length) {
+    const saveBtn = `<button class="btn ghost scope-save" data-owner="${esc(owner)}" data-member="${esc(m.member_email)}" onclick="saveScope(this)">${tr('dash.save_access')}</button>`;
+    scopeCtl = scopePicker(`scm-${esc(owner)}-${esc(m.member_email)}`, ownerSites, checked, tr, 'mscope', saveBtn);
+  } else {
+    scopeCtl = `<span class="scope-ro">🌐 ${checked && checked.size ? tr('dash.n_sites', { n: checked.size }) : tr('dash.all_sites')}</span>`;
+  }
   return `
     <div class="member">
       <div class="m-main">
         <span class="m-email">${esc(m.member_email)}</span>
         ${roleCtl}
+        ${scopeCtl}
         ${m.status === 'invited' ? `<span class="pill warn">${tr('dash.invited')}</span>` : ''}
         ${isSelf ? `<span class="pill">${tr('dash.you')}</span>` : ''}
       </div>
@@ -183,6 +220,20 @@ async function renderTeamPanel(env, viewer, owner, viewerRole, tr) {
   const seats = 1 + members.length;
   const limitTxt = limit === Infinity ? '∞' : limit;
 
+  // Owner's site list + per-member scope (for the access pickers). Only needed
+  // when the viewer can manage this team.
+  let ownerSites = [];
+  let scopeMap = {};
+  if (canManage) {
+    const [oai, orp] = await Promise.all([
+      getAIProjectsByEmail(env.DB, owner),
+      getAllProjects(env.DB, { customerEmail: owner, limit: 200 }),
+    ]);
+    ownerSites = [...(oai || []).map(normalizeAI), ...((orp && orp.projects) || []).map(normalizeRefactor)]
+      .sort((a, b) => b.lastModified - a.lastModified);
+    scopeMap = await getScopePublicIdMap(env.DB, owner).catch(() => ({}));
+  }
+
   const ownerRow = `
     <div class="member">
       <div class="m-main">
@@ -192,17 +243,20 @@ async function renderTeamPanel(env, viewer, owner, viewerRole, tr) {
       </div>
       <div class="m-actions"></div>
     </div>`;
-  const rows = ownerRow + members.map((m) => memberRow(m, owner, canManage, viewer, tr)).join('');
+  const rows = ownerRow + members.map((m) => memberRow(m, owner, canManage, viewer, tr, ownerSites, scopeMap[m.member_email] || null)).join('');
 
   let invite = '';
   if (canManage) {
     if (limit <= 1) {
       invite = `<p class="muted" style="margin-top:1rem">${tr('dash.paid_feature')}${isOwn ? ` <a href="/billing">${tr('dash.upgrade')}</a>` : ''} ${tr('dash.seat_caps')}</p>`;
     } else if (seats < limit) {
-      invite = `<div class="invite">
-          <input type="email" class="invite-email" placeholder="${tr('dash.invite_ph')}">
-          <select class="invite-role" title="Role">${ROLES.map((r) => `<option value="${r}">${tr('dash.role_' + r)}</option>`).join('')}</select>
-          <button class="btn" data-owner="${esc(owner)}" onclick="invite(this)">${tr('dash.invite_btn')}</button>
+      invite = `<div class="invite-wrap">
+          <div class="invite">
+            <input type="email" class="invite-email" placeholder="${tr('dash.invite_ph')}">
+            <select class="invite-role" title="Role">${ROLES.map((r) => `<option value="${r}">${tr('dash.role_' + r)}</option>`).join('')}</select>
+            <button class="btn" data-owner="${esc(owner)}" onclick="invite(this)">${tr('dash.invite_btn')}</button>
+          </div>
+          ${scopePicker(`scinv-${esc(owner)}`, ownerSites, null, tr)}
         </div>`;
     } else {
       invite = `<p class="muted" style="margin-top:.6rem">${tr('dash.seats_full')}${isOwn ? ` <a href="/billing">${tr('dash.upgrade')}</a> ${tr('dash.upgrade_more')}` : ''}</p>`;
@@ -266,6 +320,7 @@ export async function handleDashboard(ctx) {
   const ownCardsHtml = ownCards.join('');
 
   const creditState = await getCreditState(env.DB, email);
+  const limitStatus = await accountLimitStatus(env.DB, email, creditState.tier).catch(() => null);
 
   // Teams the viewer can access: their OWN account (owner) + any team they've
   // joined (active membership of someone else's account).
@@ -291,8 +346,11 @@ export async function handleDashboard(ctx) {
         getAIProjectsByEmail(env.DB, ref.owner),
         getAllProjects(env.DB, { customerEmail: ref.owner, limit: 200 }),
       ]);
-      const sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)]
+      let sites = [...(ai || []).map(normalizeAI), ...((refp && refp.projects) || []).map(normalizeRefactor)]
         .sort((a, b) => b.lastModified - a.lastModified);
+      // If this member is scoped to specific sites, only show those.
+      const scopeIds = await getMemberScopePublicIds(env.DB, ref.owner, email).catch(() => null);
+      if (scopeIds) sites = sites.filter((s) => scopeIds.has(s.id));
       sharedHtml += `<div class="panel"><h2>${tr('dash.shared_by', { owner: esc(ref.owner) })}</h2>
         ${sites.length ? `<div class="site-grid">${sites.map((s) => siteCard(s, '', tr, 0, env.SITES_PREVIEW_SUFFIX || '')).join('')}</div>` : `<p class="muted">${tr('dash.no_sites_yet')}</p>`}</div>`;
     }
@@ -309,6 +367,7 @@ export async function handleDashboard(ctx) {
       </div>
     </div>
     <p class="sub">${tr('dash.signed_in_as')} <strong>${esc(email)}</strong> · <a class="muted-link" href="/activity">${tr('dash.activity')}</a> · <a class="muted-link" href="/support">${tr('dash.support')}</a> · <a class="muted-link" href="/help">${tr('dash.help')}</a></p>
+    ${overLimitBannerHtml(limitStatus, tr)}
 
     ${ownSites.some((s) => s.subdomain) ? `
     <div class="note-banner" id="republish-note" hidden>
@@ -385,6 +444,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .site-managers > summary::before{content:'▸ ';color:#a0aec0}
     .site-managers[open] > summary::before{content:'▾ '}
     .site-managers[open] > summary{margin-bottom:.6rem}
+    ${LIMIT_BANNER_CSS}
     .mgr-row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.4rem 0;border-bottom:1px solid var(--line)}
     .mgr-row:last-of-type{border-bottom:none}
     .mgr-email{font-size:.85rem;color:#2d3748;word-break:break-all}
@@ -406,6 +466,18 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .invite input:focus{outline:none;border-color:var(--p1)}
     .invite-role,.role-select{padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.85rem;background:#fff;text-transform:capitalize;cursor:pointer}
     .role-legend{font-size:.78rem;margin-top:.7rem}
+    .scope-picker{margin-top:.55rem;font-size:.85rem}
+    .scope-picker.mscope{margin-top:0;font-size:.8rem}
+    .scope-picker > summary{cursor:pointer;color:var(--p2);font-weight:700;list-style:none}
+    .scope-picker > summary::-webkit-details-marker{display:none}
+    .scope-picker > summary::before{content:'▸ ';color:#a0aec0}
+    .scope-picker[open] > summary::before{content:'▾ '}
+    .scope-opts{display:flex;gap:1rem;margin:.5rem 0 .4rem}
+    .scope-opt{display:flex;align-items:center;gap:.35rem;font-weight:600;color:#4a5568;cursor:pointer}
+    .scope-list{display:flex;flex-direction:column;gap:.3rem;max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:.5rem .7rem;background:#f8fafc}
+    .scope-ck{display:flex;align-items:center;gap:.45rem;color:#2d3748;cursor:pointer}
+    .scope-save{margin-top:.55rem;font-size:.8rem;padding:.4rem .8rem}
+    .scope-ro{font-size:.78rem;color:var(--muted);white-space:nowrap}
     @media (max-width:560px){.member{align-items:flex-start}}
     .btn.ghost.danger{color:#b91c1c;border-color:#fed7d7}
     .btn.ghost.danger:hover{background:#fef2f2}
@@ -451,17 +523,46 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
       if (!r.ok || !d.success) throw new Error((d && d.error) || 'Request failed');
       return d;
     }
+    // Toggle a scope picker between "all" and "specific sites".
+    function scopeMode(radio) {
+      const pick = radio.closest('.scope-picker');
+      if (!pick) return;
+      const some = radio.value === 'some';
+      const list = pick.querySelector('.scope-list');
+      if (list) list.hidden = !some;
+      const sum = pick.querySelector('.scope-sum');
+      if (sum && !pick.classList.contains('mscope')) sum.textContent = some ? ${JSON.stringify(tr('dash.specific_sites'))} : ${JSON.stringify(tr('dash.all_sites'))};
+    }
+    // Read a picker → null (no picker), [] (all sites) or [publicIds].
+    function readScope(pick) {
+      if (!pick) return null;
+      const mode = pick.querySelector('input[type=radio]:checked');
+      if (mode && mode.value === 'all') return [];
+      const ids = [];
+      pick.querySelectorAll('.scope-list input[type=checkbox]:checked').forEach((c) => ids.push(c.value));
+      return ids;
+    }
     async function invite(btn) {
       const owner = btn.dataset.owner;
-      const wrap = btn.closest('.invite');
+      const wrap = btn.closest('.invite-wrap');
       const input = wrap.querySelector('.invite-email');
       const roleSel = wrap.querySelector('.invite-role');
       const email = (input.value || '').trim();
       const role = roleSel ? roleSel.value : 'member';
       if (!email) return;
+      const body = { owner, email, role };
+      const sites = readScope(wrap.querySelector('.scope-picker'));
+      if (sites) body.sites = sites;
       btn.disabled = true; btn.textContent = ${JSON.stringify(tr('dash.inviting'))};
-      try { await postTeam('/api/team/invite', { owner, email, role }); location.reload(); }
+      try { await postTeam('/api/team/invite', body); location.reload(); }
       catch (e) { alert(e.message); btn.disabled = false; btn.textContent = ${JSON.stringify(tr('dash.invite_btn'))}; }
+    }
+    async function saveScope(btn) {
+      const pick = btn.closest('.scope-picker');
+      const sites = readScope(pick) || [];
+      btn.disabled = true;
+      try { await postTeam('/api/team/sites', { owner: btn.dataset.owner, email: btn.dataset.member, sites }); location.reload(); }
+      catch (e) { alert(e.message); btn.disabled = false; }
     }
     async function setRole(owner, email, role) {
       try { await postTeam('/api/team/role', { owner, email, role }); location.reload(); }

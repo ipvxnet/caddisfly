@@ -1,8 +1,9 @@
 // Team management API (account-level). The caller (ctx.billingEmail) manages
 // their OWN team (they are the implicit owner/admin). JSON in/out.
-//   POST /api/team/invite  { email, role? }
+//   POST /api/team/invite  { email, role?, sites? }   sites = [publicId] | [] (=all)
 //   POST /api/team/role    { email, role }
 //   POST /api/team/remove  { email }
+//   POST /api/team/sites   { email, sites }            edit a member's site scope
 
 import {
   countTeamSeats,
@@ -11,13 +12,35 @@ import {
   setMemberRole,
   removeMember,
   canManageTeam,
+  setMemberSiteScope,
 } from '../../db/teams.js';
+import { getAIProjectByProjectId } from '../../db/ai-projects.js';
+import { getProjectByPreviewId } from '../../db/projects.js';
 import { getCreditState, teamLimit } from '../../utils/credits.js';
 import { isValidEmail, sanitizeEmail, sendTeamInviteEmail } from '../../utils/email.js';
 import { audit } from '../../utils/audit.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+// Resolve public project ids to bridge keys, keeping ONLY sites the owner owns
+// (so a member can't be scoped to someone else's site). Returns [{aiProjectId}|{projectId}].
+async function resolveOwnedKeys(env, owner, publicIds) {
+  const keys = [];
+  for (const pid of publicIds) {
+    const ai = await getAIProjectByProjectId(env.DB, pid);
+    if (ai && ai.customer_email === owner) { keys.push({ aiProjectId: ai.id }); continue; }
+    const rp = await getProjectByPreviewId(env.DB, pid);
+    if (rp && rp.customer_email === owner) keys.push({ projectId: rp.id });
+  }
+  return keys;
+}
+
+// Read body.sites (array of public ids) → owned bridge keys. Absent/empty → [].
+async function scopeKeysFromBody(env, owner, body) {
+  const ids = Array.isArray(body.sites) ? body.sites.map(String).map((s) => s.trim()).filter(Boolean) : [];
+  return ids.length ? resolveOwnedKeys(env, owner, ids) : [];
 }
 
 // Resolve the team being managed (body.owner, defaulting to the caller's own
@@ -62,11 +85,39 @@ export async function handleTeamInvite(ctx) {
   }
 
   const row = await createInvite(env.DB, { ownerEmail: owner, memberEmail: member, role, invitedBy: ctx.billingEmail });
+
+  // Optional per-site scope. When `sites` is provided we (re)set it: a non-empty
+  // list limits the member to those owned sites; [] (or "all" chosen) clears it
+  // → full-account access. When `sites` is absent entirely, scope is untouched.
+  let scopedCount = null;
+  if (Array.isArray(body.sites)) {
+    const keys = await scopeKeysFromBody(env, owner, body);
+    await setMemberSiteScope(env.DB, owner, member, keys);
+    scopedCount = keys.length;
+  }
+
   const inviteUrl = `${url.origin}/team/accept/${row.invite_token}`;
   await sendTeamInviteEmail(env, member, inviteUrl, owner);
-  audit(ctx, 'team.invite', { teamOwner: owner, resourceType: 'member', resourceId: member, resourceName: member, metadata: { role } });
+  audit(ctx, 'team.invite', { teamOwner: owner, resourceType: 'member', resourceId: member, resourceName: member, metadata: { role, sites: scopedCount } });
 
   return json({ success: true, member: { email: member, role, status: row.status } });
+}
+
+/** POST /api/team/sites — replace a member's per-site access scope. */
+export async function handleTeamSites(ctx) {
+  const { env, request } = ctx;
+  const body = await request.json().catch(() => ({}));
+  const { owner, error } = await resolveTeam(ctx, body);
+  if (error) return error;
+
+  const member = sanitizeEmail(body.email || '');
+  const existing = await getMember(env.DB, owner, member);
+  if (!existing) return json({ success: false, error: 'That person is not on this team.' }, 404);
+
+  const keys = await scopeKeysFromBody(env, owner, body);
+  await setMemberSiteScope(env.DB, owner, member, keys);
+  audit(ctx, 'team.sites', { teamOwner: owner, resourceType: 'member', resourceId: member, resourceName: member, metadata: { sites: keys.length } });
+  return json({ success: true, sites: keys.length });
 }
 
 /** POST /api/team/role */

@@ -15,6 +15,8 @@ import {
 } from '../../db/billing.js';
 import { isStripeConfigured, CREDIT_PACKS } from '../../utils/stripe.js';
 import { getCreditState } from '../../utils/credits.js';
+import { accountLimitStatus } from '../../utils/account-limits.js';
+import { overLimitBannerHtml, LIMIT_BANNER_CSS } from '../../components/limit-banner.js';
 import { translator } from '../../i18n/index.js';
 
 const NEXT_COOKIE = 'cf_billing_next';
@@ -91,6 +93,7 @@ function pageShell(origin, inner, headerOpts = {}, tr = (k) => k) {
     .credits-hero .btn{background:#fff;color:var(--p2)}
     .credits-disclaimer{font-size:.82rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.55rem .8rem;margin-bottom:1rem}
     @media (max-width:620px){.grid{grid-template-columns:1fr}}
+    ${LIMIT_BANNER_CSS}
   </style>
 </head>
 <body>
@@ -144,7 +147,7 @@ function signInView(query, tr) {
     <p class="muted-link">${tr('bill.same_email')}</p>`;
 }
 
-function dashboardView(email, account, creditState, query, env, tr) {
+function dashboardView(email, account, creditState, query, env, tr, limitStatus = null) {
   const tierKey = (account && account.pricing_tier) || 'free_trial';
   const tier = TIERS[tierKey] || TIERS.free_trial;
   const status = (account && account.subscription_status) || (tierKey === 'free_trial' ? 'free' : '—');
@@ -253,6 +256,7 @@ function dashboardView(email, account, creditState, query, env, tr) {
     <h1>${tr('bill.your_billing')}</h1>
     <p class="sub">${tr('dash.signed_in_as')} <strong>${escapeHtml(email)}</strong> · <a class="muted-link" href="/dashboard">${tr('bill.your_sites_team')}</a> · <a class="muted-link" href="/billing/logout">${tr('bill.sign_out')}</a></p>
     ${noticeFor(query, tr)}
+    ${overLimitBannerHtml(limitStatus, tr)}
     ${notConfigured}
     ${continueBlock}
     <div class="panel">
@@ -280,8 +284,9 @@ export async function handleBilling(ctx) {
   // getCreditState ensures the account row + rolls the monthly window first.
   const creditState = configured ? await getCreditState(env.DB, ctx.billingEmail) : null;
   const account = await getBillingAccount(env.DB, ctx.billingEmail);
+  const limitStatus = creditState ? await accountLimitStatus(env.DB, ctx.billingEmail, creditState.tier).catch(() => null) : null;
   const headerOpts = creditState ? { credits: creditState.totalRemaining, lang } : { lang };
-  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, creditState, query || {}, env, tr), headerOpts, tr));
+  return htmlResponse(pageShell(origin, dashboardView(ctx.billingEmail, account, creditState, query || {}, env, tr, limitStatus), headerOpts, tr));
 }
 
 /** GET /billing/verify/:token — consume magic link, set session cookie. */

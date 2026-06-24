@@ -463,6 +463,7 @@ export const es = {
     mgr_builder_access: 'Acceso del creador', mgr_disconnect: 'Desvincular',
     mgr_note: 'Esta persona puede editar y publicar este sitio. Desvincúlala para terminar la relación — siempre puedes volver a invitarla como miembro del equipo.',
     mgr_disconnect_confirm: '¿Desvincular a {email}? Perderá el acceso a este sitio de inmediato.',
+    all_sites: 'Todos los sitios', specific_sites: 'Sitios específicos', n_sites: '{n} sitios', save_access: 'Guardar acceso',
     your_team: 'Tu equipo', team_owned_by: 'Equipo · de {owner}',
     seats: '{seats} / {limit} plazas',
     you_are_owner: 'Eres el <strong>propietario</strong> (administrador) de este equipo.',
@@ -476,6 +477,12 @@ export const es = {
     seats_full: 'Todas las plazas están ocupadas.', upgrade_more: 'Mejora para tener más.',
     roles_legend: 'Roles — <strong>miembro</strong>: edita contenido · <strong>editor con publicación</strong>: edita + publica · <strong>administrador</strong>: gestiona equipo y dominios',
     remove_confirm: '¿Quitar a {email} del equipo?',
+  },
+
+  limit: {
+    over_title: 'Tienes {count} sitios publicados — tu plan {plan} permite {limit}.',
+    over_body: 'Tus sitios en vivo siguen en línea, pero no puedes publicar más hasta volver al límite. Despublica {overBy} sitio(s) o mejora tu plan.',
+    over_cta: 'Gestionar plan',
   },
 
   sup: {
