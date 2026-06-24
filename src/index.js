@@ -18,6 +18,7 @@ import { handleShowcase } from './routes/public/showcase.js';
 import { handleTemplatesShowcase, handleTemplateDemo } from './routes/public/templates.js';
 import { handleAdminShowcase, handleAdminShowcaseAdd, handleAdminShowcaseUpdate, handleAdminShowcaseDelete } from './routes/admin/showcase.js';
 import { handleAdminLeads, handleLeadsIngest, handleLeadUpdate, handleLeadDelete, handleLeadAdd, handleLeadsNeedEmail, handleLeadsEnrich, handleLeadsPlaceIds, handleLeadsScrape } from './routes/admin/leads.js';
+import { handlePreviewAccess } from './routes/admin/preview-access.js';
 import { handleLeadQuoteList, handleLeadQuoteCreate, handleLeadQuoteGet, handleLeadQuoteStatus, handleLeadOrderStatus, handleLeadQuoteDelete, handleLeadQuoteSend, handleLeadQuoteTemplateGet, handleLeadQuoteTemplateSave, handleLeadQuotePreview, handleLeadQuoteEmailUpdate, handleLeadQuoteUpdate, handleLeadQuoteReviewAdd, handleLeadQuoteCatalog } from './routes/admin/lead-quotes.js';
 import { handleTerms } from './routes/public/terms.js';
 import { handlePrivacy } from './routes/public/privacy.js';
@@ -535,6 +536,8 @@ router.get('/api/admin/leads/place-ids', handleLeadsPlaceIds);
 router.get('/api/admin/leads/need-email', handleLeadsNeedEmail);
 router.post('/api/admin/leads/enrich', handleLeadsEnrich);
 router.post('/api/admin/leads/scrape', handleLeadsScrape);
+router.get('/admin/preview-access', handlePreviewAccess, [authMiddleware, adminMiddleware]);
+router.post('/admin/preview-access', handlePreviewAccess, [authMiddleware, adminMiddleware]);
 router.get('/admin/leads', handleAdminLeads, [authMiddleware, adminMiddleware]);
 router.post('/api/admin/leads', handleLeadAdd, [authMiddleware, adminMiddleware]);
 // Global Caddisfly quote template + catalog (MUST precede /:id so ':id' doesn't capture them)

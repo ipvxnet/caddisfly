@@ -13,6 +13,7 @@ import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { countPublishedSites } from '../../../db/billing.js';
 import { countManagedPublishedSites } from '../../../db/site-transfer.js';
+import { isPreviewPublishAllowed } from '../../../db/preview-allowlist.js';
 import { PUBLISH_LIMITS } from '../../../utils/credits.js';
 import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
 import { canDeploy } from '../../../middleware/project-access.js';
@@ -84,6 +85,12 @@ export async function handleAIBuilderDeploy(ctx) {
     }
 
     if (!config) return json({ success: false, error: 'Website configuration not found' }, 400);
+
+    // Preview-only: publishing is limited to an allowlist (full emails or domains)
+    // so randoms can't ship sites on the staging worker. No effect on production.
+    if (env.ENVIRONMENT === 'preview' && !(await isPreviewPublishAllowed(env.DB, email))) {
+      return json({ success: false, error: 'Publishing on the preview environment is limited to allowlisted accounts.' }, 403);
+    }
 
     // Tier drives the publish-count cap + the "Built with Caddisfly" badge.
     const tier = await getUserTier(env.DB, email);
