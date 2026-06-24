@@ -18,13 +18,14 @@ import { getProjectByPreviewId } from '../db/projects.js';
 import { getMember } from '../db/teams.js';
 import { parseCookies } from '../utils/crypto.js';
 import { hasBuildGrant, BUILD_COOKIE } from '../db/build-grants.js';
+import { getSiteManagerRole } from '../db/site-transfer.js';
 
-/** Resolve a project's owner email from its public id (ai or refactor). */
-async function resolveOwnerEmail(env, publicId) {
+/** Resolve a project's owner email + bridge key from its public id (ai or refactor). */
+async function resolveOwner(env, publicId) {
   const ai = await getAIProjectByProjectId(env.DB, publicId);
-  if (ai) return ai.customer_email || null;
+  if (ai) return { email: ai.customer_email || null, projectKey: { aiProjectId: ai.id } };
   const rp = await getProjectByPreviewId(env.DB, publicId);
-  if (rp) return rp.customer_email || null;
+  if (rp) return { email: rp.customer_email || null, projectKey: { projectId: rp.id } };
   return null;
 }
 
@@ -55,13 +56,14 @@ export async function getViewerRole(env, viewerEmail, ownerEmail, hasGrant) {
   return null;
 }
 
-/** Can this role publish (deploy) the site? Requires a verified session. */
+/** Can this role publish (deploy) the site? Requires a verified session.
+ *  'manager' = a per-site delegate (transferred a site, kept builder access). */
 export function canDeploy(role) {
-  return ['owner', 'admin', 'publisher'].includes(role);
+  return ['owner', 'admin', 'publisher', 'manager'].includes(role);
 }
 /** Can this role add/remove custom domains? Requires a verified session. */
 export function canManageDomains(role) {
-  return ['owner', 'admin'].includes(role);
+  return ['owner', 'admin', 'manager'].includes(role);
 }
 /** May this role attempt to publish (shows the button; verification gates it)? */
 export function canRequestDeploy(role) {
@@ -105,14 +107,21 @@ function deniedResponse(ctx) {
 export async function projectAccess(ctx) {
   const publicId = ctx.params && ctx.params.project_id;
   if (!publicId) return; // nothing to gate
-  const owner = await resolveOwnerEmail(ctx.env, publicId);
+  const ownerInfo = await resolveOwner(ctx.env, publicId);
+  const owner = ownerInfo ? ownerInfo.email : null;
   // Grant check only matters when there's no verified owner session.
   let hasGrant = false;
   if (!ctx.billingEmail || ctx.billingEmail !== owner) {
     const token = parseCookies(ctx.request)[BUILD_COOKIE];
     hasGrant = await hasBuildGrant(ctx.env.DB, publicId, token);
   }
-  const role = await getViewerRole(ctx.env, ctx.billingEmail, owner, hasGrant);
+  let role = await getViewerRole(ctx.env, ctx.billingEmail, owner, hasGrant);
+  // Per-site Manager delegate: a signed-in viewer who isn't the owner or an active
+  // team member, but holds a manager grant for THIS specific site.
+  if (role === null && ctx.billingEmail && ownerInfo && ownerInfo.projectKey) {
+    const mrole = await getSiteManagerRole(ctx.env.DB, ownerInfo.projectKey, ctx.billingEmail);
+    if (mrole) role = 'manager';
+  }
   if (role === null) {
     return deniedResponse(ctx);
   }

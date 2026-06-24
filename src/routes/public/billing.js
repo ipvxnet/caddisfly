@@ -26,7 +26,7 @@ const NEXT_COOKIE = 'cf_billing_next';
  * @returns {boolean}
  */
 function isSafeNext(val) {
-  return typeof val === 'string' && !val.startsWith('//') && /^\/(billing|dashboard|ai-builder\/)/.test(val);
+  return typeof val === 'string' && !val.startsWith('//') && /^\/(billing|dashboard|ai-builder\/|transfer\/)/.test(val);
 }
 
 const TIERS = {
