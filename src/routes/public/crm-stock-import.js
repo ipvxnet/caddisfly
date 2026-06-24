@@ -148,7 +148,7 @@ export async function handleStockImportPage(ctx) {
       <a class="btn ghost" href="${base}/stock/import/template">${T.template}</a>
     </div>
     <div class="icard">
-      <label class="ifile">${T.file_label}<input id="imp-file" type="file" accept=".csv,.tsv,text/csv,text/plain"></label>
+      <div class="ifile"><label for="imp-file" class="ifile-lbl">${T.file_label}</label><input id="imp-file" type="file" accept=".csv,.tsv,text/csv,text/plain"></div>
       <textarea id="imp-csv" rows="7" placeholder="${T.or_paste}"></textarea>
       <p class="imatch">${T.match_note}</p>
       <div class="iacts">
@@ -209,8 +209,9 @@ export async function handleStockImportPage(ctx) {
     .icard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.3rem;margin-bottom:1.2rem}
     .icols-h{font-weight:700;color:var(--ink);margin:0 0 .4rem}
     .icols{margin:0 0 1rem;padding-left:1.1rem;color:var(--body);font-size:.88rem;line-height:1.7}
-    .ifile{display:block;font-weight:700;color:var(--ink);font-size:.9rem;margin-bottom:.7rem}
-    .ifile input{display:block;margin-top:.35rem;font-family:inherit}
+    .ifile{margin-bottom:.7rem}
+    .ifile-lbl{display:block;font-weight:700;color:var(--ink);font-size:.9rem;margin-bottom:.35rem;cursor:pointer}
+    .ifile input{display:block;font-family:inherit}
     #imp-csv{width:100%;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:10px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;resize:vertical}
     .imatch{color:var(--muted);font-size:.8rem;margin:.6rem 0 .8rem}
     .iacts{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
