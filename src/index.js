@@ -94,6 +94,7 @@ import { handleQuotesManager } from './routes/public/quotes-manager.js';
 import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate, handleQuoteUpdate, handleQuoteReviewAdd, handleQuoteProducts } from './routes/api/ai-builder/crm-quotes.js';
 import { handleQuoteView, handleQuotePdf } from './routes/public/quote-view.js';
 import { handleTransferInitiate, handleTransferCancel } from './routes/api/transfer.js';
+import { handleTransferPage } from './routes/public/transfer-page.js';
 import { handleTransferAcceptPage, handleTransferAcceptExecute, handleTransferDecline } from './routes/public/transfer-accept.js';
 import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
@@ -296,6 +297,7 @@ router.delete('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteDel
 router.get('/q/:token', handleQuoteView);
 router.get('/q/:token/pdf', handleQuotePdf);
 // Website transfer — owner initiates/cancels; recipient accepts/declines
+router.get('/ai-builder/:project_id/transfer', handleTransferPage, [billingAuth, projectAccess]);
 router.post('/api/ai-builder/:project_id/transfer', handleTransferInitiate, [billingAuth, projectAccess]);
 router.post('/api/ai-builder/:project_id/transfer/cancel', handleTransferCancel, [billingAuth, projectAccess]);
 router.get('/transfer/accept/:token', handleTransferAcceptPage, [billingAuth]);

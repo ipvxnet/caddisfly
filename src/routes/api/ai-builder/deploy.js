@@ -12,6 +12,7 @@ import { assemblePage } from '../../../utils/ai-page-assembler.js';
 import { uploadToR2 } from '../../../utils/r2-storage.js';
 import { getUserTier } from '../../../utils/rate-limiter.js';
 import { countPublishedSites } from '../../../db/billing.js';
+import { countManagedPublishedSites } from '../../../db/site-transfer.js';
 import { PUBLISH_LIMITS } from '../../../utils/credits.js';
 import { ensureUniqueSubdomain } from '../../../db/subdomains.js';
 import { canDeploy } from '../../../middleware/project-access.js';
@@ -91,7 +92,9 @@ export async function handleAIBuilderDeploy(ctx) {
     // Publish-count gate (enforced in production only; this site is excluded
     // from the count so re-publishing an already-live site is always allowed).
     if (env.ENVIRONMENT === 'production' && Number.isFinite(publishLimit)) {
-      const alreadyPublished = await countPublishedSites(env.DB, email, publicId);
+      // Footprint = owned + managed (a kept-builder-access site counts too).
+      const alreadyPublished = (await countPublishedSites(env.DB, email, publicId))
+        + (await countManagedPublishedSites(env.DB, email));
       if (alreadyPublished >= publishLimit) {
         return json(
           {

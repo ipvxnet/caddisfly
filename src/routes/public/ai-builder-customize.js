@@ -736,6 +736,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <a href="/ai-builder/blog/${project.project_id}" class="btn btn-secondary" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
       <a href="/ai-builder/store/${project.project_id}" class="btn btn-secondary" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
       ${hasCrm ? `<a href="/ai-builder/crm/${project.project_id}" class="btn btn-secondary" title="${tr('cust.crm')}">${tr('cust.crm')}</a>` : ''}
+      ${role === 'owner' ? `<a href="/ai-builder/${project.project_id}/transfer" class="btn btn-secondary" title="Transfer this website to another account">⇄ Transfer</a>` : ''}
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
       <span class="pub-badge ${currentSubdomain ? 'pub' : 'draft'}" id="pub-badge" title="${currentSubdomain ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${currentSubdomain ? tr('cust.status_published') : tr('cust.status_draft')}</span>
       ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite(this)">${tr('cust.deploy')}</button>` : ''}
