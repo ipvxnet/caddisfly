@@ -449,7 +449,7 @@ export const es = {
     support: 'Soporte', activity: 'Actividad', help: 'Ayuda', sign_out: 'Cerrar sesión',
     no_sites: 'Aún no tienes sitios web.', build_one: 'Crea uno →',
     live: 'En línea', not_published: 'Aún no publicado', thumb_building: 'Construyendo…',
-    customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', store: 'Tienda', bookings: 'Reservas', open: 'Abrir ↗',
+    customize: 'Personalizar', analytics: 'Estadísticas', inbox: 'Mensajes', blog: 'Blog', store: 'Tienda', bookings: 'Reservas', report: '📊 Informe', open: 'Abrir ↗',
     republish_note: 'Novedades de esta semana: menús adaptados a móvil, formularios de contacto funcionales, blog y tienda online. Abre Personalizar y pulsa Publicar para aplicar las últimas mejoras a tu sitio.',
     dismiss: 'Cerrar',
     export: '⬇ Exportar', export_title: 'Descarga tu sitio publicado como HTML (tuyo para alojarlo donde quieras)',

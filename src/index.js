@@ -105,6 +105,7 @@ import { handleTrack } from './routes/api/track.js';
 import { handleSiteAnalytics } from './routes/public/analytics.js';
 import { handleFormSubmit, handleFormDelete, handleFormTest, handleFormSettings } from './routes/api/forms.js';
 import { handleFormsInbox } from './routes/public/forms-inbox.js';
+import { handleSiteReport, handleRunSpeed } from './routes/public/site-report.js';
 import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
 import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
@@ -448,6 +449,9 @@ router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PRO
 
 // Contact-form inbox (owner-facing; same access model as customize)
 router.get('/ai-builder/forms/:project_id', handleFormsInbox, PROJ);
+// Site report — third-party dependency audit + PageSpeed (Desktop/Mobile).
+router.get('/ai-builder/report/:project_id', handleSiteReport, PROJ);
+router.post('/api/ai-builder/:project_id/report/speed', handleRunSpeed, PROJ);
 router.delete('/api/ai-builder/:project_id/forms/:id', handleFormDelete, PROJ);
 router.post('/api/ai-builder/:project_id/forms/test', handleFormTest, PROJ);
 router.put('/api/ai-builder/:project_id/forms/settings', handleFormSettings, PROJ);

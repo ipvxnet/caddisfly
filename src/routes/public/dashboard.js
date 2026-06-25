@@ -87,6 +87,7 @@ function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '', mana
         <div class="site-actions">
           <a class="btn ghost" href="/ai-builder/customize/${esc(site.id)}">${tr('dash.customize')}</a>
           <a class="btn ghost" href="/ai-builder/analytics/${esc(site.id)}">${tr('dash.analytics')}</a>
+          <a class="btn ghost" href="/ai-builder/report/${esc(site.id)}">${tr('dash.report')}</a>
           <a class="btn ghost" href="/ai-builder/forms/${esc(site.id)}">${tr('dash.inbox')}${unread ? ` <span class="pill warn">${unread}</span>` : ''}</a>
           <a class="btn ghost" href="/ai-builder/blog/${esc(site.id)}">${tr('dash.blog')}</a>
           <a class="btn ghost" href="/ai-builder/store/${esc(site.id)}">${tr('dash.store')}</a>
