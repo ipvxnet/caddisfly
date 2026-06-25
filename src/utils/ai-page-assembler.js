@@ -36,7 +36,7 @@ export function assemblePage(sections, config, project, opts = {}) {
     hideBadge = false, trackId = null, appOrigin = '', editOverlay = false,
     seoTitle = null, seoDescription = null, socialImage = null, heroImage = null, canonicalUrl = null, pageTitle = null, business = null,
     lang = 'en', products = null, bookingServices = null, holiday = null, homeSections = null, pageSections = null,
-    hasAdvStore = false,
+    hasAdvStore = false, courses = null,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
@@ -45,7 +45,7 @@ export function assemblePage(sections, config, project, opts = {}) {
   // sections as its submenu when the page opts in (show_sections_in_nav).
   // `hasAdvStore` lets the mini-cart show the discount-code input only when the
   // owner is entitled to the Advanced Store plugin.
-  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, booking_services: bookingServices, holiday, editOverlay, pageSections, hasAdvStore };
+  const renderConfig = { ...config, pages, currentSlug, previewBase, embed, hideBadge, trackId, appOrigin, lang, products, booking_services: bookingServices, holiday, editOverlay, pageSections, hasAdvStore, courses };
 
   // Render in the given order when preordered (multi-page: header + page body +
   // footer assembled by the caller); otherwise sort a COPY by section_order.

@@ -10,6 +10,7 @@ import { generatePreview, assemblePage } from '../../utils/ai-page-assembler.js'
 import { entitledSectionFilter, hasPlugin } from '../../plugins/entitlements.js';
 import { getPostsByProject } from '../../db/blog-posts.js';
 import { getProductsByProject } from '../../db/products.js';
+import { getCoursesByProject } from '../../db/courses.js';
 import { annotateProductsWithVariants } from '../../db/variants.js';
 import { getServices } from '../../db/bookings.js';
 import { parseHolidaySettings } from '../../utils/holiday-themes.js';
@@ -174,6 +175,7 @@ export async function handleAIPreview(ctx) {
     const activeProducts = await getProductsByProject(env.DB, projectKey, true);
     await annotateProductsWithVariants(env.DB, projectKey, activeProducts); // option selectors
     if (activeProducts.length) navPages.push(shopNavPage(siteLang));
+    const publishedCourses = await getCoursesByProject(env.DB, projectKey, { publishedOnly: true }); // 📚 courses promo section
     const bookingServices = await getServices(env.DB, projectKey, { activeOnly: true });
     const holSettings = parseHolidaySettings(config);
     const slug = params.page_slug;
@@ -232,6 +234,7 @@ export async function handleAIPreview(ctx) {
       preordered: true,
       lang: siteLang,
       products: activeProducts, // 🛍 featured-products section (live data)
+      courses: publishedCourses, // 📚 courses promo section (live data)
       bookingServices, // 📅 booking section (live data; widget inert until published)
       holiday: holSettings.applied && holSettings.decor ? holSettings.applied.holiday : null,
       hasAdvStore, // mini-cart discount-code input gating

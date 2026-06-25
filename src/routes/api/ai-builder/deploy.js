@@ -277,6 +277,7 @@ export async function handleAIBuilderDeploy(ctx) {
         appOrigin, // absolute beacon target (works on both serving surfaces)
         lang: siteLang,
         products: activeProducts, // 🛍 featured-products section (live data)
+        courses: publishedCourses, // 📚 courses promo section (live data)
         bookingServices, // 📅 booking section (live data)
         holiday: activeHolidayDecor, // 🎄 flyby overlay while a skin is applied
         hasAdvStore, // mini-cart discount-code input gating

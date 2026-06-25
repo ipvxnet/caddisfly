@@ -1256,7 +1256,7 @@ export const en = {
     toc: [
       ['getting-started', 'Getting started'], ['customizing', 'Customizing your site'],
       ['logo', 'Logo & branding'],
-      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'], ['bookings', 'Bookings'],
+      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'], ['courses', 'Courses & training'], ['bookings', 'Bookings'],
       ['blog', 'Blog, email & social'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
       ['performance', 'Speed & performance'],
@@ -1308,6 +1308,14 @@ export const en = {
         <p>After each sale, the buyer lands on a receipt page (saveable as PDF) and gets a confirmation email; you get a “new order” email and the order appears under <strong>🧾 Orders</strong> on the Store page. Buyers can revisit their purchase history anytime via <strong>My orders</strong> (secure email sign-in link). Product limits: Starter 10 · Pro 50 · Agency unlimited.</p>
         <p><strong>Feature products anywhere:</strong> in Customize, <strong>+ Add section → 🛍 Shop products</strong> drops your newest items (with add-to-cart) onto any page — the home page is a great spot. It updates automatically as you add products.</p>
         <p><strong>Subscriptions:</strong> sell recurring plans from a <strong>Pricing</strong> section — edit the section, attach one of your Stripe recurring prices to a plan card (or create one right there), and its button becomes a live <strong>Subscribe</strong> checkout. Renewals, invoices, and receipt emails are handled by your Stripe account.</p>`],
+      ['courses', 'Courses & training', `
+        <p>The <strong>Courses</strong> plugin lets you build and sell online courses on your site — lessons, videos, PDFs, and self-check quizzes. It's a <strong>$5/mo add-on</strong> on any paid plan; enable it from <a href="/plugins">Plugins</a>.</p>
+        <ol>
+          <li><strong>Create a course</strong> — open <strong>📚 Courses</strong> from the editor's <strong>Manage ▾</strong> menu. Build it by hand, or click <strong>✨ Generate with AI</strong>, type a topic, and get a full course (sections, lessons, and quizzes) in about 20 seconds.</li>
+          <li><strong>Add lessons</strong> — each lesson is a video, rich text, a PDF, an external link, or a self-check quiz. Group them into sections, set a price (or leave it free), add a cover image and instructor, then publish.</li>
+          <li><strong>On your site</strong> — published courses get a <strong>Courses</strong> page and menu link automatically, with a built-in player: a lesson sidebar, video/PDF/text content, and quizzes that grade instantly in the browser. Feature courses anywhere with <strong>+ Add section → 📚 Courses</strong>.</li>
+        </ol>
+        <p><strong>Paid courses</strong> use your own Stripe account (the same connection as the store). Buyers check out securely, then receive a private access link by email that unlocks every lesson — no account required. Mark individual lessons as a <strong>free preview</strong> to give a taste before purchase.</p>`],
       ['bookings', 'Bookings', `
         <p>Let visitors book appointments right on your site — services, time slots, confirmations, and cancellations are built in (free on every plan, with per-plan limits).</p>
         <ul>
