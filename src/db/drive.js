@@ -15,7 +15,7 @@ export async function listDriveFiles(db, ownerEmail, folderId = null) {
   const fid = folderId == null ? null : Number(folderId);
   const where = fid == null ? 'folder_id IS NULL' : 'folder_id = ?';
   const binds = fid == null ? [lc(ownerEmail)] : [lc(ownerEmail), fid];
-  const { results } = await db.prepare(`SELECT id, token, name, r2_key, size, content_type, folder_id, created_at FROM drive_files WHERE owner_email = ? AND ${where} ORDER BY created_at DESC`).bind(...binds).all();
+  const { results } = await db.prepare(`SELECT id, token, name, r2_key, size, content_type, folder_id, created_at FROM drive_files WHERE owner_email = ? AND ${where} AND deleted_at IS NULL ORDER BY created_at DESC`).bind(...binds).all();
   return results || [];
 }
 
@@ -28,13 +28,13 @@ export async function addDriveFile(db, ownerEmail, { token, name, r2_key, size, 
 
 /** The owner's IMAGE files (for the editor "Insert from Drive" picker), newest first. */
 export async function listDriveImages(db, ownerEmail) {
-  const { results } = await db.prepare("SELECT token, name FROM drive_files WHERE owner_email = ? AND content_type LIKE 'image/%' ORDER BY created_at DESC LIMIT 200").bind(lc(ownerEmail)).all();
+  const { results } = await db.prepare("SELECT token, name FROM drive_files WHERE owner_email = ? AND content_type LIKE 'image/%' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200").bind(lc(ownerEmail)).all();
   return results || [];
 }
 
 /** One file by id (owner-scoped) — for move/copy. */
 export async function getDriveFileById(db, ownerEmail, id) {
-  return db.prepare('SELECT id, token, name, r2_key, size, content_type, folder_id FROM drive_files WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).first();
+  return db.prepare('SELECT id, token, name, r2_key, size, content_type, folder_id FROM drive_files WHERE id = ? AND owner_email = ? AND deleted_at IS NULL').bind(Number(id), lc(ownerEmail)).first();
 }
 
 /** Move a file to a folder (NULL = root). Returns true if changed. */
@@ -50,20 +50,26 @@ export async function listFolders(db, ownerEmail, parentId = null) {
   const pid = parentId == null ? null : Number(parentId);
   const where = pid == null ? 'parent_id IS NULL' : 'parent_id = ?';
   const binds = pid == null ? [lc(ownerEmail)] : [lc(ownerEmail), pid];
-  const { results } = await db.prepare(`SELECT id, name, parent_id, created_at FROM drive_folders WHERE owner_email = ? AND ${where} ORDER BY name`).bind(...binds).all();
+  const { results } = await db.prepare(`SELECT id, name, parent_id, created_at FROM drive_folders WHERE owner_email = ? AND ${where} AND deleted_at IS NULL ORDER BY name`).bind(...binds).all();
   return results || [];
 }
 
 /** Every folder the owner has (for move/copy pickers + path labels). */
 export async function listAllFolders(db, ownerEmail) {
-  const { results } = await db.prepare('SELECT id, name, parent_id FROM drive_folders WHERE owner_email = ? ORDER BY name').bind(lc(ownerEmail)).all();
+  const { results } = await db.prepare('SELECT id, name, parent_id FROM drive_folders WHERE owner_email = ? AND deleted_at IS NULL ORDER BY name').bind(lc(ownerEmail)).all();
   return results || [];
 }
 
-/** One folder (owner-scoped). */
+/** Every folder the owner has, INCLUDING trashed ones (for tree traversal in delete/restore/purge). */
+export async function allFoldersRaw(db, ownerEmail) {
+  const { results } = await db.prepare('SELECT id, name, parent_id FROM drive_folders WHERE owner_email = ?').bind(lc(ownerEmail)).all();
+  return results || [];
+}
+
+/** One LIVE folder (owner-scoped). */
 export async function getFolder(db, ownerEmail, id) {
   if (id == null) return null;
-  return db.prepare('SELECT id, name, parent_id FROM drive_folders WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).first();
+  return db.prepare('SELECT id, name, parent_id FROM drive_folders WHERE id = ? AND owner_email = ? AND deleted_at IS NULL').bind(Number(id), lc(ownerEmail)).first();
 }
 
 /** Create a folder. Returns the new id. */
@@ -93,9 +99,13 @@ export async function deleteFolder(db, ownerEmail, id) {
   return res.meta.changes > 0;
 }
 
-/** Collect a folder + ALL descendants: every folder id, and every file {id, r2_key}. */
+/**
+ * Collect a folder + ALL descendants: every folder id, and every file {id, r2_key}.
+ * Traverses trashed rows too (uses allFoldersRaw + unfiltered file query) so it works
+ * for soft-delete, restore, AND purge of a whole subtree.
+ */
 export async function collectFolderTree(db, ownerEmail, rootId) {
-  const all = await listAllFolders(db, ownerEmail);
+  const all = await allFoldersRaw(db, ownerEmail);
   const childrenOf = new Map();
   for (const f of all) {
     const p = f.parent_id == null ? null : Number(f.parent_id);
@@ -143,5 +153,92 @@ export async function deleteDriveFile(db, ownerEmail, id) {
 
 /** Look up a file by its public token (for serving). */
 export async function getDriveFileByToken(db, token) {
-  return db.prepare('SELECT name, r2_key, content_type, size FROM drive_files WHERE token = ?').bind(String(token || '')).first();
+  return db.prepare('SELECT name, r2_key, content_type, size FROM drive_files WHERE token = ? AND deleted_at IS NULL').bind(String(token || '')).first();
+}
+
+// ---- trash (soft-delete) ----------------------------------------------------
+
+const chunked = (arr, n = 50) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
+
+/** Soft-delete one file (stamp deleted_at). Returns true if it was live. */
+export async function softDeleteFile(db, ownerEmail, id, when) {
+  const res = await db.prepare('UPDATE drive_files SET deleted_at = ? WHERE id = ? AND owner_email = ? AND deleted_at IS NULL')
+    .bind(when, Number(id), lc(ownerEmail)).run();
+  return res.meta.changes > 0;
+}
+
+/** Soft-delete a whole subtree (folders + files) in one timestamp; skips already-trashed rows. */
+export async function softDeleteTree(db, ownerEmail, folderIds, fileIds, when) {
+  for (const chunk of chunked(fileIds)) {
+    const ph = chunk.map(() => '?').join(',');
+    await db.prepare(`UPDATE drive_files SET deleted_at = ? WHERE owner_email = ? AND deleted_at IS NULL AND id IN (${ph})`).bind(when, lc(ownerEmail), ...chunk).run();
+  }
+  for (const chunk of chunked(folderIds)) {
+    const ph = chunk.map(() => '?').join(',');
+    await db.prepare(`UPDATE drive_folders SET deleted_at = ? WHERE owner_email = ? AND deleted_at IS NULL AND id IN (${ph})`).bind(when, lc(ownerEmail), ...chunk).run();
+  }
+}
+
+/** Restore a whole subtree (clear deleted_at). */
+export async function restoreTree(db, ownerEmail, folderIds, fileIds) {
+  for (const chunk of chunked(fileIds)) {
+    const ph = chunk.map(() => '?').join(',');
+    await db.prepare(`UPDATE drive_files SET deleted_at = NULL WHERE owner_email = ? AND id IN (${ph})`).bind(lc(ownerEmail), ...chunk).run();
+  }
+  for (const chunk of chunked(folderIds)) {
+    const ph = chunk.map(() => '?').join(',');
+    await db.prepare(`UPDATE drive_folders SET deleted_at = NULL WHERE owner_email = ? AND id IN (${ph})`).bind(lc(ownerEmail), ...chunk).run();
+  }
+}
+
+/** Restore one trashed file. If its old folder is gone/trashed, drop it to root. Returns its name or null. */
+export async function restoreFile(db, ownerEmail, id) {
+  const row = await db.prepare('SELECT id, name, folder_id FROM drive_files WHERE id = ? AND owner_email = ? AND deleted_at IS NOT NULL').bind(Number(id), lc(ownerEmail)).first();
+  if (!row) return null;
+  let orphan = false;
+  if (row.folder_id != null) {
+    const live = await db.prepare('SELECT id FROM drive_folders WHERE id = ? AND owner_email = ? AND deleted_at IS NULL').bind(Number(row.folder_id), lc(ownerEmail)).first();
+    orphan = !live;
+  }
+  if (orphan) await db.prepare('UPDATE drive_files SET deleted_at = NULL, folder_id = NULL WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).run();
+  else await db.prepare('UPDATE drive_files SET deleted_at = NULL WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).run();
+  return row.name;
+}
+
+/** A trashed file (for restore/purge validation). */
+export async function getDeletedFile(db, ownerEmail, id) {
+  return db.prepare('SELECT id, name, r2_key FROM drive_files WHERE id = ? AND owner_email = ? AND deleted_at IS NOT NULL').bind(Number(id), lc(ownerEmail)).first();
+}
+
+/** A trashed folder (for restore/purge validation). */
+export async function getDeletedFolder(db, ownerEmail, id) {
+  return db.prepare('SELECT id, name, parent_id FROM drive_folders WHERE id = ? AND owner_email = ? AND deleted_at IS NOT NULL').bind(Number(id), lc(ownerEmail)).first();
+}
+
+/** Bytes + count currently in the trash (still counts toward quota until purged). */
+export async function getTrashStats(db, ownerEmail) {
+  const row = await db.prepare('SELECT COALESCE(SUM(size), 0) AS used, COUNT(*) AS n FROM drive_files WHERE owner_email = ? AND deleted_at IS NOT NULL').bind(lc(ownerEmail)).first();
+  return { used: (row && row.used) || 0, count: (row && row.n) || 0 };
+}
+
+/**
+ * Trash ROOTS — the items the user explicitly deleted, not their cascaded descendants.
+ * A trashed folder/file is a root when its parent folder is NOT itself trashed.
+ */
+export async function listTrashRoots(db, ownerEmail) {
+  const fol = (await db.prepare('SELECT id, name, parent_id, deleted_at FROM drive_folders WHERE owner_email = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC').bind(lc(ownerEmail)).all()).results || [];
+  const fil = (await db.prepare('SELECT id, name, size, folder_id, token, deleted_at FROM drive_files WHERE owner_email = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC').bind(lc(ownerEmail)).all()).results || [];
+  const deletedFolderIds = new Set(fol.map((f) => Number(f.id)));
+  const isRootParent = (pid) => pid == null || !deletedFolderIds.has(Number(pid));
+  return {
+    folders: fol.filter((f) => isRootParent(f.parent_id)),
+    files: fil.filter((f) => isRootParent(f.folder_id)),
+  };
+}
+
+/** Everything in the trash (for Empty trash): files {id, r2_key} + all trashed folder ids. */
+export async function listAllDeleted(db, ownerEmail) {
+  const files = (await db.prepare('SELECT id, r2_key FROM drive_files WHERE owner_email = ? AND deleted_at IS NOT NULL').bind(lc(ownerEmail)).all()).results || [];
+  const folders = (await db.prepare('SELECT id FROM drive_folders WHERE owner_email = ? AND deleted_at IS NOT NULL').bind(lc(ownerEmail)).all()).results || [];
+  return { files, folderIds: folders.map((f) => Number(f.id)) };
 }

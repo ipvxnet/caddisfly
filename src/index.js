@@ -75,7 +75,7 @@ import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleC
 import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
 import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
-import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages } from './routes/public/drive.js';
+import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash } from './routes/public/drive.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove, handleTeamSites } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
@@ -335,13 +335,19 @@ router.post('/transfer/decline/:token', handleTransferDecline, [billingAuth]);
 router.get('/dashboard', handleDashboard, [billingAuth]);
 // Drive — account-level file storage (page + upload/delete owner-scoped; serve is public via unguessable token).
 router.get('/drive', handleDrive, [billingAuth]);
+router.get('/drive/trash', handleTrash, [billingAuth]);
 router.post('/api/drive/upload', handleDriveUpload, [billingAuth]);
 router.get('/api/drive/images', handleDriveImages, [billingAuth]);
 router.post('/api/drive/folder', handleFolderCreate, [billingAuth]);
 router.put('/api/drive/folder/:id', handleFolderRename, [billingAuth]);
+router.post('/api/drive/folder/:id/restore', handleFolderRestore, [billingAuth]);
+router.delete('/api/drive/folder/:id/purge', handleFolderPurge, [billingAuth]);
 router.delete('/api/drive/folder/:id', handleFolderDelete, [billingAuth]);
+router.post('/api/drive/trash/empty', handleEmptyTrash, [billingAuth]);
 router.post('/api/drive/:id/move', handleFileMove, [billingAuth]);
 router.post('/api/drive/:id/copy', handleFileCopy, [billingAuth]);
+router.post('/api/drive/:id/restore', handleFileRestore, [billingAuth]);
+router.delete('/api/drive/:id/purge', handleFilePurge, [billingAuth]);
 router.delete('/api/drive/:id', handleDriveDelete, [billingAuth]);
 router.get('/drive/f/:token', handleDriveFile);
 router.get('/team/accept/:token', handleTeamAccept);
