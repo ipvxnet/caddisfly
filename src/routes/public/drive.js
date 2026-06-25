@@ -68,7 +68,7 @@ const DRV = {
     err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: 'For security, executable and system files can’t be uploaded.', err_quota: 'Not enough space. Delete some files or upgrade your plan.',
     new_folder: 'New folder', folder_name_prompt: 'Folder name:', rename: 'Rename', rename_prompt: 'New name:',
     move: 'Move', copy: 'Copy', move_title: 'Move "{name}" to:', copy_title: 'Copy "{name}" to:', root_label: 'Drive (root)',
-    confirm: 'Confirm', cancel: 'Cancel', folder_del_confirm: 'Delete this folder?', folder_not_empty: "The folder isn't empty — move or delete its contents first.", folder_del_full: 'This folder contains {files} file(s) and {folders} subfolder(s). Deleting it will permanently remove EVERYTHING inside, and any links will stop working. This can’t be undone — continue?',
+    confirm: 'Confirm', cancel: 'Cancel', folder_del_confirm: 'Delete this folder?', folder_not_empty: "The folder isn't empty — move or delete its contents first.", folder_del_full: 'This folder contains {files} file(s) and {folders} subfolder(s). Deleting it will permanently remove EVERYTHING inside, and any links will stop working. This can’t be undone.', folder_del_title: 'Delete “{name}”?', del_type_hint: 'Type DELETE to confirm',
   },
   es: {
     meta_title: 'Drive — Caddisfly', title: 'Drive', back: '← Dashboard',
@@ -79,7 +79,7 @@ const DRV = {
     err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Por seguridad, no se pueden subir archivos ejecutables o de sistema.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.',
     new_folder: 'Nueva carpeta', folder_name_prompt: 'Nombre de la carpeta:', rename: 'Renombrar', rename_prompt: 'Nuevo nombre:',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" a:', copy_title: 'Copiar "{name}" a:', root_label: 'Drive (raíz)',
-    confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: '¿Eliminar esta carpeta?', folder_not_empty: 'La carpeta no está vacía — mueve o elimina su contenido primero.', folder_del_full: 'Esta carpeta contiene {files} archivo(s) y {folders} subcarpeta(s). Al eliminarla se borrará permanentemente TODO su contenido y los enlaces dejarán de funcionar. Esto no se puede deshacer, ¿continuar?',
+    confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: '¿Eliminar esta carpeta?', folder_not_empty: 'La carpeta no está vacía — mueve o elimina su contenido primero.', folder_del_full: 'Esta carpeta contiene {files} archivo(s) y {folders} subcarpeta(s). Al eliminarla se borrará permanentemente TODO su contenido y los enlaces dejarán de funcionar. Esto no se puede deshacer.', folder_del_title: '¿Eliminar “{name}”?', del_type_hint: 'Escribe DELETE para confirmar',
   },
   pt: {
     meta_title: 'Drive — Caddisfly', title: 'Drive', back: '← Dashboard',
@@ -90,7 +90,7 @@ const DRV = {
     err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Por segurança, arquivos executáveis e de sistema não podem ser enviados.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.',
     new_folder: 'Nova pasta', folder_name_prompt: 'Nome da pasta:', rename: 'Renomear', rename_prompt: 'Novo nome:',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" para:', copy_title: 'Copiar "{name}" para:', root_label: 'Drive (raiz)',
-    confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: 'Excluir esta pasta?', folder_not_empty: 'A pasta não está vazia — mova ou exclua seu conteúdo primeiro.', folder_del_full: 'Esta pasta contém {files} arquivo(s) e {folders} subpasta(s). Ao excluí-la, TUDO dentro será removido permanentemente e os links deixarão de funcionar. Isso não pode ser desfeito — continuar?',
+    confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: 'Excluir esta pasta?', folder_not_empty: 'A pasta não está vazia — mova ou exclua seu conteúdo primeiro.', folder_del_full: 'Esta pasta contém {files} arquivo(s) e {folders} subpasta(s). Ao excluí-la, TUDO dentro será removido permanentemente e os links deixarão de funcionar. Isso não pode ser desfeito.', folder_del_title: 'Excluir “{name}”?', del_type_hint: 'Digite DELETE para confirmar',
   },
 };
 const pick = (lang) => DRV[lang] || DRV.en;
@@ -133,7 +133,7 @@ export async function handleDrive(ctx) {
   const folderRows = folders.map((f) => `<tr class="dr-folder">
       <td><a href="/drive?folder=${f.id}" class="dr-fname">📁 ${esc(f.name)}</a></td>
       <td class="muted">—</td><td class="muted">${esc(f.created_at ? new Date(f.created_at * 1000).toISOString().slice(0, 10) : '')}</td>
-      <td class="dr-acts"><button class="link-btn dr-frename" data-id="${f.id}" data-name="${esc(f.name)}">${T.rename}</button><button class="link-btn danger dr-fdel" data-id="${f.id}">${T.del}</button></td></tr>`).join('');
+      <td class="dr-acts"><button class="link-btn dr-frename" data-id="${f.id}" data-name="${esc(f.name)}">${T.rename}</button><button class="link-btn danger dr-fdel" data-id="${f.id}" data-name="${esc(f.name)}">${T.del}</button></td></tr>`).join('');
 
   const fileRows = files.map((f) => `<tr>
       <td><a href="/drive/f/${esc(f.token)}" target="_blank" rel="noopener" title="${esc(f.name)}">${esc(f.name)}</a></td>
@@ -169,10 +169,18 @@ export async function handleDrive(ctx) {
       <div class="mc-acts"><button class="btn ghost" type="button" id="mc-cancel">${T.cancel}</button><button class="btn" type="button" id="mc-go">${T.confirm}</button></div>
     </div></div>
 
+    <div class="mc-overlay" id="del-modal" hidden><div class="mc-box">
+      <h3 id="del-title"></h3>
+      <p id="del-warn" class="del-warn"></p>
+      <label class="del-hint" for="del-input">${T.del_type_hint}</label>
+      <input id="del-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="DELETE">
+      <div class="mc-acts"><button class="btn ghost" type="button" id="del-cancel">${T.cancel}</button><button class="btn danger" type="button" id="del-go" disabled>${T.del}</button></div>
+    </div></div>
+
     <script>
       var MAX = ${DRIVE_MAX_FILE};
       var CUR = ${curId == null ? 'null' : curId};
-      var S = ${JSON.stringify({ uploading: T.uploading, err: T.err, errSize: T.err_size, copied: T.copied, copy: T.copy_link, delConfirm: T.del_confirm, folderName: T.folder_name_prompt, renamePrompt: T.rename_prompt, folderDel: T.folder_del_confirm, folderDelFull: T.folder_del_full, notEmpty: T.folder_not_empty, moveTitle: T.move_title, copyTitle: T.copy_title })};
+      var S = ${JSON.stringify({ uploading: T.uploading, err: T.err, errSize: T.err_size, copied: T.copied, copy: T.copy_link, delConfirm: T.del_confirm, folderName: T.folder_name_prompt, renamePrompt: T.rename_prompt, folderDel: T.folder_del_confirm, folderDelFull: T.folder_del_full, folderDelTitle: T.folder_del_title, delTypeHint: T.del_type_hint, notEmpty: T.folder_not_empty, moveTitle: T.move_title, copyTitle: T.copy_title })};
       function post(u, body){ return fetch(u, { method:'POST', headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); }); }
       // upload (into current folder)
       var input=document.getElementById('dr-input'), drop=document.getElementById('dr-drop'), msg=document.getElementById('dr-msg');
@@ -228,7 +236,18 @@ export async function handleDrive(ctx) {
       document.getElementById('dr-newfolder').addEventListener('click', async function(){ var n=prompt(S.folderName); if(!n)return; var r=await post('/api/drive/folder',{name:n,parent_id:CUR}); if(r.ok&&r.d.success){location.reload();return;} alert((r.d&&r.d.error)||S.err); });
       // folder rename / delete
       document.querySelectorAll('.dr-frename').forEach(function(b){ b.addEventListener('click', async function(){ var n=prompt(S.renamePrompt, b.dataset.name); if(!n)return; var r=await fetch('/api/drive/folder/'+b.dataset.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})}).then(function(x){return x.json();}); if(r.success){location.reload();return;} alert(r.error||S.err); }); });
-      document.querySelectorAll('.dr-fdel').forEach(function(b){ b.addEventListener('click', async function(){ b.disabled=true; var p=await fetch('/api/drive/folder/'+b.dataset.id,{method:'DELETE'}).then(function(x){return x.json();}).catch(function(){return{};}); if(!p.needsConfirm){ alert(p.error||S.err); b.disabled=false; return; } var msg=(p.files+p.folders>0)?S.folderDelFull.replace('{files}',p.files).replace('{folders}',p.folders):S.folderDel; if(!confirm(msg)){ b.disabled=false; return; } var r=await fetch('/api/drive/folder/'+b.dataset.id+'?confirm=1',{method:'DELETE'}).then(function(x){return x.json();}).catch(function(){return{};}); if(r.success){location.reload();return;} alert(r.error||S.err); b.disabled=false; }); });
+      document.querySelectorAll('.dr-fdel').forEach(function(b){ b.addEventListener('click', async function(){ b.disabled=true; var p=await fetch('/api/drive/folder/'+b.dataset.id,{method:'DELETE'}).then(function(x){return x.json();}).catch(function(){return{};}); b.disabled=false; if(!p.needsConfirm){ alert(p.error||S.err); return; } if(p.files+p.folders>0){ openDel(b.dataset.id, b.dataset.name||'', p.files, p.folders); return; } if(!confirm(S.folderDel))return; var r=await fetch('/api/drive/folder/'+b.dataset.id+'?confirm=1',{method:'DELETE'}).then(function(x){return x.json();}).catch(function(){return{};}); if(r.success){location.reload();return;} alert(r.error||S.err); }); });
+      // type-DELETE confirm modal (for non-empty folders)
+      var delModal=document.getElementById('del-modal'), delTitle=document.getElementById('del-title'), delWarn=document.getElementById('del-warn'), delInput=document.getElementById('del-input'), delGo=document.getElementById('del-go');
+      var delId=null;
+      function delMatch(){ return delInput.value.trim().toUpperCase()==='DELETE'; }
+      function closeDel(){ delModal.hidden=true; delInput.value=''; delGo.disabled=true; delId=null; }
+      function openDel(id, name, files, folders){ delId=id; delTitle.textContent=S.folderDelTitle.replace('{name}', name); delWarn.textContent=S.folderDelFull.replace('{files}',files).replace('{folders}',folders); delInput.value=''; delGo.disabled=true; delModal.hidden=false; delInput.focus(); }
+      delInput.addEventListener('input', function(){ delGo.disabled=!delMatch(); });
+      delInput.addEventListener('keydown', function(e){ if(e.key==='Enter'&&delMatch()) delGo.click(); });
+      document.getElementById('del-cancel').addEventListener('click', closeDel);
+      delModal.addEventListener('click', function(e){ if(e.target===delModal) closeDel(); });
+      delGo.addEventListener('click', async function(){ if(!delMatch())return; delGo.disabled=true; var r=await fetch('/api/drive/folder/'+delId+'?confirm=1',{method:'DELETE'}).then(function(x){return x.json();}).catch(function(){return{};}); if(r.success){location.reload();return;} alert(r.error||S.err); closeDel(); });
       // move / copy modal
       var modal=document.getElementById('mc-modal'), mcTitle=document.getElementById('mc-title'), mcFolder=document.getElementById('mc-folder'), mcGo=document.getElementById('mc-go');
       var mcState={ id:null, mode:null };
@@ -269,7 +288,11 @@ export async function handleDrive(ctx) {
     .mc-overlay[hidden]{display:none}
     .mc-box{background:#fff;border-radius:14px;padding:1.4rem;max-width:420px;width:100%}
     .mc-box h3{margin:0 0 .8rem;font-size:1rem;color:var(--ink)}
-    .mc-box select{width:100%;padding:.6rem .7rem;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.9rem}
+    .mc-box select,.mc-box input{width:100%;padding:.6rem .7rem;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.9rem;box-sizing:border-box}
+    .del-warn{margin:0 0 1rem;font-size:.85rem;color:#b91c1c;line-height:1.45}
+    .del-hint{display:block;margin:0 0 .35rem;font-size:.8rem;font-weight:600;color:var(--muted)}
+    .btn.danger{background:#b91c1c;border-color:#b91c1c;color:#fff}
+    .btn.danger:disabled{opacity:.45;cursor:not-allowed}
     .mc-acts{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1rem}
   </style></head><body>${siteHeader('/dashboard', {})}<main><div class="drwrap">${inner}</div></main>${siteFooter({ lang })}</body></html>`);
 }
