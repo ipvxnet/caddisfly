@@ -443,7 +443,7 @@ export const pt = {
     meta_title: 'Painel — Caddisfly',
     title: 'Os seus sites',
     plan_billing: 'Plano e Faturamento →',
-    buy_domain: '🌐 Domínios',
+    drive: '🗂 Drive', buy_domain: '🌐 Domínios',
     admin: 'Admin',
     signed_in_as: 'Sessão iniciada como',
     support: 'Suporte', activity: 'Atividade', help: 'Ajuda', sign_out: 'Sair',
