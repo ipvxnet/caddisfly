@@ -610,3 +610,21 @@ export async function handleDriveFile(ctx) {
   }
   return new Response(obj.body, { headers });
 }
+
+/**
+ * GET /site-asset/:publicId/:token — serve a published-site asset that deploy
+ * copied out of the Drive (copy-on-publish). PUBLIC. Read straight from R2 at
+ * published/<publicId>/assets/<token>; content-type comes from what deploy stored.
+ */
+export async function handleSiteAsset(ctx) {
+  const { env, params } = ctx;
+  const publicId = String(params.publicId || '').replace(/[^A-Za-z0-9-]/g, '');
+  const token = String(params.token || '').replace(/[^A-Za-z0-9_-]/g, '');
+  if (!publicId || !token) return new Response('Not found', { status: 404 });
+  const obj = await env.STORAGE.get(`published/${publicId}/assets/${token}`);
+  if (!obj) return new Response('Not found', { status: 404 });
+  const ct = (obj.httpMetadata && obj.httpMetadata.contentType) || 'application/octet-stream';
+  const headers = { 'Content-Type': ct, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'public, max-age=31536000, immutable' };
+  if (ct === 'image/svg+xml') headers['Content-Security-Policy'] = "default-src 'none'; style-src 'unsafe-inline'";
+  return new Response(obj.body, { headers });
+}

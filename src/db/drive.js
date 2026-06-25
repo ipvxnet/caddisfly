@@ -156,6 +156,15 @@ export async function getDriveFileByToken(db, token) {
   return db.prepare('SELECT name, r2_key, content_type, size FROM drive_files WHERE token = ? AND deleted_at IS NULL').bind(String(token || '')).first();
 }
 
+/**
+ * Look up a file's R2 key by token for deploy-time copy-on-publish, scoped to the
+ * site owner. Ignores deleted_at so a publish can still rescue a just-trashed file
+ * (the R2 object is kept until purge).
+ */
+export async function getDriveAssetByToken(db, ownerEmail, token) {
+  return db.prepare('SELECT r2_key, content_type, name FROM drive_files WHERE token = ? AND owner_email = ?').bind(String(token || ''), lc(ownerEmail)).first();
+}
+
 // ---- trash (soft-delete) ----------------------------------------------------
 
 const chunked = (arr, n = 50) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };

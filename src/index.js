@@ -75,7 +75,7 @@ import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleC
 import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
 import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
-import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash } from './routes/public/drive.js';
+import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash, handleSiteAsset } from './routes/public/drive.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove, handleTeamSites } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
@@ -350,6 +350,7 @@ router.post('/api/drive/:id/restore', handleFileRestore, [billingAuth]);
 router.delete('/api/drive/:id/purge', handleFilePurge, [billingAuth]);
 router.delete('/api/drive/:id', handleDriveDelete, [billingAuth]);
 router.get('/drive/f/:token', handleDriveFile);
+router.get('/site-asset/:publicId/:token', handleSiteAsset); // published-site asset copied from the Drive (public)
 router.get('/team/accept/:token', handleTeamAccept);
 router.get('/booking/receipt', handleBookingReceipt);
 router.get('/booking/cancel/:token', handleBookingCancelPage);
