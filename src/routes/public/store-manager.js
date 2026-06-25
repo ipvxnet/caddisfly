@@ -162,11 +162,11 @@ export async function handleStoreManager(ctx) {
           <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickImageFromDrive(this.previousElementSibling.previousElementSibling, true)">${tr('storem.from_drive')}</button>
           <label>${tr('storem.media_videos')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-videos" rows="2" placeholder="https://youtu.be/…"></textarea>
-          <label>${tr('storem.media_files')} <span class="hint">Name | URL</span></label>
-          <textarea id="np-files" rows="2" placeholder="Datasheet | https://…/spec.pdf"></textarea>
+          <label>${tr('storem.media_files')} <span class="hint">${tr('storem.media_files_hint')}</span></label>
+          <textarea id="np-files" rows="2" placeholder="${tr('storem.media_files_ph')}"></textarea>
           <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">${tr('storem.upload_pdf')}</button>
-          <label>${tr('storem.media_links')} <span class="hint">Label | URL</span></label>
-          <textarea id="np-links" rows="2" placeholder="Manufacturer | https://…"></textarea>
+          <label>${tr('storem.media_links')} <span class="hint">${tr('storem.media_links_hint')}</span></label>
+          <textarea id="np-links" rows="2" placeholder="${tr('storem.media_links_ph')}"></textarea>
         </details>
         <div class="edit-actions">
           <button class="btn" onclick="createProduct(this)">${tr('storem.create_btn')}</button>
@@ -248,6 +248,8 @@ export async function handleStoreManager(ctx) {
       mediaFiles: ${JSON.stringify(tr('storem.media_files'))},
       mediaLinks: ${JSON.stringify(tr('storem.media_links'))},
       mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
+      mediaFilesHint: ${JSON.stringify(tr('storem.media_files_hint'))},
+      mediaLinksHint: ${JSON.stringify(tr('storem.media_links_hint'))},
       uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
       uploadImage: ${JSON.stringify(tr('storem.upload_image'))},
       fromDrive: ${JSON.stringify(tr('storem.from_drive'))},
@@ -423,9 +425,9 @@ export async function handleStoreManager(ctx) {
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, true)">' + T.uploadImage + '</button>' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickImageFromDrive(this.previousElementSibling.previousElementSibling, true)">' + T.fromDrive + '</button>' +
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
-        '<label>' + T.mediaFiles + ' <span class="hint">Name | URL</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
+        '<label>' + T.mediaFiles + ' <span class="hint">' + T.mediaFilesHint + '</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
-        '<label>' + T.mediaLinks + ' <span class="hint">Label | URL</span></label><textarea class="m-links" rows="2">' + esc(mt.links) + '</textarea>' +
+        '<label>' + T.mediaLinks + ' <span class="hint">' + T.mediaLinksHint + '</span></label><textarea class="m-links" rows="2">' + esc(mt.links) + '</textarea>' +
         '</details>' +
         (ADV ? '<details class="var-wrap" data-pid="' + p.id + '" ontoggle="if(this.open)loadVariants(' + p.id + ')">' +
           '<summary style="cursor:pointer;font-weight:600">' + T.varHeading + '</summary>' +
