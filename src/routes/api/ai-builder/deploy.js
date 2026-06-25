@@ -21,6 +21,7 @@ import { getPostsByProject } from '../../../db/blog-posts.js';
 import { autoSyndicateOnDeploy } from './social.js';
 import { blogNavPage, blogListSection, blogPostSection } from '../../../utils/blog-render.js';
 import { getProductsByProject } from '../../../db/products.js';
+import { getDriveAssetByToken } from '../../../db/drive.js';
 import { annotateProductsWithVariants } from '../../../db/variants.js';
 import { getServices } from '../../../db/bookings.js';
 import { parseHolidaySettings } from '../../../utils/holiday-themes.js';
@@ -194,6 +195,40 @@ export async function handleAIBuilderDeploy(ctx) {
 
     const appOrigin = env.APP_URL || '';
 
+    // Copy-on-publish: any Drive file referenced in the built HTML (…/drive/f/<token>)
+    // is copied into a site-owned asset (published/<publicId>/assets/<token>, served at
+    // /site-asset/<publicId>/<token>) and the URL rewritten — so the published site no
+    // longer depends on the Drive file (deleting/trashing it can't break a live page).
+    // Owner-scoped; idempotent within a deploy (each token copied once). The leading
+    // prefix wipe above clears stale assets, so each deploy re-copies fresh.
+    const copiedAssets = new Map(); // token -> boolean (copied OK)
+    const rehostDriveAssets = async (html) => {
+      if (!html || html.indexOf('/drive/f/') === -1) return html;
+      const tokens = new Set();
+      const re = /\/drive\/f\/([A-Za-z0-9_-]+)/g;
+      let m;
+      while ((m = re.exec(html)) !== null) tokens.add(m[1]);
+      let out = html;
+      for (const token of tokens) {
+        if (!copiedAssets.has(token)) {
+          let ok = false;
+          try {
+            const meta = await getDriveAssetByToken(env.DB, email, token);
+            if (meta && meta.r2_key) {
+              const obj = await env.STORAGE.get(meta.r2_key);
+              if (obj) {
+                await env.STORAGE.put(`published/${publicId}/assets/${token}`, obj.body, { httpMetadata: { contentType: meta.content_type || 'application/octet-stream' } });
+                ok = true;
+              }
+            }
+          } catch (e) { console.error('deploy: drive asset copy failed (leaving URL):', token, e.message); }
+          copiedAssets.set(token, ok);
+        }
+        if (copiedAssets.get(token)) out = out.split(`/drive/f/${token}`).join(`/site-asset/${publicId}/${token}`);
+      }
+      return out;
+    };
+
     // Render + store each visible page TWICE: once for /site/:id (nav rooted at
     // /site/<id>) and once for the subdomain (nav rooted at /). Analytics beacon
     // always posts to the app origin (the sites worker is DB-free).
@@ -244,11 +279,11 @@ export async function handleAIBuilderDeploy(ctx) {
       };
 
       // /site/:id copy (app worker).
-      const idHtml = assemblePage(combined, config, projectView, { ...common, previewBase: `/site/${publicId}` });
+      const idHtml = await rehostDriveAssets(assemblePage(combined, config, projectView, { ...common, previewBase: `/site/${publicId}` }));
       await uploadToR2(env.STORAGE, `published/${publicId}/${page.slug}.html`, idHtml, 'text/html; charset=utf-8');
 
       // Subdomain copy (caddisfly-sites worker) — nav rooted at /.
-      const subHtml = assemblePage(combined, config, projectView, { ...common, previewBase: '' });
+      const subHtml = await rehostDriveAssets(assemblePage(combined, config, projectView, { ...common, previewBase: '' }));
       await uploadToR2(env.STORAGE, `sites/${subdomain}/${page.slug}.html`, subHtml, 'text/html; charset=utf-8');
       // Home also written as index.html so the worker serves "/" DB-free.
       if (page.is_home) {
@@ -278,11 +313,11 @@ export async function handleAIBuilderDeploy(ctx) {
       const writeBlogPage = async (slugPath, sectionFor, seo) => {
         // /site/:id copy
         const idSections = [...header, sectionFor(`/site/${publicId}`), ...footer];
-        const idHtml = assemblePage(idSections, config, projectView, { ...blogCommon, ...seo, previewBase: `/site/${publicId}` });
+        const idHtml = await rehostDriveAssets(assemblePage(idSections, config, projectView, { ...blogCommon, ...seo, previewBase: `/site/${publicId}` }));
         await uploadToR2(env.STORAGE, `published/${publicId}/${slugPath}.html`, idHtml, 'text/html; charset=utf-8');
         // Subdomain copy (nav rooted at /)
         const subSections = [...header, sectionFor(''), ...footer];
-        const subHtml = assemblePage(subSections, config, projectView, { ...blogCommon, ...seo, previewBase: '' });
+        const subHtml = await rehostDriveAssets(assemblePage(subSections, config, projectView, { ...blogCommon, ...seo, previewBase: '' }));
         await uploadToR2(env.STORAGE, `sites/${subdomain}/${slugPath}.html`, subHtml, 'text/html; charset=utf-8');
       };
 

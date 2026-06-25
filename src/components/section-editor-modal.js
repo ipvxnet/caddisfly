@@ -688,6 +688,11 @@ async function galleryReplaceUpload(input) {
   try { const url = await galleryUploadFile(file); const imgs = galleryRead(); if (imgs[i]) imgs[i].url = url; galleryWrite(imgs); galleryRender(); }
   catch (e) { alert(${JSON.stringify(tr('sed.upload_failed_p'))} + e.message); }
 }
+// Add a Drive image to the gallery (uses the shared picker; appends to the list).
+function galleryAddFromDrive() {
+  if (!window.__drivePicker) return;
+  window.__drivePicker(function (url) { const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); });
+}
 
 // Initialise the gallery manager if this section has one (runs on inject).
 galleryRender();
@@ -818,12 +823,14 @@ function plansRender() {
 // Initialise the plans editor if this section has one (runs on inject).
 if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices(); }
 
-// ---- Insert from Drive: a picker on each image field (runs on inject) --------
+// ---- Insert from Drive: a picker available on EVERY image field -------------
+// Exposes window.__drivePicker(applyFn): opens the overlay, and on thumbnail
+// click calls applyFn(url). Single-image upload areas (hero/about) get a button
+// injected here; repeatable-item images + the gallery call __drivePicker from
+// their own server-rendered buttons (repImgDrive / galleryAddFromDrive).
 (function(){
   var DP = ${JSON.stringify({ btn: tr('sed.from_drive'), title: tr('sed.drive_title'), empty: tr('sed.drive_empty'), loading: tr('sed.drive_loading'), err: tr('sed.drive_err') })};
-  var modal = document.getElementById('section-editor-modal'); if (!modal) return;
-  var areas = modal.querySelectorAll('.image-upload-area'); if (!areas.length) return;
-  var overlay = null, tField = null, tPrev = null;
+  var overlay = null, applyFn = null;
   function ensureOverlay(){
     if (overlay) return overlay;
     overlay = document.createElement('div');
@@ -834,8 +841,8 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
     overlay.querySelector('.dp-x').addEventListener('click', function(){ overlay.style.display = 'none'; });
     return overlay;
   }
-  async function openPicker(field, prev){
-    tField = field; tPrev = prev; var o = ensureOverlay(); var grid = o.querySelector('.dp-grid');
+  window.__drivePicker = async function(apply){
+    applyFn = apply; var o = ensureOverlay(); var grid = o.querySelector('.dp-grid');
     grid.innerHTML = '<p style="color:#718096">' + DP.loading + '</p>'; o.style.display = 'flex';
     try {
       var res = await fetch('/api/drive/images'); var d = await res.json(); var imgs = (d && d.images) || [];
@@ -845,19 +852,21 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
         var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
         b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
         var img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover'; b.appendChild(img);
-        b.addEventListener('click', function(){ if (tField) tField.value = im.url; if (tPrev) { tPrev.src = im.url; tPrev.style.display = 'block'; } o.style.display = 'none'; });
+        b.addEventListener('click', function(){ if (applyFn) applyFn(im.url); o.style.display = 'none'; });
         grid.appendChild(b);
       });
     } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + DP.err + '</p>'; }
-  }
-  areas.forEach(function(area){
+  };
+  // Single-image upload areas (hero/about/etc.): inject a "From Drive" button.
+  var modal = document.getElementById('section-editor-modal');
+  if (modal) modal.querySelectorAll('.image-upload-area').forEach(function(area){
     var fg = area.closest('.form-group') || area.parentElement;
     var field = fg && fg.querySelector('input[type=hidden]');
     var prev = area.querySelector('.image-preview');
     if (!field) return;
     var btn = document.createElement('button'); btn.type = 'button'; btn.textContent = DP.btn;
     btn.style.cssText = 'margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer';
-    btn.addEventListener('click', function(e){ e.stopPropagation(); openPicker(field, prev); });
+    btn.addEventListener('click', function(e){ e.stopPropagation(); window.__drivePicker(function(url){ field.value = url; if (prev) { prev.src = url; prev.style.display = 'block'; } }); });
     area.parentNode.insertBefore(btn, area.nextSibling);
   });
 })();
@@ -1075,7 +1084,7 @@ function generateAboutFields(content, tr, variant = 'default', contentLang = 'en
 }
 
 function aboutImgLabels(tr) {
-  return { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') };
+  return { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') };
 }
 
 function generateAboutTextImageFields(content, tr) {
@@ -1224,6 +1233,7 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
           <img class="rep-img-thumb" src="${escapeHtml(v)}" alt=""${v ? '' : ' style="display:none"'}>
           <div class="rep-img-btns">
             <button type="button" onclick="repImgUpload(this)">⬆ ${escapeHtml(l.upload || 'Upload')}</button>
+            <button type="button" onclick="repImgDrive(this)">🗂 ${escapeHtml(l.drive || 'Drive')}</button>
             <button type="button" onclick="repImgUrl(this)">🔗 ${escapeHtml(l.url || 'URL')}</button>
             <button type="button" onclick="repImgStock(this)">🖼 ${escapeHtml(l.photo || 'Photo')}</button>
             <button type="button" onclick="repImgAI(this)">✨ ${escapeHtml(l.ai || 'AI')}</button>
@@ -1299,6 +1309,7 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
       }
       function repImgClear(b){ repImgApply(repItemOf(b), ''); }
       function repImgUrl(b){ var u = prompt(REP_IMG_T.urlPrompt || 'Image URL'); if (u && u.trim()) repImgApply(repItemOf(b), u.trim()); }
+      function repImgDrive(b){ var item = repItemOf(b); if (window.__drivePicker) window.__drivePicker(function(url){ repImgApply(item, url); }); }
       function repImgUpload(b){ var i = repItemOf(b).querySelector('.rep-img-file'); if (i) i.click(); }
       function repImgTitle(item){ var t = item.querySelector('[data-k="title"]'); return (t && t.value.trim()) || ''; }
       function repImgStatus(item, msg){ var s = item.querySelector('.rep-img-status'); if (s) s.textContent = msg || ''; }
@@ -1402,7 +1413,7 @@ function generateServicesFields(content, tr) {
           { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
           { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.svc_desc_ph') },
           { key: 'image_url', label: tr('sed.f_image'), kind: 'image',
-            img: { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
+            img: { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
         ],
       })}
     </div>
@@ -1432,7 +1443,7 @@ function generateTestimonialsFields(content, tr, contentLang = 'en') {
         fields: [
           { key: 'name', alt: 'author', label: tr('sed.f_name'), ph: tr('sed.tst_name_ph') },
           { key: 'role', label: tr('sed.f_role'), ph: tr('sed.tst_role_ph') },
-          { key: 'avatar', label: tr('sed.f_image'), kind: 'image', img: { upload: tr('sed.img_upload'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
+          { key: 'avatar', label: tr('sed.f_image'), kind: 'image', img: { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
           { key: 'text', alt: 'quote', label: tr('sed.f_quote'), kind: 'textarea', ph: tr('sed.tst_text_ph') },
           { key: 'rating', label: tr('sed.f_rating'), kind: 'short', num: true, ph: '5' },
           { key: 'video_url', label: tr('sed.f_video') || 'Video (optional)', kind: 'video', ph: tr('sed.video_ph') || 'YouTube, Vimeo or Loom link', vid: { upload: tr('sed.img_upload') || 'Upload' } },
@@ -1495,6 +1506,7 @@ function generateGalleryFields(content, tr) {
       <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
       <div id="gallery-manager" class="gallery-manager"></div>
       <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">${tr('sed.add_photo')}</button>
+      <button type="button" class="gallery-add-btn" onclick="galleryAddFromDrive()">${tr('sed.from_drive')}</button>
       <button type="button" class="gallery-add-btn" onclick="gallerySwapAll()">🖼 ${tr('sed.swap_all')}</button>
       <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
       <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
