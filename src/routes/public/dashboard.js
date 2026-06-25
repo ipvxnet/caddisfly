@@ -362,6 +362,7 @@ export async function handleDashboard(ctx) {
       <h1>${tr('dash.title')}</h1>
       <div>
         ${isAdmin ? `<a class="btn admin" href="/admin">⚙ ${tr('dash.admin')}</a>` : ''}
+        <a class="btn ghost" href="/drive">${tr('dash.drive')}</a>
         <a class="btn ghost" href="/domains">${tr('dash.buy_domain')}</a>
         <a class="btn ghost" href="/billing">${tr('dash.plan_billing')}</a>
         <a class="btn ghost" href="/billing/logout" style="color:#b91c1c">${tr('dash.sign_out')} →</a>

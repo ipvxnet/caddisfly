@@ -443,7 +443,7 @@ export const es = {
     meta_title: 'Panel — Caddisfly',
     title: 'Tus sitios web',
     plan_billing: 'Plan y facturación →',
-    buy_domain: '🌐 Dominios',
+    drive: '🗂 Drive', buy_domain: '🌐 Dominios',
     admin: 'Admin',
     signed_in_as: 'Sesión iniciada como',
     support: 'Soporte', activity: 'Actividad', help: 'Ayuda', sign_out: 'Cerrar sesión',

@@ -22,6 +22,12 @@ export const PUBLISH_LIMITS = { free_trial: 1, starter: 3, pro: 15, agency: Infi
 // Custom-domain cap per tier (free gets a subdomain only).
 export const DOMAIN_LIMITS = { free_trial: 0, starter: 1, pro: 5, agency: Infinity };
 
+// Drive storage per tier, in BYTES (advertised: 1 / 25 / 100 / 500 GB). Drive
+// files only — published-site assets + backups are hosting, not counted here.
+const GB = 1024 * 1024 * 1024;
+export const DRIVE_LIMITS = { free_trial: 1 * GB, starter: 25 * GB, pro: 100 * GB, agency: 500 * GB };
+export const DRIVE_MAX_FILE = 50 * 1024 * 1024; // 50 MB per upload
+
 // Team seats per tier — TOTAL seats including the owner (free = owner only).
 export const TEAM_LIMITS = { free_trial: 1, starter: 5, pro: 15, agency: 50 };
 

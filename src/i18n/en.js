@@ -443,7 +443,7 @@ export const en = {
     meta_title: 'Dashboard — Caddisfly',
     title: 'Your websites',
     plan_billing: 'Plan & billing →',
-    buy_domain: '🌐 Domains',
+    drive: '🗂 Drive', buy_domain: '🌐 Domains',
     admin: 'Admin',
     signed_in_as: 'Signed in as',
     support: 'Support', activity: 'Activity', help: 'Help', sign_out: 'Sign out',
