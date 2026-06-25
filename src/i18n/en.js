@@ -1053,7 +1053,7 @@ export const en = {
     testimonials: 'Testimonials', add_testimonial: '＋ Add testimonial', tst_name_ph: 'Name', tst_role_ph: 'Role / company', tst_text_ph: 'What they said',
     item_service: 'Service', item_testimonial: 'Testimonial',
     f_icon: 'Icon (emoji)', f_title: 'Title', f_description: 'Description',
-    f_image: 'Photo', img_upload: 'Upload', img_url: 'URL', img_photo: 'Suggest', img_ai: 'AI', img_remove: 'Remove',
+    f_image: 'Photo', img_upload: 'Upload', img_drive: 'Drive', img_url: 'URL', img_photo: 'Suggest', img_ai: 'AI', img_remove: 'Remove',
     swap_all: 'Swap all photos with AI', img_url_prompt: 'Paste an image URL',
     img_finding: 'Finding a photo…', img_generating: 'Generating…', img_fail: 'Failed — try again',
     f_name: 'Name', f_role: 'Role / company', f_quote: 'Quote', f_rating: 'Rating (1–5)', f_video: 'Video (optional)', video_ph: 'YouTube, Vimeo or Loom link',

@@ -1047,7 +1047,7 @@ export const es = {
     testimonials: 'Reseñas', add_testimonial: '＋ Añadir reseña', tst_name_ph: 'Nombre', tst_role_ph: 'Cargo / empresa', tst_text_ph: 'Lo que dijeron',
     item_service: 'Servicio', item_testimonial: 'Reseña',
     f_icon: 'Icono (emoji)', f_title: 'Título', f_description: 'Descripción',
-    f_image: 'Foto', img_upload: 'Subir', img_url: 'URL', img_photo: 'Sugerir', img_ai: 'IA', img_remove: 'Quitar',
+    f_image: 'Foto', img_upload: 'Subir', img_drive: 'Drive', img_url: 'URL', img_photo: 'Sugerir', img_ai: 'IA', img_remove: 'Quitar',
     swap_all: 'Cambiar todas las fotos con IA', img_url_prompt: 'Pega una URL de imagen',
     img_finding: 'Buscando una foto…', img_generating: 'Generando…', img_fail: 'Falló — inténtalo de nuevo',
     f_name: 'Nombre', f_role: 'Cargo / empresa', f_quote: 'Cita', f_rating: 'Valoración (1–5)', f_video: 'Video (opcional)', video_ph: 'Enlace de YouTube, Vimeo o Loom',
