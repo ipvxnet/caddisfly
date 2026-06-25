@@ -1,47 +1,19 @@
 // AI course generator — "Generate a course from a topic". Ports the 4vrxp LMS
-// courseGen prompt onto Caddisfly's Workers AI (TEXT_MODEL) + extractJSON. One
-// LLM call → 4 sections × 3 text lessons + a per-section self-check quiz, then
-// materialized into the DB tree via db/courses.js. The route charges
-// CREDIT_COSTS.course_ai. See memory: generation-quality (extractJSON), workers-ai-model.
+// courseGen idea onto Caddisfly's Workers AI (TEXT_MODEL) + extractJSON, but
+// SPLITS the work to stay fast and reliable: one small OUTLINE call (meta +
+// section/lesson titles) then ONE call PER SECTION in PARALLEL for the lesson
+// bodies + quiz. A single 70B call for the whole course (~3.5k tokens) is slow
+// and risks edge timeouts; small parallel calls finish in ~20s and rarely
+// truncate. Each section retries and degrades gracefully (title-only lessons)
+// so the user always gets a course. Materialized via db/courses.js. The route
+// charges CREDIT_COSTS.course_ai. See memory: generation-quality, workers-ai-model.
 import { callWorkersAI, extractJSON } from './ai-content-generator.js';
 import { uniqueCourseSlug, createCourse, createSection, createLesson, ensureQuiz, addQuizQuestion } from '../db/courses.js';
 
 const LANG_NAME = { en: 'English', es: 'Spanish', pt: 'Brazilian Portuguese' };
 const QUIZ_SUFFIX = { en: 'Quiz', es: 'Cuestionario', pt: 'Quiz' };
-
-function systemPrompt(lang) {
-  const langName = LANG_NAME[lang] || 'English';
-  return `You are an expert instructional designer. Return a course plan as raw JSON only — no markdown, no code fences, no explanation. Output must start with { and end with }.
-
-JSON schema (follow exactly):
-{
-  "title": "string",
-  "subtitle": "string (one-line tagline)",
-  "description": "string (2-3 sentence overview)",
-  "category": "string (one or two words)",
-  "sections": [
-    {
-      "title": "string",
-      "lessons": [ { "title": "string", "body": "string (HTML lesson body, MINIMUM 150 words, multiple paragraphs)" } ],
-      "quiz": [ { "question": "string ending in ?", "type": "mcq_single", "options": ["A","B","C","D"], "correct_index": 0, "explanation": "string" } ]
-    }
-  ]
-}
-
-Lesson body REQUIREMENTS — every lesson MUST:
-1. Open with a 2-4 sentence paragraph introducing the concept in plain language.
-2. Include a <h3> sub-heading.
-3. Follow with a paragraph OR a <ul>/<ol> of 3-5 items.
-4. Close with a concrete example or real-world scenario.
-Allowed HTML tags only: <p> <h3> <ul> <ol> <li> <strong> <em>. Never a single paragraph; never fewer than 150 words.
-
-Constraints:
-- Exactly 4 sections, ordered foundational → advanced.
-- Exactly 3 lessons per section, each teaching a distinct sub-topic (no overlap).
-- Exactly 3 quiz questions per section — at least 2 mcq_single (4 distinct options each), the third may be true_false.
-- All JSON strings use escaped double quotes; no single quotes inside string values.
-- Write ALL content (titles, lessons, questions) in ${langName}.`;
-}
+const N_SECTIONS = 4;
+const N_LESSONS = 3;
 
 function sanitizeQuestion(q) {
   const r = q || {};
@@ -57,48 +29,81 @@ function sanitizeQuestion(q) {
   };
 }
 
-function sanitizeSection(s) {
-  const r = s || {};
+async function withRetry(fn, attempts = 2) {
+  let last;
+  for (let i = 1; i <= attempts; i++) {
+    try { return await fn(); } catch (e) { last = e; if (i < attempts) await new Promise((r) => setTimeout(r, 400 * i)); }
+  }
+  throw last;
+}
+
+// Phase A — outline: course meta + section titles + per-section lesson titles.
+// Small output (~300 tokens) → one fast, reliable call.
+async function generateOutline(env, topic, lang) {
+  const langName = LANG_NAME[lang] || 'English';
+  const system = `You are an expert instructional designer. Return ONLY raw JSON (start with {, end with }) — no markdown, no prose.
+Schema: {"title":"string","subtitle":"one-line tagline","description":"2-3 sentence overview","category":"one or two words","sections":[{"title":"string","lessons":["lesson title","lesson title","lesson title"]}]}
+Rules: exactly ${N_SECTIONS} sections ordered foundational → advanced; exactly ${N_LESSONS} concise lesson titles per section, each a distinct sub-topic (no overlap). Write everything in ${langName}.`;
+  const raw = await callWorkersAI(env, `Outline a course about: ${topic}`, { system_message: system, temperature: 0.4, max_tokens: 1000 });
+  const p = extractJSON(raw);
+  if (!p || !p.title || !Array.isArray(p.sections) || !p.sections.length) throw new Error('outline_incomplete');
   return {
-    title: String(r.title || 'Module').trim(),
-    lessons: Array.isArray(r.lessons)
-      ? r.lessons.map((l) => ({ title: String((l && l.title) || 'Lesson').trim(), body: String((l && l.body) || '<p></p>') })).filter((l) => l.title)
-      : [],
-    quiz: Array.isArray(r.quiz) ? r.quiz.map(sanitizeQuestion).filter((q) => q.question) : [],
+    title: String(p.title).trim(),
+    subtitle: String(p.subtitle || '').trim(),
+    description: String(p.description || '').trim(),
+    category: String(p.category || '').trim().slice(0, 60),
+    sections: p.sections.slice(0, 6).map((s) => ({
+      title: String((s && s.title) || 'Module').trim(),
+      lessonTitles: Array.isArray(s && s.lessons) ? s.lessons.map((l) => String(l).trim()).filter(Boolean).slice(0, 5) : [],
+    })).filter((s) => s.title),
   };
 }
 
+// Phase B — one section: HTML lesson bodies for the given titles + a self-check quiz.
+async function generateSectionContent(env, courseTitle, sectionTitle, lessonTitles, lang) {
+  const langName = LANG_NAME[lang] || 'English';
+  const titles = (lessonTitles.length ? lessonTitles : ['Overview']);
+  const list = titles.map((l, i) => `${i + 1}. ${l}`).join('\n');
+  const system = `You are an expert instructional designer. Return ONLY raw JSON (start with {, end with }) — no markdown, no prose.
+Schema: {"lessons":[{"title":"string","body":"HTML string"}],"quiz":[{"question":"string ending in ?","type":"mcq_single","options":["A","B","C","D"],"correct_index":0,"explanation":"string"}]}
+Each lesson body: open with a <p> intro paragraph, include a <h3> sub-heading, then a <p> or a <ul>/<ol> of 3-5 <li>, and close with a <p> giving a concrete example. Allowed tags ONLY: <p> <h3> <ul> <ol> <li> <strong> <em>. 120-180 words per lesson.
+Rules: write a body for EACH lesson title below, keeping the SAME titles in the SAME order; then exactly 3 quiz questions (at least 2 mcq_single with 4 distinct options, plus 1 true_false). Write everything in ${langName}.`;
+  const user = `Course: "${courseTitle}"\nSection: "${sectionTitle}"\nLesson titles:\n${list}\n\nWrite each lesson's HTML body and the section quiz.`;
+  const raw = await callWorkersAI(env, user, { system_message: system, temperature: 0.4, max_tokens: 2000 });
+  const p = extractJSON(raw) || {};
+  const bodies = Array.isArray(p.lessons) ? p.lessons : [];
+  const lessons = titles.map((title, i) => {
+    const byIndex = bodies[i] && bodies[i].body;
+    const byTitle = (bodies.find((b) => b && String(b.title || '').trim().toLowerCase() === title.toLowerCase()) || {}).body;
+    return { title, body: String(byIndex || byTitle || `<p>${title}</p>`) };
+  });
+  const quiz = Array.isArray(p.quiz) ? p.quiz.map(sanitizeQuestion).filter((q) => q.question) : [];
+  return { title: sectionTitle, lessons, quiz };
+}
+
 /**
- * Generate a structured course from a free-text topic. 3 attempts (the retry
- * loop handles malformed/truncated JSON). Returns
- * { title, subtitle, description, category, sections:[{title, lessons, quiz}] }.
+ * Generate a structured course from a free-text topic: outline → parallel
+ * per-section content. Returns { title, subtitle, description, category,
+ * sections:[{title, lessons:[{title,body}], quiz:[...]}] }. Per-section failures
+ * degrade to title-only lessons rather than failing the whole course.
  */
 export async function generateCourseStructure(env, topic, lang = 'en') {
-  let lastErr;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const raw = await callWorkersAI(env, `Design a complete course about: ${topic}`, {
-        system_message: systemPrompt(lang),
-        temperature: 0.4,
-        max_tokens: 4000,
-      });
-      const parsed = extractJSON(raw);
-      if (!parsed || !parsed.title || !Array.isArray(parsed.sections) || !parsed.sections.length) throw new Error('incomplete');
-      const sections = parsed.sections.map(sanitizeSection).filter((s) => s.lessons.length || s.quiz.length);
-      if (!sections.length) throw new Error('no_sections');
-      return {
-        title: String(parsed.title).trim(),
-        subtitle: String(parsed.subtitle || '').trim(),
-        description: String(parsed.description || '').trim(),
-        category: String(parsed.category || '').trim().slice(0, 60),
-        sections,
-      };
-    } catch (e) {
-      lastErr = e;
-      if (attempt < 3) await new Promise((r) => setTimeout(r, 500 * attempt));
-    }
-  }
-  throw new Error(`course_gen_failed: ${(lastErr && lastErr.message) || 'unknown'}`);
+  const outline = await withRetry(() => generateOutline(env, topic, lang), 2);
+  const sections = await Promise.all(outline.sections.map((s) =>
+    withRetry(() => generateSectionContent(env, outline.title, s.title, s.lessonTitles, lang), 2)
+      .catch(() => ({
+        title: s.title,
+        lessons: (s.lessonTitles.length ? s.lessonTitles : ['Overview']).map((t) => ({ title: t, body: `<p>${t}</p>` })),
+        quiz: [],
+      }))
+  ));
+  return {
+    title: outline.title,
+    subtitle: outline.subtitle,
+    description: outline.description,
+    category: outline.category,
+    sections,
+  };
 }
 
 /**
@@ -117,7 +122,7 @@ export async function materializeCourse(db, projectKey, gen, lang = 'en') {
     for (const les of sec.lessons) {
       await createLesson(db, course.id, section.id, { type: 'text', title: les.title, body: les.body });
     }
-    if (sec.quiz.length) {
+    if (sec.quiz && sec.quiz.length) {
       const quizLesson = await createLesson(db, course.id, section.id, { type: 'quiz', title: `${sec.title} — ${quizSuffix}` });
       const quiz = await ensureQuiz(db, course.id, quizLesson.id, { title: quizLesson.title });
       for (const q of sec.quiz) {
