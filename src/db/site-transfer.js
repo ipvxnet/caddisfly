@@ -175,10 +175,18 @@ export async function computeSiteRequirements(db, projectKey) {
   const crm = await one(`SELECT COUNT(*) AS n FROM crm_contacts WHERE ${k.col} = ?`)
     + await one(`SELECT COUNT(*) AS n FROM crm_quotes WHERE ${k.col} = ?`);
   const advStore = await one(`SELECT COUNT(*) AS n FROM store_discounts WHERE ${k.col} = ?`);
+  const courses = await one(`SELECT COUNT(*) AS n FROM courses WHERE ${k.col} = ?`)
+    + await one(`SELECT COUNT(*) AS n FROM ai_sections WHERE ${k.col} = ? AND section_type = 'courses'`);
 
   const plugins = [];
   if (catalogue) plugins.push('catalogue');
   if (crm) plugins.push('crm');
   if (advStore) plugins.push('advanced_store');
-  return { base: true, domain: domains > 0, plugins };
+  if (courses) plugins.push('courses');
+  // A free-tier account may own + host 1 published subdomain site, so a paid plan
+  // is only genuinely required when the site has a custom domain OR uses a plugin
+  // (otherwise those sections just get hidden for the new owner). Previously `base`
+  // was hardcoded true, gating EVERY transfer behind a paid plan even for a plain
+  // subdomain site with no plugins.
+  return { base: domains > 0 || plugins.length > 0, domain: domains > 0, plugins };
 }
