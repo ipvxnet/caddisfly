@@ -69,6 +69,10 @@ import { featuredProductsTemplate } from './shop/featured.js';
 // Catalogue (plugin) — addable body section, live product injection by category
 import { catalogueTilesTemplate, catalogueShowcaseTemplate } from './catalogue/tiles.js';
 import { bookingWidgetTemplate } from './booking/widget.js';
+// Courses (plugin) — synthetic /courses + /courses/:slug pages (like shop)
+import { courseListTemplate } from './courses/list.js';
+import { coursePlayerTemplate } from './courses/player.js';
+import { coursesSectionTemplate } from './courses/section.js';
 
 /**
  * Template registry
@@ -172,6 +176,16 @@ export const TEMPLATE_REGISTRY = {
   },
   shop_product: {
     default: shopProductTemplate,
+  },
+  course_list: {
+    default: courseListTemplate,
+  },
+  course_player: {
+    default: coursePlayerTemplate,
+  },
+  courses: {
+    default: coursesSectionTemplate,
+    tiles: coursesSectionTemplate,
   },
 };
 

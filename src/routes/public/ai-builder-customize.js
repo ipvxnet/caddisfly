@@ -154,6 +154,9 @@ export async function handleAIBuilderCustomize(ctx) {
     const addableSections = ADDABLE_SECTIONS.filter((s) => !s.plugin || pluginOk[s.plugin]);
     // CRM is a manager tool (no section) — link it from the toolbar when entitled.
     const hasCrm = await hasPlugin(env, ctx.billingEmail, 'crm');
+    // Courses (Training/LMS) — manager tool + a gated `courses` section; the
+    // manager link shows when entitled.
+    const hasCourses = await hasPlugin(env, ctx.billingEmail, 'courses');
 
     // Layout variants per addable section type (for the add-time layout picker).
     const sectionVariants = Object.fromEntries(addableSections.map((s) => [s.type, getAvailableVariants(s.type)]));
@@ -772,6 +775,7 @@ export async function handleAIBuilderCustomize(ctx) {
           <a href="/ai-builder/blog/${project.project_id}" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
           <a href="/ai-builder/store/${project.project_id}" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
           ${hasCrm ? `<a href="/ai-builder/crm/${project.project_id}" title="${tr('cust.crm')}">${tr('cust.crm')}</a>` : ''}
+          ${hasCourses ? `<a href="/ai-builder/courses/${project.project_id}" title="${tr('cust.courses_title')}">${tr('cust.courses')}</a>` : ''}
           ${role === 'owner' ? `<a href="/ai-builder/${project.project_id}/transfer" title="Transfer this website to another account">⇄ Transfer</a>` : ''}
         </div>
       </div>

@@ -543,7 +543,7 @@ export const es = {
     analytics: '📊 Estadísticas', analytics_title: 'Estadísticas de tráfico de tu sitio publicado',
     blog: '📝 Blog', blog_title: 'Escribe y publica entradas de blog con IA',
     store: '🛍 Tienda', store_title: 'Vende en tu sitio — productos, pedidos, pagos con Stripe',
-    crm: '👥 CRM', manage: 'Gestionar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos en línea — lecciones, videos, cuestionarios y ventas', manage: 'Gestionar',
     full_preview: 'Ver vista previa completa', deploy: 'Publicar sitio', deploying: 'Publicando…',
     upgrade_title: 'Mejora tu plan para desbloquear', view_plans: 'Ver planes →', maybe_later: 'Quizás más tarde',
     tab_content: 'Contenido', tab_design: 'Diseño',
@@ -1249,7 +1249,7 @@ export const es = {
     toc: [
       ['getting-started', 'Primeros pasos'], ['customizing', 'Personalizar tu sitio'],
       ['logo', 'Logo y marca'],
-      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Tienda online'], ['bookings', 'Reservas'],
+      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Tienda online'], ['courses', 'Cursos y formación'], ['bookings', 'Reservas'],
       ['blog', 'Blog, email y redes'], ['messages', 'Formulario de contacto y bandeja'],
       ['versions', 'Versiones, copias y exportación'], ['seo', 'SEO y aparecer en Google'],
       ['performance', 'Velocidad y rendimiento'],
@@ -1301,6 +1301,14 @@ export const es = {
         <p>Tras cada venta, el comprador llega a una página de recibo (descargable en PDF) y recibe un correo de confirmación; tú recibes un correo de “nuevo pedido” y el pedido aparece en <strong>🧾 Pedidos</strong> en la página Tienda. Los compradores pueden ver su historial cuando quieran con <strong>Mis pedidos</strong> (enlace seguro por correo). Límites de productos: Starter 10 · Pro 50 · Agency ilimitados.</p>
         <p><strong>Destaca productos donde quieras:</strong> en Personalizar, <strong>+ Añadir sección → 🛍 Productos de la tienda</strong> coloca tus artículos más recientes (con añadir al carrito) en cualquier página — la página de inicio es un gran lugar. Se actualiza automáticamente al añadir productos.</p>
         <p><strong>Suscripciones:</strong> vende planes recurrentes desde una sección de <strong>Precios</strong> — edita la sección, adjunta uno de tus precios recurrentes de Stripe a una tarjeta de plan (o créalo ahí mismo) y su botón se convierte en un <strong>Suscribirse</strong> con pago real. Las renovaciones, facturas y recibos los gestiona tu cuenta de Stripe.</p>`],
+      ['courses', 'Cursos y formación', `
+        <p>El complemento <strong>Cursos</strong> le permite crear y vender cursos en línea en su sitio — lecciones, videos, PDFs y cuestionarios de autoevaluación. Es un <strong>complemento de $5/mes</strong> en cualquier plan de pago; habilítelo desde <a href="/plugins">Plugins</a>.</p>
+        <ol>
+          <li><strong>Crea un curso</strong> — abra <strong>📚 Cursos</strong> desde el menú <strong>Gestionar ▾</strong> del editor. Créelo a mano, o haga clic en <strong>✨ Generar con IA</strong>, escriba un tema y obtenga un curso completo (secciones, lecciones y cuestionarios) en aproximadamente 20 segundos.</li>
+          <li><strong>Añade lecciones</strong> — cada lección es un video, texto enriquecido, un PDF, un enlace externo o un cuestionario de autoevaluación. Agrúpelas en secciones, establezca un precio (o déjelo gratis), agregue una imagen de portada e instructor, luego publique.</li>
+          <li><strong>En tu sitio</strong> — los cursos publicados obtienen automáticamente una página <strong>Cursos</strong> y un enlace del menú, con un reproductor integrado: una barra lateral de lecciones, contenido de video/PDF/texto y cuestionarios que califican al instante en el navegador. Destaca cursos en cualquier lugar con <strong>+ Añadir sección → 📚 Cursos</strong>.</li>
+        </ol>
+        <p><strong>Cursos de pago</strong> usan su propia cuenta de Stripe (la misma conexión que la tienda). Los compradores pagan de forma segura y reciben un enlace de acceso privado por correo que desbloquea todas las lecciones — sin necesidad de cuenta. Marque lecciones individuales como <strong>vista previa gratis</strong> para ofrecer una muestra antes de la compra.</p>`],
       ['bookings', 'Reservas', `
         <p>Permite que los visitantes reserven citas directamente en tu sitio — servicios, horarios, confirmaciones y cancelaciones incluidos (gratis en todos los planes, con límites por plan).</p>
         <ul>

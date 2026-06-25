@@ -26,6 +26,8 @@ import { annotateProductsWithVariants } from '../../../db/variants.js';
 import { getServices } from '../../../db/bookings.js';
 import { parseHolidaySettings } from '../../../utils/holiday-themes.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
+import { getCoursesByProject, getCourseFull } from '../../../db/courses.js';
+import { courseNavPage, courseListSection, coursePlayerSection } from '../../../utils/course-render.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -133,6 +135,16 @@ export async function handleAIBuilderDeploy(ctx) {
     await annotateProductsWithVariants(env.DB, projectKey, activeProducts); // option selectors
     const storeCurrency = config.store_currency || 'usd';
     if (activeProducts.length) navPages.push(shopNavPage(siteLang));
+
+    // Courses (plugin): published courses become /courses + /courses/<slug>
+    // pages with a Courses nav link (synthetic, like the shop). Gated by the
+    // courses entitlement — the dedicated course pages aren't plugin-typed
+    // sections, so gate the baking + nav explicitly here.
+    const hasCourses = await hasPlugin(env, email, 'courses');
+    const publishedCourses = hasCourses
+      ? await getCoursesByProject(env.DB, projectKey, { publishedOnly: true })
+      : [];
+    if (publishedCourses.length) navPages.push(courseNavPage(siteLang));
 
     // 📅 booking section: active services render live; slots come via the API.
     const bookingServices = await getServices(env.DB, projectKey, { activeOnly: true });
@@ -265,6 +277,7 @@ export async function handleAIBuilderDeploy(ctx) {
         appOrigin, // absolute beacon target (works on both serving surfaces)
         lang: siteLang,
         products: activeProducts, // 🛍 featured-products section (live data)
+        courses: publishedCourses, // 📚 courses promo section (live data)
         bookingServices, // 📅 booking section (live data)
         holiday: activeHolidayDecor, // 🎄 flyby overlay while a skin is applied
         hasAdvStore, // mini-cart discount-code input gating
@@ -389,6 +402,54 @@ export async function handleAIBuilderDeploy(ctx) {
             seoDescription: (product.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) || null,
             socialImage: product.image
               ? (product.image.startsWith('/') ? `${subdomainBase}${product.image}` : product.image)
+              : config.social_image || null,
+          }
+        );
+      }
+    }
+
+    // Bake courses: /courses index + one player page per published course, in
+    // BOTH copies (/site/:id and the subdomain). Gated by the courses entitlement;
+    // self-check quizzes run client-side; no paywall yet (Phase 5). Course images
+    // from Drive get rehosted by the copy-on-publish pass like other assets.
+    if (publishedCourses.length) {
+      const courseCommon = {
+        pages: navPages,
+        currentSlug: 'courses',
+        homeSections,
+        pageSections,
+        preordered: true,
+        hideBadge: tier !== 'free_trial',
+        trackId: publicId,
+        appOrigin,
+        lang: siteLang,
+        business,
+      };
+      const writeCoursePage = async (slugPath, sectionFor, seo) => {
+        const idSections = [...header, sectionFor(`/site/${publicId}`), ...footer];
+        const idHtml = assemblePage(idSections, config, projectView, { ...courseCommon, ...seo, previewBase: `/site/${publicId}` });
+        await uploadToR2(env.STORAGE, `published/${publicId}/${slugPath}.html`, idHtml, 'text/html; charset=utf-8');
+        const subSections = [...header, sectionFor(''), ...footer];
+        const subHtml = assemblePage(subSections, config, projectView, { ...courseCommon, ...seo, previewBase: '' });
+        await uploadToR2(env.STORAGE, `sites/${subdomain}/${slugPath}.html`, subHtml, 'text/html; charset=utf-8');
+      };
+      await writeCoursePage(
+        'courses',
+        (base) => courseListSection(publishedCourses, base, storeCurrency, siteLang),
+        { canonicalUrl: `${subdomainBase}/courses`, pageTitle: 'Courses' }
+      );
+      for (const course of publishedCourses) {
+        const full = await getCourseFull(env.DB, projectKey, course.id);
+        if (!full) continue;
+        await writeCoursePage(
+          `courses/${course.slug}`,
+          (base) => coursePlayerSection(full, base, storeCurrency, siteLang),
+          {
+            canonicalUrl: `${subdomainBase}/courses/${course.slug}`,
+            pageTitle: course.title,
+            seoDescription: (course.subtitle || course.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) || null,
+            socialImage: course.image
+              ? (course.image.startsWith('/') ? `${subdomainBase}${course.image}` : course.image)
               : config.social_image || null,
           }
         );

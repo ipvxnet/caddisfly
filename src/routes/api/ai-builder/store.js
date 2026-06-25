@@ -35,7 +35,8 @@ import {
 } from '../../../utils/stripe.js';
 import { slugify } from '../../../db/blog-posts.js';
 import { insertOrderIfNew, getOrdersByProject, markOrdersRead } from '../../../db/store-orders.js';
-import { sendOrderBuyerEmail, sendOrderMerchantEmail } from '../../../utils/email.js';
+import { sendOrderBuyerEmail, sendOrderMerchantEmail, sendTicketEmail } from '../../../utils/email.js';
+import { recordCoursePurchase, getCourseById } from '../../../db/courses.js';
 import { t } from '../../../i18n/index.js';
 import {
   createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
@@ -1077,6 +1078,51 @@ export async function recordStoreOrder(env, publicId, session) {
   return { isNew: true, order: row };
 }
 
+const COURSE_EMAIL_T = {
+  en: { subject: (c) => `Access your course: ${c}`, heading: 'You’re enrolled! 🎓', intro: (c, biz) => `Thanks for your purchase from ${biz}. Click below to start “${c}”. Bookmark the link — it’s your private access to the course.`, cta: 'Open your course' },
+  es: { subject: (c) => `Accede a tu curso: ${c}`, heading: '¡Estás inscrito! 🎓', intro: (c, biz) => `Gracias por tu compra en ${biz}. Haz clic abajo para empezar “${c}”. Guarda el enlace — es tu acceso privado al curso.`, cta: 'Abrir mi curso' },
+  pt: { subject: (c) => `Acesse seu curso: ${c}`, heading: 'Você está inscrito! 🎓', intro: (c, biz) => `Obrigado pela sua compra em ${biz}. Clique abaixo para começar “${c}”. Salve o link — é o seu acesso privado ao curso.`, cta: 'Abrir meu curso' },
+};
+
+/**
+ * Settle a paid-course checkout: record the purchase (idempotent on the Stripe
+ * session) and, on a NEW purchase, email the buyer their private access link
+ * (/course-access/:token). Called by the /course-access/claim success handler
+ * and by the webhook backstop. Reuses the store's Stripe Connect plumbing.
+ */
+export async function settleCoursePurchase(env, publicId, session) {
+  const r = await resolveStoreProject(env, publicId);
+  if (!r) return null;
+  const meta = (session && session.metadata) || {};
+  const courseId = parseInt(meta.course_id, 10);
+  if (!Number.isFinite(courseId)) return null;
+  const details = session.customer_details || {};
+  const { purchase, isNew } = await recordCoursePurchase(env.DB, r.projectKey, {
+    courseId,
+    buyerEmail: details.email || '',
+    stripeSessionId: session.id,
+    amountCents: session.amount_total || 0,
+    currency: session.currency || 'usd',
+  });
+  if (isNew && details.email) {
+    const course = await getCourseById(env.DB, r.projectKey, courseId);
+    const lang = r.language || 'en';
+    const T = COURSE_EMAIL_T[lang] || COURSE_EMAIL_T.en;
+    try {
+      await sendTicketEmail(env, {
+        to: details.email,
+        subject: T.subject((course && course.title) || ''),
+        heading: T.heading,
+        intro: T.intro((course && course.title) || '', r.businessName),
+        body: '',
+        linkUrl: `${env.APP_URL || ''}/course-access/${purchase.access_token}`,
+        linkLabel: T.cta,
+      });
+    } catch (e) { console.error('course access email failed (non-fatal):', e.message); }
+  }
+  return { purchase, isNew };
+}
+
 /**
  * POST /api/store/webhook — Stripe Connect webhook (events from connected
  * accounts; configure a "Listen to events on Connected accounts" endpoint in
@@ -1111,6 +1157,12 @@ export async function handleStoreWebhook(ctx) {
         const full = await getStoreCheckoutSession(env, event.account, session.id);
         const r = await settlePaidBooking(env, { session: full, account: event.account, publicId: meta.site });
         console.log('booking webhook settle:', meta.booking_id, r.state);
+      }
+      // Paid-course backstop: record the purchase + email the access link even if
+      // the buyer never lands on the claim page (idempotent on the session id).
+      if (meta.type === 'course_purchase' && meta.site && session.payment_status === 'paid') {
+        const full = await getStoreCheckoutSession(env, event.account, session.id);
+        await settleCoursePurchase(env, meta.site, full);
       }
     }
     return json({ received: true });

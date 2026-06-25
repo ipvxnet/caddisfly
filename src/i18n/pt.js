@@ -543,7 +543,7 @@ export const pt = {
     analytics: '📊 Estatísticas', analytics_title: 'Estatísticas de tráfego do seu site publicado',
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
     store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
-    crm: '👥 CRM', manage: 'Gerenciar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', manage: 'Gerenciar',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site', deploying: 'Publicando…',
     upgrade_title: 'Faça upgrade para desbloquear', view_plans: 'Ver planos →', maybe_later: 'Talvez depois',
     tab_content: 'Conteúdo', tab_design: 'Design',
@@ -1249,7 +1249,7 @@ export const pt = {
     toc: [
       ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
       ['logo', 'Logo e marca'],
-      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'], ['bookings', 'Reservas'],
+      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'], ['courses', 'Cursos e treinamento'], ['bookings', 'Reservas'],
       ['blog', 'Blog, email e redes'], ['messages', 'Formulário de contato e caixa de entrada'],
       ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
       ['performance', 'Velocidade e desempenho'],
@@ -1301,6 +1301,14 @@ export const pt = {
         <p>Após cada venda, o comprador chega a uma página de recibo (salvável em PDF) e recebe um e-mail de confirmação; você recebe um e-mail de “novo pedido” e o pedido aparece em <strong>🧾 Pedidos</strong> na página Loja. Os compradores podem rever o histórico quando quiserem em <strong>Meus pedidos</strong> (link seguro por e-mail). Limites de produtos: Starter 10 · Pro 50 · Agency ilimitados.</p>
         <p><strong>Destaque produtos onde quiser:</strong> no Personalizar, <strong>+ Adicionar seção → 🛍 Produtos da loja</strong> coloca seus itens mais recentes (com adicionar ao carrinho) em qualquer página — a página inicial é um ótimo lugar. Atualiza automaticamente conforme você adiciona produtos.</p>
         <p><strong>Assinaturas:</strong> venda planos recorrentes a partir de uma seção de <strong>Preços</strong> — edite a seção, anexe um dos seus preços recorrentes do Stripe a um cartão de plano (ou crie um ali mesmo) e o botão dele vira um <strong>Assinar</strong> com pagamento real. Renovações, faturas e recibos ficam por conta da sua conta Stripe.</p>`],
+      ['courses', 'Cursos e treinamento', `
+        <p>O complemento <strong>Cursos</strong> permite que você crie e venda cursos online no seu site — aulas, vídeos, PDFs e quizzes de autoavaliação. É um <strong>complemento de $5/mês</strong> em qualquer plano pago; habilite-o em <a href="/plugins">Plugins</a>.</p>
+        <ol>
+          <li><strong>Crie um curso</strong> — abra <strong>📚 Cursos</strong> no menu <strong>Gerenciar ▾</strong> do editor. Crie-o manualmente, ou clique em <strong>✨ Gerar com IA</strong>, digite um tema e obtenha um curso completo (seções, aulas e quizzes) em cerca de 20 segundos.</li>
+          <li><strong>Adicione aulas</strong> — cada aula é um vídeo, texto rico, um PDF, um link externo ou um quiz de autoavaliação. Agrupe-as em seções, defina um preço (ou deixe-o grátis), adicione uma imagem de capa e instrutor, depois publique.</li>
+          <li><strong>No seu site</strong> — cursos publicados recebem automaticamente uma página <strong>Cursos</strong> e um link no menu, com um reprodutor integrado: uma barra lateral de aulas, conteúdo de vídeo/PDF/texto e quizzes que avaliam na hora no navegador. Destaque cursos em qualquer lugar com <strong>+ Adicionar seção → 📚 Cursos</strong>.</li>
+        </ol>
+        <p><strong>Cursos pagos</strong> usam sua própria conta do Stripe (a mesma conexão da loja). Os compradores pagam com segurança e recebem um link de acesso privado por e-mail que desbloqueia todas as aulas — sem precisar de conta. Marque aulas individuais como <strong>prévia grátis</strong> para oferecer uma amostra antes da compra.</p>`],
       ['bookings', 'Reservas', `
         <p>Deixe os visitantes agendarem direto no seu site — serviços, horários, confirmações e cancelamentos inclusos (grátis em todos os planos, com limites por plano).</p>
         <ul>

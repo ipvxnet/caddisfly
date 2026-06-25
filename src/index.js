@@ -99,6 +99,9 @@ import { handleCrmContacts, handleCrmContactUpdate, handleCrmActivity, handleCrm
 import { handleQuotesManager } from './routes/public/quotes-manager.js';
 import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, handleOrderStatus, handleQuoteDelete, handleQuoteSend, handleQuoteTemplateGet, handleQuoteTemplateSave, handleQuotePreview, handleQuoteEmailUpdate, handleQuoteUpdate, handleQuoteReviewAdd, handleQuoteProducts } from './routes/api/ai-builder/crm-quotes.js';
 import { handleQuoteView, handleQuotePdf } from './routes/public/quote-view.js';
+import { handleCoursesManager } from './routes/public/courses-manager.js';
+import { handleCourseEditor } from './routes/public/courses-editor.js';
+import { handleCourseCreate, handleCourseGenerate, handleCourseUpdate, handleCourseDelete, handleSectionCreate, handleSectionUpdate, handleSectionDelete, handleLessonCreate, handleLessonUpdate, handleLessonDelete, handleQuestionCreate, handleQuestionDelete } from './routes/api/ai-builder/courses.js';
 import { handleTransferInitiate, handleTransferCancel } from './routes/api/transfer.js';
 import { handleTransferPage } from './routes/public/transfer-page.js';
 import { handleTransferAcceptPage, handleTransferAcceptExecute, handleTransferDecline, handleTransferSubscribe } from './routes/public/transfer-accept.js';
@@ -109,6 +112,8 @@ import { handleFormsInbox } from './routes/public/forms-inbox.js';
 import { handleSiteReport, handleRunSpeed } from './routes/public/site-report.js';
 import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
 import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
+import { handleAIPreviewCourses } from './routes/public/ai-preview-courses.js';
+import { handleCourseCheckout, handleCourseClaim, handleCourseAccess } from './routes/public/course-purchase.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
 import { handleBookingManager } from './routes/public/booking-manager.js';
 import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
@@ -261,6 +266,8 @@ router.get('/ai-preview/:project_id/blog/:post_slug', handleAIPreviewBlog);
 router.get('/ai-preview/:project_id/blog', handleAIPreviewBlog);
 router.get('/ai-preview/:project_id/shop/:product_slug', handleAIPreviewShop);
 router.get('/ai-preview/:project_id/shop', handleAIPreviewShop);
+router.get('/ai-preview/:project_id/courses/:course_slug', handleAIPreviewCourses);
+router.get('/ai-preview/:project_id/courses', handleAIPreviewCourses);
 router.get('/ai-preview/:project_id', handleAIPreview);
 router.get('/ai-preview/:project_id/:page_slug', handleAIPreview);
 router.get('/site/:project_id/blog/:post_slug', handlePublishedSite);
@@ -319,6 +326,21 @@ router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id/email', handleQuote
 router.put('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteUpdate, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.post('/api/ai-builder/:project_id/crm/quotes/:quote_id/review', handleQuoteReviewAdd, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
 router.delete('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteDelete, [billingAuth, projectAccess, pluginGate('crm', { json: true })]);
+// Courses (Training/LMS) plugin — manager + per-course editor + JSON CRUD API
+router.get('/ai-builder/courses/:project_id', handleCoursesManager, [billingAuth, projectAccess, pluginGate('courses')]);
+router.get('/ai-builder/courses/:project_id/:course_id', handleCourseEditor, [billingAuth, projectAccess, pluginGate('courses')]);
+router.post('/api/ai-builder/:project_id/courses', handleCourseCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.post('/api/ai-builder/:project_id/courses/generate', handleCourseGenerate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.put('/api/ai-builder/:project_id/courses/:course_id', handleCourseUpdate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.delete('/api/ai-builder/:project_id/courses/:course_id', handleCourseDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.post('/api/ai-builder/:project_id/courses/:course_id/sections', handleSectionCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.put('/api/ai-builder/:project_id/courses/:course_id/sections/:section_id', handleSectionUpdate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.delete('/api/ai-builder/:project_id/courses/:course_id/sections/:section_id', handleSectionDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.post('/api/ai-builder/:project_id/courses/:course_id/sections/:section_id/lessons', handleLessonCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.put('/api/ai-builder/:project_id/courses/:course_id/lessons/:lesson_id', handleLessonUpdate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.delete('/api/ai-builder/:project_id/courses/:course_id/lessons/:lesson_id', handleLessonDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.post('/api/ai-builder/:project_id/courses/:course_id/lessons/:lesson_id/questions', handleQuestionCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.delete('/api/ai-builder/:project_id/courses/:course_id/quiz/:quiz_id/questions/:question_id', handleQuestionDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
 // Public hosted quote page + PDF (token-authed, no session)
 router.get('/q/:token', handleQuoteView);
 router.get('/q/:token/pdf', handleQuotePdf);
@@ -408,6 +430,10 @@ router.put('/api/video-sink/:token', handleVideoSink);
 router.post('/api/video-sink/:token', handleVideoSink);
 // Store checkout — public, called cross-origin by the mini cart on shop pages
 router.post('/api/store/checkout', handleStoreCheckout);
+router.post('/api/store/course-checkout', handleCourseCheckout);
+// Paid-course access (token = credential; claim must precede :token — first-match)
+router.get('/course-access/claim', handleCourseClaim);
+router.get('/course-access/:token', handleCourseAccess);
 router.post('/api/store/discount/validate', handleDiscountValidate);
 router.post('/api/store/subscribe', handleStoreSubscribe);
 // Buyer receipt page (Stripe success_url) + Connect webhook (order backstop)
