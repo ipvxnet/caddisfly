@@ -248,7 +248,40 @@ export async function handleAIBuilderCustomize(ctx) {
     .header-actions {
       display: flex;
       gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
+
+    .hdr-menu { position: relative; }
+    .hdr-menu .caret { font-size: 0.85em; opacity: 0.8; }
+    .hdr-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+      padding: 0.4rem;
+      min-width: 200px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .hdr-dropdown[hidden] { display: none; }
+    .hdr-dropdown a {
+      display: block;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      color: #334155;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+    .hdr-dropdown a:hover { background: #eef2ff; color: #4f46e5; }
 
     .btn {
       padding: 0.75rem 1.5rem;
@@ -732,16 +765,32 @@ export async function handleAIBuilderCustomize(ctx) {
     <div class="header-actions">
       <a href="/billing" class="credit-chip" title="${tr('cust.credits_title', { m: creditState.monthlyRemaining.toLocaleString(), p: creditState.purchased.toLocaleString() })}">✨ <strong>${creditState.totalRemaining.toLocaleString()}</strong></a>
       <a href="/dashboard" class="btn btn-secondary" title="${tr('cust.dashboard_title')}">${tr('cust.dashboard')}</a>
-      <a href="/ai-builder/analytics/${project.project_id}" class="btn btn-secondary" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
-      <a href="/ai-builder/blog/${project.project_id}" class="btn btn-secondary" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
-      <a href="/ai-builder/store/${project.project_id}" class="btn btn-secondary" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
-      ${hasCrm ? `<a href="/ai-builder/crm/${project.project_id}" class="btn btn-secondary" title="${tr('cust.crm')}">${tr('cust.crm')}</a>` : ''}
-      ${role === 'owner' ? `<a href="/ai-builder/${project.project_id}/transfer" class="btn btn-secondary" title="Transfer this website to another account">⇄ Transfer</a>` : ''}
+      <div class="hdr-menu">
+        <button type="button" class="btn btn-secondary" id="manage-btn" aria-haspopup="true" aria-expanded="false">${tr('cust.manage')} <span class="caret">▾</span></button>
+        <div class="hdr-dropdown" id="manage-menu" hidden>
+          <a href="/ai-builder/analytics/${project.project_id}" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
+          <a href="/ai-builder/blog/${project.project_id}" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
+          <a href="/ai-builder/store/${project.project_id}" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
+          ${hasCrm ? `<a href="/ai-builder/crm/${project.project_id}" title="${tr('cust.crm')}">${tr('cust.crm')}</a>` : ''}
+          ${role === 'owner' ? `<a href="/ai-builder/${project.project_id}/transfer" title="Transfer this website to another account">⇄ Transfer</a>` : ''}
+        </div>
+      </div>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
       <span class="pub-badge ${currentSubdomain ? 'pub' : 'draft'}" id="pub-badge" title="${currentSubdomain ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${currentSubdomain ? tr('cust.status_published') : tr('cust.status_draft')}</span>
       ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite(this)">${tr('cust.deploy')}</button>` : ''}
     </div>
   </div>
+  <script>
+    (function(){
+      var btn=document.getElementById('manage-btn'), menu=document.getElementById('manage-menu');
+      if(!btn||!menu) return;
+      function close(){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); }
+      btn.addEventListener('click', function(e){ e.stopPropagation(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded', willOpen?'true':'false'); });
+      menu.addEventListener('click', function(e){ e.stopPropagation(); });
+      document.addEventListener('click', function(){ if(!menu.hidden) close(); });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+    })();
+  </script>
 
   <div class="container">
     <div class="split-view">
