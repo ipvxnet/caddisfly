@@ -79,7 +79,10 @@ export async function executeTransfer(db, projectKey, { fromEmail, toEmail, keep
     // Domains purchased through us bound to this site → bill the new owner.
     db.prepare(`UPDATE domain_orders SET customer_email = ?, stripe_customer_id = ? WHERE ${k.col} = ?`).bind(to, recipientStripeCustomerId || null, k.val),
     // Clear owner-specific operational config (payout/notify/syndication).
-    db.prepare(`UPDATE ai_website_configs SET stripe_account_id = NULL, social_connections_json = NULL, notify_email = NULL, updated_at = unixepoch() WHERE ${k.col} = ?`).bind(k.val),
+    // stripe_account_id is NOT NULL DEFAULT '' — clearing it to NULL throws
+    // SQLITE_CONSTRAINT_NOTNULL and rolls back the whole transfer batch (the
+    // transfer-accept 500). Clear to '' (the column's default) instead.
+    db.prepare(`UPDATE ai_website_configs SET stripe_account_id = '', social_connections_json = NULL, notify_email = NULL, updated_at = unixepoch() WHERE ${k.col} = ?`).bind(k.val),
   ];
   if (keepBuilder) {
     // NOTE: the unique index is PARTIAL, so the conflict target must repeat its WHERE.
