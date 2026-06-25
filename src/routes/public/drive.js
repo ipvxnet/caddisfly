@@ -18,19 +18,38 @@ import { audit } from '../../utils/audit.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const json = (b, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
 
-const TYPES = {
-  jpg: { mime: 'image/jpeg', inline: true }, jpeg: { mime: 'image/jpeg', inline: true }, png: { mime: 'image/png', inline: true },
-  gif: { mime: 'image/gif', inline: true }, webp: { mime: 'image/webp', inline: true }, avif: { mime: 'image/avif', inline: true },
-  pdf: { mime: 'application/pdf', inline: true },
-  mp4: { mime: 'video/mp4', inline: true }, webm: { mime: 'video/webm', inline: true }, mov: { mime: 'video/quicktime', inline: true },
-  mp3: { mime: 'audio/mpeg', inline: true }, wav: { mime: 'audio/wav', inline: true }, ogg: { mime: 'audio/ogg', inline: true },
-  woff: { mime: 'font/woff', inline: true }, woff2: { mime: 'font/woff2', inline: true }, ttf: { mime: 'font/ttf', inline: true }, otf: { mime: 'font/otf', inline: true },
-  doc: { mime: 'application/msword', inline: false }, docx: { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', inline: false },
-  xls: { mime: 'application/vnd.ms-excel', inline: false }, xlsx: { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', inline: false },
-  ppt: { mime: 'application/vnd.ms-powerpoint', inline: false }, pptx: { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', inline: false },
-  txt: { mime: 'text/plain', inline: false }, csv: { mime: 'text/csv', inline: false }, zip: { mime: 'application/zip', inline: false },
+// Drive is a general-purpose asset store ("network drive"), so we DENY only
+// executable / system files and allow everything else. Serving stays safe:
+// only known media renders inline, everything else downloads (attachment +
+// nosniff), and SVG carries a script-blocking CSP — so html/js/etc. can be
+// stored but never execute on our origin.
+const DENIED = new Set([
+  'exe', 'msi', 'msix', 'bat', 'cmd', 'com', 'scr', 'pif', 'cpl', 'dll', 'sys', 'drv', 'vxd', 'msc', 'msu', 'gadget',
+  'vbs', 'vbe', 'vb', 'ws', 'wsf', 'wsh', 'ps1', 'ps1xml', 'psc1', 'scf', 'lnk', 'inf', 'reg', 'hta', 'jse', 'jar',
+  'app', 'dmg', 'pkg', 'mpkg', 'deb', 'rpm', 'apk', 'appimage', 'run', 'command', 'sh', 'bash', 'zsh', 'csh', 'ksh',
+]);
+// Proper Content-Type for common types (default application/octet-stream).
+const MIME = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif',
+  svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon', heic: 'image/heic', tiff: 'image/tiff', tif: 'image/tiff',
+  pdf: 'application/pdf',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', m4v: 'video/x-m4v', avi: 'video/x-msvideo', mkv: 'video/x-matroska',
+  mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac',
+  woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', otf: 'font/otf', eot: 'application/vnd.ms-fontobject',
+  doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt: 'text/plain', csv: 'text/csv', rtf: 'application/rtf', md: 'text/markdown', json: 'application/json', xml: 'application/xml',
+  zip: 'application/zip', rar: 'application/vnd.rar', '7z': 'application/x-7z-compressed', gz: 'application/gzip', tar: 'application/x-tar',
 };
+// Extensions we render inline in the browser; everything else downloads.
+const INLINE = new Set([
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'ico', 'svg', 'pdf',
+  'mp4', 'webm', 'mov', 'm4v', 'mp3', 'wav', 'ogg', 'm4a', 'flac', 'txt',
+  'woff', 'woff2', 'ttf', 'otf',
+]);
 const extOf = (name) => { const m = /\.([a-z0-9]+)$/i.exec(String(name || '')); return m ? m[1].toLowerCase() : ''; };
+const mimeOf = (name) => MIME[extOf(name)] || 'application/octet-stream';
 
 function fmtBytes(n) {
   if (!n || n < 1024) return (n || 0) + ' B';
@@ -46,7 +65,7 @@ const DRV = {
     usage: '{used} of {total} used', upload_btn: 'Upload files', upload_folder: '📁 Upload folder', uploading: 'Uploading…', drop_hint: 'Drag files or a folder here, or click to choose',
     empty: 'This folder is empty — upload a file or create a folder.', th_file: 'File', th_size: 'Size', th_added: 'Added',
     copy_link: 'Copy link', copied: 'Copied ✓', del: 'Delete', del_confirm: 'Delete this file? Links to it will stop working.',
-    err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: "That file type isn't allowed.", err_quota: 'Not enough space. Delete some files or upgrade your plan.',
+    err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: 'For security, executable and system files can’t be uploaded.', err_quota: 'Not enough space. Delete some files or upgrade your plan.',
     new_folder: 'New folder', folder_name_prompt: 'Folder name:', rename: 'Rename', rename_prompt: 'New name:',
     move: 'Move', copy: 'Copy', move_title: 'Move "{name}" to:', copy_title: 'Copy "{name}" to:', root_label: 'Drive (root)',
     confirm: 'Confirm', cancel: 'Cancel', folder_del_confirm: 'Delete this folder?', folder_not_empty: "The folder isn't empty — move or delete its contents first.",
@@ -57,7 +76,7 @@ const DRV = {
     usage: '{used} de {total} utilizado', upload_btn: 'Subir archivos', upload_folder: '📁 Subir carpeta', uploading: 'Subiendo…', drop_hint: 'Arrastra archivos o una carpeta aquí, o haz clic para elegir',
     empty: 'Esta carpeta está vacía — sube un archivo o crea una carpeta.', th_file: 'Archivo', th_size: 'Tamaño', th_added: 'Añadido',
     copy_link: 'Copiar enlace', copied: 'Copiado ✓', del: 'Eliminar', del_confirm: '¿Eliminar este archivo? Los enlaces a él dejarán de funcionar.',
-    err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Ese tipo de archivo no está permitido.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.',
+    err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Por seguridad, no se pueden subir archivos ejecutables o de sistema.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.',
     new_folder: 'Nueva carpeta', folder_name_prompt: 'Nombre de la carpeta:', rename: 'Renombrar', rename_prompt: 'Nuevo nombre:',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" a:', copy_title: 'Copiar "{name}" a:', root_label: 'Drive (raíz)',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: '¿Eliminar esta carpeta?', folder_not_empty: 'La carpeta no está vacía — mueve o elimina su contenido primero.',
@@ -68,7 +87,7 @@ const DRV = {
     usage: '{used} de {total} usado', upload_btn: 'Carregar arquivos', upload_folder: '📁 Carregar pasta', uploading: 'Carregando…', drop_hint: 'Arraste arquivos ou uma pasta aqui, ou clique para escolher',
     empty: 'Esta pasta está vazia — carregue um arquivo ou crie uma pasta.', th_file: 'Arquivo', th_size: 'Tamanho', th_added: 'Adicionado',
     copy_link: 'Copiar link', copied: 'Copiado ✓', del: 'Excluir', del_confirm: 'Excluir este arquivo? Os links para ele deixarão de funcionar.',
-    err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Esse tipo de arquivo não é permitido.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.',
+    err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Por segurança, arquivos executáveis e de sistema não podem ser enviados.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.',
     new_folder: 'Nova pasta', folder_name_prompt: 'Nome da pasta:', rename: 'Renomear', rename_prompt: 'Novo nome:',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" para:', copy_title: 'Copiar "{name}" para:', root_label: 'Drive (raiz)',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: 'Excluir esta pasta?', folder_not_empty: 'A pasta não está vazia — mova ou exclua seu conteúdo primeiro.',
@@ -263,8 +282,8 @@ export async function handleDriveUpload(ctx) {
   if (!email) return json({ success: false, error: 'Please sign in.' }, 401);
 
   const name = (url.searchParams.get('name') || 'file').slice(0, 255);
-  const type = TYPES[extOf(name)];
-  if (!type) return json({ success: false, error: T.err_type }, 415);
+  if (DENIED.has(extOf(name))) return json({ success: false, error: T.err_type }, 415);
+  const mime = mimeOf(name);
   let folderId = url.searchParams.get('folder') ? Number(url.searchParams.get('folder')) : null;
   if (folderId != null && !(await getFolder(env.DB, email, folderId))) folderId = null;
 
@@ -281,8 +300,8 @@ export async function handleDriveUpload(ctx) {
 
   const token = generateToken(16);
   const r2_key = `drive/${token}`;
-  await env.STORAGE.put(r2_key, buf, { httpMetadata: { contentType: type.mime } });
-  await addDriveFile(env.DB, email, { token, name, r2_key, size, content_type: type.mime, folder_id: folderId });
+  await env.STORAGE.put(r2_key, buf, { httpMetadata: { contentType: mime } });
+  await addDriveFile(env.DB, email, { token, name, r2_key, size, content_type: mime, folder_id: folderId });
   audit(ctx, 'drive.upload', { resourceType: 'file', resourceId: token, resourceName: name, metadata: { size, folder: folderId } });
   return json({ success: true, token, url: `${url.origin}/drive/f/${token}`, size });
 }
@@ -406,12 +425,18 @@ export async function handleDriveFile(ctx) {
   if (!f) return new Response('Not found', { status: 404 });
   const obj = await env.STORAGE.get(f.r2_key);
   if (!obj) return new Response('Not found', { status: 404 });
-  const inline = TYPES[extOf(f.name)] ? TYPES[extOf(f.name)].inline : false;
+  const ext = extOf(f.name);
   const headers = {
-    'Content-Type': f.content_type || 'application/octet-stream',
+    'Content-Type': f.content_type || mimeOf(f.name),
     'X-Content-Type-Options': 'nosniff',
     'Cache-Control': 'public, max-age=31536000, immutable',
   };
-  if (!inline) headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(f.name)}"`;
+  if (ext === 'svg') {
+    // Usable as an <img> source, but neutralize any embedded scripts if the
+    // file URL is opened as a top-level document.
+    headers['Content-Security-Policy'] = "default-src 'none'; style-src 'unsafe-inline'";
+  } else if (!INLINE.has(ext)) {
+    headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(f.name)}"`;
+  }
   return new Response(obj.body, { headers });
 }
