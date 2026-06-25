@@ -39,6 +39,14 @@ export const PLUGINS = {
     priceVar: 'STRIPE_PRICE_PLUGIN_ADVANCED_STORE',
     sectionTypes: [], // upgrades the existing store; no new section
   },
+  courses: {
+    key: 'courses',
+    label: 'Courses',
+    summary: 'Sell and share online courses — AI-built lessons, videos, PDFs and quizzes on your site.',
+    priceCents: 500,
+    priceVar: 'STRIPE_PRICE_PLUGIN_COURSES',
+    sectionTypes: ['courses'],
+  },
   // Future (see PLUGIN_PLATFORM_DESIGN.md §11A): members.
 };
 
@@ -64,12 +72,14 @@ const PLUGIN_I18N = {
     catalogue: { label: 'Catálogo', summary: 'Catálogos ricos de productos/servicios — categorías, galería, video, PDFs y compra opcional.' },
     crm: { label: 'CRM', summary: 'Toda persona que contacte, reserve o compre — leads, pipeline y notas en un solo lugar.' },
     advanced_store: { label: 'Tienda avanzada', summary: 'Seguimiento de inventario, alertas de stock bajo y códigos de descuento para tu tienda.' },
+    courses: { label: 'Cursos', summary: 'Vende y comparte cursos en línea — lecciones, videos, PDFs y cuestionarios creados con IA en tu sitio.' },
     all_access: { label: 'Acceso total', summary: 'Todos los plugins — Catálogo, CRM y Tienda avanzada — en un solo precio.' },
   },
   pt: {
     catalogue: { label: 'Catálogo', summary: 'Catálogos ricos de produtos/serviços — categorias, galeria, vídeo, PDFs e compra opcional.' },
     crm: { label: 'CRM', summary: 'Todo mundo que entra em contato, reserva ou compra — leads, pipeline e notas em um único lugar.' },
     advanced_store: { label: 'Loja avançada', summary: 'Rastreamento de estoque, alertas de estoque baixo e códigos de desconto para sua loja.' },
+    courses: { label: 'Cursos', summary: 'Venda e compartilhe cursos online — aulas, vídeos, PDFs e quizzes criados com IA no seu site.' },
     all_access: { label: 'Acesso total', summary: 'Todos os plugins — Catálogo, CRM e Loja avançada — em um único preço.' },
   },
 };

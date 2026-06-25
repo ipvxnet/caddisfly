@@ -543,7 +543,7 @@ export const pt = {
     analytics: '📊 Estatísticas', analytics_title: 'Estatísticas de tráfego do seu site publicado',
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
     store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
-    crm: '👥 CRM', manage: 'Gerenciar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', manage: 'Gerenciar',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site', deploying: 'Publicando…',
     upgrade_title: 'Faça upgrade para desbloquear', view_plans: 'Ver planos →', maybe_later: 'Talvez depois',
     tab_content: 'Conteúdo', tab_design: 'Design',
