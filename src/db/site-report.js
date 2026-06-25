@@ -130,6 +130,28 @@ export async function getSpeedReport(db, projectKey) {
   return { tested_url: row.tested_url, created_at: row.created_at, data: parse(row.data_json) };
 }
 
+/** Speed-test rate limit: 4 runs per rolling 24h per site. */
+export const SPEED_LIMIT = 4;
+export const SPEED_WINDOW = 24 * 60 * 60;
+
+/** Count speed-test runs for a project since `sinceTs`. */
+export async function countSpeedRuns(db, projectKey, sinceTs) {
+  const k = keyCol(projectKey);
+  const row = await db.prepare(`SELECT COUNT(*) AS c FROM speed_runs WHERE ${k.col} = ? AND created_at >= ?`).bind(k.val, sinceTs).first();
+  return (row && row.c) || 0;
+}
+
+/** Log a speed-test run (and prune rows older than the window for this project). */
+export async function logSpeedRun(db, projectKey) {
+  const k = keyCol(projectKey);
+  const ai = k.col === 'ai_project_id' ? k.val : null;
+  const rg = k.col === 'project_id' ? k.val : null;
+  await db.batch([
+    db.prepare(`DELETE FROM speed_runs WHERE ${k.col} = ? AND created_at < ?`).bind(k.val, Math.floor(Date.now() / 1000) - SPEED_WINDOW),
+    db.prepare(`INSERT INTO speed_runs (ai_project_id, project_id) VALUES (?, ?)`).bind(ai, rg),
+  ]);
+}
+
 /** Upsert the latest speed report for a project. */
 export async function saveSpeedReport(db, projectKey, testedUrl, data) {
   const k = keyCol(projectKey);

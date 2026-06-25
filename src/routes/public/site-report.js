@@ -8,7 +8,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getDomainsByProject } from '../../db/custom-domains.js';
-import { scanExternalDeps, getSpeedReport, saveSpeedReport, runPageSpeed } from '../../db/site-report.js';
+import { scanExternalDeps, getSpeedReport, saveSpeedReport, runPageSpeed, countSpeedRuns, logSpeedRun, SPEED_LIMIT, SPEED_WINDOW } from '../../db/site-report.js';
 
 const SITES_BASE = 'caddisfly.app';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -31,6 +31,7 @@ const REP = {
     m_perf: 'Performance', m_access: 'Accessibility', m_bp: 'Best practices', m_seo: 'SEO',
     metrics_h: 'Load metrics', met_lcp: 'Largest paint', met_fcp: 'First paint', met_tbt: 'Blocking time', met_cls: 'Layout shift', met_si: 'Speed index', met_tti: 'Interactive',
     err: 'Could not run the test.', err_psi: 'Speed test unavailable — the PageSpeed API may need to be enabled on the Google key.',
+    rate_limited: "You've reached the limit of {n} speed tests per 24 h for this site. Try again later.", runs_left: '{n} of {max} tests left today',
   },
   es: {
     meta_title: 'Informe del sitio — Caddisfly', title: 'Informe del sitio', back: '← Dashboard',
@@ -47,6 +48,7 @@ const REP = {
     m_perf: 'Rendimiento', m_access: 'Accesibilidad', m_bp: 'Mejores prácticas', m_seo: 'SEO',
     metrics_h: 'Métricas de carga', met_lcp: 'Pintura más grande', met_fcp: 'Primera pintura', met_tbt: 'Tiempo de bloqueo', met_cls: 'Desplazamiento de diseño', met_si: 'Índice de velocidad', met_tti: 'Interactivo',
     err: 'No se pudo ejecutar la prueba.', err_psi: 'Prueba de velocidad no disponible — es posible que debas habilitar la API de PageSpeed en la clave de Google.',
+    rate_limited: 'Has alcanzado el límite de {n} pruebas de velocidad por 24 h para este sitio. Inténtalo más tarde.', runs_left: '{n} de {max} pruebas restantes hoy',
   },
   pt: {
     meta_title: 'Relatório do site — Caddisfly', title: 'Relatório do site', back: '← Dashboard',
@@ -63,6 +65,7 @@ const REP = {
     m_perf: 'Desempenho', m_access: 'Acessibilidade', m_bp: 'Melhores práticas', m_seo: 'SEO',
     metrics_h: 'Métricas de carregamento', met_lcp: 'Pintura mais larga', met_fcp: 'Primeira pintura', met_tbt: 'Tempo de bloqueio', met_cls: 'Deslocamento de layout', met_si: 'Índice de velocidade', met_tti: 'Interativo',
     err: 'Não foi possível executar o teste.', err_psi: 'Teste de velocidade indisponível — talvez seja necessário habilitar a API de PageSpeed na chave do Google.',
+    rate_limited: 'Você atingiu o limite de {n} testes de velocidade por 24 h para este site. Tente novamente mais tarde.', runs_left: '{n} de {max} testes restantes hoje',
   },
 };
 const pick = (lang) => REP[lang] || REP.en;
@@ -135,8 +138,15 @@ export async function handleSiteReport(ctx) {
     const blocks = hasReport
       ? `<div class="strats">${strategyBlock(T, T.mobile, report.data.mobile)}${strategyBlock(T, T.desktop, report.data.desktop)}</div>`
       : '';
-    speedBody = `${blocks}${meta}
-      <div class="runline"><button class="btn" type="button" id="run-speed">${hasReport ? T.run_again : T.run_btn}</button><span id="run-msg" class="muted"></span></div>`;
+    const since = Math.floor(Date.now() / 1000) - SPEED_WINDOW;
+    const used = await countSpeedRuns(env.DB, r.projectKey, since).catch(() => 0);
+    const remaining = Math.max(0, SPEED_LIMIT - used);
+    const runBtn = remaining > 0
+      ? `<button class="btn" type="button" id="run-speed">${hasReport ? T.run_again : T.run_btn}</button>
+         <span class="muted rleft">${T.runs_left.replace('{n}', remaining).replace('{max}', SPEED_LIMIT)}</span>`
+      : `<button class="btn" type="button" disabled style="opacity:.5;cursor:not-allowed">${hasReport ? T.run_again : T.run_btn}</button>
+         <span class="muted">${T.rate_limited.replace('{n}', SPEED_LIMIT)}</span>`;
+    speedBody = `${blocks}${meta}<div class="runline">${runBtn}<span id="run-msg" class="muted"></span></div>`;
   }
 
   const base = '/ai-builder';
@@ -205,6 +215,12 @@ export async function handleRunSpeed(ctx) {
   if (!published) return json({ success: false, error: T.not_published }, 400);
   const { liveUrl } = await siteHosts(env, r.projectKey, r.subdomain);
   if (!liveUrl) return json({ success: false, error: T.not_published }, 400);
+  // Rate limit: SPEED_LIMIT runs per rolling SPEED_WINDOW per site (protects the PSI quota).
+  const since = Math.floor(Date.now() / 1000) - SPEED_WINDOW;
+  if (await countSpeedRuns(env.DB, r.projectKey, since) >= SPEED_LIMIT) {
+    return json({ success: false, error: T.rate_limited.replace('{n}', SPEED_LIMIT) }, 429);
+  }
+  await logSpeedRun(env.DB, r.projectKey); // count the call (consumes PSI quota regardless of outcome)
   try {
     const data = await runPageSpeed(env, liveUrl);
     await saveSpeedReport(env.DB, r.projectKey, liveUrl, data);
