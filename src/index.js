@@ -101,7 +101,7 @@ import { handleQuoteList, handleQuoteCreate, handleQuoteGet, handleQuoteStatus, 
 import { handleQuoteView, handleQuotePdf } from './routes/public/quote-view.js';
 import { handleCoursesManager } from './routes/public/courses-manager.js';
 import { handleCourseEditor } from './routes/public/courses-editor.js';
-import { handleCourseCreate, handleCourseUpdate, handleCourseDelete, handleSectionCreate, handleSectionUpdate, handleSectionDelete, handleLessonCreate, handleLessonUpdate, handleLessonDelete, handleQuestionCreate, handleQuestionDelete } from './routes/api/ai-builder/courses.js';
+import { handleCourseCreate, handleCourseGenerate, handleCourseUpdate, handleCourseDelete, handleSectionCreate, handleSectionUpdate, handleSectionDelete, handleLessonCreate, handleLessonUpdate, handleLessonDelete, handleQuestionCreate, handleQuestionDelete } from './routes/api/ai-builder/courses.js';
 import { handleTransferInitiate, handleTransferCancel } from './routes/api/transfer.js';
 import { handleTransferPage } from './routes/public/transfer-page.js';
 import { handleTransferAcceptPage, handleTransferAcceptExecute, handleTransferDecline, handleTransferSubscribe } from './routes/public/transfer-accept.js';
@@ -326,6 +326,7 @@ router.delete('/api/ai-builder/:project_id/crm/quotes/:quote_id', handleQuoteDel
 router.get('/ai-builder/courses/:project_id', handleCoursesManager, [billingAuth, projectAccess, pluginGate('courses')]);
 router.get('/ai-builder/courses/:project_id/:course_id', handleCourseEditor, [billingAuth, projectAccess, pluginGate('courses')]);
 router.post('/api/ai-builder/:project_id/courses', handleCourseCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+router.post('/api/ai-builder/:project_id/courses/generate', handleCourseGenerate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
 router.put('/api/ai-builder/:project_id/courses/:course_id', handleCourseUpdate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
 router.delete('/api/ai-builder/:project_id/courses/:course_id', handleCourseDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
 router.post('/api/ai-builder/:project_id/courses/:course_id/sections', handleSectionCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);

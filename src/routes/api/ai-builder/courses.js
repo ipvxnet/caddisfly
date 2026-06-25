@@ -11,6 +11,8 @@ import {
   createLesson, updateLesson, deleteLesson, getLesson,
   ensureQuiz, updateQuiz, addQuizQuestion, deleteQuizQuestion,
 } from '../../../db/courses.js';
+import { generateCourseStructure, materializeCourse } from '../../../utils/course-gen.js';
+import { canAfford, chargeCredits, formatCreditError, CREDIT_COSTS } from '../../../utils/credits.js';
 
 async function readBody(request) {
   try { return await request.json(); } catch { return {}; }
@@ -41,6 +43,29 @@ export async function handleCourseCreate(ctx) {
     instructor: b.instructor, level: b.level, gen_engine: b.gen_engine,
   });
   return jsonResponse({ success: true, course });
+}
+
+// POST /api/ai-builder/:project_id/courses/generate — AI-generate a full course
+// (topic → 4 sections × 3 lessons + per-section quiz). Charges CREDIT_COSTS.course_ai.
+export async function handleCourseGenerate(ctx) {
+  const { env, params, request } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return jsonResponse({ error: 'not_found' }, 404);
+  const b = await readBody(request);
+  const topic = String(b.topic || '').trim();
+  if (topic.length < 3) return jsonResponse({ success: false, error: 'topic_too_short' }, 400);
+  const cost = CREDIT_COSTS.course_ai;
+  const afford = await canAfford(env, env.DB, r.email, cost);
+  if (!afford.ok) return jsonResponse(formatCreditError(afford.state, 'an AI course'), 402);
+  try {
+    const gen = await generateCourseStructure(env, topic, r.language);
+    const courseId = await materializeCourse(env.DB, r.projectKey, gen, r.language);
+    await chargeCredits(env, env.DB, r.email, cost);
+    return jsonResponse({ success: true, course_id: courseId });
+  } catch (e) {
+    console.error('course generate error:', e);
+    return jsonResponse({ success: false, error: 'generation_failed', details: e.message }, 500);
+  }
 }
 
 // PUT /api/ai-builder/:project_id/courses/:course_id

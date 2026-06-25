@@ -19,6 +19,8 @@ const T = {
     empty: 'No courses yet — create your first one above.',
     confirm_del: 'Delete this course and all its lessons? This cannot be undone.',
     err: 'Something went wrong.',
+    gen_btn: '✨ Generate with AI', gen_ph: 'What should the course teach? e.g. Home composting for beginners',
+    generate: 'Generate', generating: 'Generating… (~20s)', gen_err: 'Could not generate the course — try a different topic.',
   },
   es: {
     meta_title: 'Cursos — Caddisfly', meta_desc: 'Crea y vende cursos en línea.', title: 'Cursos', back: '← Volver al editor',
@@ -31,6 +33,8 @@ const T = {
     empty: 'No hay cursos aún — crea el primero arriba.',
     confirm_del: '¿Eliminar este curso y todas sus lecciones? No se puede deshacer.',
     err: 'Algo salió mal.',
+    gen_btn: '✨ Generar con IA', gen_ph: '¿Qué debe enseñar el curso? p. ej. Compostaje casero para principiantes',
+    generate: 'Generar', generating: 'Generando… (~20s)', gen_err: 'No se pudo generar el curso — prueba con otro tema.',
   },
   pt: {
     meta_title: 'Cursos — Caddisfly', meta_desc: 'Crie e venda cursos online.', title: 'Cursos', back: '← Voltar ao editor',
@@ -43,6 +47,8 @@ const T = {
     empty: 'Ainda não há cursos — crie o primeiro acima.',
     confirm_del: 'Excluir este curso e todas as suas aulas? Isso não pode ser desfeito.',
     err: 'Algo deu errado.',
+    gen_btn: '✨ Gerar com IA', gen_ph: 'O que o curso deve ensinar? ex. Compostagem caseira para iniciantes',
+    generate: 'Gerar', generating: 'Gerando… (~20s)', gen_err: 'Não foi possível gerar o curso — tente outro tema.',
   },
 };
 
@@ -90,7 +96,13 @@ export async function handleCoursesManager(ctx) {
     <p class="sub">${t.sub.replace('{count}', courses.length).replace('{label}', countLabel)}</p>
 
     <div class="cm-toolbar">
-      <button class="btn" type="button" id="newBtn" onclick="toggleNew()">${t.new_course}</button>
+      <button class="btn" type="button" onclick="toggleGen()">${t.gen_btn}</button>
+      <button class="btn ghost" type="button" id="newBtn" onclick="toggleNew()">${t.new_course}</button>
+    </div>
+    <div class="cm-newform" id="genform">
+      <input id="gen-topic" placeholder="${t.gen_ph}" maxlength="200">
+      <button class="btn" type="button" onclick="genCourse(this)">${t.generate}</button>
+      <button class="btn ghost" type="button" onclick="toggleGen()">${t.cancel}</button>
     </div>
     <div class="cm-newform" id="newform">
       <input id="nc-title" placeholder="${t.new_ph}" maxlength="160">
@@ -107,7 +119,21 @@ export async function handleCoursesManager(ctx) {
       var BASE = '/api/ai-builder/' + ${JSON.stringify(params.project_id)} + '/courses';
       var EDIT = '/ai-builder/courses/' + ${JSON.stringify(params.project_id)} + '/';
       var S = ${JSON.stringify({ err: t.err, confirmDel: t.confirm_del })};
+      var GEN = ${JSON.stringify({ generating: t.generating, genErr: t.gen_err, generate: t.generate })};
       function toggleNew(){ var f=document.getElementById('newform'); var on=f.style.display==='flex'; f.style.display=on?'none':'flex'; if(!on) document.getElementById('nc-title').focus(); }
+      function toggleGen(){ var f=document.getElementById('genform'); var on=f.style.display==='flex'; f.style.display=on?'none':'flex'; if(!on) document.getElementById('gen-topic').focus(); }
+      async function genCourse(btn){
+        var topic=document.getElementById('gen-topic').value.trim();
+        if(topic.length<3){ document.getElementById('gen-topic').focus(); return; }
+        btn.disabled=true; var old=btn.textContent; btn.textContent=GEN.generating;
+        try{
+          var res=await fetch(BASE+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic})});
+          var d=await res.json();
+          if(d&&d.success&&d.course_id){ location.href=EDIT+d.course_id; return; }
+          alert((d&&d.error)||GEN.genErr);
+        }catch(e){ alert(GEN.genErr); }
+        btn.disabled=false; btn.textContent=GEN.generate;
+      }
       async function createCourse(btn){
         var title=document.getElementById('nc-title').value.trim();
         if(!title){ document.getElementById('nc-title').focus(); return; }
