@@ -26,6 +26,12 @@ export async function addDriveFile(db, ownerEmail, { token, name, r2_key, size, 
   return { token };
 }
 
+/** The owner's IMAGE files (for the editor "Insert from Drive" picker), newest first. */
+export async function listDriveImages(db, ownerEmail) {
+  const { results } = await db.prepare("SELECT token, name FROM drive_files WHERE owner_email = ? AND content_type LIKE 'image/%' ORDER BY created_at DESC LIMIT 200").bind(lc(ownerEmail)).all();
+  return results || [];
+}
+
 /** One file by id (owner-scoped) — for move/copy. */
 export async function getDriveFileById(db, ownerEmail, id) {
   return db.prepare('SELECT id, token, name, r2_key, size, content_type, folder_id FROM drive_files WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).first();
@@ -85,6 +91,46 @@ export async function folderHasContents(db, ownerEmail, id) {
 export async function deleteFolder(db, ownerEmail, id) {
   const res = await db.prepare('DELETE FROM drive_folders WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).run();
   return res.meta.changes > 0;
+}
+
+/** Collect a folder + ALL descendants: every folder id, and every file {id, r2_key}. */
+export async function collectFolderTree(db, ownerEmail, rootId) {
+  const all = await listAllFolders(db, ownerEmail);
+  const childrenOf = new Map();
+  for (const f of all) {
+    const p = f.parent_id == null ? null : Number(f.parent_id);
+    if (!childrenOf.has(p)) childrenOf.set(p, []);
+    childrenOf.get(p).push(Number(f.id));
+  }
+  const folderIds = [];
+  const stack = [Number(rootId)];
+  while (stack.length) {
+    const id = stack.pop();
+    folderIds.push(id);
+    for (const c of childrenOf.get(id) || []) stack.push(c);
+  }
+  const files = [];
+  for (let i = 0; i < folderIds.length; i += 50) {
+    const chunk = folderIds.slice(i, i + 50);
+    const ph = chunk.map(() => '?').join(',');
+    const { results } = await db.prepare(`SELECT id, r2_key FROM drive_files WHERE owner_email = ? AND folder_id IN (${ph})`).bind(lc(ownerEmail), ...chunk).all();
+    for (const r of results || []) files.push(r);
+  }
+  return { folderIds, files };
+}
+
+/** Delete a set of folders + files by id (rows only; caller removes R2 objects). */
+export async function purgeFolderTree(db, ownerEmail, folderIds, fileIds) {
+  for (let i = 0; i < fileIds.length; i += 50) {
+    const chunk = fileIds.slice(i, i + 50);
+    const ph = chunk.map(() => '?').join(',');
+    await db.prepare(`DELETE FROM drive_files WHERE owner_email = ? AND id IN (${ph})`).bind(lc(ownerEmail), ...chunk).run();
+  }
+  for (let i = 0; i < folderIds.length; i += 50) {
+    const chunk = folderIds.slice(i, i + 50);
+    const ph = chunk.map(() => '?').join(',');
+    await db.prepare(`DELETE FROM drive_folders WHERE owner_email = ? AND id IN (${ph})`).bind(lc(ownerEmail), ...chunk).run();
+  }
 }
 
 /** Delete one file (scoped to owner). Returns the r2_key to remove, or null. */

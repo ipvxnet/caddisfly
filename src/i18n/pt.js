@@ -1029,6 +1029,7 @@ export const pt = {
     edit_section: 'Editar seção', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Salvar alterações',
     saving: 'Salvando…', updated: 'Seção atualizada com sucesso!', save_failed: 'Não foi possível salvar as alterações', save_failed_p: 'Não foi possível salvar: ',
     uploading: 'Enviando…', upload_complete: 'Envio concluído!', upload_failed: 'Falha no envio', upload_failed_p: 'Falha no envio: ',
+    from_drive: '🗂 Do Drive', drive_title: 'Inserir do seu Drive', drive_empty: 'Ainda não há imagens no seu Drive — carregue algumas na página Drive.', drive_loading: 'Carregando…', drive_err: 'Não foi possível carregar seu Drive.',
     not_supported: 'Este tipo de seção ainda não pode ser editado.',
     heading: 'Título', hl_hint: 'Título principal (máx. 60 caracteres)',
     subheading: 'Subtítulo', sub_hint: 'Texto de apoio (máx. 120 caracteres)',
