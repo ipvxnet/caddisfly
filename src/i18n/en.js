@@ -792,7 +792,7 @@ export const en = {
     image_label: 'Image URL', image_hint: 'optional — you can generate one with AI after adding',
     category_label: 'Category', category_hint: 'groups items into catalogue sections (optional)',
     forsale_label: 'For sale — uncheck for an info-only catalogue item',
-    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', stock_label: 'Stock', stock_hint: 'leave blank for unlimited; 0 = out of stock', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line', upload_pdf: '⬆ Upload PDF', upload_image: '⬆ Upload picture',
+    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', stock_label: 'Stock', stock_hint: 'leave blank for unlimited; 0 = out of stock', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line', upload_pdf: '⬆ Upload PDF', upload_image: '⬆ Upload picture', from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.',
     create_btn: 'Add product', creating: 'Adding…',
     save: 'Save', saving: 'Saving…', cancel: 'Cancel', edit: 'Edit',
     delete: 'Delete', delete_confirm: 'Delete this product? This cannot be undone.',

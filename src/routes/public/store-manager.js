@@ -150,6 +150,7 @@ export async function handleStoreManager(ctx) {
         <label>${tr('storem.image_label')} <span class="hint">${tr('storem.image_hint')}</span></label>
         <input id="np-image" maxlength="500" placeholder="https://…">
         <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, false)">${tr('storem.upload_image')}</button>
+        <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickImageFromDrive(this.previousElementSibling.previousElementSibling, false)">${tr('storem.from_drive')}</button>
         <label>${tr('storem.category_label')} <span class="hint">${tr('storem.category_hint')}</span></label>
         <input id="np-category" maxlength="80" placeholder="Parts, Tools…">
         <label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" id="np-forsale" checked style="width:auto"> ${tr('storem.forsale_label')}</label>
@@ -158,6 +159,7 @@ export async function handleStoreManager(ctx) {
           <label>${tr('storem.media_gallery')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-gallery" rows="2" placeholder="https://…/photo1.jpg"></textarea>
           <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, true)">${tr('storem.upload_image')}</button>
+          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickImageFromDrive(this.previousElementSibling.previousElementSibling, true)">${tr('storem.from_drive')}</button>
           <label>${tr('storem.media_videos')} <span class="hint">${tr('storem.media_perline')}</span></label>
           <textarea id="np-videos" rows="2" placeholder="https://youtu.be/…"></textarea>
           <label>${tr('storem.media_files')} <span class="hint">Name | URL</span></label>
@@ -248,6 +250,11 @@ export async function handleStoreManager(ctx) {
       mediaPerline: ${JSON.stringify(tr('storem.media_perline'))},
       uploadPdf: ${JSON.stringify(tr('storem.upload_pdf'))},
       uploadImage: ${JSON.stringify(tr('storem.upload_image'))},
+      fromDrive: ${JSON.stringify(tr('storem.from_drive'))},
+      driveTitle: ${JSON.stringify(tr('storem.drive_title'))},
+      driveEmpty: ${JSON.stringify(tr('storem.drive_empty'))},
+      driveLoading: ${JSON.stringify(tr('storem.drive_loading'))},
+      driveErr: ${JSON.stringify(tr('storem.drive_err'))},
       stockLabel: ${JSON.stringify(tr('storem.stock_label'))},
       stockHint: ${JSON.stringify(tr('storem.stock_hint'))},
       types: {
@@ -407,12 +414,14 @@ export async function handleStoreManager(ctx) {
         '<button class="btn ghost" onclick="aiDescribeEdit(' + p.id + ', this)">' + T.aiDesc + '</button></div>' +
         '<label>' + T.imageLabel + '</label><input class="f-image" maxlength="500" value="' + esc(p.image || '') + '">' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, false)">' + T.uploadImage + '</button>' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickImageFromDrive(this.previousElementSibling.previousElementSibling, false)">' + T.fromDrive + '</button>' +
         '<label>' + T.categoryLabel + '</label><input class="f-category" maxlength="80" value="' + esc(p.category || '') + '">' +
         '<label style="display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-weight:600"><input type="checkbox" class="f-forsale"' + (p.for_sale === 0 ? '' : ' checked') + ' style="width:auto"> ' + T.forsaleLabel + '</label>' +
         (ADV ? '<label>' + T.stockLabel + ' <span class="hint">' + T.stockHint + '</span></label><input class="f-stock" type="number" min="0" value="' + (p.stock == null ? '' : p.stock) + '">' : '') +
         '<details style="margin-top:.8rem"><summary style="cursor:pointer;font-weight:600">' + T.mediaLabel + '</summary>' +
         '<label>' + T.mediaGallery + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-gallery" rows="2">' + esc(mt.gallery) + '</textarea>' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadImageInto(this, this.previousElementSibling, true)">' + T.uploadImage + '</button>' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickImageFromDrive(this.previousElementSibling.previousElementSibling, true)">' + T.fromDrive + '</button>' +
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
         '<label>' + T.mediaFiles + ' <span class="hint">Name | URL</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
@@ -484,6 +493,38 @@ export async function handleStoreManager(ctx) {
         btn.disabled = false; btn.textContent = old;
       };
       inp.click();
+    }
+
+    // Insert an image from the user's Drive. target is an <input> (replace) or a
+    // <textarea> (append one URL per line). Reuses /api/drive/images.
+    var __drvOverlay = null, __drvApply = null;
+    function ensureDriveOverlay() {
+      if (__drvOverlay) return __drvOverlay;
+      __drvOverlay = document.createElement('div');
+      __drvOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10002;padding:1rem';
+      __drvOverlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + T.driveTitle + '</strong><button type="button" class="drv-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="drv-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
+      document.body.appendChild(__drvOverlay);
+      __drvOverlay.addEventListener('click', function(e){ if (e.target === __drvOverlay) __drvOverlay.style.display = 'none'; });
+      __drvOverlay.querySelector('.drv-x').addEventListener('click', function(){ __drvOverlay.style.display = 'none'; });
+      return __drvOverlay;
+    }
+    async function pickImageFromDrive(target, append) {
+      if (!target) return;
+      __drvApply = function(url){ if (append) target.value = target.value ? (target.value + '\\n' + url) : url; else target.value = url; };
+      var o = ensureDriveOverlay(); var grid = o.querySelector('.drv-grid');
+      grid.innerHTML = '<p style="color:#718096">' + T.driveLoading + '</p>'; o.style.display = 'flex';
+      try {
+        var res = await fetch('/api/drive/images'); var d = await res.json(); var imgs = (d && d.images) || [];
+        if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + T.driveEmpty + '</p>'; return; }
+        grid.innerHTML = '';
+        imgs.forEach(function(im){
+          var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
+          b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
+          var img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover'; b.appendChild(img);
+          b.addEventListener('click', function(){ if (__drvApply) __drvApply(im.url); o.style.display = 'none'; });
+          grid.appendChild(b);
+        });
+      } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + T.driveErr + '</p>'; }
     }
 
     // Upload a PDF → R2, append "name | url" to the given files textarea.
