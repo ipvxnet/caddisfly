@@ -449,7 +449,7 @@ export const en = {
     support: 'Support', activity: 'Activity', help: 'Help', sign_out: 'Sign out',
     no_sites: 'You have no websites yet.', build_one: 'Build one →',
     live: 'Live', not_published: 'Not published yet', thumb_building: 'Building…',
-    customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', store: 'Store', bookings: 'Bookings', open: 'Open ↗',
+    customize: 'Customize', analytics: 'Analytics', inbox: 'Inbox', blog: 'Blog', store: 'Store', bookings: 'Bookings', report: '📊 Report', open: 'Open ↗',
     republish_note: 'New this week: mobile-friendly menus, working contact forms, blog and online store. Open Customize and hit Publish to apply the latest improvements to your live site.',
     dismiss: 'Dismiss',
     export: '⬇ Export', export_title: 'Download your published site as HTML (yours to host anywhere)',
