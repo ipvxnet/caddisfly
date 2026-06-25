@@ -65,7 +65,7 @@ export async function handleAIPreviewCourses(ctx) {
       const course = await getCourseBySlug(env.DB, projectKey, params.course_slug);
       if (!course) return new Response('Course not found', { status: 404 });
       const full = await getCourseFull(env.DB, projectKey, course.id);
-      bodySection = coursePlayerSection(full, base, currency, language);
+      bodySection = coursePlayerSection(full, base, currency, language, true); // owner preview → unlocked
     } else {
       const published = await getCoursesByProject(env.DB, projectKey, { publishedOnly: true });
       bodySection = courseListSection(published, base, currency, language);

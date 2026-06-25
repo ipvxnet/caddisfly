@@ -16,9 +16,9 @@ function money(cents, currency, lang) {
 }
 
 const T = {
-  en: { free: 'Free', by: 'By', curriculum: 'Curriculum', check: 'Check answers', passed: 'You passed — {p}%', failed: 'Score: {p}% — review and try again', open_res: 'Open resource ↗', download: 'Download', back: '← All courses', lessons: 'lessons', preview: 'Preview' },
-  es: { free: 'Gratis', by: 'Por', curriculum: 'Temario', check: 'Comprobar respuestas', passed: 'Aprobaste — {p}%', failed: 'Puntuación: {p}% — repasa e inténtalo de nuevo', open_res: 'Abrir recurso ↗', download: 'Descargar', back: '← Todos los cursos', lessons: 'lecciones', preview: 'Vista previa' },
-  pt: { free: 'Grátis', by: 'Por', curriculum: 'Conteúdo', check: 'Verificar respostas', passed: 'Você passou — {p}%', failed: 'Pontuação: {p}% — revise e tente de novo', open_res: 'Abrir recurso ↗', download: 'Baixar', back: '← Todos os cursos', lessons: 'aulas', preview: 'Prévia' },
+  en: { free: 'Free', by: 'By', curriculum: 'Curriculum', check: 'Check answers', passed: 'You passed — {p}%', failed: 'Score: {p}% — review and try again', open_res: 'Open resource ↗', download: 'Download', back: '← All courses', lessons: 'lessons', preview: 'Preview', buy: 'Buy course', locked_title: 'This lesson is locked', locked_body: 'Buy the course to unlock every lesson.', buy_err: 'Checkout is unavailable right now.' },
+  es: { free: 'Gratis', by: 'Por', curriculum: 'Temario', check: 'Comprobar respuestas', passed: 'Aprobaste — {p}%', failed: 'Puntuación: {p}% — repasa e inténtalo de nuevo', open_res: 'Abrir recurso ↗', download: 'Descargar', back: '← Todos los cursos', lessons: 'lecciones', preview: 'Vista previa', buy: 'Comprar curso', locked_title: 'Esta lección está bloqueada', locked_body: 'Compra el curso para desbloquear todas las lecciones.', buy_err: 'El pago no está disponible ahora.' },
+  pt: { free: 'Grátis', by: 'Por', curriculum: 'Conteúdo', check: 'Verificar respostas', passed: 'Você passou — {p}%', failed: 'Pontuação: {p}% — revise e tente de novo', open_res: 'Abrir recurso ↗', download: 'Baixar', back: '← Todos os cursos', lessons: 'aulas', preview: 'Prévia', buy: 'Comprar curso', locked_title: 'Esta aula está bloqueada', locked_body: 'Compre o curso para desbloquear todas as aulas.', buy_err: 'O pagamento está indisponível no momento.' },
 };
 
 const ICON = { video: '🎬', text: '📄', pdf: '📕', url: '🔗', quiz: '❓' };
@@ -72,6 +72,15 @@ function quizHtml(quiz, tr) {
   </div>`;
 }
 
+function paywallBlock(c, currency, lang, tr) {
+  return `<div class="crs-locked">
+    <div class="crs-lock-ico">🔒</div>
+    <h3>${esc(tr.locked_title)}</h3>
+    <p>${esc(tr.locked_body)}</p>
+    <button type="button" class="crs-buy" data-buy>${esc(tr.buy)} — ${money(c.price_cents, currency, lang)}</button>
+  </div>`;
+}
+
 export function coursePlayerTemplate(data, config) {
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
   const lang = data.lang || config.lang || 'en';
@@ -81,6 +90,11 @@ export function coursePlayerTemplate(data, config) {
   const currency = data.currency || config.store_currency || 'usd';
   const c = data.course || {};
   const sections = Array.isArray(c.sections) ? c.sections : [];
+  const isPaid = !!c.is_paid && c.price_cents > 0;
+  const unlocked = !!data.unlocked;       // token access / owner preview → open everything
+  const paywalled = isPaid && !unlocked;  // published paid course → gate non-preview lessons
+  const publicId = config.trackId || '';
+  const appOrigin = config.appOrigin || '';
 
   // Flatten lessons → stable pane indices; build the sidebar + panes together.
   let idx = 0;
@@ -91,14 +105,17 @@ export function coursePlayerTemplate(data, config) {
     navParts.push(`<div class="crs-sec-title">${esc(s.title)}</div>`);
     for (const l of (s.lessons || [])) {
       const i = String(idx);
+      const locked = paywalled && !l.is_preview;
+      const ico = locked ? '🔒' : (ICON[l.type] || '📄');
+      const tag = paywalled && l.is_preview ? esc(tr.preview) : (l.duration ? esc(l.duration) : '');
       navParts.push(`<button type="button" class="crs-lesson-item${idx === 0 ? ' active' : ''}" data-lesson="${i}">
-        <span class="crs-li-ico">${ICON[l.type] || '📄'}</span>
+        <span class="crs-li-ico">${ico}</span>
         <span class="crs-li-title">${esc(l.title)}</span>
-        ${l.duration ? `<span class="crs-li-dur">${esc(l.duration)}</span>` : ''}
+        ${tag ? `<span class="crs-li-dur">${tag}</span>` : ''}
       </button>`);
       paneParts.push(`<div class="crs-pane" data-pane="${i}"${idx === 0 ? '' : ' hidden'}>
         <h2 class="crs-pane-title">${esc(l.title)}</h2>
-        ${lessonContent(l, tr)}
+        ${locked ? paywallBlock(c, currency, lang, tr) : lessonContent(l, tr)}
       </div>`);
       idx++; lessonCount++;
     }
@@ -107,6 +124,9 @@ export function coursePlayerTemplate(data, config) {
   const priceBadge = c.price_cents > 0
     ? `<span class="crs-hero-price">${money(c.price_cents, currency, lang)}</span>`
     : `<span class="crs-hero-free">${esc(tr.free)}</span>`;
+  const heroBuy = paywalled
+    ? `<button type="button" class="crs-buy crs-buy-hero" data-buy>${esc(tr.buy)} — ${money(c.price_cents, currency, lang)}</button>`
+    : '';
   const meta = [c.instructor ? `${esc(tr.by)} ${esc(c.instructor)}` : '', c.level ? esc(c.level) : '', `${lessonCount} ${esc(tr.lessons)}`].filter(Boolean).join(' · ');
 
   const styles = `
@@ -156,6 +176,15 @@ export function coursePlayerTemplate(data, config) {
 .crs-quiz-result { font-weight: 700; border-radius: 10px; padding: .7rem 1rem; }
 .crs-quiz-result.pass { background: #f0fdf4; color: #166534; }
 .crs-quiz-result.fail { background: #fef2f2; color: #991b1b; }
+.crs-buy { background: #fff; color: ${primary_color}; border: none; border-radius: 10px; padding: .7rem 1.4rem; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+.crs-buy:hover { opacity: .92; }
+.crs-buy:disabled { opacity: .6; cursor: default; }
+.crs-buy-hero { margin-top: 1.3rem; }
+.crs-locked { text-align: center; padding: 3rem 1rem; }
+.crs-lock-ico { font-size: 2.6rem; }
+.crs-locked h3 { color: #1a202c; font-size: 1.3rem; margin: .7rem 0 .4rem; }
+.crs-locked p { color: #4a5568; margin: 0 0 1.4rem; }
+.crs-locked .crs-buy { background: ${primary_color}; color: #fff; }
 @media (max-width: 860px) { .crs-player { grid-template-columns: 1fr; } .crs-side { position: static; max-height: none; } }
 </style>`;
 
@@ -166,6 +195,7 @@ export function coursePlayerTemplate(data, config) {
     <h1>${esc(c.title)}</h1>
     ${c.subtitle ? `<p class="crs-hero-sub">${esc(c.subtitle)}</p>` : ''}
     <div class="crs-hero-meta">${priceBadge}${meta ? `<span>${meta}</span>` : ''}</div>
+    ${heroBuy}
   </div></div>
   ${c.description_html ? `<div class="crs-desc">${c.description_html}</div>` : ''}
   <div class="crs-player" id="crs-player">
@@ -182,6 +212,7 @@ export function coursePlayerTemplate(data, config) {
 (function(){
   var root=document.getElementById('crs-player'); if(!root) return;
   var Q=${JSON.stringify({ passed: tr.passed, failed: tr.failed })};
+  var PUBLIC_ID=${JSON.stringify(publicId)}, APP_ORIGIN=${JSON.stringify(appOrigin)}, SLUG=${JSON.stringify(c.slug || '')}, BUY_ERR=${JSON.stringify(tr.buy_err)};
   var items=root.querySelectorAll('.crs-lesson-item');
   var panes=root.querySelectorAll('.crs-pane');
   function show(i){
@@ -189,6 +220,15 @@ export function coursePlayerTemplate(data, config) {
     for(var j=0;j<items.length;j++){ items[j].classList.toggle('active', items[j].getAttribute('data-lesson')===i); }
   }
   root.addEventListener('click', function(e){
+    var buyBtn=e.target.closest('[data-buy]');
+    if(buyBtn){
+      buyBtn.disabled=true;
+      fetch(APP_ORIGIN+'/api/store/course-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({s:PUBLIC_ID,slug:SLUG,path:location.pathname})})
+        .then(function(r){return r.json();})
+        .then(function(d){ if(d&&d.url){ location.href=d.url; } else { alert((d&&d.error)||BUY_ERR); buyBtn.disabled=false; } })
+        .catch(function(){ alert(BUY_ERR); buyBtn.disabled=false; });
+      return;
+    }
     var it=e.target.closest('.crs-lesson-item');
     if(it){ show(it.getAttribute('data-lesson')); if(window.innerWidth<860){ var m=root.querySelector('.crs-main'); if(m) m.scrollIntoView({behavior:'smooth'}); } return; }
     var btn=e.target.closest('.crs-quiz-check');

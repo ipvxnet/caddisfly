@@ -325,6 +325,47 @@ export async function getCourseFull(db, projectKey, id) {
   return { ...course, sections: Array.from(bySection.values()) };
 }
 
+// ── Paid-course purchases (Phase 5) ──────────────────────────────────────────
+// A completed purchase grants an access_token = the magic-link credential that
+// unlocks the full player at /course-access/:token (no visitor account).
+
+function genAccessToken() {
+  return (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '').slice(0, 40);
+}
+
+/** Record a completed course purchase. Idempotent on stripe_session_id (the
+ *  receipt page + the webhook both call this). Returns { purchase, isNew }. */
+export async function recordCoursePurchase(db, projectKey, { courseId, buyerEmail, stripeSessionId, amountCents, currency } = {}) {
+  if (stripeSessionId) {
+    const existing = await db.prepare('SELECT * FROM course_purchases WHERE stripe_session_id = ?').bind(stripeSessionId).first();
+    if (existing) return { purchase: existing, isNew: false };
+  }
+  const row = await db
+    .prepare(
+      `INSERT INTO course_purchases (course_id, ai_project_id, project_id, buyer_email, access_token, stripe_session_id, amount_cents, currency, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed') RETURNING *`
+    )
+    .bind(
+      courseId,
+      projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
+      projectKey.projectId != null ? projectKey.projectId : null,
+      buyerEmail || '',
+      genAccessToken(),
+      stripeSessionId || '',
+      Math.max(0, Math.round(amountCents) || 0),
+      currency || 'usd'
+    )
+    .first();
+  return { purchase: row, isNew: true };
+}
+
+/** Look up a completed purchase by its access token (the magic-link credential).
+ *  Not project-scoped — the token IS the credential. */
+export async function getCoursePurchaseByToken(db, token) {
+  if (!token) return null;
+  return db.prepare("SELECT * FROM course_purchases WHERE access_token = ? AND status = 'completed'").bind(token).first();
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function clampScore(v, dflt) {

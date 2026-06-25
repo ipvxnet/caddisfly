@@ -113,6 +113,7 @@ import { handleSiteReport, handleRunSpeed } from './routes/public/site-report.js
 import { handleAIPreviewBlog } from './routes/public/ai-preview-blog.js';
 import { handleAIPreviewShop } from './routes/public/ai-preview-shop.js';
 import { handleAIPreviewCourses } from './routes/public/ai-preview-courses.js';
+import { handleCourseCheckout, handleCourseClaim, handleCourseAccess } from './routes/public/course-purchase.js';
 import { handleBlogManager } from './routes/public/blog-manager.js';
 import { handleBookingManager } from './routes/public/booking-manager.js';
 import { handleBookingCancelPage, handleBookingCancelAction } from './routes/public/booking-cancel.js';
@@ -429,6 +430,10 @@ router.put('/api/video-sink/:token', handleVideoSink);
 router.post('/api/video-sink/:token', handleVideoSink);
 // Store checkout — public, called cross-origin by the mini cart on shop pages
 router.post('/api/store/checkout', handleStoreCheckout);
+router.post('/api/store/course-checkout', handleCourseCheckout);
+// Paid-course access (token = credential; claim must precede :token — first-match)
+router.get('/course-access/claim', handleCourseClaim);
+router.get('/course-access/:token', handleCourseAccess);
 router.post('/api/store/discount/validate', handleDiscountValidate);
 router.post('/api/store/subscribe', handleStoreSubscribe);
 // Buyer receipt page (Stripe success_url) + Connect webhook (order backstop)

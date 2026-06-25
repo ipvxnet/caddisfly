@@ -32,10 +32,12 @@ export function courseListSection(courses, base, currency, lang = 'en') {
 }
 
 /** Synthetic course_player section for one course page. `course` = getCourseFull
- *  result (course + sections[] each with lessons[], quiz lessons carry .quiz). */
-export function coursePlayerSection(course, base, currency, lang = 'en') {
+ *  result (course + sections[] each with lessons[], quiz lessons carry .quiz).
+ *  `unlocked` (token access / owner preview) opens every lesson on a paid course;
+ *  on a published paid course it's false → the player paywalls non-preview lessons. */
+export function coursePlayerSection(course, base, currency, lang = 'en', unlocked = false) {
   const data = {
-    base, currency, lang,
+    base, currency, lang, unlocked: !!unlocked,
     course: {
       slug: course.slug,
       title: course.title,
