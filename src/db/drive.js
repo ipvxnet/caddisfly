@@ -26,6 +26,12 @@ export async function addDriveFile(db, ownerEmail, { token, name, r2_key, size, 
   return { token };
 }
 
+/** The owner's IMAGE files (for the editor "Insert from Drive" picker), newest first. */
+export async function listDriveImages(db, ownerEmail) {
+  const { results } = await db.prepare("SELECT token, name FROM drive_files WHERE owner_email = ? AND content_type LIKE 'image/%' ORDER BY created_at DESC LIMIT 200").bind(lc(ownerEmail)).all();
+  return results || [];
+}
+
 /** One file by id (owner-scoped) — for move/copy. */
 export async function getDriveFileById(db, ownerEmail, id) {
   return db.prepare('SELECT id, token, name, r2_key, size, content_type, folder_id FROM drive_files WHERE id = ? AND owner_email = ?').bind(Number(id), lc(ownerEmail)).first();

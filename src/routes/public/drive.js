@@ -8,7 +8,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import {
   getDriveUsage, listDriveFiles, addDriveFile, deleteDriveFile, getDriveFileByToken,
   getDriveFileById, moveDriveFile, listFolders, listAllFolders, getFolder, createFolder,
-  renameFolder, folderHasContents, deleteFolder,
+  renameFolder, folderHasContents, deleteFolder, listDriveImages,
 } from '../../db/drive.js';
 import { getUserTier } from '../../utils/rate-limiter.js';
 import { DRIVE_LIMITS, DRIVE_MAX_FILE } from '../../utils/credits.js';
@@ -43,7 +43,7 @@ const DRV = {
   en: {
     meta_title: 'Drive — Caddisfly', title: 'Drive', back: '← Dashboard',
     sub: 'Upload images, PDFs and files to use across your sites. Stored in your own space — no need to share via Google Drive.',
-    usage: '{used} of {total} used', upload_btn: 'Upload files', uploading: 'Uploading…', drop_hint: 'Drag files here, or click to choose',
+    usage: '{used} of {total} used', upload_btn: 'Upload files', upload_folder: '📁 Upload folder', uploading: 'Uploading…', drop_hint: 'Drag files or a folder here, or click to choose',
     empty: 'This folder is empty — upload a file or create a folder.', th_file: 'File', th_size: 'Size', th_added: 'Added',
     copy_link: 'Copy link', copied: 'Copied ✓', del: 'Delete', del_confirm: 'Delete this file? Links to it will stop working.',
     err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: "That file type isn't allowed.", err_quota: 'Not enough space. Delete some files or upgrade your plan.',
@@ -54,7 +54,7 @@ const DRV = {
   es: {
     meta_title: 'Drive — Caddisfly', title: 'Drive', back: '← Dashboard',
     sub: 'Sube imágenes, PDF y archivos para usarlos en tus sitios. Almacenados en tu propio espacio — no es necesario compartirlos a través de Google Drive.',
-    usage: '{used} de {total} utilizado', upload_btn: 'Subir archivos', uploading: 'Subiendo…', drop_hint: 'Arrastra archivos aquí o haz clic para elegir',
+    usage: '{used} de {total} utilizado', upload_btn: 'Subir archivos', upload_folder: '📁 Subir carpeta', uploading: 'Subiendo…', drop_hint: 'Arrastra archivos o una carpeta aquí, o haz clic para elegir',
     empty: 'Esta carpeta está vacía — sube un archivo o crea una carpeta.', th_file: 'Archivo', th_size: 'Tamaño', th_added: 'Añadido',
     copy_link: 'Copiar enlace', copied: 'Copiado ✓', del: 'Eliminar', del_confirm: '¿Eliminar este archivo? Los enlaces a él dejarán de funcionar.',
     err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Ese tipo de archivo no está permitido.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.',
@@ -65,7 +65,7 @@ const DRV = {
   pt: {
     meta_title: 'Drive — Caddisfly', title: 'Drive', back: '← Dashboard',
     sub: 'Faça o upload de imagens, PDFs e arquivos para usar em seus sites. Armazenados no seu próprio espaço — não é necessário compartilhar via Google Drive.',
-    usage: '{used} de {total} usado', upload_btn: 'Carregar arquivos', uploading: 'Carregando…', drop_hint: 'Arraste arquivos aqui ou clique para escolher',
+    usage: '{used} de {total} usado', upload_btn: 'Carregar arquivos', upload_folder: '📁 Carregar pasta', uploading: 'Carregando…', drop_hint: 'Arraste arquivos ou uma pasta aqui, ou clique para escolher',
     empty: 'Esta pasta está vazia — carregue um arquivo ou crie uma pasta.', th_file: 'Arquivo', th_size: 'Tamanho', th_added: 'Adicionado',
     copy_link: 'Copiar link', copied: 'Copiado ✓', del: 'Excluir', del_confirm: 'Excluir este arquivo? Os links para ele deixarão de funcionar.',
     err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Esse tipo de arquivo não é permitido.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.',
@@ -135,8 +135,11 @@ export async function handleDrive(ctx) {
     <div class="dr-usage"><div class="dr-bar"><div class="dr-fill ${barCls}" style="width:${pct}%"></div></div>
       <div class="dr-ulabel">${T.usage.replace('{used}', fmtBytes(used)).replace('{total}', fmtBytes(limit))} · ${pct}%</div></div>
     <div class="dr-toolbar"><nav class="dr-crumb">${breadcrumb}</nav><button class="btn ghost" type="button" id="dr-newfolder">＋ ${T.new_folder}</button></div>
-    <div class="dr-drop" id="dr-drop"><input type="file" id="dr-input" multiple hidden>
-      <p>${T.drop_hint}</p><button class="btn" type="button" id="dr-pick">${T.upload_btn}</button><span id="dr-msg" class="muted"></span></div>
+    <div class="dr-drop" id="dr-drop"><input type="file" id="dr-input" multiple hidden><input type="file" id="dr-folder-input" webkitdirectory hidden>
+      <p>${T.drop_hint}</p>
+      <button class="btn" type="button" id="dr-pick">${T.upload_btn}</button>
+      <button class="btn ghost" type="button" id="dr-pickfolder">${T.upload_folder}</button>
+      <span id="dr-msg" class="muted"></span></div>
     ${(folders.length || files.length)
       ? `<div class="dr-twrap"><table class="dr-table"><thead><tr><th>${T.th_file}</th><th>${T.th_size}</th><th>${T.th_added}</th><th></th></tr></thead><tbody>${folderRows}${fileRows}</tbody></table></div>`
       : `<div class="dr-empty">${T.empty}</div>`}
@@ -154,17 +157,47 @@ export async function handleDrive(ctx) {
       function post(u, body){ return fetch(u, { method:'POST', headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); }); }
       // upload (into current folder)
       var input=document.getElementById('dr-input'), drop=document.getElementById('dr-drop'), msg=document.getElementById('dr-msg');
+      var folderInput=document.getElementById('dr-folder-input');
       document.getElementById('dr-pick').addEventListener('click', function(){ input.click(); });
-      input.addEventListener('change', function(){ uploadAll(input.files); });
+      document.getElementById('dr-pickfolder').addEventListener('click', function(){ folderInput.click(); });
+      input.addEventListener('change', function(){ uploadTree(itemsFromFiles(input.files)); });
+      folderInput.addEventListener('change', function(){ uploadTree(itemsFromFiles(folderInput.files)); });
       ['dragover','dragenter'].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add('over'); }); });
-      ['dragleave','drop'].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.remove('over'); }); });
-      drop.addEventListener('drop', function(ev){ if(ev.dataTransfer&&ev.dataTransfer.files) uploadAll(ev.dataTransfer.files); });
-      async function uploadAll(list){
-        var fs=Array.prototype.slice.call(list||[]); if(!fs.length) return;
-        for(var i=0;i<fs.length;i++){ var f=fs[i]; if(f.size>MAX){ msg.textContent=S.errSize; continue; }
-          msg.textContent=S.uploading+' ('+(i+1)+'/'+fs.length+')';
-          try{ var q='/api/drive/upload?name='+encodeURIComponent(f.name)+(CUR!=null?'&folder='+CUR:'');
-            var res=await fetch(q,{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:f}); var d=await res.json();
+      ['dragleave'].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.remove('over'); }); });
+      drop.addEventListener('drop', async function(ev){
+        ev.preventDefault(); drop.classList.remove('over');
+        var its = ev.dataTransfer && ev.dataTransfer.items;
+        if(its && its.length && its[0].webkitGetAsEntry){
+          var entries=[]; for(var i=0;i<its.length;i++){ var e=its[i].webkitGetAsEntry&&its[i].webkitGetAsEntry(); if(e) entries.push(e); }
+          if(entries.some(function(e){return e.isDirectory;})){ var out=[]; for(var j=0;j<entries.length;j++){ await walkEntry(entries[j],'',out); } uploadTree(out); return; }
+        }
+        if(ev.dataTransfer&&ev.dataTransfer.files) uploadTree(itemsFromFiles(ev.dataTransfer.files));
+      });
+      // Map a flat FileList → [{path, file}] using webkitRelativePath (dir part) when present.
+      function itemsFromFiles(list){ return Array.prototype.slice.call(list||[]).map(function(f){ var rp=f.webkitRelativePath||f.name; var slash=rp.lastIndexOf('/'); return { path: slash>=0?rp.substring(0,slash):'', file:f }; }); }
+      // Recursively read a dropped DirectoryEntry into [{path, file}] (path = containing dir, relative).
+      function walkEntry(entry, base, out){ return new Promise(function(resolve){
+        if(entry.isFile){ entry.file(function(file){ out.push({path:base, file:file}); resolve(); }, function(){ resolve(); }); }
+        else if(entry.isDirectory){ var childBase=base?base+'/'+entry.name:entry.name; var rd=entry.createReader(); var acc=[];
+          (function more(){ rd.readEntries(function(ents){ if(!ents.length){ var p=acc.map(function(c){ return walkEntry(c, childBase, out); }); Promise.all(p).then(resolve); return; } acc=acc.concat(Array.prototype.slice.call(ents)); more(); }, function(){ resolve(); }); })();
+        } else resolve();
+      }); }
+      // Create folders as needed (cache by path), then upload each file into its folder.
+      async function ensureFolder(path, cache){
+        if(!path) return CUR;
+        if(cache[path]!=null) return cache[path];
+        var parts=path.split('/'); var name=parts.pop(); var parentId=await ensureFolder(parts.join('/'), cache);
+        var r=await post('/api/drive/folder',{name:name, parent_id:parentId});
+        if(!r.ok||!r.d.success) throw new Error((r.d&&r.d.error)||S.err);
+        cache[path]=r.d.id; return r.d.id;
+      }
+      async function uploadTree(items){
+        if(!items||!items.length) return; var cache={};
+        for(var i=0;i<items.length;i++){ var it=items[i]; if(it.file.size>MAX){ msg.textContent=S.errSize; continue; }
+          msg.textContent=S.uploading+' ('+(i+1)+'/'+items.length+')';
+          var fid; try{ fid=await ensureFolder(it.path, cache); }catch(e){ msg.textContent=S.err; return; }
+          try{ var q='/api/drive/upload?name='+encodeURIComponent(it.file.name)+(fid!=null?'&folder='+fid:'');
+            var res=await fetch(q,{method:'POST',headers:{'Content-Type':it.file.type||'application/octet-stream'},body:it.file}); var d=await res.json();
             if(!res.ok||!d.success){ msg.textContent=(d&&d.error)||S.err; return; } }catch(e){ msg.textContent=S.err; return; } }
         location.reload();
       }
@@ -355,6 +388,15 @@ export async function handleFileCopy(ctx) {
   await addDriveFile(env.DB, email, { token, name: src.name, r2_key, size: src.size, content_type: src.content_type, folder_id: folderId });
   audit(ctx, 'drive.file.copy', { resourceType: 'file', resourceId: token, resourceName: src.name, metadata: { from: id, to: folderId, size: src.size } });
   return json({ success: true, token, url: `${url.origin}/drive/f/${token}` });
+}
+
+/** GET /api/drive/images — the owner's Drive images (for the editor picker). */
+export async function handleDriveImages(ctx) {
+  const { env, url } = ctx;
+  const email = ctx.billingEmail;
+  if (!email) return json({ success: false, error: 'Please sign in.' }, 401);
+  const rows = await listDriveImages(env.DB, email);
+  return json({ success: true, images: rows.map((r) => ({ token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}` })) });
 }
 
 /** GET /drive/f/:token — serve a file publicly (token is the unguessable auth). */

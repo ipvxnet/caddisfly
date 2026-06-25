@@ -817,6 +817,50 @@ function plansRender() {
 }
 // Initialise the plans editor if this section has one (runs on inject).
 if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices(); }
+
+// ---- Insert from Drive: a picker on each image field (runs on inject) --------
+(function(){
+  var DP = ${JSON.stringify({ btn: tr('sed.from_drive'), title: tr('sed.drive_title'), empty: tr('sed.drive_empty'), loading: tr('sed.drive_loading'), err: tr('sed.drive_err') })};
+  var modal = document.getElementById('section-editor-modal'); if (!modal) return;
+  var areas = modal.querySelectorAll('.image-upload-area'); if (!areas.length) return;
+  var overlay = null, tField = null, tPrev = null;
+  function ensureOverlay(){
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10002;padding:1rem';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + DP.title + '</strong><button type="button" class="dp-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.style.display = 'none'; });
+    overlay.querySelector('.dp-x').addEventListener('click', function(){ overlay.style.display = 'none'; });
+    return overlay;
+  }
+  async function openPicker(field, prev){
+    tField = field; tPrev = prev; var o = ensureOverlay(); var grid = o.querySelector('.dp-grid');
+    grid.innerHTML = '<p style="color:#718096">' + DP.loading + '</p>'; o.style.display = 'flex';
+    try {
+      var res = await fetch('/api/drive/images'); var d = await res.json(); var imgs = (d && d.images) || [];
+      if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + DP.empty + '</p>'; return; }
+      grid.innerHTML = '';
+      imgs.forEach(function(im){
+        var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
+        b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
+        var img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover'; b.appendChild(img);
+        b.addEventListener('click', function(){ if (tField) tField.value = im.url; if (tPrev) { tPrev.src = im.url; tPrev.style.display = 'block'; } o.style.display = 'none'; });
+        grid.appendChild(b);
+      });
+    } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + DP.err + '</p>'; }
+  }
+  areas.forEach(function(area){
+    var fg = area.closest('.form-group') || area.parentElement;
+    var field = fg && fg.querySelector('input[type=hidden]');
+    var prev = area.querySelector('.image-preview');
+    if (!field) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.textContent = DP.btn;
+    btn.style.cssText = 'margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer';
+    btn.addEventListener('click', function(e){ e.stopPropagation(); openPicker(field, prev); });
+    area.parentNode.insertBefore(btn, area.nextSibling);
+  });
+})();
 </script>
   `;
 }
