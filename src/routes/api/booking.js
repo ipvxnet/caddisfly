@@ -35,7 +35,7 @@ import { BOOKING_MONTHLY_LIMITS } from '../../utils/credits.js';
 import { generateToken } from '../../utils/crypto.js';
 import { notifyBookingEvent } from '../../utils/booking-notify.js';
 import { bookingIcs, zonedTimeToUtc } from '../../utils/booking-ics.js';
-import { createStoreCheckoutSession, refundConnectPayment } from '../../utils/stripe.js';
+import { createStoreCheckoutSession, refundConnectPayment, stripeUnitAmount } from '../../utils/stripe.js';
 import { notifyOps } from '../../utils/ops-notify.js';
 import { siteForBooking } from '../public/booking-cancel.js';
 import { audit } from '../../utils/audit.js';
@@ -221,13 +221,16 @@ export async function handleBookingCreate(ctx) {
     // one is set (validated < price at save time); remainder settles in person.
     const isDeposit = paid && service.deposit_cents > 0 && service.deposit_cents < service.price_cents;
     const chargeCents = isDeposit ? service.deposit_cents : service.price_cents;
+    // Paid bookings share the STORE currency (set from the connected Stripe account),
+    // so store + bookings always charge/display in the same currency.
+    const bookCurrency = (site.config && site.config.store_currency) || 'usd';
     if (paid) {
       const hold = await claimBooking(env.DB, site.projectKey, {
         service_id: service.id, customer_name: name, customer_email: email, note,
         date, start_min: slot.start_min, end_min: slot.end_min,
         cancel_token: cancelToken, visitor_tz: visitorTz,
         pendingHold: true, holdSeconds: 1860,
-        amount_cents: chargeCents, currency: service.currency || 'usd',
+        amount_cents: chargeCents, currency: bookCurrency,
       });
       if (!hold) return jsonResponse({ success: false, error: t(ctx.lang, 'bkw.err_taken') }, 409);
 
@@ -237,8 +240,8 @@ export async function handleBookingCreate(ctx) {
           account: site.config.stripe_account_id,
           lineItems: [{
             price_data: {
-              currency: service.currency || 'usd',
-              unit_amount: chargeCents,
+              currency: bookCurrency,
+              unit_amount: stripeUnitAmount(chargeCents, bookCurrency),
               product_data: { name: `${isDeposit ? 'Deposit — ' : ''}${service.name} — ${date} ${minutesLabel(slot.start_min)}` },
             },
             quantity: 1,

@@ -144,7 +144,7 @@ import {
   handleStripeConnectCallback,
   handleProductList, handleProductCreate, handleProductUpdate, handleProductDelete,
   handleProductAIDescribe, handleProductImage, handleStoreCheckout,
-  handleStoreWebhook, handleOrderList, handleProductImport,
+  handleStoreWebhook, handleOrderList, handleProductImport, handleStoreCurrency,
   handleDiscountList, handleDiscountCreate, handleDiscountUpdate, handleDiscountDelete,
   handleDiscountValidate,
   handleVariantList, handleVariantCreate, handleVariantUpdate, handleVariantDelete,
@@ -538,6 +538,7 @@ router.get('/ai-builder/store/:project_id', handleStoreManager, PROJ);
 router.get('/api/ai-builder/:project_id/store/stripe', handleStoreStripeStatus, PROJ);
 router.post('/api/ai-builder/:project_id/store/stripe/connect', handleStoreStripeConnect, PROJ);
 router.post('/api/ai-builder/:project_id/store/stripe/disconnect', handleStoreStripeDisconnect, PROJ);
+router.put('/api/ai-builder/:project_id/store/currency', handleStoreCurrency, PROJ);
 router.get('/store/stripe/callback', handleStripeConnectCallback);
 // Products (first-match: the specific ai-describe route before :product_id)
 router.get('/api/ai-builder/:project_id/store/products', handleProductList, PROJ);
