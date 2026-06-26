@@ -55,7 +55,14 @@ export const PLUGINS = {
     priceVar: 'STRIPE_PRICE_PLUGIN_INSTAGRAM_FEED',
     sectionTypes: ['instagram_feed'],
   },
-  // Future (see PLUGIN_PLATFORM_DESIGN.md §11A): members.
+  members: {
+    key: 'members',
+    label: 'Members',
+    summary: 'Let visitors sign in to your site (passwordless) and keep pages or sections members-only.',
+    priceCents: 500,
+    priceVar: 'STRIPE_PRICE_PLUGIN_MEMBERS',
+    sectionTypes: ['members'],
+  },
 };
 
 /**
@@ -82,6 +89,7 @@ const PLUGIN_I18N = {
     advanced_store: { label: 'Tienda avanzada', summary: 'Seguimiento de inventario, alertas de stock bajo y códigos de descuento para tu tienda.' },
     courses: { label: 'Cursos', summary: 'Vende y comparte cursos en línea — lecciones, videos, PDFs y cuestionarios creados con IA en tu sitio.' },
     instagram_feed: { label: 'Feed de Instagram', summary: 'Una sección «Lo último» que muestra tus publicaciones más recientes de Instagram, actualizadas automáticamente.' },
+    members: { label: 'Miembros', summary: 'Permite que los visitantes inicien sesión en tu sitio (sin contraseña) y reserva páginas o secciones solo para miembros.' },
     all_access: { label: 'Acceso total', summary: 'Todos los plugins — Catálogo, CRM y Tienda avanzada — en un solo precio.' },
   },
   pt: {
@@ -90,6 +98,7 @@ const PLUGIN_I18N = {
     advanced_store: { label: 'Loja avançada', summary: 'Rastreamento de estoque, alertas de estoque baixo e códigos de desconto para sua loja.' },
     courses: { label: 'Cursos', summary: 'Venda e compartilhe cursos online — aulas, vídeos, PDFs e quizzes criados com IA no seu site.' },
     instagram_feed: { label: 'Feed do Instagram', summary: 'Uma seção «O que há de novo» que mostra suas publicações mais recentes do Instagram, atualizadas automaticamente.' },
+    members: { label: 'Membros', summary: 'Permita que visitantes entrem no seu site (sem senha) e mantenha páginas ou seções exclusivas para membros.' },
     all_access: { label: 'Acesso total', summary: 'Todos os plugins — Catálogo, CRM e Loja avançada — em um único preço.' },
   },
 };

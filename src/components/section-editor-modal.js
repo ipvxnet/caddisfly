@@ -935,6 +935,8 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
       return generateBookingFields(content, tr, projectId);
     case 'instagram_feed':
       return generateInstagramFeedFields(content, tr);
+    case 'members':
+      return generateMembersFields(content, tr);
     default:
       return `<p>${tr('sed.not_supported')}</p>`;
   }
@@ -1028,6 +1030,27 @@ function generateInstagramFeedFields(content, tr) {
         ${[4, 6, 8, 12].map((n) => `<option value="${n}"${n === count ? ' selected' : ''}>${n}</option>`).join('')}
       </select>
     </div>
+  `;
+}
+
+/**
+ * 👤 Member sign-in: heading/subheading only. The widget itself (login form /
+ * account state) is self-contained and talks to the member API at render time.
+ * Manage the member list from the dashboard Members manager.
+ */
+function generateMembersFields(content, tr) {
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${tr('sed.mbr_heading_ph')}">
+    </div>
+
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+
+    <p style="color: #718096; font-size: .85rem;">${tr('sed.mbr_hint')}</p>
   `;
 }
 

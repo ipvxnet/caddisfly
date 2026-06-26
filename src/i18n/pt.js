@@ -543,7 +543,7 @@ export const pt = {
     analytics: '📊 Estatísticas', analytics_title: 'Estatísticas de tráfego do seu site publicado',
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
     store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
-    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', manage: 'Gerenciar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', members: '👤 Membros', members_title: 'Os membros do seu site — acessos e conteúdo exclusivo', manage: 'Gerenciar',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site', deploying: 'Publicando…',
     upgrade_title: 'Faça upgrade para desbloquear', view_plans: 'Ver planos →', maybe_later: 'Talvez depois',
     tab_content: 'Conteúdo', tab_design: 'Design',
@@ -1088,6 +1088,8 @@ export const pt = {
     igf_feed_id: 'ID do feed do Instagram',
     igf_feed_hint: 'Crie um feed grátis no Behold, conecte seu Instagram e cole aqui o ID do feed —',
     igf_count: 'Publicações a exibir',
+    mbr_heading_ph: 'Membros',
+    mbr_hint: 'Os visitantes entram com um link mágico (sem senha). Gerencie sua lista de membros na página Membros do painel.',
   },
 
   aip: {

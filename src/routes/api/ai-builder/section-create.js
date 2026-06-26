@@ -38,6 +38,7 @@ export const ADDABLE_SECTIONS = [
   { type: 'catalogue', emoji: '📒', label: 'Catalogue', plugin: 'catalogue' },
   { type: 'courses', emoji: '📚', label: 'Courses', plugin: 'courses' },
   { type: 'instagram_feed', emoji: '📷', label: 'Instagram Feed', plugin: 'instagram_feed' },
+  { type: 'members', emoji: '👤', label: 'Member sign-in', plugin: 'members' },
   { type: 'booking', emoji: '📅', label: 'Bookings' },
   { type: 'stats', emoji: '📊', label: 'Stats' },
   { type: 'cta', emoji: '📣', label: 'Call to action' },
