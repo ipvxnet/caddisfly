@@ -124,6 +124,11 @@ export async function handleStoreManager(ctx) {
         </select>
         <p class="muted" style="font-size:.84rem;margin:.4rem 0 0">${tr('storem.currency_hint')} <span id="currency-saved" style="color:#166534;font-weight:600"></span></p>
       </div>
+      <div id="pix-note" style="display:none;margin-top:1rem;border-top:1px solid var(--line);padding-top:1rem">
+        <strong>${tr('storem.pix_note_title')}</strong>
+        <p class="muted" style="font-size:.84rem;margin:.4rem 0 0">${tr('storem.pix_note_body')}
+          <a href="https://dashboard.stripe.com/settings/payment_methods" target="_blank" rel="noopener">${tr('storem.pix_note_link')}</a></p>
+      </div>
     </div>
 
     <div class="panel">
@@ -469,6 +474,7 @@ export async function handleStoreManager(ctx) {
     function renderProducts(d) {
       CUR = d.currency || 'usd';
       var _csel = document.getElementById('store-currency-sel'); if (_csel) _csel.value = CUR;
+      var _pix = document.getElementById('pix-note'); if (_pix) _pix.style.display = (CUR === 'brl') ? '' : 'none';
       LIMIT = d.limit; ENFORCED = !!d.enforced; COUNT = d.products.length;
       document.getElementById('prod-count').textContent = '(' + COUNT + (LIMIT != null ? '/' + LIMIT : '') + ')';
       var note = document.getElementById('limit-note');

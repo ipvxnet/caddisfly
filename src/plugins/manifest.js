@@ -47,6 +47,14 @@ export const PLUGINS = {
     priceVar: 'STRIPE_PRICE_PLUGIN_COURSES',
     sectionTypes: ['courses'],
   },
+  instagram_feed: {
+    key: 'instagram_feed',
+    label: 'Instagram Feed',
+    summary: "A \"What's happening\" section that shows your latest Instagram posts, refreshed automatically.",
+    priceCents: 500,
+    priceVar: 'STRIPE_PRICE_PLUGIN_INSTAGRAM_FEED',
+    sectionTypes: ['instagram_feed'],
+  },
   // Future (see PLUGIN_PLATFORM_DESIGN.md §11A): members.
 };
 
@@ -73,6 +81,7 @@ const PLUGIN_I18N = {
     crm: { label: 'CRM', summary: 'Toda persona que contacte, reserve o compre — leads, pipeline y notas en un solo lugar.' },
     advanced_store: { label: 'Tienda avanzada', summary: 'Seguimiento de inventario, alertas de stock bajo y códigos de descuento para tu tienda.' },
     courses: { label: 'Cursos', summary: 'Vende y comparte cursos en línea — lecciones, videos, PDFs y cuestionarios creados con IA en tu sitio.' },
+    instagram_feed: { label: 'Feed de Instagram', summary: 'Una sección «Lo último» que muestra tus publicaciones más recientes de Instagram, actualizadas automáticamente.' },
     all_access: { label: 'Acceso total', summary: 'Todos los plugins — Catálogo, CRM y Tienda avanzada — en un solo precio.' },
   },
   pt: {
@@ -80,6 +89,7 @@ const PLUGIN_I18N = {
     crm: { label: 'CRM', summary: 'Todo mundo que entra em contato, reserva ou compra — leads, pipeline e notas em um único lugar.' },
     advanced_store: { label: 'Loja avançada', summary: 'Rastreamento de estoque, alertas de estoque baixo e códigos de desconto para sua loja.' },
     courses: { label: 'Cursos', summary: 'Venda e compartilhe cursos online — aulas, vídeos, PDFs e quizzes criados com IA no seu site.' },
+    instagram_feed: { label: 'Feed do Instagram', summary: 'Uma seção «O que há de novo» que mostra suas publicações mais recentes do Instagram, atualizadas automaticamente.' },
     all_access: { label: 'Acesso total', summary: 'Todos os plugins — Catálogo, CRM e Loja avançada — em um único preço.' },
   },
 };

@@ -792,7 +792,8 @@ export const en = {
     image_label: 'Image URL', image_hint: 'optional — you can generate one with AI after adding',
     category_label: 'Category', category_hint: 'groups items into catalogue sections (optional)',
     forsale_label: 'For sale — uncheck for an info-only catalogue item',
-    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', stock_label: 'Stock', stock_hint: 'leave blank for unlimited; 0 = out of stock', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line', media_files_hint: 'Name | URL', media_files_ph: 'Datasheet | https://…/spec.pdf', media_links_hint: 'Label | URL', media_links_ph: 'Manufacturer | https://…', currency_label: 'Currency', currency_hint: 'Auto-detected from your connected Stripe account. Applies to your store and paid bookings.', currency_saved: 'Saved ✓', upload_pdf: '⬆ Upload PDF', upload_image: '⬆ Upload picture', from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.',
+    media_label: 'Catalogue media (optional)', media_gallery: 'Gallery image URLs', stock_label: 'Stock', stock_hint: 'leave blank for unlimited; 0 = out of stock', media_videos: 'Video URLs', media_files: 'PDF / files', media_links: 'Links', media_perline: 'one per line', media_files_hint: 'Name | URL', media_files_ph: 'Datasheet | https://…/spec.pdf', media_links_hint: 'Label | URL', media_links_ph: 'Manufacturer | https://…', currency_label: 'Currency', currency_hint: 'Auto-detected from your connected Stripe account. Applies to your store and paid bookings.', currency_saved: 'Saved ✓',
+    pix_note_title: '🇧🇷 Accept PIX & boleto (Brazil)', pix_note_body: 'PIX and boleto are turned on in your own Stripe Dashboard, not here. Open Settings → Payment methods and enable PIX and Boleto — they then appear automatically at checkout for your customers. Boleto confirms 1–2 business days after the customer pays; the order, booking or course is recorded automatically once it clears.', pix_note_link: 'Open Stripe payment methods ↗', upload_pdf: '⬆ Upload PDF', upload_image: '⬆ Upload picture', from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.',
     create_btn: 'Add product', creating: 'Adding…',
     save: 'Save', saving: 'Saving…', cancel: 'Cancel', edit: 'Edit',
     delete: 'Delete', delete_confirm: 'Delete this product? This cannot be undone.',
@@ -1090,6 +1091,10 @@ export const en = {
     bkg_heading_ph: 'Book an appointment',
     bkg_hint: 'Visitors pick a service and a time slot — manage services, hours, and bookings on the',
     bkg_manager_link: '📅 Bookings page →',
+    igf_heading_ph: "What's happening",
+    igf_feed_id: 'Instagram feed ID',
+    igf_feed_hint: 'Create a free feed at Behold, connect your Instagram, and paste the feed ID here —',
+    igf_count: 'Posts to show',
   },
 
   aip: {

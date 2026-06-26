@@ -73,6 +73,8 @@ import { bookingWidgetTemplate } from './booking/widget.js';
 import { courseListTemplate } from './courses/list.js';
 import { coursePlayerTemplate } from './courses/player.js';
 import { coursesSectionTemplate } from './courses/section.js';
+// Instagram Feed (plugin) — addable body section; live client-side feed fetch
+import { instagramFeedSectionTemplate } from './instagram_feed/section.js';
 
 /**
  * Template registry
@@ -186,6 +188,10 @@ export const TEMPLATE_REGISTRY = {
   courses: {
     default: coursesSectionTemplate,
     tiles: coursesSectionTemplate,
+  },
+  instagram_feed: {
+    default: instagramFeedSectionTemplate,
+    grid: instagramFeedSectionTemplate,
   },
 };
 
