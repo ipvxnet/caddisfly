@@ -12,7 +12,7 @@ import { resolveStoreProject, getOrCreateConfig, settleCoursePurchase } from '..
 import { getCourseBySlug, getCourseFull, getCoursePurchaseByToken } from '../../db/courses.js';
 import { coursePlayerSection } from '../../utils/course-render.js';
 import { renderSection } from '../../templates/ai-builder/registry.js';
-import { createStoreCheckoutSession, getStoreCheckoutSession } from '../../utils/stripe.js';
+import { createStoreCheckoutSession, getStoreCheckoutSession, stripeUnitAmount } from '../../utils/stripe.js';
 
 const PUBLIC_ID_RE = /^[a-f0-9]{32}$/i;
 function json(body, status = 200) {
@@ -90,7 +90,7 @@ export async function handleCourseCheckout(ctx) {
 
     const session = await createStoreCheckoutSession(env, {
       account: config.stripe_account_id,
-      lineItems: [{ price_data: { currency: config.store_currency || 'usd', unit_amount: course.price_cents, product_data: productData }, quantity: 1 }],
+      lineItems: [{ price_data: { currency: config.store_currency || 'usd', unit_amount: stripeUnitAmount(course.price_cents, config.store_currency || 'usd'), product_data: productData }, quantity: 1 }],
       successUrl: `${appOrigin}/course-access/claim?s=${publicId}&sid={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}${path}?cancelled=1`,
       metadata: { type: 'course_purchase', site: publicId, course_id: String(course.id), slug: course.slug },

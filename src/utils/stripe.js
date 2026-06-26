@@ -565,6 +565,22 @@ export async function exchangeConnectCode(env, code) {
   return out.stripe_user_id;
 }
 
+/** Retrieve a connected account (platform call) — used to read default_currency
+ *  so a merchant's store currency follows the Stripe account they connect. */
+export async function getConnectAccount(env, accountId) {
+  return stripeRequest(env, `/accounts/${accountId}`, null, null, 'GET');
+}
+
+/** Stripe zero-decimal currencies — the amount is the actual value, NOT ×100. */
+export const STRIPE_ZERO_DECIMAL = new Set(['bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'ugx', 'vnd', 'vuv', 'xaf', 'xof', 'xpf']);
+
+/** price_cents (stored as 2-decimal minor units) → Stripe `unit_amount` for the
+ *  currency. Zero-decimal currencies want the major value (cents/100). */
+export function stripeUnitAmount(cents, currency) {
+  const c = Math.round(cents || 0);
+  return STRIPE_ZERO_DECIMAL.has(String(currency || '').toLowerCase()) ? Math.round(c / 100) : c;
+}
+
 /** Revoke our platform's access to a connected account (merchant disconnect). */
 export async function deauthorizeConnect(env, accountId) {
   return connectRequest(env, '/oauth/deauthorize', {

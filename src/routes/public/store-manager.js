@@ -8,6 +8,7 @@ import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { hasPlugin } from '../../plugins/entitlements.js';
 import { translator } from '../../i18n/index.js';
+import { STORE_CURRENCIES } from '../../utils/currencies.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -115,6 +116,13 @@ export async function handleStoreManager(ctx) {
       <div class="stripe-row">
         <div class="stripe-status" id="stripe-status">${tr('storem.checking')}</div>
         <div id="stripe-actions"></div>
+      </div>
+      <div class="currency-box" style="margin-top:1rem;border-top:1px solid var(--line);padding-top:1rem">
+        <label for="store-currency-sel"><strong>${tr('storem.currency_label')}</strong></label>
+        <select id="store-currency-sel" onchange="saveCurrency(this.value)" style="margin-left:.5rem;padding:.4rem .55rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit">
+          ${STORE_CURRENCIES.map(([c, label]) => `<option value="${esc(c)}">${esc(label)}</option>`).join('')}
+        </select>
+        <p class="muted" style="font-size:.84rem;margin:.4rem 0 0">${tr('storem.currency_hint')} <span id="currency-saved" style="color:#166534;font-weight:600"></span></p>
       </div>
     </div>
 
@@ -449,8 +457,18 @@ export async function handleStoreManager(ctx) {
         '</div></div></div>';
     }
 
+    async function saveCurrency(cur){
+      var s=document.getElementById('currency-saved'); if(s) s.textContent='…';
+      try{
+        var res=await fetch('/api/ai-builder/'+${JSON.stringify(publicId)}+'/store/currency',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({currency:cur})});
+        var d=await res.json();
+        if(d&&d.success){ if(s) s.textContent=${JSON.stringify(tr('storem.currency_saved'))}; setTimeout(function(){location.reload();},700); }
+        else if(s){ s.textContent=(d&&d.error)||'Error'; }
+      }catch(e){ if(s) s.textContent='Error'; }
+    }
     function renderProducts(d) {
       CUR = d.currency || 'usd';
+      var _csel = document.getElementById('store-currency-sel'); if (_csel) _csel.value = CUR;
       LIMIT = d.limit; ENFORCED = !!d.enforced; COUNT = d.products.length;
       document.getElementById('prod-count').textContent = '(' + COUNT + (LIMIT != null ? '/' + LIMIT : '') + ')';
       var note = document.getElementById('limit-note');

@@ -32,7 +32,10 @@ import {
   createConnectSubscriptionPrice,
   createSubscriptionCheckoutSession,
   verifyWebhook,
+  getConnectAccount,
+  stripeUnitAmount,
 } from '../../../utils/stripe.js';
+import { isValidStoreCurrency } from '../../../utils/currencies.js';
 import { slugify } from '../../../db/blog-posts.js';
 import { insertOrderIfNew, getOrdersByProject, markOrdersRead } from '../../../db/store-orders.js';
 import { sendOrderBuyerEmail, sendOrderMerchantEmail, sendTicketEmail } from '../../../utils/email.js';
@@ -193,7 +196,16 @@ export async function handleStripeConnectCallback(ctx) {
   try {
     const accountId = await exchangeConnectCode(env, code);
     const config = await getOrCreateConfig(env.DB, resolved.projectKey);
-    await updateWebsiteConfigById(env.DB, config.id, { stripe_account_id: accountId });
+    // Adopt the merchant's Stripe account currency so the store + bookings show
+    // the right currency (R$, €, …) with no manual config. Only when still on the
+    // default 'usd' so we never clobber a deliberate manual override.
+    const connectUpdates = { stripe_account_id: accountId };
+    try {
+      const account = await getConnectAccount(env, accountId);
+      const cur = account && String(account.default_currency || '').toLowerCase();
+      if (cur && (!config.store_currency || config.store_currency === 'usd')) connectUpdates.store_currency = cur;
+    } catch (e) { console.error('connect currency detect failed (non-fatal):', e.message); }
+    await updateWebsiteConfigById(env.DB, config.id, connectUpdates);
     audit(ctx, 'stripe.connect', { teamOwner: resolved.email, resourceType: 'site', resourceId: projectId, metadata: { account: accountId } });
     return back(projectId, 'connected=1');
   } catch (e) {
@@ -502,7 +514,7 @@ export async function handleStoreCheckout(ctx) {
       lineItems.push({
         price_data: {
           currency: config.store_currency || 'usd',
-          unit_amount: unit,
+          unit_amount: stripeUnitAmount(unit, config.store_currency || 'usd'),
           product_data: productData,
         },
         quantity: ln.qty,
@@ -1170,6 +1182,21 @@ export async function handleStoreWebhook(ctx) {
     console.error('store webhook error:', e);
     return json({ success: false }, 500); // non-2xx → Stripe retries
   }
+}
+
+/** PUT /api/ai-builder/:project_id/store/currency — manual override of the store
+ *  currency (normally auto-detected from the connected Stripe account). Applies to
+ *  the store, catalogue, courses AND paid bookings (they all read store_currency). */
+export async function handleStoreCurrency(ctx) {
+  const { env, params, request } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return json({ success: false, error: 'Project not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const cur = String(body.currency || '').toLowerCase();
+  if (!isValidStoreCurrency(cur)) return json({ success: false, error: 'Unsupported currency' }, 400);
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  await updateWebsiteConfigById(env.DB, config.id, { store_currency: cur });
+  return json({ success: true, currency: cur });
 }
 
 /** GET /api/ai-builder/:project_id/store/orders — list + clear unread. */
