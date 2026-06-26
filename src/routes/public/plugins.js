@@ -7,7 +7,7 @@ import { headTags, baseCss, siteHeader, siteFooter } from '../../components/bran
 import { getBillingAccount } from '../../db/billing.js';
 import { getAccountPlugins, isEntitlementValid, PLUGIN_GRACE_SECONDS } from '../../db/account-plugins.js';
 import { hasBasePlan } from '../../plugins/entitlements.js';
-import { PLUGINS, BUNDLES, pluginLabel, pluginSummary } from '../../plugins/manifest.js';
+import { PLUGINS, BUNDLES, pluginLabel, pluginSummary, bundlePluginKeys, bundleBestFor } from '../../plugins/manifest.js';
 import { isStripeConfigured } from '../../utils/stripe.js';
 
 const PL = {
@@ -17,10 +17,11 @@ const PL = {
     signin_banner: 'Please {signin} to manage plugins.', signin: 'sign in',
     billing_unavail: 'Billing is temporarily unavailable.',
     need_plan: 'Plugins are add-ons to a paid plan. {upgrade} to add them.', upgrade_link: 'Upgrade your plan',
-    included: 'Included', part_bundle: 'Part of your All-Access bundle',
+    included: 'Included', part_bundle: 'Included in a bundle you own',
     active: 'Active', cancel: 'Cancel', ends: 'Ends {date}', resubscribe: 'Resubscribe',
     add_price: 'Add — {price}/mo', requires_plan: 'Requires a paid plan',
-    get_all: 'Get all plugins — {price}/mo', bundle_suffix: '— every plugin', save_line: 'Save {amt}/mo vs buying separately.',
+    bundles_title: 'Bundles — save with a pack', single_title: 'Or pick à la carte',
+    best_for: 'Best for', get_bundle: 'Subscribe — {price}/mo', save_line: 'Save {amt}/mo vs buying separately.',
     grace: 'Canceled plugins keep working for a 7-day grace period, then their sections are hidden on your live site. Your content is kept and restored if you resubscribe.',
     err_base: 'A paid plan is required for plugins.', err_not_avail: "This plugin isn't available yet — check back soon.",
     err_no_sub: 'No active subscription to attach to.', err_generic: 'Something went wrong ({e}).', err_net: 'Network error. Please try again.',
@@ -31,10 +32,11 @@ const PL = {
     signin_banner: 'Por favor {signin} para gestionar los plugins.', signin: 'inicia sesión',
     billing_unavail: 'El cobro está temporalmente no disponible.',
     need_plan: 'Los plugins son complementos de un plan de pago. {upgrade} para agregarlos.', upgrade_link: 'Mejora tu plan',
-    included: 'Incluido', part_bundle: 'Parte de tu paquete Acceso total',
+    included: 'Incluido', part_bundle: 'Incluido en un paquete que ya tienes',
     active: 'Activo', cancel: 'Cancelar', ends: 'Finaliza {date}', resubscribe: 'Volver a suscribirse',
     add_price: 'Añadir — {price}/mes', requires_plan: 'Requiere un plan de pago',
-    get_all: 'Obtén todos los plugins — {price}/mes', bundle_suffix: '— todos los plugins', save_line: 'Ahorra {amt}/mes frente a comprarlos por separado.',
+    bundles_title: 'Paquetes — ahorra con un pack', single_title: 'O elige a la carta',
+    best_for: 'Ideal para', get_bundle: 'Suscribirse — {price}/mes', save_line: 'Ahorra {amt}/mes frente a comprarlos por separado.',
     grace: 'Los plugins cancelados siguen funcionando durante un período de gracia de 7 días, después sus secciones se ocultan en tu sitio publicado. Tu contenido se conserva y se restaura si vuelves a suscribirte.',
     err_base: 'Se requiere un plan de pago para los plugins.', err_not_avail: 'Este plugin aún no está disponible — vuelve pronto.',
     err_no_sub: 'No hay una suscripción activa a la que añadirlo.', err_generic: 'Algo salió mal ({e}).', err_net: 'Error de red. Inténtalo de nuevo.',
@@ -45,10 +47,11 @@ const PL = {
     signin_banner: 'Por favor {signin} para gerenciar os plugins.', signin: 'entre',
     billing_unavail: 'A cobrança está temporariamente indisponível.',
     need_plan: 'Plugins são complementos de um plano pago. {upgrade} para adicioná-los.', upgrade_link: 'Faça upgrade do seu plano',
-    included: 'Incluído', part_bundle: 'Parte do seu pacote Acesso total',
+    included: 'Incluído', part_bundle: 'Incluído em um pacote que você já tem',
     active: 'Ativo', cancel: 'Cancelar', ends: 'Encerra em {date}', resubscribe: 'Assinar novamente',
     add_price: 'Adicionar — {price}/mês', requires_plan: 'Requer um plano pago',
-    get_all: 'Obtenha todos os plugins — {price}/mês', bundle_suffix: '— todos os plugins', save_line: 'Economize {amt}/mês em vez de comprar separadamente.',
+    bundles_title: 'Pacotes — economize com um combo', single_title: 'Ou escolha avulso',
+    best_for: 'Ideal para', get_bundle: 'Assinar — {price}/mês', save_line: 'Economize {amt}/mês em vez de comprar separadamente.',
     grace: 'Plugins cancelados continuam funcionando por um período de carência de 7 dias, depois suas seções ficam ocultas no seu site publicado. Seu conteúdo é mantido e restaurado se você assinar novamente.',
     err_base: 'Um plano pago é necessário para os plugins.', err_not_avail: 'Este plugin ainda não está disponível — volte em breve.',
     err_no_sub: 'Nenhuma assinatura ativa para anexar.', err_generic: 'Algo deu errado ({e}).', err_net: 'Erro de rede. Tente novamente.',
@@ -82,15 +85,23 @@ export async function handlePluginsMarketplace(ctx) {
     banner = `<div class="notice warn">${T.need_plan.replace('{upgrade}', `<a href="/billing">${T.upgrade_link}</a>`)}</div>`;
   }
 
-  // The All-Access bundle entitles all its member plugins via one row.
-  const bundle = BUNDLES.all_access;
-  const bundleConfigured = bundle && env[bundle.priceVar];
-  const bundleActive = bundle ? isEntitlementValid(owned.get(bundle.key), now) : false;
+  // Bundles entitle their member plugins via one row. There are several now
+  // (vertical packs + Everything); a plugin is "covered" if ANY active bundle
+  // the account owns includes it.
+  const allBundles = Object.values(BUNDLES);
+  const activeBundleKeys = new Set();
+  const coveredPlugins = new Set();
+  for (const b of allBundles) {
+    if (isEntitlementValid(owned.get(b.key), now)) {
+      activeBundleKeys.add(b.key);
+      for (const pk of bundlePluginKeys(b)) coveredPlugins.add(pk);
+    }
+  }
 
   const cards = Object.values(PLUGINS).map((p) => {
     const row = owned.get(p.key);
     const valid = isEntitlementValid(row, now);
-    const coveredByBundle = bundleActive && bundle.plugins.includes(p.key);
+    const coveredByBundle = coveredPlugins.has(p.key);
     let state, action;
     if (coveredByBundle) {
       // The bundle owns this plugin — manage it from the bundle card.
@@ -117,11 +128,12 @@ export async function handlePluginsMarketplace(ctx) {
     </div>`;
   }).join('');
 
-  // Bundle banner-card (only when a Stripe price is configured for it).
-  let bundleCard = '';
-  if (bundleConfigured) {
+  // Bundle cards — one per CONFIGURED bundle (Stripe price set). Vertical packs
+  // first, then the Everything tier last (it's the premium upsell).
+  const bundleCardFor = (bundle) => {
     const brow = owned.get(bundle.key);
-    const sumIndividual = bundle.plugins.reduce((s, k) => s + ((PLUGINS[k] && PLUGINS[k].priceCents) || 0), 0);
+    const members = bundlePluginKeys(bundle);
+    const sumIndividual = members.reduce((s, k) => s + ((PLUGINS[k] && PLUGINS[k].priceCents) || 0), 0);
     const savings = Math.max(0, sumIndividual - bundle.priceCents);
     let bstate, baction;
     if (brow && brow.status === 'active') {
@@ -134,23 +146,31 @@ export async function handlePluginsMarketplace(ctx) {
     } else {
       bstate = `<span class="pill">${money(bundle.priceCents)}/mo</span>`;
       baction = basePlan
-        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">${T.get_all.replace('{price}', money(bundle.priceCents))}</button>`
+        ? `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${bundle.key}">${T.get_bundle.replace('{price}', money(bundle.priceCents))}</button>`
         : `<a class="btn btn-ghost" href="/billing">${T.requires_plan}</a>`;
     }
     const saveLine = savings > 0 ? ` <strong>${T.save_line.replace('{amt}', money(savings))}</strong>` : '';
-    bundleCard = `<div class="pl-bundle">
-      <div class="pl-head"><h3>✨ ${esc(pluginLabel(bundle.key, lang))} ${T.bundle_suffix}</h3>${bstate}</div>
+    const bestFor = bundleBestFor(bundle.key, lang);
+    const isAll = bundle.key === 'everything';
+    return `<div class="pl-bundle${isAll ? ' pl-bundle-all' : ''}">
+      <div class="pl-head"><h3>✨ ${esc(pluginLabel(bundle.key, lang))}</h3>${bstate}</div>
       <p class="pl-sum">${esc(pluginSummary(bundle.key, lang))}${saveLine}</p>
+      ${bestFor ? `<p class="pl-bestfor"><strong>${T.best_for}:</strong> ${esc(bestFor)}</p>` : ''}
       <div class="pl-action">${baction}</div>
     </div>`;
-  }
+  };
+  const orderedBundles = allBundles
+    .filter((b) => env[b.priceVar])
+    .sort((a, c) => (a.key === 'everything' ? 1 : 0) - (c.key === 'everything' ? 1 : 0));
+  const bundleCards = orderedBundles.map(bundleCardFor).join('');
 
   const inner = `
     <h1>${T.h1}</h1>
     <p class="sub">${T.sub}</p>
     ${banner}
     <div id="pl-msg"></div>
-    ${bundleCard}
+    ${bundleCards ? `<h2 class="pl-section-h">${T.bundles_title}</h2><div class="pl-bundles">${bundleCards}</div>` : ''}
+    <h2 class="pl-section-h">${bundleCards ? T.single_title : ''}</h2>
     <div class="pl-grid">${cards}</div>
     <p class="muted-link" style="margin-top:1.4rem">${T.grace}</p>
     <script>
@@ -187,9 +207,16 @@ export async function handlePluginsMarketplace(ctx) {
     .bwrap{max-width:820px;margin:0 auto;padding:3rem 1.5rem}
     .bwrap h1{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:.4rem}
     .sub{color:var(--body);margin-bottom:1.6rem}
-    .pl-bundle{background:linear-gradient(135deg,#faf5ff,#eff6ff);border:1.5px solid var(--p2);border-radius:16px;padding:1.4rem 1.5rem;margin-bottom:1.2rem;display:flex;flex-direction:column;gap:.6rem}
-    .pl-bundle .pl-head h3{font-size:1.2rem}
-    .pl-bundle .pl-action .btn{width:auto}
+    .pl-section-h{font-size:1.05rem;font-weight:800;color:var(--ink);margin:1.6rem 0 .8rem}
+    .pl-section-h:empty{display:none}
+    .pl-bundles{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:.4rem}
+    .pl-bundle{background:linear-gradient(135deg,#faf5ff,#eff6ff);border:1.5px solid var(--p2);border-radius:16px;padding:1.4rem 1.5rem;display:flex;flex-direction:column;gap:.5rem}
+    .pl-bundle-all{grid-column:1 / -1;background:linear-gradient(135deg,#1a202c,#2d3748);border-color:#1a202c}
+    .pl-bundle-all h3,.pl-bundle-all .pl-sum,.pl-bundle-all .pl-bestfor{color:#fff}
+    .pl-bundle-all .pl-bestfor strong{color:#cbd5e0}
+    .pl-bundle .pl-head h3{font-size:1.15rem}
+    .pl-bundle .pl-action .btn{width:100%;justify-content:center}
+    .pl-bestfor{font-size:.84rem;color:var(--muted)}
     .pl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
     .pl-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;display:flex;flex-direction:column;gap:.6rem}
     .pl-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem}
