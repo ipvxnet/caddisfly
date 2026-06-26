@@ -1155,7 +1155,13 @@ export async function handleStoreWebhook(ctx) {
     return json({ success: false, error: 'Bad signature' }, 400);
   }
   try {
-    if (event.type === 'checkout.session.completed' && event.account) {
+    // `completed` covers instant methods (card, PIX). Async methods (boleto pays
+    // D+1/D+2) fire `completed` with payment_status='unpaid' (skipped by the
+    // payment_status==='paid' guards below) and then `async_payment_succeeded`
+    // when they settle — handle both so boleto records the order/booking/course.
+    // (A late boleto booking is conflict-safe: settlePaidBooking confirms if the
+    // slot is still free, else auto-refunds.)
+    if ((event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') && event.account) {
       const session = event.data && event.data.object;
       const meta = (session && session.metadata) || {};
       if (meta.type === 'store_order' && meta.site && session.payment_status === 'paid') {
