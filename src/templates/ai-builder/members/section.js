@@ -45,6 +45,7 @@ export function membersSectionTemplate(data, config) {
 </style>`;
 
   const cfg = {
+    site: siteId,
     api: apiBase + '/api/members/' + encodeURIComponent(siteId),
     msgs: { sent: tr.sent, signed_in: tr.signed_in, err: tr.err },
   };
@@ -56,7 +57,7 @@ export function membersSectionTemplate(data, config) {
   var root = all[all.length-1];
   if (!root || root.__mbrInit) return; root.__mbrInit = 1;
   var c = ${JSON.stringify(cfg)};
-  if (!c.api || c.api.indexOf('/api/members/') === -1) return; // not published yet
+  if (!c.site) return; // not published yet — login only works on the live site
   var login = root.querySelector('.mbr-login');
   var account = root.querySelector('.mbr-account');
   var form = root.querySelector('.mbr-form');
