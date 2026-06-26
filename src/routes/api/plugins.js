@@ -6,7 +6,7 @@
 
 import { jsonResponse } from '../../utils/response.js';
 import { getBillingAccount } from '../../db/billing.js';
-import { PLUGINS, BUNDLES } from '../../plugins/manifest.js';
+import { PLUGINS, BUNDLES, bundlePluginKeys } from '../../plugins/manifest.js';
 import { hasBasePlan } from '../../plugins/entitlements.js';
 import { getAccountPlugin, upsertAccountPlugin } from '../../db/account-plugins.js';
 import {
@@ -72,8 +72,8 @@ export async function handlePluginSubscribe(ctx) {
     });
     // Subscribing to a BUNDLE? Drop any redundant individual plugin items so the
     // customer isn't double-billed — their content keeps working via the bundle.
-    if (Array.isArray(r.plugin.plugins)) {
-      for (const covered of r.plugin.plugins) {
+    if (BUNDLES[r.key]) {
+      for (const covered of bundlePluginKeys(r.plugin)) {
         const indPrice = ctx.env[(PLUGINS[covered] || {}).priceVar];
         const indItem = indPrice && findItem(sub, indPrice);
         if (!indItem) continue;

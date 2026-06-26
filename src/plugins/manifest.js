@@ -60,18 +60,50 @@ export const PLUGINS = {
 
 /**
  * Bundles — a single Stripe price that grants several plugins at a discount.
- * @type {Record<string, {key: string, label: string, plugins: string[], priceVar: string}>}
+ * Vertical bundles ($10/mo, 3 plugins → save $5) target a buyer type; the
+ * `everything` bundle ($20/mo) grants ALL plugins, current AND future
+ * (`plugins: 'all'` sentinel — resolved by bundlePluginKeys). À la carte stays
+ * $5/plugin. `bestFor` drives the "Best for…" recommendation copy on /plugins.
+ * @type {Record<string, {key: string, label: string, plugins: string[]|'all', priceVar: string}>}
  */
 export const BUNDLES = {
-  all_access: {
-    key: 'all_access',
-    label: 'All-Access',
-    summary: 'Every plugin — Catalogue, CRM and Advanced Store — bundled at one price.',
-    plugins: ['catalogue', 'crm', 'advanced_store'],
+  commerce: {
+    key: 'commerce',
+    label: 'Commerce',
+    summary: 'Everything to sell online — a rich catalogue plus inventory, discounts and variants, and a customer CRM.',
+    bestFor: 'Online stores, retail & boutiques',
+    plugins: ['catalogue', 'advanced_store', 'crm'],
     priceCents: 1000, // vs $15 separately — saves $5/mo
-    priceVar: 'STRIPE_PRICE_BUNDLE_ALL',
+    priceVar: 'STRIPE_PRICE_BUNDLE_COMMERCE',
+  },
+  // NOTE: the 'creators' bundle (courses + members + instagram_feed) is HELD
+  // until the Members plugin ships (stage 2 gating) — re-add it then.
+  local_pro: {
+    key: 'local_pro',
+    label: 'Local Pro',
+    summary: 'Capture and manage leads with a CRM, show a service menu or portfolio, and keep your Instagram feed fresh.',
+    bestFor: 'Salons, barbershops, dentists, contractors, photographers',
+    plugins: ['crm', 'catalogue', 'instagram_feed'],
+    priceCents: 1000,
+    priceVar: 'STRIPE_PRICE_BUNDLE_LOCAL_PRO',
+  },
+  everything: {
+    key: 'everything',
+    label: 'Everything',
+    summary: 'Every plugin we offer — now and everything we add in the future — at one price.',
+    bestFor: 'Power users who want it all',
+    plugins: 'all', // sentinel → all current + future plugin keys (bundlePluginKeys)
+    priceCents: 2000, // vs $30 separately — saves $10/mo
+    priceVar: 'STRIPE_PRICE_BUNDLE_EVERYTHING',
   },
 };
+
+/** Resolve a bundle's member plugin keys — expands the 'all' sentinel to every
+ *  current plugin (so the Everything bundle auto-includes future plugins). */
+export function bundlePluginKeys(bundle) {
+  if (!bundle) return [];
+  return bundle.plugins === 'all' ? Object.keys(PLUGINS) : (bundle.plugins || []);
+}
 
 // Localized label + summary per plugin/bundle key (en falls back to the manifest
 // `label`/`summary` above). Used by the marketplace + transfer requirement list.
@@ -82,7 +114,9 @@ const PLUGIN_I18N = {
     advanced_store: { label: 'Tienda avanzada', summary: 'Seguimiento de inventario, alertas de stock bajo y códigos de descuento para tu tienda.' },
     courses: { label: 'Cursos', summary: 'Vende y comparte cursos en línea — lecciones, videos, PDFs y cuestionarios creados con IA en tu sitio.' },
     instagram_feed: { label: 'Feed de Instagram', summary: 'Una sección «Lo último» que muestra tus publicaciones más recientes de Instagram, actualizadas automáticamente.' },
-    all_access: { label: 'Acceso total', summary: 'Todos los plugins — Catálogo, CRM y Tienda avanzada — en un solo precio.' },
+    commerce: { label: 'Commerce', summary: 'Todo para vender en línea — un catálogo completo más inventario, descuentos y variantes, y un CRM de clientes.', bestFor: 'Tiendas en línea, retail y boutiques' },
+    local_pro: { label: 'Local Pro', summary: 'Capta y gestiona leads con un CRM, muestra un menú de servicios o portafolio, y mantén tu feed de Instagram al día.', bestFor: 'Salones, barberías, dentistas, contratistas, fotógrafos' },
+    everything: { label: 'Todo Incluido', summary: 'Todos los plugins que ofrecemos — ahora y todo lo que agreguemos en el futuro — a un solo precio.', bestFor: 'Usuarios avanzados que lo quieren todo' },
   },
   pt: {
     catalogue: { label: 'Catálogo', summary: 'Catálogos ricos de produtos/serviços — categorias, galeria, vídeo, PDFs e compra opcional.' },
@@ -90,7 +124,9 @@ const PLUGIN_I18N = {
     advanced_store: { label: 'Loja avançada', summary: 'Rastreamento de estoque, alertas de estoque baixo e códigos de desconto para sua loja.' },
     courses: { label: 'Cursos', summary: 'Venda e compartilhe cursos online — aulas, vídeos, PDFs e quizzes criados com IA no seu site.' },
     instagram_feed: { label: 'Feed do Instagram', summary: 'Uma seção «O que há de novo» que mostra suas publicações mais recentes do Instagram, atualizadas automaticamente.' },
-    all_access: { label: 'Acesso total', summary: 'Todos os plugins — Catálogo, CRM e Loja avançada — em um único preço.' },
+    commerce: { label: 'Commerce', summary: 'Tudo para vender online — um catálogo completo mais estoque, descontos e variações, e um CRM de clientes.', bestFor: 'Lojas online, varejo e boutiques' },
+    local_pro: { label: 'Local Pro', summary: 'Capte e gerencie leads com um CRM, mostre um menu de serviços ou portfólio, e mantenha seu feed do Instagram atualizado.', bestFor: 'Salões, barbearias, dentistas, prestadores, fotógrafos' },
+    everything: { label: 'Tudo Incluído', summary: 'Todos os plugins que oferecemos — agora e tudo que adicionarmos no futuro — a um único preço.', bestFor: 'Usuários avançados que querem tudo' },
   },
 };
 
@@ -103,6 +139,12 @@ export function pluginLabel(key, lang = 'en') {
 export function pluginSummary(key, lang = 'en') {
   const loc = PLUGIN_I18N[lang] && PLUGIN_I18N[lang][key];
   return (loc && loc.summary) || (PLUGINS[key] || BUNDLES[key] || {}).summary || '';
+}
+
+/** Localized "Best for…" audience line for a bundle key (falls back to English). */
+export function bundleBestFor(key, lang = 'en') {
+  const loc = PLUGIN_I18N[lang] && PLUGIN_I18N[lang][key];
+  return (loc && loc.bestFor) || (BUNDLES[key] || {}).bestFor || '';
 }
 
 /** All known plugin keys. */
@@ -142,5 +184,5 @@ export function entitlementKeyForPriceId(env, priceId) {
 
 /** Bundles whose plugin list includes `pluginKey` (so a bundle entitles it). */
 export function bundlesIncluding(pluginKey) {
-  return Object.values(BUNDLES).filter((b) => b.plugins.includes(pluginKey));
+  return Object.values(BUNDLES).filter((b) => bundlePluginKeys(b).includes(pluginKey));
 }
