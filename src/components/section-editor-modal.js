@@ -933,6 +933,8 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
       return generateProductsFields(content, tr, projectId);
     case 'booking':
       return generateBookingFields(content, tr, projectId);
+    case 'instagram_feed':
+      return generateInstagramFeedFields(content, tr);
     default:
       return `<p>${tr('sed.not_supported')}</p>`;
   }
@@ -992,6 +994,40 @@ function generateBookingFields(content, tr, projectId) {
     <p style="color: #718096; font-size: .85rem;">${tr('sed.bkg_hint')}
       <a href="/ai-builder/bookings/${escapeHtml(projectId)}" target="_blank" rel="noopener">${tr('sed.bkg_manager_link')}</a>
     </p>
+  `;
+}
+
+/**
+ * 📷 Instagram Feed: heading/subheading + the merchant's Behold.so feed ID and
+ * how many posts to show. Posts are fetched live in the browser at view time
+ * (nothing stored here). The feed ID comes from a free behold.so account.
+ */
+function generateInstagramFeedFields(content, tr) {
+  const count = [4, 6, 8, 12].includes(parseInt(content.count, 10)) ? parseInt(content.count, 10) : 6;
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${tr('sed.igf_heading_ph')}">
+    </div>
+
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+
+    <div class="form-group">
+      <label for="feed_id">${tr('sed.igf_feed_id')}</label>
+      <input type="text" id="feed_id" name="feed_id" value="${escapeHtml(content.feed_id || '')}" placeholder="e.g. aB3xY9…">
+      <small style="display:block;color:#718096;margin-top:.35rem">${tr('sed.igf_feed_hint')}
+        <a href="https://behold.so" target="_blank" rel="noopener">behold.so ↗</a></small>
+    </div>
+
+    <div class="form-group">
+      <label for="count">${tr('sed.igf_count')}</label>
+      <select id="count" name="count">
+        ${[4, 6, 8, 12].map((n) => `<option value="${n}"${n === count ? ' selected' : ''}>${n}</option>`).join('')}
+      </select>
+    </div>
   `;
 }
 

@@ -788,7 +788,7 @@ export const es = {
     image_label: 'URL de imagen', image_hint: 'opcional — puedes generar una con IA después de añadirlo',
     category_label: 'Categoría', category_hint: 'agrupa los artículos en secciones del catálogo (opcional)',
     forsale_label: 'A la venta — desmarca para un artículo de catálogo solo informativo',
-    media_label: 'Medios del catálogo (opcional)', media_gallery: 'URLs de imágenes de galería', stock_label: 'Inventario', stock_hint: 'déjalo en blanco para ilimitado; 0 = agotado', media_videos: 'URLs de video', media_files: 'PDF / archivos', media_links: 'Enlaces', media_perline: 'uno por línea', media_files_hint: 'Nombre | URL', media_files_ph: 'Ficha técnica | https://…/spec.pdf', media_links_hint: 'Etiqueta | URL', media_links_ph: 'Fabricante | https://…', currency_label: 'Moneda', currency_hint: 'Detectada automáticamente de tu cuenta de Stripe conectada. Se aplica a tu tienda y reservas pagadas.', currency_saved: 'Guardado ✓', upload_pdf: '⬆ Subir PDF', upload_image: '⬆ Subir imagen', from_drive: '🗂 Desde tu Drive', drive_title: 'Insertar desde tu Drive', drive_empty: 'Aún no hay imágenes en tu Drive — sube algunas en la página de Drive.', drive_loading: 'Cargando…', drive_err: 'No se pudo cargar tu Drive.',
+    media_label: 'Medios del catálogo (opcional)', media_gallery: 'URLs de imágenes de galería', stock_label: 'Inventario', stock_hint: 'déjalo en blanco para ilimitado; 0 = agotado', media_videos: 'URLs de video', media_files: 'PDF / archivos', media_links: 'Enlaces', media_perline: 'uno por línea', media_files_hint: 'Nombre | URL', media_files_ph: 'Ficha técnica | https://…/spec.pdf', media_links_hint: 'Etiqueta | URL', media_links_ph: 'Fabricante | https://…', currency_label: 'Moneda', currency_hint: 'Detectada automáticamente de tu cuenta de Stripe conectada. Se aplica a tu tienda y reservas pagadas.', currency_saved: 'Guardado ✓', pix_note_title: '🇧🇷 Acepta PIX y boleto (Brasil)', pix_note_body: 'PIX y boleto se activan en tu propio Panel de Stripe, no aquí. Abre Ajustes → Métodos de pago y habilita PIX y Boleto — luego aparecen automáticamente en el checkout para tus clientes. El boleto se confirma 1–2 días hábiles después de que el cliente paga; el pedido, la reserva o el curso se registra automáticamente al acreditarse.', pix_note_link: 'Abrir métodos de pago de Stripe ↗', upload_pdf: '⬆ Subir PDF', upload_image: '⬆ Subir imagen', from_drive: '🗂 Desde tu Drive', drive_title: 'Insertar desde tu Drive', drive_empty: 'Aún no hay imágenes en tu Drive — sube algunas en la página de Drive.', drive_loading: 'Cargando…', drive_err: 'No se pudo cargar tu Drive.',
     create_btn: 'Añadir producto', creating: 'Añadiendo…',
     save: 'Guardar', saving: 'Guardando…', cancel: 'Cancelar', edit: 'Editar',
     delete: 'Eliminar', delete_confirm: '¿Eliminar este producto? Esto no se puede deshacer.',
@@ -1086,6 +1086,10 @@ export const es = {
     bkg_heading_ph: 'Reserva una cita',
     bkg_hint: 'Los visitantes eligen un servicio y un horario — gestiona servicios, horarios y reservas en la',
     bkg_manager_link: 'página 📅 Reservas →',
+    igf_heading_ph: 'Lo último',
+    igf_feed_id: 'ID del feed de Instagram',
+    igf_feed_hint: 'Crea un feed gratis en Behold, conecta tu Instagram y pega aquí el ID del feed —',
+    igf_count: 'Publicaciones a mostrar',
   },
 
   aip: {

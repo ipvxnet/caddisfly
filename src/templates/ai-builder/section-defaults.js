@@ -19,6 +19,7 @@ const DEFAULTS = {
     stats: ['By the Numbers', ''],
     cta: ['Ready to get started?', ''],
     contact: ['Get in Touch', 'We’d love to hear from you'],
+    instagram_feed: ["What's happening", 'Our latest posts'],
   },
   es: {
     hero: ['Bienvenido', 'El eslogan de tu negocio'],
@@ -31,6 +32,7 @@ const DEFAULTS = {
     stats: ['En Números', ''],
     cta: ['¿Listo para empezar?', ''],
     contact: ['Contáctanos', 'Nos encantaría saber de ti'],
+    instagram_feed: ['Lo último', 'Nuestras publicaciones recientes'],
   },
   pt: {
     hero: ['Bem-vindo', 'O slogan do seu negócio'],
@@ -43,6 +45,7 @@ const DEFAULTS = {
     stats: ['Em Números', ''],
     cta: ['Pronto para começar?', ''],
     contact: ['Fale Conosco', 'Adoraríamos ouvir você'],
+    instagram_feed: ['O que há de novo', 'Nossas publicações recentes'],
   },
 };
 

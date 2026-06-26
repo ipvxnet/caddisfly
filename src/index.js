@@ -123,6 +123,7 @@ import { handleBookingReceipt } from './routes/public/booking-receipt.js';
 import { handleBookingReschedulePage, handleBookingRescheduleAction } from './routes/public/booking-reschedule.js';
 import { handleBookingFeed } from './routes/public/booking-feed.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
+import { handleInstagramFeed } from './routes/public/instagram-feed.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
   handleBookingHoursSave, handleBookingOverrideSave, handleBookingOverrideDelete, handleBookingHolidaysAdd,
@@ -430,6 +431,9 @@ router.post('/api/forms/submit', handleFormSubmit);
 router.get('/api/booking/:project_id/services', handleBookingServices);
 router.get('/api/booking/:project_id/slots', handleBookingSlots);
 router.post('/api/booking/:project_id/book', handleBookingCreate);
+// Instagram Feed plugin — public proxy for the merchant's Behold.so feed,
+// called cross-origin by the instagram_feed section on published sites.
+router.get('/api/instagram/feed', handleInstagramFeed);
 // Video upload sink — PUBLIC, token-authorized; the xAI video model PUTs the
 // finished clip here under Zero Data Retention (see video-sink.js).
 router.put('/api/video-sink/:token', handleVideoSink);
