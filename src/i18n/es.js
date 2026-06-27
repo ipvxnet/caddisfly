@@ -160,6 +160,7 @@ export const es = {
     refactor_almost: '¡Casi listo! Revisa tu correo y haz clic en el enlace para crear tu vista previa.',
     rf_sending: 'Enviando…',
     rf_btn_preview: 'Ver lo que encontramos',
+    rf_optional: 'Agregar detalles (opcional)', rf_search_label: 'Mejor forma de encontrarte en Google',
     rf_searching: 'Buscando…',
     rf_card_title: '¿Es este tu negocio?',
     rf_build: 'Crear mi sitio →',
@@ -230,7 +231,7 @@ export const es = {
     prompt_label: '¿Qué tipo de sitio necesitas?',
     prompt_ph: 'p. ej., Necesito una web para mi panadería con menú en línea y formulario de contacto…',
     lang_label: 'Idioma de tu sitio web',
-    submit: 'Empezar a crear →',
+    submit: 'Empezar a crear →', have_site: '¿Ya tienes un sitio web?',
   },
 
   loading: {

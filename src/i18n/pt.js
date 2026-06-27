@@ -160,6 +160,7 @@ export const pt = {
     refactor_almost: 'Quase lá! Verifique seu e-mail e clique no link para criar sua prévia.',
     rf_sending: 'Enviando…',
     rf_btn_preview: 'Ver o que encontramos',
+    rf_optional: 'Adicionar detalhes (opcional)', rf_search_label: 'Melhor forma de te encontrar no Google',
     rf_searching: 'Buscando…',
     rf_card_title: 'Este é o seu negócio?',
     rf_build: 'Criar meu site →',
@@ -230,7 +231,7 @@ export const pt = {
     prompt_label: 'Que tipo de site você precisa?',
     prompt_ph: 'ex.: Preciso de um site para a minha padaria com cardápio online e formulário de contato…',
     lang_label: 'Idioma do seu site',
-    submit: 'Começar a criar →',
+    submit: 'Começar a criar →', have_site: 'Já tem um site?',
   },
 
   loading: {
