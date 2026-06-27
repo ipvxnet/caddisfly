@@ -68,7 +68,9 @@ function statusPill(s, tr) {
 }
 
 function siteCard(site, domainsBlock = '', tr, unread = 0, hostSuffix = '', managersBlock = '') {
-  const live = site.subdomain ? `https://${site.subdomain}${hostSuffix}.${SITES_BASE}` : '';
+  // A reserved-but-unpublished address has a subdomain set without being live —
+  // require `deployed` so the card doesn't link to a URL that 404s until publish.
+  const live = (site.deployed && site.subdomain) ? `https://${site.subdomain}${hostSuffix}.${SITES_BASE}` : '';
   // Live home-page thumbnail via the same embed preview the editor uses. Projects
   // still generating have no page to show yet, so render a placeholder instead.
   const previewable = site.status !== 'conversation' && site.status !== 'content_generation';

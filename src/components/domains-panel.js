@@ -49,26 +49,30 @@ function domainRowHtml(d, sitesBase, tr) {
  * Render a custom-domain panel for one project.
  * @param {object} opts - { projectId, domains[], subdomain, saasOn, sitesBase, lang }
  */
-export function renderDomainsPanel({ projectId, domains = [], subdomain = '', saasOn = true, sitesBase = 'caddisfly.app', lang = 'en', subdomainLocked = false, previewSuffix = '' }) {
+export function renderDomainsPanel({ projectId, domains = [], subdomain = '', saasOn = true, sitesBase = 'caddisfly.app', lang = 'en', subdomainLocked = false, previewSuffix = '', published = false }) {
   const tr = translator(lang);
-  // Site address (subdomain) — shown only once published (has a subdomain). The
-  // owner may rename it ONCE (live check + suggestions); after that it locks.
+  // Site address (subdomain). PUBLISHED: live URL + a ONE-TIME rename (locks
+  // after). NOT published: pick/reserve the address now so first publish uses it
+  // instead of a generic derived name — freely changeable until then.
   const fullHost = subdomain ? `${subdomain}${previewSuffix}.${sitesBase}` : '';
-  const addr = subdomain
-    ? `<div class="sub-panel">
-         <div class="sub-current">${tr('dom.addr_current')} <a href="https://${esc(fullHost)}" target="_blank" rel="noopener">${esc(fullHost)}</a></div>
-         ${subdomainLocked
-        ? `<p class="sub-locked">${tr('dom.addr_locked')}</p>`
-        : `<details class="sub-change">
-              <summary>${tr('dom.addr_change')}</summary>
-              <p class="sub-note">${tr('dom.addr_once')}</p>
-              <div class="sub-row"><input type="text" class="sub-input" placeholder="my-business" autocomplete="off" maxlength="40" spellcheck="false"><span class="sub-suffix">${esc(previewSuffix)}.${esc(sitesBase)}</span></div>
-              <div class="sub-status"></div>
-              <div class="sub-suggest"></div>
-              <button type="button" class="d-btn primary sub-save" disabled>${tr('dom.addr_save')}</button>
-            </details>`}
-       </div>`
+  const currentLine = subdomain
+    ? (published
+        ? `<div class="sub-current">${tr('dom.addr_current')} <a href="https://${esc(fullHost)}" target="_blank" rel="noopener">${esc(fullHost)}</a></div>`
+        : `<div class="sub-current">${tr('dom.addr_reserved')} <code class="sub-host">${esc(fullHost)}</code> <span class="sub-muted">${tr('dom.addr_reserved_note')}</span></div>`)
     : '';
+  const addr = subdomainLocked
+    ? `<div class="sub-panel">${currentLine}<p class="sub-locked">${tr('dom.addr_locked')}</p></div>`
+    : `<div class="sub-panel">
+         ${currentLine}
+         <details class="sub-change"${subdomain ? '' : ' open'}>
+           <summary>${subdomain ? tr('dom.addr_change') : tr('dom.addr_pick')}</summary>
+           <p class="sub-note">${published ? tr('dom.addr_once') : tr('dom.addr_prepub')}</p>
+           <div class="sub-row"><input type="text" class="sub-input" placeholder="my-business" autocomplete="off" maxlength="40" spellcheck="false"><span class="sub-suffix">${esc(previewSuffix)}.${esc(sitesBase)}</span></div>
+           <div class="sub-status"></div>
+           <div class="sub-suggest"></div>
+           <button type="button" class="d-btn primary sub-save" disabled>${subdomain ? tr('dom.addr_save') : tr('dom.addr_reserve_btn')}</button>
+         </details>
+       </div>`;
   const list = domains.length
     ? domains.map((d) => domainRowHtml(d, sitesBase, tr)).join('')
     : `<p class="d-empty">${tr('dom.none_yet')}</p>`;
@@ -82,7 +86,7 @@ export function renderDomainsPanel({ projectId, domains = [], subdomain = '', sa
        <p class="d-hint">${tr('dom.tip')}</p>`
     : `<p class="d-empty">${tr('dom.publish_first')}</p>`;
   const hub = `<p class="d-hub">${tr('dom.hub_link', { link: `<a href="/domains">${tr('dom.hub_link_a')}</a>` })}</p>`;
-  return `<div class="domains-panel" data-project="${esc(projectId)}">${addr}${note}<div class="domains-list">${list}</div>${form}${hub}</div>`;
+  return `<div class="domains-panel" data-project="${esc(projectId)}" data-published="${published ? '1' : '0'}">${addr}${note}<div class="domains-list">${list}</div>${form}${hub}</div>`;
 }
 
 /** Styles for the domains panel (include once per page). */
@@ -243,7 +247,7 @@ export function domainsJs(lang = 'en') {
           checking: ${JSON.stringify(tr('dom.addr_checking'))}, available: ${JSON.stringify(tr('dom.addr_available'))},
           taken: ${JSON.stringify(tr('dom.addr_taken'))}, is_current: ${JSON.stringify(tr('dom.addr_is_current'))},
           suggest: ${JSON.stringify(tr('dom.addr_suggest'))}, saving: ${JSON.stringify(tr('dom.addr_saving'))},
-          saved: ${JSON.stringify(tr('dom.addr_saved'))}, confirm: ${JSON.stringify(tr('dom.addr_confirm'))},
+          saved: ${JSON.stringify(tr('dom.addr_saved'))}, confirm: ${JSON.stringify(tr('dom.addr_confirm'))}, confirm_reserve: ${JSON.stringify(tr('dom.addr_confirm_reserve'))},
           netErr: ${JSON.stringify(tr('dom.network_err'))}, too_short: ${JSON.stringify(tr('dom.addr_too_short'))},
           too_long: ${JSON.stringify(tr('dom.addr_too_long'))}, reserved: ${JSON.stringify(tr('dom.addr_reserved'))},
           empty: ${JSON.stringify(tr('dom.addr_empty'))}
@@ -276,7 +280,9 @@ export function domainsJs(lang = 'en') {
             }, 400);
           });
           saveBtn.addEventListener('click', async function(){
-            if(!slug) return; if(!confirm(ST.confirm.replace('{name}', slug))) return;
+            if(!slug) return;
+            var isPub = panel.dataset.published === '1';
+            if(!confirm((isPub ? ST.confirm : ST.confirm_reserve).replace('{name}', slug))) return;
             saveBtn.disabled=true; status.className='sub-status'; status.textContent = ST.saving;
             try{
               var res = await fetch('/api/ai-builder/'+encodeURIComponent(projectId)+'/subdomain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:slug})});

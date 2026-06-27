@@ -48,7 +48,11 @@ export async function handleSubdomainRename(ctx) {
   if (!canManageDomains(ctx.projectRole)) return jsonResponse({ success: false, error: 'forbidden' }, 403);
   const r = await resolve(env, params.project_id);
   if (!r) return jsonResponse({ success: false, error: 'not_found' }, 404);
-  if (r.row.subdomain_changed_at) return jsonResponse({ success: false, error: 'already_changed' }, 409);
+  // The one-time limit + the R2 re-host apply only to a PUBLISHED site. Before
+  // first publish the address is just RESERVED (deploy uses it as-is) — freely
+  // changeable, since there's nothing live to move and no "generic" name yet.
+  const published = r.row.status === 'deployed';
+  if (published && r.row.subdomain_changed_at) return jsonResponse({ success: false, error: 'already_changed' }, 409);
 
   const body = await request.json().catch(() => ({}));
   const v = validateSubdomain(body.name || '');
@@ -59,16 +63,18 @@ export async function handleSubdomainRename(ctx) {
     return jsonResponse({ success: false, error: 'taken', suggestions: await suggestFreeSubdomains(env.DB, v.slug, 5) }, 409);
   }
 
-  // Reserve the name + lock (one-time). Done BEFORE the R2 move so a concurrent
-  // check sees it as taken.
-  await r.update({ subdomain: v.slug, subdomain_changed_at: Math.floor(Date.now() / 1000) });
+  // Reserve the name (BEFORE any R2 move so a concurrent check sees it taken).
+  // Lock it as the one-time change ONLY when the site is already published.
+  const patch = { subdomain: v.slug };
+  if (published) patch.subdomain_changed_at = Math.floor(Date.now() / 1000);
+  await r.update(patch);
 
   let rehosted = 0;
-  if (oldSub && oldSub !== v.slug) {
+  if (published && oldSub && oldSub !== v.slug) {
     try { rehosted = await rehostSite(env, oldSub, v.slug); } catch (e) { console.error('subdomain rehost error:', e.message); }
     try { await repointCustomDomains(env, r.projectKey, v.slug); } catch (e) { console.error('subdomain repoint error:', e.message); }
   }
-  return jsonResponse({ success: true, subdomain: v.slug, url: liveUrl(env, v.slug), rehosted });
+  return jsonResponse({ success: true, subdomain: v.slug, url: liveUrl(env, v.slug), reserved: !published, rehosted });
 }
 
 /** Copy published pages sites/<old>/* → sites/<new>/*, rewriting the baked
