@@ -26,8 +26,14 @@ function esc(s) {
 
 function profileName(project) {
   try {
-    const p = JSON.parse(project.company_profile_json || '{}');
-    if (p && p.name) return p.name;
+    const cp = JSON.parse(project.company_profile_json || '{}');
+    // The OLD verify flow stores the profile at the top level (cp.name); the
+    // search/build refactor pipeline NESTS it (cp.profile.name) — check both, or
+    // every search/build site falls back to showing its URL. Mirrors customize.js.
+    const name = cp.name
+      || (cp.profile && (cp.profile.name || cp.profile.business_name))
+      || (cp.userProfile && cp.userProfile.business_name);
+    if (name) return name;
   } catch {
     /* ignore */
   }
