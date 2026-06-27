@@ -1212,6 +1212,8 @@ export const es = {
     connect: 'Conectar dominio',
     tip: 'Consejo: usa un subdominio como <code>www.</code> o <code>shop.</code> — funcionan en cualquier proveedor de DNS. Un dominio raíz a secas (<code>tunegocio.com</code>) necesita ALIAS / aplanamiento de CNAME, que algunos proveedores (p. ej. GoDaddy, Namecheap) no admiten.',
     publish_first: 'Publica tu sitio primero — luego podrás apuntarle un dominio.',
+    addr_current: 'La dirección de tu sitio:', addr_change: '✏️ Cambiar la dirección del sitio', addr_once: 'Solo puedes cambiar la dirección de tu sitio una vez — elige con cuidado.', addr_save: 'Guardar dirección', addr_locked: 'La dirección de tu sitio ya fue cambiada (solo se puede cambiar una vez).',
+    addr_checking: 'Verificando…', addr_available: 'disponible', addr_taken: 'Esa dirección está ocupada — prueba una de estas:', addr_is_current: 'Esa ya es tu dirección actual.', addr_suggest: 'Nombres disponibles:', addr_saving: 'Guardando…', addr_saved: 'Guardado ✓ — actualizando…', addr_confirm: '¿Cambiar la dirección de tu sitio a «{name}»? Esto solo se puede hacer una vez.', addr_too_short: 'Demasiado corto (mín. 3 caracteres).', addr_too_long: 'Demasiado largo (máx. 40 caracteres).', addr_reserved: 'Ese nombre está reservado — elige otro.', addr_empty: 'Escribe un nombre.',
     could_not_connect: 'No se pudo conectar ese dominio.', network_err: 'Error de red. Inténtalo de nuevo.',
     gate_default: 'Los dominios propios están disponibles en los planes de pago.',
     gate_upgrade: 'Mejora tu plan', gate_dashboard: 'Ir al panel',

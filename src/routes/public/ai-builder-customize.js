@@ -48,12 +48,14 @@ export async function handleAIBuilderCustomize(ctx) {
     let industrySignal = ''; // name + description/services → recommended template
 
     let currentSubdomain;
+    let subdomainChangedAt = null;
     let siteSubtitle = '';
     if (project) {
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
       projectKey = { aiProjectId: project.id };
       customerEmail = project.customer_email;
       currentSubdomain = project.subdomain;
+      subdomainChangedAt = project.subdomain_changed_at;
       let detail = {};
       try { detail = JSON.parse(project.detailed_profile_json || '{}'); } catch {}
       industrySignal = [project.project_name, detail.business_name, detail.services, detail.history, detail.demographics].filter(Boolean).join(' ');
@@ -96,6 +98,7 @@ export async function handleAIBuilderCustomize(ctx) {
       isAIBuilder = false;
       customerEmail = regularProject.customer_email;
       currentSubdomain = regularProject.subdomain;
+      subdomainChangedAt = regularProject.subdomain_changed_at;
     }
 
     if (!config) {
@@ -117,7 +120,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <details class="design-group" id="domains-group"${domains.length ? ' open' : ''}>
         <summary>🌐 Custom domain</summary>
         <div class="design-group-body">
-          ${renderDomainsPanel({ projectId: project.project_id, domains, subdomain: currentSubdomain, saasOn, sitesBase, lang })}
+          ${renderDomainsPanel({ projectId: project.project_id, domains, subdomain: currentSubdomain, saasOn, sitesBase, lang, subdomainLocked: !!subdomainChangedAt, previewSuffix: env.SITES_PREVIEW_SUFFIX || '' })}
         </div>
       </details>`;
 

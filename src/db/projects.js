@@ -135,6 +135,8 @@ export async function updateProject(db, projectId, updates) {
     'terms_accepted_at',
     // Subdomain hosting (migration 012)
     'subdomain',
+    // One-time subdomain rename timestamp (migration 071)
+    'subdomain_changed_at',
     // Email-to-blog inbound token (migration 033)
     'inbound_email_token'
   ];

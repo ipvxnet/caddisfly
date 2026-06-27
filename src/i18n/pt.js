@@ -1212,6 +1212,8 @@ export const pt = {
     connect: 'Conectar domínio',
     tip: 'Dica: use um subdomínio como <code>www.</code> ou <code>shop.</code> — funcionam em qualquer provedor de DNS. Um domínio raiz puro (<code>seunegocio.com</code>) precisa de ALIAS / flattening de CNAME, que alguns provedores (ex.: GoDaddy, Namecheap) não suportam.',
     publish_first: 'Publique o seu site primeiro — depois você poderá apontar um domínio para ele.',
+    addr_current: 'O endereço do seu site:', addr_change: '✏️ Alterar o endereço do site', addr_once: 'Você só pode alterar o endereço do seu site uma vez — escolha com cuidado.', addr_save: 'Salvar endereço', addr_locked: 'O endereço do seu site já foi alterado (só pode ser alterado uma vez).',
+    addr_checking: 'Verificando…', addr_available: 'disponível', addr_taken: 'Esse endereço está em uso — tente um destes:', addr_is_current: 'Esse já é o seu endereço atual.', addr_suggest: 'Nomes disponíveis:', addr_saving: 'Salvando…', addr_saved: 'Salvo ✓ — atualizando…', addr_confirm: 'Alterar o endereço do seu site para “{name}”? Isso só pode ser feito uma vez.', addr_too_short: 'Muito curto (mín. 3 caracteres).', addr_too_long: 'Muito longo (máx. 40 caracteres).', addr_reserved: 'Esse nome é reservado — escolha outro.', addr_empty: 'Digite um nome.',
     could_not_connect: 'Não foi possível conectar esse domínio.', network_err: 'Erro de rede. Tente novamente.',
     gate_default: 'Os domínios próprios estão disponíveis nos planos pagos.',
     gate_upgrade: 'Faça upgrade do seu plano', gate_dashboard: 'Ir para o painel',

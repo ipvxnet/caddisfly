@@ -49,8 +49,26 @@ function domainRowHtml(d, sitesBase, tr) {
  * Render a custom-domain panel for one project.
  * @param {object} opts - { projectId, domains[], subdomain, saasOn, sitesBase, lang }
  */
-export function renderDomainsPanel({ projectId, domains = [], subdomain = '', saasOn = true, sitesBase = 'caddisfly.app', lang = 'en' }) {
+export function renderDomainsPanel({ projectId, domains = [], subdomain = '', saasOn = true, sitesBase = 'caddisfly.app', lang = 'en', subdomainLocked = false, previewSuffix = '' }) {
   const tr = translator(lang);
+  // Site address (subdomain) — shown only once published (has a subdomain). The
+  // owner may rename it ONCE (live check + suggestions); after that it locks.
+  const fullHost = subdomain ? `${subdomain}${previewSuffix}.${sitesBase}` : '';
+  const addr = subdomain
+    ? `<div class="sub-panel">
+         <div class="sub-current">${tr('dom.addr_current')} <a href="https://${esc(fullHost)}" target="_blank" rel="noopener">${esc(fullHost)}</a></div>
+         ${subdomainLocked
+        ? `<p class="sub-locked">${tr('dom.addr_locked')}</p>`
+        : `<details class="sub-change">
+              <summary>${tr('dom.addr_change')}</summary>
+              <p class="sub-note">${tr('dom.addr_once')}</p>
+              <div class="sub-row"><input type="text" class="sub-input" placeholder="my-business" autocomplete="off" maxlength="40" spellcheck="false"><span class="sub-suffix">${esc(previewSuffix)}.${esc(sitesBase)}</span></div>
+              <div class="sub-status"></div>
+              <div class="sub-suggest"></div>
+              <button type="button" class="d-btn primary sub-save" disabled>${tr('dom.addr_save')}</button>
+            </details>`}
+       </div>`
+    : '';
   const list = domains.length
     ? domains.map((d) => domainRowHtml(d, sitesBase, tr)).join('')
     : `<p class="d-empty">${tr('dom.none_yet')}</p>`;
@@ -64,7 +82,7 @@ export function renderDomainsPanel({ projectId, domains = [], subdomain = '', sa
        <p class="d-hint">${tr('dom.tip')}</p>`
     : `<p class="d-empty">${tr('dom.publish_first')}</p>`;
   const hub = `<p class="d-hub">${tr('dom.hub_link', { link: `<a href="/domains">${tr('dom.hub_link_a')}</a>` })}</p>`;
-  return `<div class="domains-panel" data-project="${esc(projectId)}">${note}<div class="domains-list">${list}</div>${form}${hub}</div>`;
+  return `<div class="domains-panel" data-project="${esc(projectId)}">${addr}${note}<div class="domains-list">${list}</div>${form}${hub}</div>`;
 }
 
 /** Styles for the domains panel (include once per page). */
@@ -99,6 +117,22 @@ export const DOMAINS_CSS = `
     .d-hub { font-size: .8rem; color: #718096; margin: .9rem 0 0; padding-top: .7rem; border-top: 1px solid #edf1f7; }
     .d-hub a { color: #667eea; font-weight: 700; text-decoration: none; }
     .d-hub a:hover { text-decoration: underline; }
+    .sub-panel { border: 1px solid #e2e8f0; border-radius: 10px; padding: .8rem; margin-bottom: 1rem; background: #fbfcfe; }
+    .sub-current { font-size: .9rem; color: #1a202c; }
+    .sub-current a { color: #667eea; font-weight: 600; text-decoration: none; }
+    .sub-locked { font-size: .8rem; color: #718096; margin: .5rem 0 0; }
+    .sub-change summary { cursor: pointer; font-weight: 700; font-size: .85rem; color: #667eea; margin-top: .55rem; }
+    .sub-note { font-size: .78rem; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: .45rem .6rem; margin: .6rem 0; }
+    .sub-row { display: flex; align-items: stretch; gap: 0; margin-top: .2rem; }
+    .sub-input { flex: 1; min-width: 100px; padding: .5rem .7rem; border: 1.5px solid #e2e8f0; border-right: none; border-radius: 8px 0 0 8px; font: inherit; font-size: .9rem; }
+    .sub-suffix { display: flex; align-items: center; padding: 0 .7rem; background: #f1f5f9; border: 1.5px solid #e2e8f0; border-left: none; border-radius: 0 8px 8px 0; color: #64748b; font-size: .85rem; font-family: ui-monospace, Menlo, monospace; }
+    .sub-status { font-size: .82rem; min-height: 1.1em; margin: .5rem 0; font-weight: 600; }
+    .sub-status.ok { color: #03543f; }
+    .sub-status.bad { color: #c53030; }
+    .sub-suggest { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .5rem; }
+    .sub-sg-label { width: 100%; font-size: .76rem; color: #718096; }
+    .sub-sg { font: inherit; font-size: .8rem; padding: .3rem .6rem; border: 1px solid #cbd5e0; background: #fff; border-radius: 999px; cursor: pointer; color: #4a5568; }
+    .sub-sg:hover { border-color: #667eea; color: #667eea; }
     .d-form { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
     .d-input { flex: 1; min-width: 180px; padding: .5rem .7rem; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: .9rem; }
     .d-err { color: #c53030; font-size: .8rem; width: 100%; }
@@ -203,6 +237,56 @@ export function domainsJs(lang = 'en') {
           } else alert(data.error || ${JSON.stringify(tr('dom.could_not_remove'))});
         }catch(_){ alert(${JSON.stringify(tr('dom.network_err'))}); }
       };
+      // --- Site address: one-time subdomain rename (live check + suggestions) ---
+      (function(){
+        var ST = {
+          checking: ${JSON.stringify(tr('dom.addr_checking'))}, available: ${JSON.stringify(tr('dom.addr_available'))},
+          taken: ${JSON.stringify(tr('dom.addr_taken'))}, is_current: ${JSON.stringify(tr('dom.addr_is_current'))},
+          suggest: ${JSON.stringify(tr('dom.addr_suggest'))}, saving: ${JSON.stringify(tr('dom.addr_saving'))},
+          saved: ${JSON.stringify(tr('dom.addr_saved'))}, confirm: ${JSON.stringify(tr('dom.addr_confirm'))},
+          netErr: ${JSON.stringify(tr('dom.network_err'))}, too_short: ${JSON.stringify(tr('dom.addr_too_short'))},
+          too_long: ${JSON.stringify(tr('dom.addr_too_long'))}, reserved: ${JSON.stringify(tr('dom.addr_reserved'))},
+          empty: ${JSON.stringify(tr('dom.addr_empty'))}
+        };
+        function errText(code){ return ({ too_short: ST.too_short, too_long: ST.too_long, reserved: ST.reserved, empty: ST.empty })[code] || ST.taken; }
+        document.querySelectorAll('.sub-change').forEach(function(box){
+          var panel = box.closest('.domains-panel'); if(!panel) return;
+          var projectId = panel.dataset.project;
+          var input = box.querySelector('.sub-input'), status = box.querySelector('.sub-status');
+          var suggest = box.querySelector('.sub-suggest'), saveBtn = box.querySelector('.sub-save');
+          var slug = '', timer;
+          input.addEventListener('input', function(){
+            clearTimeout(timer); status.className='sub-status'; status.textContent=''; suggest.innerHTML=''; slug=''; saveBtn.disabled=true;
+            var v=(input.value||'').trim(); if(!v) return;
+            status.textContent = ST.checking;
+            timer = setTimeout(async function(){
+              try{
+                var res = await fetch('/api/ai-builder/'+encodeURIComponent(projectId)+'/subdomain/check?name='+encodeURIComponent(v));
+                var d = await res.json();
+                if(d.available){ status.className='sub-status ok'; status.textContent='✓ '+(d.url||d.slug)+' — '+ST.available; slug=d.slug; saveBtn.disabled=false; }
+                else {
+                  status.className='sub-status bad';
+                  status.textContent = d.is_current ? ST.is_current : ('✗ '+(d.error?errText(d.error):ST.taken));
+                  if(d.suggestions && d.suggestions.length){
+                    suggest.innerHTML = '<span class="sub-sg-label">'+ST.suggest+'</span>' + d.suggestions.map(function(s){ return '<button type="button" class="sub-sg" data-s="'+dEsc(s)+'">'+dEsc(s)+'</button>'; }).join('');
+                    suggest.querySelectorAll('.sub-sg').forEach(function(b){ b.addEventListener('click', function(){ input.value=b.getAttribute('data-s'); input.dispatchEvent(new Event('input')); input.focus(); }); });
+                  }
+                }
+              }catch(_){ status.className='sub-status bad'; status.textContent = ST.netErr; }
+            }, 400);
+          });
+          saveBtn.addEventListener('click', async function(){
+            if(!slug) return; if(!confirm(ST.confirm.replace('{name}', slug))) return;
+            saveBtn.disabled=true; status.className='sub-status'; status.textContent = ST.saving;
+            try{
+              var res = await fetch('/api/ai-builder/'+encodeURIComponent(projectId)+'/subdomain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:slug})});
+              var d = await res.json();
+              if(d.success){ status.className='sub-status ok'; status.textContent = ST.saved; setTimeout(function(){ location.reload(); }, 1000); }
+              else { status.className='sub-status bad'; status.textContent = (d.error==='taken' ? '✗ '+ST.taken : (errText(d.error)||ST.netErr)); saveBtn.disabled=false; }
+            }catch(_){ status.className='sub-status bad'; status.textContent = ST.netErr; saveBtn.disabled=false; }
+          });
+        });
+      })();
     })();
 `;
 }
