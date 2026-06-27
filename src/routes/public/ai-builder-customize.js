@@ -49,6 +49,7 @@ export async function handleAIBuilderCustomize(ctx) {
 
     let currentSubdomain;
     let subdomainChangedAt = null;
+    let isPublished = false;
     let siteSubtitle = '';
     if (project) {
       config = await getWebsiteConfigByAIProjectId(env.DB, project.id);
@@ -56,6 +57,7 @@ export async function handleAIBuilderCustomize(ctx) {
       customerEmail = project.customer_email;
       currentSubdomain = project.subdomain;
       subdomainChangedAt = project.subdomain_changed_at;
+      isPublished = project.status === 'deployed';
       let detail = {};
       try { detail = JSON.parse(project.detailed_profile_json || '{}'); } catch {}
       industrySignal = [project.project_name, detail.business_name, detail.services, detail.history, detail.demographics].filter(Boolean).join(' ');
@@ -99,6 +101,7 @@ export async function handleAIBuilderCustomize(ctx) {
       customerEmail = regularProject.customer_email;
       currentSubdomain = regularProject.subdomain;
       subdomainChangedAt = regularProject.subdomain_changed_at;
+      isPublished = regularProject.status === 'deployed';
     }
 
     if (!config) {
@@ -120,7 +123,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <details class="design-group" id="domains-group"${domains.length ? ' open' : ''}>
         <summary>🌐 Custom domain</summary>
         <div class="design-group-body">
-          ${renderDomainsPanel({ projectId: project.project_id, domains, subdomain: currentSubdomain, saasOn, sitesBase, lang, subdomainLocked: !!subdomainChangedAt, previewSuffix: env.SITES_PREVIEW_SUFFIX || '' })}
+          ${renderDomainsPanel({ projectId: project.project_id, domains, subdomain: currentSubdomain, saasOn, sitesBase, lang, subdomainLocked: !!subdomainChangedAt, previewSuffix: env.SITES_PREVIEW_SUFFIX || '', published: isPublished })}
         </div>
       </details>`;
 
@@ -786,7 +789,7 @@ export async function handleAIBuilderCustomize(ctx) {
         </div>
       </div>
       <a href="/ai-preview/${project.project_id}" class="btn btn-secondary" target="_blank">${tr('cust.full_preview')}</a>
-      <span class="pub-badge ${currentSubdomain ? 'pub' : 'draft'}" id="pub-badge" title="${currentSubdomain ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${currentSubdomain ? tr('cust.status_published') : tr('cust.status_draft')}</span>
+      <span class="pub-badge ${isPublished ? 'pub' : 'draft'}" id="pub-badge" title="${isPublished ? tr('cust.status_published_title') : tr('cust.status_draft_title')}">${isPublished ? tr('cust.status_published') : tr('cust.status_draft')}</span>
       ${showDeploy ? `<button class="btn btn-primary" onclick="deployWebsite(this)">${tr('cust.deploy')}</button>` : ''}
     </div>
   </div>
