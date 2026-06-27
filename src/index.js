@@ -124,7 +124,7 @@ import { handleBookingReschedulePage, handleBookingRescheduleAction } from './ro
 import { handleBookingFeed } from './routes/public/booking-feed.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import { handleInstagramFeed } from './routes/public/instagram-feed.js';
-import { handleMemberLogin, handleMemberVerify, handleMemberMe, handleMemberLogout } from './routes/api/members.js';
+import { handleMemberLogin, handleMemberVerify, handleMemberMe, handleMemberLogout, handleMemberContent } from './routes/api/members.js';
 import { handleMembersManager, handleMemberSetStatus, handleMemberDelete, handleMembersCsv } from './routes/public/members-manager.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
@@ -447,6 +447,7 @@ router.post('/api/members/:site/login', handleMemberLogin);
 router.get('/members/:site/verify', handleMemberVerify);
 router.get('/api/members/:site/me', handleMemberMe);
 router.post('/api/members/:site/logout', handleMemberLogout);
+router.get('/api/members/:site/content', handleMemberContent);
 // Video upload sink — PUBLIC, token-authorized; the xAI video model PUTs the
 // finished clip here under Zero Data Retention (see video-sink.js).
 router.put('/api/video-sink/:token', handleVideoSink);

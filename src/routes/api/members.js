@@ -5,6 +5,7 @@
 //   GET  /members/:site/verify?token=…                                        -> sets session cookie, redirects back
 //   GET  /api/members/:site/me                                                -> { logged_in, email }
 //   POST /api/members/:site/logout                                            -> clears cookie
+//   GET  /api/members/:site/content?page=<slug>                               -> real body of a members-only page (members only)
 //
 // The roster row is written on VERIFY (proven email ownership), not on the login
 // request, so unverified emails never pollute the merchant's member list.
@@ -16,6 +17,15 @@ import {
   resolveMemberSite, signMagicToken, verifyMagicToken, signSession,
   readSession, sessionCookie, clearCookie, safeReturnUrl,
 } from '../../utils/member-session.js';
+import { getMemberByEmail } from '../../db/site-members.js';
+import { hasPlugin, entitledSectionFilter } from '../../plugins/entitlements.js';
+import { getPageBySlug, getHomePage, getPagesByProject } from '../../db/ai-pages.js';
+import { getHomeBodySections, getBodySectionsForPage } from '../../db/ai-sections.js';
+import { getProductsByProject } from '../../db/products.js';
+import { annotateProductsWithVariants } from '../../db/variants.js';
+import { getServices } from '../../db/bookings.js';
+import { getCoursesByProject } from '../../db/courses.js';
+import { assemblePage } from '../../utils/ai-page-assembler.js';
 
 const appOrigin = (env) => (env.APP_URL && env.APP_URL.startsWith('http') ? env.APP_URL : 'https://caddisfly.ai');
 
@@ -71,6 +81,53 @@ export async function handleMemberMe(ctx) {
 /** POST /api/members/:site/logout — clear the session cookie. */
 export async function handleMemberLogout() {
   return jsonResponse({ success: true }, 200, { 'Set-Cookie': clearCookie() });
+}
+
+/** GET /api/members/:site/content?page=<slug> — the REAL body of a members-only
+ *  page, served ONLY to a valid signed-in member (the public page ships just a
+ *  gate; this is injected client-side). Returns { html:'' } for non-gated pages
+ *  or when the owner isn't entitled — never leaks gated content to non-members. */
+export async function handleMemberContent(ctx) {
+  const { env, request, params } = ctx;
+  const url = new URL(request.url);
+  const session = await readSession(env, request, params.site);
+  if (!session) return jsonResponse({ error: 'not_a_member' }, 401);
+  const site = await resolveMemberSite(env, params.site);
+  if (!site) return jsonResponse({ error: 'site_not_found' }, 404);
+
+  // Blocked members get nothing; gating is real only when the owner is entitled.
+  const member = await getMemberByEmail(env.DB, site.projectKey, session.e);
+  if (!member || member.status === 'blocked') return jsonResponse({ error: 'forbidden' }, 403);
+  if (!(await hasPlugin(env, site.ownerEmail, 'members'))) return jsonResponse({ html: '' });
+
+  const slug = (url.searchParams.get('page') || '').trim();
+  const page = slug ? await getPageBySlug(env.DB, site.projectKey, slug) : await getHomePage(env.DB, site.projectKey);
+  if (!page || !page.members_only) return jsonResponse({ html: '' }); // only serve GATED pages
+
+  const filterSections = await entitledSectionFilter(env, site.ownerEmail);
+  const body = filterSections(page.is_home
+    ? await getHomeBodySections(env.DB, site.projectKey, page.id, true)
+    : await getBodySectionsForPage(env.DB, page.id, true));
+  if (!body.length) return jsonResponse({ html: '' });
+
+  // Same live data deploy injects, so gated sections render identically.
+  const products = await getProductsByProject(env.DB, site.projectKey, true);
+  await annotateProductsWithVariants(env.DB, site.projectKey, products);
+  const courses = (await hasPlugin(env, site.ownerEmail, 'courses'))
+    ? await getCoursesByProject(env.DB, site.projectKey, { publishedOnly: true }) : [];
+  const bookingServices = await getServices(env.DB, site.projectKey, { activeOnly: true });
+  const hasAdvStore = await hasPlugin(env, site.ownerEmail, 'advanced_store');
+  let pages = [];
+  try { pages = await getPagesByProject(env.DB, site.projectKey); } catch { /* nav anchors best-effort */ }
+
+  // Render the page body via the normal assembler (NOT gated) and extract <main>.
+  const full = assemblePage(body, site.config || {}, { project_name: site.siteName }, {
+    pages, currentSlug: page.slug, preordered: true, previewBase: '',
+    trackId: params.site, appOrigin: env.APP_URL || '', lang: site.lang,
+    products, courses, bookingServices, hasAdvStore,
+  });
+  const m = full.match(/<main>([\s\S]*?)<\/main>/i);
+  return jsonResponse({ html: m ? m[1].trim() : '' });
 }
 
 function memberNoticePage(heading, sub) {

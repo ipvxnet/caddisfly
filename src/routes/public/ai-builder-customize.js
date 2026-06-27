@@ -848,6 +848,7 @@ export async function handleAIBuilderCustomize(ctx) {
           </label>
           <label class="menu-org-row"><input type="checkbox" ${currentPage.is_visible ? 'checked' : ''} onchange="setPageVisible(${currentPage.id}, this.checked)"> ${tr('cust.menu_show') || 'Show in menu'}</label>
           <label class="menu-org-row"><input type="checkbox" ${currentPage.show_sections_in_nav ? 'checked' : ''} onchange="setShowSections(${currentPage.id}, this.checked)"> ${tr('cust.menu_sections_sub') || 'Sections as submenu'}</label>
+          ${hasMembers ? `<label class="menu-org-row" title="${tr('cust.members_only_hint') || 'Visitors must sign in (as a member) to view this page'}"><input type="checkbox" ${currentPage.members_only ? 'checked' : ''} onchange="setMembersOnly(${currentPage.id}, this.checked)"> 🔒 ${tr('cust.members_only') || 'Members only'}</label>` : ''}
         </div>`;
             })()
           : ''}
@@ -1331,6 +1332,7 @@ export async function handleAIBuilderCustomize(ctx) {
     function setPageParent(id, parentId) { updatePageField(id, { parent_id: parentId ? Number(parentId) : null }); }
     function setPageVisible(id, vis) { updatePageField(id, { is_visible: vis ? 1 : 0 }); }
     function setShowSections(id, val) { updatePageField(id, { show_sections_in_nav: val ? 1 : 0 }); }
+    function setMembersOnly(id, val) { updatePageField(id, { members_only: val ? 1 : 0 }); }
     async function reorderMenuScope(ids) {
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/reorder\`, {
