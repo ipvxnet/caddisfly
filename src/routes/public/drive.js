@@ -67,7 +67,7 @@ const DRV = {
     usage: '{used} of {total} used', upload_btn: 'Upload files', upload_folder: '📁 Upload folder', uploading: 'Uploading…', drop_hint: 'Drag files or a folder here, or click to choose',
     empty: 'This folder is empty — upload a file or create a folder.', th_file: 'File', th_size: 'Size', th_added: 'Added',
     copy_link: 'Copy link', copied: 'Copied ✓', del: 'Delete', del_confirm: 'Move this file to the Trash? Links to it will stop working until you restore it.',
-    err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: 'For security, executable and system files can’t be uploaded.', err_quota: 'Not enough space. Delete some files or upgrade your plan.',
+    err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: 'For security, executable and system files can’t be uploaded.', err_quota: 'Not enough space. Delete some files or upgrade your plan.', err_empty: 'This file is empty or could not be read.', up_ok: '{n} uploaded', up_skip: '{n} skipped (empty or too large)', up_fail: '{n} failed',
     new_folder: 'New folder', folder_name_prompt: 'Folder name:', rename: 'Rename', rename_prompt: 'New name:',
     move: 'Move', copy: 'Copy', move_title: 'Move "{name}" to:', copy_title: 'Copy "{name}" to:', root_label: 'Drive (root)',
     confirm: 'Confirm', cancel: 'Cancel', folder_del_confirm: 'Move this folder to the Trash?', folder_not_empty: "The folder isn't empty — move or delete its contents first.", folder_del_full: 'This folder contains {files} file(s) and {folders} subfolder(s). Deleting it moves EVERYTHING inside to the Trash, and links will stop working until you restore them.', folder_del_title: 'Delete “{name}”?', del_type_hint: 'Type DELETE to confirm',
@@ -79,7 +79,7 @@ const DRV = {
     usage: '{used} de {total} utilizado', upload_btn: 'Subir archivos', upload_folder: '📁 Subir carpeta', uploading: 'Subiendo…', drop_hint: 'Arrastra archivos o una carpeta aquí, o haz clic para elegir',
     empty: 'Esta carpeta está vacía — sube un archivo o crea una carpeta.', th_file: 'Archivo', th_size: 'Tamaño', th_added: 'Añadido',
     copy_link: 'Copiar enlace', copied: 'Copiado ✓', del: 'Eliminar', del_confirm: '¿Mover este archivo a la Papelera? Los enlaces a él dejarán de funcionar hasta que lo restaures.',
-    err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Por seguridad, no se pueden subir archivos ejecutables o de sistema.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.',
+    err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Por seguridad, no se pueden subir archivos ejecutables o de sistema.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.', err_empty: 'Este archivo está vacío o no se pudo leer.', up_ok: '{n} subidos', up_skip: '{n} omitidos (vacíos o muy grandes)', up_fail: '{n} fallidos',
     new_folder: 'Nueva carpeta', folder_name_prompt: 'Nombre de la carpeta:', rename: 'Renombrar', rename_prompt: 'Nuevo nombre:',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" a:', copy_title: 'Copiar "{name}" a:', root_label: 'Drive (raíz)',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: '¿Mover esta carpeta a la Papelera?', folder_not_empty: 'La carpeta no está vacía — mueve o elimina su contenido primero.', folder_del_full: 'Esta carpeta contiene {files} archivo(s) y {folders} subcarpeta(s). Al eliminarla se mueve TODO su contenido a la Papelera, y los enlaces dejarán de funcionar hasta que los restaures.', folder_del_title: '¿Eliminar “{name}”?', del_type_hint: 'Escribe DELETE para confirmar',
@@ -91,7 +91,7 @@ const DRV = {
     usage: '{used} de {total} usado', upload_btn: 'Carregar arquivos', upload_folder: '📁 Carregar pasta', uploading: 'Carregando…', drop_hint: 'Arraste arquivos ou uma pasta aqui, ou clique para escolher',
     empty: 'Esta pasta está vazia — carregue um arquivo ou crie uma pasta.', th_file: 'Arquivo', th_size: 'Tamanho', th_added: 'Adicionado',
     copy_link: 'Copiar link', copied: 'Copiado ✓', del: 'Excluir', del_confirm: 'Mover este arquivo para a Lixeira? Os links para ele deixarão de funcionar até você restaurá-lo.',
-    err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Por segurança, arquivos executáveis e de sistema não podem ser enviados.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.',
+    err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Por segurança, arquivos executáveis e de sistema não podem ser enviados.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.', err_empty: 'Este arquivo está vazio ou não pôde ser lido.', up_ok: '{n} enviados', up_skip: '{n} ignorados (vazios ou muito grandes)', up_fail: '{n} falharam',
     new_folder: 'Nova pasta', folder_name_prompt: 'Nome da pasta:', rename: 'Renomear', rename_prompt: 'Novo nome:',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" para:', copy_title: 'Copiar "{name}" para:', root_label: 'Drive (raiz)',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: 'Mover esta pasta para a Lixeira?', folder_not_empty: 'A pasta não está vazia — mova ou exclua seu conteúdo primeiro.', folder_del_full: 'Esta pasta contém {files} arquivo(s) e {folders} subpasta(s). Ao excluí-la, TUDO dentro vai para a Lixeira, e os links deixarão de funcionar até você restaurá-los.', folder_del_title: 'Excluir “{name}”?', del_type_hint: 'Digite DELETE para confirmar',
@@ -221,7 +221,7 @@ export async function handleDrive(ctx) {
     <script>
       var MAX = ${DRIVE_MAX_FILE};
       var CUR = ${curId == null ? 'null' : curId};
-      var S = ${JSON.stringify({ uploading: T.uploading, err: T.err, errSize: T.err_size, copied: T.copied, copy: T.copy_link, delConfirm: T.del_confirm, folderName: T.folder_name_prompt, renamePrompt: T.rename_prompt, folderDel: T.folder_del_confirm, folderDelFull: T.folder_del_full, folderDelTitle: T.folder_del_title, delTypeHint: T.del_type_hint, notEmpty: T.folder_not_empty, moveTitle: T.move_title, copyTitle: T.copy_title })};
+      var S = ${JSON.stringify({ uploading: T.uploading, err: T.err, errSize: T.err_size, upOk: T.up_ok, upSkip: T.up_skip, upFail: T.up_fail, copied: T.copied, copy: T.copy_link, delConfirm: T.del_confirm, folderName: T.folder_name_prompt, renamePrompt: T.rename_prompt, folderDel: T.folder_del_confirm, folderDelFull: T.folder_del_full, folderDelTitle: T.folder_del_title, delTypeHint: T.del_type_hint, notEmpty: T.folder_not_empty, moveTitle: T.move_title, copyTitle: T.copy_title })};
       function post(u, body){ return fetch(u, { method:'POST', headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); }); }
       // upload (into current folder)
       var input=document.getElementById('dr-input'), drop=document.getElementById('dr-drop'), msg=document.getElementById('dr-msg');
@@ -261,13 +261,25 @@ export async function handleDrive(ctx) {
       }
       async function uploadTree(items){
         if(!items||!items.length) return; var cache={};
-        for(var i=0;i<items.length;i++){ var it=items[i]; if(it.file.size>MAX){ msg.textContent=S.errSize; continue; }
-          msg.textContent=S.uploading+' ('+(i+1)+'/'+items.length+')';
-          var fid; try{ fid=await ensureFolder(it.path, cache); }catch(e){ msg.textContent=S.err; return; }
+        // One bad file (empty/unreadable/too-big or a server hiccup) must NOT abort
+        // the whole batch — skip it, keep going, and summarize at the end.
+        var ok=0, skipped=0, failed=0, total=items.length;
+        for(var i=0;i<total;i++){ var it=items[i];
+          if(!it.file||!it.file.size){ skipped++; continue; }   // 0-byte / unreadable
+          if(it.file.size>MAX){ skipped++; continue; }          // too large
+          msg.textContent=S.uploading+' ('+(i+1)+'/'+total+')';
+          var fid; try{ fid=await ensureFolder(it.path, cache); }catch(e){ failed++; continue; }
           try{ var q='/api/drive/upload?name='+encodeURIComponent(it.file.name)+(fid!=null?'&folder='+fid:'');
-            var res=await fetch(q,{method:'POST',headers:{'Content-Type':it.file.type||'application/octet-stream'},body:it.file}); var d=await res.json();
-            if(!res.ok||!d.success){ msg.textContent=(d&&d.error)||S.err; return; } }catch(e){ msg.textContent=S.err; return; } }
-        location.reload();
+            var res=await fetch(q,{method:'POST',headers:{'Content-Type':it.file.type||'application/octet-stream'},body:it.file});
+            var d=await res.json().catch(function(){return{};});
+            if(res.ok&&d.success){ ok++; } else if(d&&d.code==='empty'){ skipped++; } else { failed++; }
+          }catch(e){ failed++; } }
+        if(ok===total){ location.reload(); return; }            // all good — refresh now
+        var parts=[S.upOk.replace('{n}',ok)];                   // partial — summarize, then refresh
+        if(skipped) parts.push(S.upSkip.replace('{n}',skipped));
+        if(failed) parts.push(S.upFail.replace('{n}',failed));
+        msg.textContent=parts.join(' · ');
+        setTimeout(function(){ location.reload(); }, 2800);
       }
       // copy link
       document.querySelectorAll('.dr-copy').forEach(function(b){ b.addEventListener('click', function(){ navigator.clipboard.writeText(b.dataset.url).then(function(){ var t=b.textContent; b.textContent=S.copied; setTimeout(function(){ b.textContent=S.copy; },1400); }); }); });
@@ -326,7 +338,7 @@ export async function handleDriveUpload(ctx) {
   const buf = await request.arrayBuffer();
   const size = buf.byteLength;
   if (size > DRIVE_MAX_FILE) return json({ success: false, error: T.err_size }, 413);
-  if (size === 0) return json({ success: false, error: T.err }, 400);
+  if (size === 0) return json({ success: false, error: T.err_empty, code: 'empty' }, 400);
 
   const limit = tier2limit(await getUserTier(env.DB, email));
   const { used } = await getDriveUsage(env.DB, email);
