@@ -232,6 +232,7 @@ export const en = {
     prompt_ph: 'e.g., I need a website for my bakery with an online menu and contact form…',
     lang_label: 'Language of your website',
     submit: 'Start building →', have_site: 'Already have a website?',
+    choice_title: 'What would you like to do?', choice_new: 'Build a brand-new site', choice_new_desc: 'Start from scratch — describe your business and the AI builds it for you.', choice_refactor: 'Refactor an existing site', choice_refactor_desc: 'Already have a website? We rebuild it into a clean, modern design — keeping your content and branding.', choice_back: 'Back',
   },
 
   loading: {
