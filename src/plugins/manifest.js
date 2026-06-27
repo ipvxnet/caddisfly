@@ -51,8 +51,9 @@ export const PLUGINS = {
     key: 'instagram_feed',
     label: 'Instagram Feed',
     summary: "A \"What's happening\" section that shows your latest Instagram posts, refreshed automatically.",
-    priceCents: 500,
-    priceVar: 'STRIPE_PRICE_PLUGIN_INSTAGRAM_FEED',
+    priceCents: 0,        // FREE plugin — opt-in from the store, no charge, no base plan needed
+    free: true,
+    priceVar: 'STRIPE_PRICE_PLUGIN_INSTAGRAM_FEED', // unused for free; kept for history
     sectionTypes: ['instagram_feed'],
   },
   members: {
@@ -95,10 +96,10 @@ export const BUNDLES = {
   local_pro: {
     key: 'local_pro',
     label: 'Local Pro',
-    summary: 'Capture and manage leads with a CRM, show a service menu or portfolio, and keep your Instagram feed fresh.',
+    summary: 'Capture and manage leads with a CRM and show a service menu or portfolio — plus the free Instagram feed.',
     bestFor: 'Salons, barbershops, dentists, contractors, photographers',
-    plugins: ['crm', 'catalogue', 'instagram_feed'],
-    priceCents: 1000,
+    plugins: ['crm', 'catalogue'], // Instagram is now a FREE plugin (not bundled/charged)
+    priceCents: 800, // vs $10 separately — saves $2/mo
     priceVar: 'STRIPE_PRICE_BUNDLE_LOCAL_PRO',
   },
   everything: {
@@ -117,6 +118,11 @@ export const BUNDLES = {
 export function bundlePluginKeys(bundle) {
   if (!bundle) return [];
   return bundle.plugins === 'all' ? Object.keys(PLUGINS) : (bundle.plugins || []);
+}
+
+/** Is this a FREE plugin (opt-in from the store, no charge, no base plan)? */
+export function isFreePlugin(key) {
+  return !!(PLUGINS[key] && PLUGINS[key].free);
 }
 
 // Localized label + summary per plugin/bundle key (en falls back to the manifest

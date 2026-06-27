@@ -5,7 +5,7 @@ import { jsonResponse } from '../../utils/response.js';
 import { sanitizeEmail } from '../../utils/email.js';
 import { verifyWebhook, planForPriceId } from '../../utils/stripe.js';
 import { upsertBillingAccount, getBillingAccountByCustomer, addPurchasedCredits, resetMonthlyCredits } from '../../db/billing.js';
-import { entitlementKeyForPriceId } from '../../plugins/manifest.js';
+import { entitlementKeyForPriceId, isFreePlugin } from '../../plugins/manifest.js';
 import { getAccountPlugins, upsertAccountPlugin } from '../../db/account-plugins.js';
 import { notifyOpsAsync } from '../../utils/ops-notify.js';
 import { processDomainOrder, processManualRenewal } from './domains-store.js';
@@ -39,6 +39,9 @@ async function syncAccountPlugins(env, email, sub, periodEnd) {
   }
   const existing = await getAccountPlugins(env.DB, email);
   for (const row of existing) {
+    // FREE plugins (opt-in, no Stripe item) must NOT be reconciled away just
+    // because they aren't in the subscription's items.
+    if (isFreePlugin(row.plugin_key)) continue;
     if (row.status === 'active' && !present.has(row.plugin_key)) {
       await upsertAccountPlugin(env.DB, { email, pluginKey: row.plugin_key, status: 'canceling', stripeItemId: row.stripe_item_id, currentPeriodEnd: row.current_period_end });
     }
@@ -172,10 +175,12 @@ export async function handleStripeWebhook(ctx) {
             subscription_status: 'canceled',
             cancel_at_period_end: 0,
           });
-          // Base plan gone → plugins can't be held (hasPlugin requires a base
-          // plan). Mark them canceled for cleanliness.
+          // Base plan gone → PAID plugins can't be held (hasPlugin requires a
+          // base plan). Mark them canceled for cleanliness. FREE plugins survive
+          // (they never required a base plan).
           const plugins = await getAccountPlugins(env.DB, email);
           for (const row of plugins) {
+            if (isFreePlugin(row.plugin_key)) continue;
             if (row.status !== 'canceled') {
               await upsertAccountPlugin(env.DB, { email, pluginKey: row.plugin_key, status: 'canceled', stripeItemId: row.stripe_item_id, currentPeriodEnd: row.current_period_end });
             }

@@ -19,6 +19,7 @@ const PL = {
     need_plan: 'Plugins are add-ons to a paid plan. {upgrade} to add them.', upgrade_link: 'Upgrade your plan',
     included: 'Included', part_bundle: 'Included in a bundle you own',
     active: 'Active', cancel: 'Cancel', ends: 'Ends {date}', resubscribe: 'Resubscribe',
+    free: 'Free', add_free: '＋ Add — free', remove: 'Remove',
     add_price: 'Add — {price}/mo', requires_plan: 'Requires a paid plan',
     bundles_title: 'Bundles — save with a pack', single_title: 'Or pick à la carte',
     best_for: 'Best for', get_bundle: 'Subscribe — {price}/mo', save_line: 'Save {amt}/mo vs buying separately.',
@@ -34,6 +35,7 @@ const PL = {
     need_plan: 'Los plugins son complementos de un plan de pago. {upgrade} para agregarlos.', upgrade_link: 'Mejora tu plan',
     included: 'Incluido', part_bundle: 'Incluido en un paquete que ya tienes',
     active: 'Activo', cancel: 'Cancelar', ends: 'Finaliza {date}', resubscribe: 'Volver a suscribirse',
+    free: 'Gratis', add_free: '＋ Añadir — gratis', remove: 'Quitar',
     add_price: 'Añadir — {price}/mes', requires_plan: 'Requiere un plan de pago',
     bundles_title: 'Paquetes — ahorra con un pack', single_title: 'O elige a la carta',
     best_for: 'Ideal para', get_bundle: 'Suscribirse — {price}/mes', save_line: 'Ahorra {amt}/mes frente a comprarlos por separado.',
@@ -49,6 +51,7 @@ const PL = {
     need_plan: 'Plugins são complementos de um plano pago. {upgrade} para adicioná-los.', upgrade_link: 'Faça upgrade do seu plano',
     included: 'Incluído', part_bundle: 'Incluído em um pacote que você já tem',
     active: 'Ativo', cancel: 'Cancelar', ends: 'Encerra em {date}', resubscribe: 'Assinar novamente',
+    free: 'Grátis', add_free: '＋ Adicionar — grátis', remove: 'Remover',
     add_price: 'Adicionar — {price}/mês', requires_plan: 'Requer um plano pago',
     bundles_title: 'Pacotes — economize com um combo', single_title: 'Ou escolha avulso',
     best_for: 'Ideal para', get_bundle: 'Assinar — {price}/mês', save_line: 'Economize {amt}/mês em vez de comprar separadamente.',
@@ -102,11 +105,19 @@ export async function handlePluginsMarketplace(ctx) {
     const row = owned.get(p.key);
     const valid = isEntitlementValid(row, now);
     const coveredByBundle = coveredPlugins.has(p.key);
+    const free = !!p.free;
     let state, action;
     if (coveredByBundle) {
       // The bundle owns this plugin — manage it from the bundle card.
       state = `<span class="pill ok">${T.included}</span>`;
       action = `<span class="muted-link">${T.part_bundle}</span>`;
+    } else if (free) {
+      // FREE plugin: opt-in for anyone (no paid plan), or already added.
+      const has = row && row.status === 'active';
+      state = `<span class="pill${has ? ' ok' : ''}">${has ? T.active : T.free}</span>`;
+      action = has
+        ? `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${p.key}">${T.remove}</button>`
+        : `<button class="btn btn-primary cf-plug" data-act="subscribe" data-key="${p.key}">${T.add_free}</button>`;
     } else if (row && row.status === 'active') {
       state = `<span class="pill ok">${T.active}</span>`;
       action = `<button class="btn btn-ghost cf-plug" data-act="cancel" data-key="${p.key}">${T.cancel}</button>`;

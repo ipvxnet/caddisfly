@@ -6,7 +6,7 @@
 
 import { jsonResponse } from '../../utils/response.js';
 import { getBillingAccount } from '../../db/billing.js';
-import { PLUGINS, BUNDLES, bundlePluginKeys } from '../../plugins/manifest.js';
+import { PLUGINS, BUNDLES, bundlePluginKeys, isFreePlugin } from '../../plugins/manifest.js';
 import { hasBasePlan } from '../../plugins/entitlements.js';
 import { getAccountPlugin, upsertAccountPlugin } from '../../db/account-plugins.js';
 import {
@@ -39,6 +39,8 @@ async function resolve(ctx) {
   if (!plugin) return { error: jsonResponse({ error: 'unknown_plugin' }, 404) };
   const email = ctx.billingEmail;
   if (!email) return { error: jsonResponse({ error: 'sign_in_required' }, 401) };
+  // FREE plugin: no Stripe, no base plan, no subscription — just opt-in/opt-out.
+  if (isFreePlugin(key)) return { key, plugin, email, free: true };
   if (!isStripeConfigured(ctx.env)) return { error: jsonResponse({ error: 'billing_unavailable' }, 503) };
   const priceId = ctx.env[plugin.priceVar];
   if (!priceId) return { error: jsonResponse({ error: 'plugin_not_configured' }, 503) };
@@ -56,6 +58,11 @@ async function resolve(ctx) {
 export async function handlePluginSubscribe(ctx) {
   const r = await resolve(ctx);
   if (r.error) return r.error;
+  // Free plugin: grant immediately (active, no Stripe item, no period end).
+  if (r.free) {
+    await upsertAccountPlugin(ctx.env.DB, { email: r.email, pluginKey: r.key, status: 'active', stripeItemId: null, currentPeriodEnd: null });
+    return jsonResponse({ ok: true, plugin: r.key, status: 'active', free: true });
+  }
   try {
     const sub = await getSubscription(ctx.env, r.subId);
     let item = findItem(sub, r.priceId);
@@ -99,6 +106,11 @@ export async function handlePluginSubscribe(ctx) {
 export async function handlePluginCancel(ctx) {
   const r = await resolve(ctx);
   if (r.error) return r.error;
+  // Free plugin: remove the opt-in immediately (no Stripe, no grace billing).
+  if (r.free) {
+    await upsertAccountPlugin(ctx.env.DB, { email: r.email, pluginKey: r.key, status: 'canceled', stripeItemId: null, currentPeriodEnd: 0 });
+    return jsonResponse({ ok: true, plugin: r.key, status: 'canceled', free: true });
+  }
   try {
     const sub = await getSubscription(ctx.env, r.subId);
     const item = findItem(sub, r.priceId);
