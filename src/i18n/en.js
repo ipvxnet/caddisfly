@@ -161,7 +161,7 @@ export const en = {
     refactor_almost: 'Almost there! Check your email and click the link to build your preview.',
     rf_sending: 'Sending…',
     rf_btn_preview: 'Preview what we found',
-    rf_optional: 'Add details (optional)', rf_search_label: 'Best way to find you on Google',
+    rf_optional: 'Add details (optional)', rf_search_label: 'Best way to find you on Google', rf_name_label: 'Business name', rf_services_label: 'What you offer',
     rf_searching: 'Searching…',
     rf_card_title: 'Is this your business?',
     rf_build: 'Build my site →',

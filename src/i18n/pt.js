@@ -160,7 +160,7 @@ export const pt = {
     refactor_almost: 'Quase lá! Verifique seu e-mail e clique no link para criar sua prévia.',
     rf_sending: 'Enviando…',
     rf_btn_preview: 'Ver o que encontramos',
-    rf_optional: 'Adicionar detalhes (opcional)', rf_search_label: 'Melhor forma de te encontrar no Google',
+    rf_optional: 'Adicionar detalhes (opcional)', rf_search_label: 'Melhor forma de te encontrar no Google', rf_name_label: 'Nome do negócio', rf_services_label: 'O que você oferece',
     rf_searching: 'Buscando…',
     rf_card_title: 'Este é o seu negócio?',
     rf_build: 'Criar meu site →',

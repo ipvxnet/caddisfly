@@ -38,11 +38,11 @@ export async function handleAIBuilderRefactor(ctx) {
 
         <details class="rfx-more">
           <summary>${esc(tr('landing.rf_optional') || 'Add details (optional)')}</summary>
-          <label for="rfx-name">${esc(tr('convo.form.business_name') || 'Business name')}</label>
+          <label for="rfx-name">${esc(tr('landing.rf_name_label'))}</label>
           <input type="text" id="rfx-name" placeholder="">
-          <label for="rfx-search">${esc(tr('landing.rf_search_label') || 'Best way to find you on Google')}</label>
+          <label for="rfx-search">${esc(tr('landing.rf_search_label'))}</label>
           <input type="text" id="rfx-search" placeholder="">
-          <label for="rfx-services">${esc(tr('convo.form.services') || 'What you offer')}</label>
+          <label for="rfx-services">${esc(tr('landing.rf_services_label'))}</label>
           <input type="text" id="rfx-services" placeholder="">
         </details>
 
