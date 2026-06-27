@@ -32,7 +32,12 @@ export function memberGatePlaceholder(lang = 'en', primaryColor = '#667eea') {
     </form>
     <div class="mbr-gate-msg" role="status"></div>
   </div>
-</section>
+</section>${gateStyles(primaryColor)}`;
+}
+
+/** Shared gate card styles (light card; the mbr-gate classes are registered in the dark lists). */
+function gateStyles(primaryColor = '#667eea') {
+  return `
 <style>
 .mbr-gate { display:flex; align-items:center; justify-content:center; padding:5rem 1.5rem; min-height:50vh; background:#fff; }
 .mbr-gate-card { max-width:440px; width:100%; text-align:center; background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:18px; padding:2.6rem 2rem; box-shadow:0 10px 34px rgba(0,0,0,.08); }
@@ -47,6 +52,27 @@ export function memberGatePlaceholder(lang = 'en', primaryColor = '#667eea') {
 </style>`;
 }
 
+/** Per-SECTION gate placeholder (stage 2b): replaces one members-only section's
+ *  content. The wrapper carries data-member-gate-section so the gate script can
+ *  inject the real section for signed-in members. Reuses the same card + form. */
+export function memberGateSectionPlaceholder(sectionId, lang = 'en', primaryColor = '#667eea') {
+  const tr = T[lang] || T.en;
+  return `
+<section class="mbr-gate" data-member-gate-section="${esc(String(sectionId))}">
+  <div class="mbr-gate-card">
+    <div class="mbr-gate-lock" aria-hidden="true">🔒</div>
+    <h2 class="mbr-gate-title">${esc(tr.title)}</h2>
+    <p class="mbr-gate-sub">${esc(tr.sub)}</p>
+    <form class="mbr-gate-form" novalidate>
+      <input type="email" class="mbr-gate-input" placeholder="${esc(tr.ph)}" required autocomplete="email">
+      <input type="text" class="mbr-gate-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <button type="submit" class="mbr-gate-btn">${esc(tr.send)}</button>
+    </form>
+    <div class="mbr-gate-msg" role="status"></div>
+  </div>
+</section>${gateStyles(primaryColor)}`;
+}
+
 /** One-per-page client script: reveal for members, else wire the sign-in form. */
 export function memberGateScript({ siteId, appOrigin, slug, lang = 'en' }) {
   const tr = T[lang] || T.en;
@@ -54,14 +80,12 @@ export function memberGateScript({ siteId, appOrigin, slug, lang = 'en' }) {
   return `
 <script>
 (function(){
-  var gate = document.querySelector('[data-member-gate-page]');
-  if (!gate) return;
+  var gates = document.querySelectorAll('[data-member-gate-page],[data-member-gate-section]');
+  if (!gates.length) return;
   var c = ${JSON.stringify(cfg)};
   if (!c.api || c.api.indexOf('/api/members/') === -1) return;
-  var msg = gate.querySelector('.mbr-gate-msg');
-  var form = gate.querySelector('.mbr-gate-form');
-  // innerHTML/outerHTML don't run <script> — re-create them so injected
-  // interactive sections (booking, instagram, members widget) initialize.
+  // innerHTML doesn't run <script> — re-create them so injected interactive
+  // sections (booking, instagram, members widget) initialize.
   function execScripts(node){
     node.querySelectorAll('script').forEach(function(old){
       var s = document.createElement('script');
@@ -69,28 +93,34 @@ export function memberGateScript({ siteId, appOrigin, slug, lang = 'en' }) {
       old.parentNode.replaceChild(s, old);
     });
   }
+  function inject(el, html){ var w = document.createElement('div'); w.innerHTML = html; el.replaceWith(w); execScripts(w); }
   function reveal(){
     fetch(c.api + '/content?page=' + encodeURIComponent(c.page), { credentials: 'include' })
       .then(function(r){ return r.json(); })
       .then(function(d){
-        if (d && d.html) { var wrap = document.createElement('div'); wrap.innerHTML = d.html; gate.replaceWith(wrap); execScripts(wrap); }
+        if (d && d.html) { var pg = document.querySelector('[data-member-gate-page]'); if (pg) inject(pg, d.html); }
+        if (d && d.sections) d.sections.forEach(function(s){ var el = document.querySelector('[data-member-gate-section="' + s.id + '"]'); if (el) inject(el, s.html); });
       }).catch(function(){});
   }
   fetch(c.api + '/me', { credentials: 'include' })
     .then(function(r){ return r.json(); })
     .then(function(d){ if (d && d.logged_in) reveal(); })
     .catch(function(){});
-  form.addEventListener('submit', function(e){
-    e.preventDefault();
-    var email = form.querySelector('.mbr-gate-input').value.trim();
-    if (!email) return;
-    var btn = form.querySelector('.mbr-gate-btn'); btn.disabled = true;
-    fetch(c.api + '/login', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email: email, return_url: location.href, website: form.querySelector('.mbr-gate-hp').value }) })
-      .then(function(r){ return r.json(); })
-      .then(function(d){ msg.textContent = (d && d.success) ? c.sent : c.err; })
-      .catch(function(){ msg.textContent = c.err; })
-      .finally(function(){ btn.disabled = false; });
+  gates.forEach(function(gate){
+    var form = gate.querySelector('.mbr-gate-form'); if (!form) return;
+    var msg = gate.querySelector('.mbr-gate-msg');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var email = form.querySelector('.mbr-gate-input').value.trim();
+      if (!email) return;
+      var btn = form.querySelector('.mbr-gate-btn'); btn.disabled = true;
+      fetch(c.api + '/login', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: email, return_url: location.href, website: form.querySelector('.mbr-gate-hp').value }) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ msg.textContent = (d && d.success) ? c.sent : c.err; })
+        .catch(function(){ msg.textContent = c.err; })
+        .finally(function(){ btn.disabled = false; });
+    });
   });
 })();
 </script>`;

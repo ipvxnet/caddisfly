@@ -102,7 +102,7 @@ export async function handleMemberContent(ctx) {
 
   const slug = (url.searchParams.get('page') || '').trim();
   const page = slug ? await getPageBySlug(env.DB, site.projectKey, slug) : await getHomePage(env.DB, site.projectKey);
-  if (!page || !page.members_only) return jsonResponse({ html: '' }); // only serve GATED pages
+  if (!page) return jsonResponse({ html: '' });
 
   const filterSections = await entitledSectionFilter(env, site.ownerEmail);
   const body = filterSections(page.is_home
@@ -110,7 +110,7 @@ export async function handleMemberContent(ctx) {
     : await getBodySectionsForPage(env.DB, page.id, true));
   if (!body.length) return jsonResponse({ html: '' });
 
-  // Same live data deploy injects, so gated sections render identically.
+  // Same live data deploy injects, so gated content renders identically.
   const products = await getProductsByProject(env.DB, site.projectKey, true);
   await annotateProductsWithVariants(env.DB, site.projectKey, products);
   const courses = (await hasPlugin(env, site.ownerEmail, 'courses'))
@@ -120,14 +120,24 @@ export async function handleMemberContent(ctx) {
   let pages = [];
   try { pages = await getPagesByProject(env.DB, site.projectKey); } catch { /* nav anchors best-effort */ }
 
-  // Render the page body via the normal assembler (NOT gated) and extract <main>.
-  const full = assemblePage(body, site.config || {}, { project_name: site.siteName }, {
-    pages, currentSlug: page.slug, preordered: true, previewBase: '',
-    trackId: params.site, appOrigin: env.APP_URL || '', lang: site.lang,
-    products, courses, bookingServices, hasAdvStore,
-  });
-  const m = full.match(/<main>([\s\S]*?)<\/main>/i);
-  return jsonResponse({ html: m ? m[1].trim() : '' });
+  // Render the given sections (NOT gated) and return the <main> inner.
+  const renderBody = (secs) => {
+    const full = assemblePage(secs, site.config || {}, { project_name: site.siteName }, {
+      pages, currentSlug: page.slug, preordered: true, previewBase: '',
+      trackId: params.site, appOrigin: env.APP_URL || '', lang: site.lang,
+      products, courses, bookingServices, hasAdvStore,
+    });
+    const m = full.match(/<main>([\s\S]*?)<\/main>/i);
+    return m ? m[1].trim() : '';
+  };
+
+  // Whole-page gate (2a): return the full body. Else per-section gate (2b):
+  // return each members-only section keyed by id.
+  if (page.members_only) return jsonResponse({ html: renderBody(body) });
+  const isMO = (s) => { try { const v = JSON.parse(s.content_json || '{}')._members_only; return v === true || v === 1 || v === '1'; } catch { return false; } };
+  const gated = body.filter(isMO);
+  if (!gated.length) return jsonResponse({ sections: [] });
+  return jsonResponse({ sections: gated.map((s) => ({ id: s.id, html: renderBody([s]) })) });
 }
 
 function memberNoticePage(heading, sub) {

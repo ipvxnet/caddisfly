@@ -7,6 +7,7 @@ import { getSectionById, getSectionsByAIProjectId, getSectionsByRegularProjectId
 import { getPagesByProject } from '../../../db/ai-pages.js';
 import { getProductCategories } from '../../../db/products.js';
 import { generateSectionEditorModal } from '../../../components/section-editor-modal.js';
+import { hasPlugin } from '../../../plugins/entitlements.js';
 import { translator } from '../../../i18n/index.js';
 
 // Section type → i18n key for its friendly anchor name (lp.sec_*). Page names
@@ -100,7 +101,11 @@ export async function handleGetSectionEditor(ctx) {
     if (section.section_type === 'catalogue') {
       catCategories = await getProductCategories(env.DB, projectKey, false).catch(() => []);
     }
-    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData, siteLang, catCategories);
+    // Per-section "members only" toggle shows only when the OWNER is entitled to
+    // the Members plugin (entitlements resolve to the owner email).
+    const ownerEmail = (aiProject && aiProject.customer_email) || (regularProject && regularProject.customer_email) || '';
+    const hasMembers = await hasPlugin(env, ownerEmail, 'members');
+    const html = generateSectionEditorModal(section, projectPreviewId, lang, linkData, siteLang, catCategories, hasMembers);
 
     return new Response(html, {
       status: 200,

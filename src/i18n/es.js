@@ -1028,6 +1028,7 @@ export const es = {
   sed: {
     appearance: 'Apariencia de la sección', appearance_auto: 'Automático (según el tema)', appearance_light: 'Claro', appearance_dark: 'Oscuro',
     appearance_hint: 'Por defecto la sección sigue tu tema. Fuerza un fondo claro u oscuro aquí si quieres que esta destaque.',
+    members_only: 'Solo para miembros', members_only_hint: 'Oculta esta sección tras un inicio de sesión — solo los miembros que entren la verán.',
     edit_section: 'Editar sección', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Guardar cambios',
     saving: 'Guardando…', updated: '¡Sección actualizada!', save_failed: 'No se pudieron guardar los cambios', save_failed_p: 'No se pudo guardar: ',
     uploading: 'Subiendo…', upload_complete: '¡Subida completa!', upload_failed: 'Error al subir', upload_failed_p: 'Error al subir: ',

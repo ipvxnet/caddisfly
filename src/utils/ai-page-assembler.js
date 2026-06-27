@@ -7,7 +7,7 @@ import { getTheme, darkModeCss, templateTokensCss, sectionAppearanceCss } from '
 import { optimizeStockImages, optimizeStockUrl } from './stock-image.js';
 import { translator } from '../i18n/index.js';
 import { SECTION_NAV_LABELS, rewriteLocalizedAnchors } from './anchor-normalize.js';
-import { memberGatePlaceholder, memberGateScript } from '../templates/ai-builder/members/gate.js';
+import { memberGatePlaceholder, memberGateSectionPlaceholder, memberGateScript } from '../templates/ai-builder/members/gate.js';
 
 // Google Fonts that ship a single (400) weight only — requesting extra weights in
 // the css2 URL returns HTTP 400 and breaks the whole stylesheet, so omit the axis.
@@ -43,6 +43,9 @@ export function assemblePage(sections, config, project, opts = {}) {
     // signed-in members via /api/members/:site/content). Set only at DEPLOY
     // (public); preview stays ungated so the owner can edit the real content.
     pageMembersOnly = false,
+    // Stage 2b: honor per-section `_members_only` flags (gate individual sections).
+    // Set at DEPLOY when the owner is entitled to the Members plugin.
+    gateSections = false,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
@@ -77,6 +80,7 @@ export function assemblePage(sections, config, project, opts = {}) {
   // Members-only page: render ONLY a sign-in gate — the real body is never baked
   // into the public HTML (it's served on demand to signed-in members). Skip the
   // whole section render so nothing leaks.
+  let anySectionGated = false;
   let renderedSections;
   if (pageMembersOnly) {
     renderedSections = `<main>${memberGatePlaceholder(lang, config.primary_color)}</main>`;
@@ -87,12 +91,20 @@ export function assemblePage(sections, config, project, opts = {}) {
       // Use html_template field if available, otherwise check contentData._variant
       const variant = section.html_template || contentData._variant || 'default';
 
-      const rendered = renderSection(section.section_type, contentData, renderConfig, variant);
+      const type = section.section_type;
+      // Per-section members-only gate (stage 2b): ship a placeholder instead of
+      // the real section; the real content is served on demand to signed-in
+      // members. Never gates header/footer.
+      const mo = contentData._members_only;
+      const sectionGated = gateSections && type !== 'header' && type !== 'footer' && (mo === true || mo === 1 || mo === '1');
+      if (sectionGated) anySectionGated = true;
+      const rendered = sectionGated
+        ? memberGateSectionPlaceholder(section.id, lang, config.primary_color)
+        : renderSection(section.section_type, contentData, renderConfig, variant);
       // Semantic anchor target (e.g. id="contact") so in-page links like
       // `#contact` resolve regardless of which variant rendered — but only the
       // FIRST section of each type, and only if the template didn't already emit
       // that id (avoids duplicate ids).
-      const type = section.section_type;
       let semanticAnchor = '';
       if (type && !seenTypes.has(type)) {
         seenTypes.add(type);
@@ -134,9 +146,10 @@ export function assemblePage(sections, config, project, opts = {}) {
   // button links resolve to the real id="<type>" target.
   const routed = rewriteCrossPageAnchors(renderedSections, { pages, currentSlug, previewBase, embed, currentTypes });
   let body = rewriteLocalizedAnchors(routed);
-  // Members-only page: ship the one-per-page gate client script (checks /me,
-  // reveals the real body for signed-in members, else drives the sign-in form).
-  if (pageMembersOnly) {
+  // Ship the one-per-page gate client script whenever the page has ANY gate
+  // (whole-page or per-section): checks /me, reveals real content for signed-in
+  // members via /content, else drives the sign-in form(s).
+  if (pageMembersOnly || anySectionGated) {
     body += memberGateScript({ siteId: trackId, appOrigin, slug: currentSlug, lang });
   }
 

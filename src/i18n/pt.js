@@ -1028,6 +1028,7 @@ export const pt = {
   sed: {
     appearance: 'Aparência da seção', appearance_auto: 'Automático (conforme o tema)', appearance_light: 'Claro', appearance_dark: 'Escuro',
     appearance_hint: 'Por padrão a seção segue o seu tema. Force um fundo claro ou escuro aqui se quiser que esta se destaque.',
+    members_only: 'Somente para membros', members_only_hint: 'Oculte esta seção atrás de um login — só os membros que entrarem a verão.',
     edit_section: 'Editar seção', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Salvar alterações',
     saving: 'Salvando…', updated: 'Seção atualizada com sucesso!', save_failed: 'Não foi possível salvar as alterações', save_failed_p: 'Não foi possível salvar: ',
     uploading: 'Enviando…', upload_complete: 'Envio concluído!', upload_failed: 'Falha no envio', upload_failed_p: 'Falha no envio: ',
