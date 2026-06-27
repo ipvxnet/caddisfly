@@ -232,6 +232,7 @@ export const pt = {
     prompt_ph: 'ex.: Preciso de um site para a minha padaria com cardápio online e formulário de contato…',
     lang_label: 'Idioma do seu site',
     submit: 'Começar a criar →', have_site: 'Já tem um site?',
+    choice_title: 'O que você gostaria de fazer?', choice_new: 'Criar um site novo', choice_new_desc: 'Comece do zero — descreva seu negócio e a IA cria para você.', choice_refactor: 'Renovar um site existente', choice_refactor_desc: 'Já tem um site? Nós o reconstruímos com um design limpo e moderno — mantendo seu conteúdo e sua marca.', choice_back: 'Voltar',
   },
 
   loading: {

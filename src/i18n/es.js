@@ -232,6 +232,7 @@ export const es = {
     prompt_ph: 'p. ej., Necesito una web para mi panadería con menú en línea y formulario de contacto…',
     lang_label: 'Idioma de tu sitio web',
     submit: 'Empezar a crear →', have_site: '¿Ya tienes un sitio web?',
+    choice_title: '¿Qué te gustaría hacer?', choice_new: 'Crear un sitio nuevo', choice_new_desc: 'Empieza desde cero — describe tu negocio y la IA lo crea por ti.', choice_refactor: 'Renovar un sitio existente', choice_refactor_desc: '¿Ya tienes un sitio web? Lo reconstruimos con un diseño limpio y moderno — conservando tu contenido y tu marca.', choice_back: 'Volver',
   },
 
   loading: {

@@ -268,7 +268,38 @@ export async function handleAIBuilderLanding(ctx) {
       <h1>${tr('builder.title')}</h1>
       <p class="subtitle">${tr('builder.subtitle')}</p>
 
-      <div class="cta-form">
+      <style>
+        .cta-choice{background:#fff;border-radius:16px;padding:1.6rem;box-shadow:0 10px 40px rgba(0,0,0,.08);max-width:560px;margin:0 auto}
+        .cta-choice h2{margin:.2rem 0 1.1rem;text-align:center}
+        .choice-signed{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.6rem .9rem;font-size:.92rem;color:#166534;margin-bottom:1.1rem}
+        .choice-cards{display:grid;gap:.9rem}
+        .choice-card{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:1.1rem 1.2rem;cursor:pointer;text-decoration:none;transition:border-color .15s,box-shadow .15s,transform .15s;font:inherit}
+        .choice-card:hover{border-color:#764ba2;box-shadow:0 8px 24px rgba(118,75,162,.14);transform:translateY(-2px)}
+        .choice-emoji{font-size:1.7rem;line-height:1}
+        .choice-name{font-weight:800;color:#1a202c;font-size:1.1rem;margin:.5rem 0 .25rem}
+        .choice-desc{color:#64748b;font-size:.9rem;line-height:1.45}
+        .choice-back{background:none;border:none;color:#64748b;font-weight:600;cursor:pointer;padding:0;margin-bottom:.7rem;font:inherit;font-size:.9rem}
+        .choice-back:hover{color:#764ba2}
+      </style>
+      <div class="cta-choice" id="cta-choice"${prefill ? ' style="display:none"' : ''}>
+        ${signedInEmail ? `<div class="choice-signed">✓ ${tr('builder.signed_in_as')} <strong>${esc(signedInEmail)}</strong></div>` : ''}
+        <h2>${tr('builder.choice_title') || 'What would you like to do?'}</h2>
+        <div class="choice-cards">
+          <button type="button" class="choice-card" id="choice-new">
+            <div class="choice-emoji">✨</div>
+            <div class="choice-name">${tr('builder.choice_new') || 'Build a brand-new site'}</div>
+            <div class="choice-desc">${tr('builder.choice_new_desc') || 'Start from scratch — describe your business and the AI builds it for you.'}</div>
+          </button>
+          <a class="choice-card" href="/ai-builder/refactor">
+            <div class="choice-emoji">♻</div>
+            <div class="choice-name">${tr('builder.choice_refactor') || 'Refactor an existing site'}</div>
+            <div class="choice-desc">${tr('builder.choice_refactor_desc') || 'Already have a website? We rebuild it into a clean, modern design — keeping your content and branding.'}</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="cta-form" id="cta-form"${prefill ? '' : ' style="display:none"'}>
+        <button type="button" class="choice-back" id="choice-back">← ${tr('builder.choice_back') || 'Back'}</button>
         <h2>${tr('builder.get_started')}</h2>
         <div id="error" class="error"></div>
         <div id="success" class="success"></div>
@@ -301,10 +332,6 @@ export async function handleAIBuilderLanding(ctx) {
           </div>
           <button type="submit" class="submit-btn" id="submit-btn">${tr('builder.submit')}</button>
         </form>
-        <p style="text-align:center;margin-top:1rem;font-size:.92rem;color:#64748b">
-          ${tr('builder.have_site') || 'Already have a website?'}
-          <a href="/ai-builder/refactor" style="color:#764ba2;font-weight:700">♻ ${tr('landing.cta_refactor')}</a>
-        </p>
       </div>
     </div>
   </section>
@@ -331,6 +358,25 @@ export async function handleAIBuilderLanding(ctx) {
   </section>
 
   <script>
+    // Choice-first: "Build with AI" shows two options (brand-new vs refactor)
+    // before the describe form, so a refactor never lands on the from-scratch
+    // generator by accident. Refactor is a plain link to /ai-builder/refactor.
+    (function(){
+      var choice = document.getElementById('cta-choice');
+      var ctaForm = document.getElementById('cta-form');
+      var chNew = document.getElementById('choice-new');
+      var chBack = document.getElementById('choice-back');
+      if (chNew) chNew.addEventListener('click', function(){
+        if (choice) choice.style.display = 'none';
+        if (ctaForm) ctaForm.style.display = '';
+        var p = document.getElementById('prompt'); if (p) p.focus();
+      });
+      if (chBack) chBack.addEventListener('click', function(){
+        if (ctaForm) ctaForm.style.display = 'none';
+        if (choice) choice.style.display = '';
+      });
+    })();
+
     const form = document.getElementById('start-form');
     const submitBtn = document.getElementById('submit-btn');
     const errorDiv = document.getElementById('error');
