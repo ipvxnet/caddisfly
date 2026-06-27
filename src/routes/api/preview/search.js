@@ -35,7 +35,13 @@ export async function handlePreviewSearch(ctx) {
   const { request, env } = ctx;
   try {
     const body = await request.json();
-    const { email, website } = body;
+    // Signed-in refactor (dashboard "Refactor my site"): billingAuth is a
+    // non-blocking middleware on this route, so ctx.billingEmail is set for a
+    // logged-in user. We then OWN the resulting project under their account and
+    // skip the anonymous 5/day abuse cap (they already have an account).
+    const sessionEmail = (ctx.billingEmail || '').trim();
+    const website = body.website;
+    const email = sessionEmail || body.email;
     const acceptedTerms = body.accepted_terms === true || body.accepted_terms === 'true';
     const LANGS = ['en', 'es', 'pt'];
     const language = LANGS.includes(body.language) ? body.language : (LANGS.includes(ctx.lang) ? ctx.lang : 'en');
@@ -50,11 +56,14 @@ export async function handlePreviewSearch(ctx) {
     const sanitizedEmail = sanitizeEmail(email);
     const normalizedWebsite = normalizeWebsiteUrl(website);
 
-    // Abuse cap (paid call ahead): 5/day per IP AND per email.
-    const ipHash = await hashIp(request.headers.get('CF-Connecting-IP') || '');
-    const allow = await lookupAllowance(env.DB, ipHash, sanitizedEmail);
-    if (!allow.allowed) {
-      return json({ success: false, limit_reached: true, remaining: 0, error: tr('landing.rf_limit') }, 429);
+    // Abuse cap (paid call ahead): 5/day per IP AND per email — ANONYMOUS only.
+    // Signed-in users (sessionEmail) have an account and aren't capped here.
+    const ipHash = sessionEmail ? null : await hashIp(request.headers.get('CF-Connecting-IP') || '');
+    if (!sessionEmail) {
+      const allow = await lookupAllowance(env.DB, ipHash, sanitizedEmail);
+      if (!allow.allowed) {
+        return json({ success: false, limit_reached: true, remaining: 0, error: tr('landing.rf_limit') }, 429);
+      }
     }
 
     // Validate/screen user-provided details.
@@ -67,7 +76,7 @@ export async function handlePreviewSearch(ctx) {
     }
 
     // Count this attempt now (so a no-match still consumes one — can't retry-spam).
-    await recordLookup(env.DB, ipHash, sanitizedEmail);
+    if (!sessionEmail) await recordLookup(env.DB, ipHash, sanitizedEmail);
 
     // Scrape (placeholder-aware) + paid Places lookup.
     // browser:true → allow the paid Zyte fallback; this path is capped at 5/day.
@@ -135,11 +144,12 @@ export async function handlePreviewSearch(ctx) {
       company_profile_json: JSON.stringify({ scrapeSignal, userProfile, profile, photoPool }),
     });
 
-    const after = await lookupAllowance(env.DB, ipHash, sanitizedEmail);
+    const after = sessionEmail ? { remaining: null } : await lookupAllowance(env.DB, ipHash, sanitizedEmail);
     return json({
       success: true,
       preview_id: previewId,
       build_token: token,
+      logged_in: !!sessionEmail,
       found: !!places.found,
       name: profile.name || '',
       category: profile.category || '',
@@ -153,7 +163,7 @@ export async function handlePreviewSearch(ctx) {
       reviews: (Array.isArray(profile.reviews) ? profile.reviews : []).slice(0, 2)
         .map((r) => ({ author: r.author, rating: r.rating, text: (r.text || '').slice(0, 160) })),
       remaining: after.remaining,
-      limit: LOOKUP_DAILY_LIMIT,
+      limit: sessionEmail ? null : LOOKUP_DAILY_LIMIT,
     });
   } catch (error) {
     console.error('Preview search error:', error);

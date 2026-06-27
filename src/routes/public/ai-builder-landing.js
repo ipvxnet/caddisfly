@@ -301,6 +301,10 @@ export async function handleAIBuilderLanding(ctx) {
           </div>
           <button type="submit" class="submit-btn" id="submit-btn">${tr('builder.submit')}</button>
         </form>
+        <p style="text-align:center;margin-top:1rem;font-size:.92rem;color:#64748b">
+          ${tr('builder.have_site') || 'Already have a website?'}
+          <a href="/ai-builder/refactor" style="color:#764ba2;font-weight:700">♻ ${tr('landing.cta_refactor')}</a>
+        </p>
       </div>
     </div>
   </section>

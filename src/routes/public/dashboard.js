@@ -361,6 +361,8 @@ export async function handleDashboard(ctx) {
     <div class="dhead">
       <h1>${tr('dash.title')}</h1>
       <div>
+        <a class="btn" href="/ai-builder">✨ ${tr('nav.build')}</a>
+        <a class="btn ghost" href="/ai-builder/refactor">♻ ${tr('landing.cta_refactor')}</a>
         ${isAdmin ? `<a class="btn admin" href="/admin">⚙ ${tr('dash.admin')}</a>` : ''}
         <a class="btn ghost" href="/drive">${tr('dash.drive')}</a>
         <a class="btn ghost" href="/domains">${tr('dash.buy_domain')}</a>
@@ -382,7 +384,7 @@ export async function handleDashboard(ctx) {
     <div class="panel">
       ${ownSites.length
         ? `<div class="site-grid">${ownCardsHtml}</div>`
-        : `<p class="muted">${tr('dash.no_sites')} <a href="/ai-builder">${tr('dash.build_one')}</a></p>`}
+        : `<p class="muted">${tr('dash.no_sites')} <a href="/ai-builder">${tr('dash.build_one')}</a> · <a href="/ai-builder/refactor">${tr('landing.cta_refactor')}</a></p>`}
     </div>
 
     ${managedHtml}

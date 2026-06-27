@@ -40,6 +40,7 @@ import { handleVerify } from './routes/public/verify.js';
 
 // AI Builder route handlers
 import { handleAIBuilderLanding } from './routes/public/ai-builder-landing.js';
+import { handleAIBuilderRefactor } from './routes/public/ai-builder-refactor.js';
 import { handleAIBuilderChat } from './routes/public/ai-builder-chat.js';
 import { handleAIBuilderGenerating } from './routes/public/ai-builder-generating.js';
 import { handleAIBuilderCustomize } from './routes/public/ai-builder-customize.js';
@@ -258,6 +259,7 @@ router.get('/preview-asset/:preview_id/:filename', handlePreviewAsset);
 
 // AI Builder public routes
 router.get('/ai-builder', handleAIBuilderLanding, [billingAuth]);
+router.get('/ai-builder/refactor', handleAIBuilderRefactor, [billingAuth]);
 router.get('/ai-builder/chat/:project_id', handleAIBuilderChat, [billingAuth, projectAccess]);
 router.get('/ai-builder/generating/:project_id', handleAIBuilderGenerating, [billingAuth, projectAccess]);
 router.get('/ai-builder/customize/:project_id', handleAIBuilderCustomize, [billingAuth, projectAccess]);
@@ -414,8 +416,11 @@ router.post('/api/support/ticket/:public_id/reply', handleReplyTicket, [billingA
 // API routes
 router.post('/api/preview/create', handlePreviewCreate);
 // Refactor preview flow: look up what we found (paid Places, capped) → confirm → build.
-router.post('/api/preview/search', handlePreviewSearch);
-router.post('/api/preview/build/:preview_id', handlePreviewBuildConfirm);
+// billingAuth is NON-BLOCKING: anonymous homepage refactor works unchanged; a
+// signed-in user (dashboard "Refactor my site") is detected so the project is
+// owned under their account + the anonymous abuse cap is skipped (search.js).
+router.post('/api/preview/search', handlePreviewSearch, [billingAuth]);
+router.post('/api/preview/build/:preview_id', handlePreviewBuildConfirm, [billingAuth]);
 router.post('/api/preview/manual/:token', handleManualProfile);
 router.get('/api/preview/:preview_id/status', handlePreviewStatus);
 // Build executor for the refactor flow — called by the /verify building page;
