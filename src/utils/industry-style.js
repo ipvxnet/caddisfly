@@ -81,7 +81,7 @@ const INDUSTRY_KEYWORDS = [
   // would mis-match "Tire Shop", "Coffee Shop", "Barber Shop", etc.).
   ['retail', ['boutique', 'retail', 'clothing', 'fashion', 'furniture', 'apparel', 'thrift']],
   ['dispensary', ['dispensary', 'cannabis', 'cbd', 'marijuana', 'hemp', 'cannabis store']],
-  ['tech', ['software', 'tech', 'app', 'saas', 'startup', 'digital', 'ai', 'data', 'cloud', 'platform']],
+  ['tech', ['software', 'tech', 'technology', 'app', 'saas', 'startup', 'digital', 'ai', 'data', 'cloud', 'platform', 'systems', 'communications', 'electronics', 'cybersecurity']],
 ];
 
 // Palette per industry: { primary, secondary, accent }
@@ -197,12 +197,18 @@ export function inferIndustry(...texts) {
   // Score each industry by total matched keyword length so more-specific signals
   // win (e.g. "Tire Shop" → automotive via 'tire', not retail). First-listed
   // industry wins ties (strictly-greater comparison preserves order).
+  //
+  // WHOLE-WORD matching only: a plain substring test made short keywords hijack
+  // unrelated copy — 'cat' matched "communi(cat)ion" → a C3-comms firm themed as
+  // a pet store; 'ai' matched "T(ai)lored". Word boundaries kill that class. The
+  // explicit singular+plural keyword lists ('pet'/'pets', 'tour'/'tours') already
+  // assume whole-word matching.
   let best = 'general';
   let bestScore = 0;
   for (const [industry, keywords] of INDUSTRY_KEYWORDS) {
     let score = 0;
     for (const k of keywords) {
-      if (haystack.includes(k)) score += k.length;
+      if (matchesWord(haystack, k)) score += k.length;
     }
     if (score > bestScore) {
       bestScore = score;
@@ -210,6 +216,25 @@ export function inferIndustry(...texts) {
     }
   }
   return best;
+}
+
+/** Whole-word (phrase) match of `keyword` in an already-lowercased haystack.
+ *  Boundaries are non-alphanumeric, so 'cat' matches "cat"/"a cat." but NOT
+ *  "communication"; multi-word + hyphenated keywords ("pet grooming",
+ *  "e-learning") still match as a unit. */
+function matchesWord(haystack, keyword) {
+  const k = String(keyword).toLowerCase();
+  let from = 0;
+  for (;;) {
+    const i = haystack.indexOf(k, from);
+    if (i < 0) return false;
+    const before = i === 0 ? '' : haystack[i - 1];
+    const after = i + k.length >= haystack.length ? '' : haystack[i + k.length];
+    const okBefore = !before || !/[a-z0-9]/.test(before);
+    const okAfter = !after || !/[a-z0-9]/.test(after);
+    if (okBefore && okAfter) return true;
+    from = i + 1;
+  }
 }
 
 /**

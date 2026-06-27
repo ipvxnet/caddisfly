@@ -160,7 +160,7 @@ export const es = {
     refactor_almost: '¡Casi listo! Revisa tu correo y haz clic en el enlace para crear tu vista previa.',
     rf_sending: 'Enviando…',
     rf_btn_preview: 'Ver lo que encontramos',
-    rf_optional: 'Agregar detalles (opcional)', rf_search_label: 'Mejor forma de encontrarte en Google',
+    rf_optional: 'Agregar detalles (opcional)', rf_search_label: 'Mejor forma de encontrarte en Google', rf_name_label: 'Nombre del negocio', rf_services_label: 'Qué ofreces',
     rf_searching: 'Buscando…',
     rf_card_title: '¿Es este tu negocio?',
     rf_build: 'Crear mi sitio →',
