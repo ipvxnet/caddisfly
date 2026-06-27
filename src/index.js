@@ -69,6 +69,7 @@ import { handleSuggestMenu, handleApplyMenu } from './routes/api/ai-builder/menu
 import { handleAIBuilderDeploy } from './routes/api/ai-builder/deploy.js';
 import { handleUpdateSeo, handleSeoAiReview } from './routes/api/ai-builder/seo.js';
 import { handleAddDomain, handleDomainStatus, handleRemoveDomain } from './routes/api/ai-builder/domains.js';
+import { handleSubdomainCheck, handleSubdomainRename } from './routes/api/ai-builder/subdomain.js';
 
 // Billing (Stripe + magic-link) route handlers
 import { handleBilling, handleBillingVerify, handleBillingLogout } from './routes/public/billing.js';
@@ -513,6 +514,9 @@ router.post('/api/ai-builder/:project_id/managers/remove', handleRemoveManager, 
 router.post('/api/ai-builder/:project_id/domains', handleAddDomain, PROJ);
 router.get('/api/ai-builder/:project_id/domains/:id/status', handleDomainStatus, PROJ);
 router.delete('/api/ai-builder/:project_id/domains/:id', handleRemoveDomain, PROJ);
+// One-time custom site address (subdomain) — live check + rename.
+router.get('/api/ai-builder/:project_id/subdomain/check', handleSubdomainCheck, PROJ);
+router.post('/api/ai-builder/:project_id/subdomain', handleSubdomainRename, PROJ);
 
 // Contact-form inbox (owner-facing; same access model as customize)
 router.get('/ai-builder/forms/:project_id', handleFormsInbox, PROJ);

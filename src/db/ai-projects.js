@@ -116,6 +116,7 @@ export async function updateAIProject(db, id, data) {
     'deployed_url',
     'terms_accepted_at',
     'subdomain',
+    'subdomain_changed_at',
     'inbound_email_token',
     // Onboarding redesign: branching flow + detailed-profile blob.
     'flow_path',
