@@ -418,7 +418,7 @@ export const pt = {
     vs_small: '— enquanto os grandes te dão <strong>2 GB por $17</strong>. Armazenamento quase não nos custa nada, então também não cobramos muito por ele. Simples assim.',
     note: 'Todos os planos incluem o criador com IA, sites de várias páginas, edição ao vivo, temas e publicação com um clique. Cancele quando quiser.',
     compare_link: 'Veja o lado a lado com o Wix →',
-    plugins_note: 'Precisa de mais? Plugins opcionais — Catálogo, CRM e Loja Avançada — $5/mês cada, ou os três por $10/mês →',
+    plugins_note: 'Precisa de mais? Plugins opcionais — Cursos, Membros, Catálogo, CRM e Loja Avançada — $5/mês cada, ou economize com um pacote →',
     speed_link: 'Veja a velocidade dos nossos sites →',
     faq_title: 'Perguntas',
     cta_title: 'Comece a criar — grátis', cta_sub: 'O seu primeiro site está a um minuto.', cta_btn: '✨ Criar com IA',
@@ -1261,7 +1261,7 @@ export const pt = {
     toc: [
       ['getting-started', 'Primeiros passos'], ['customizing', 'Personalizar o seu site'],
       ['logo', 'Logo e marca'],
-      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'], ['courses', 'Cursos e treinamento'], ['bookings', 'Reservas'],
+      ['publishing', 'Publicar'], ['qr', 'Código QR'], ['store', 'Loja online'], ['courses', 'Cursos e treinamento'], ['members', 'Membros e login'], ['bookings', 'Reservas'],
       ['blog', 'Blog, email e redes'], ['messages', 'Formulário de contato e caixa de entrada'],
       ['versions', 'Versões, backups e exportação'], ['seo', 'SEO e aparecer no Google'],
       ['performance', 'Velocidade e desempenho'],
@@ -1320,7 +1320,16 @@ export const pt = {
           <li><strong>Adicione aulas</strong> — cada aula é um vídeo, texto rico, um PDF, um link externo ou um quiz de autoavaliação. Agrupe-as em seções, defina um preço (ou deixe-o grátis), adicione uma imagem de capa e instrutor, depois publique.</li>
           <li><strong>No seu site</strong> — cursos publicados recebem automaticamente uma página <strong>Cursos</strong> e um link no menu, com um reprodutor integrado: uma barra lateral de aulas, conteúdo de vídeo/PDF/texto e quizzes que avaliam na hora no navegador. Destaque cursos em qualquer lugar com <strong>+ Adicionar seção → 📚 Cursos</strong>.</li>
         </ol>
-        <p><strong>Cursos pagos</strong> usam sua própria conta do Stripe (a mesma conexão da loja). Os compradores pagam com segurança e recebem um link de acesso privado por e-mail que desbloqueia todas as aulas — sem precisar de conta. Marque aulas individuais como <strong>prévia grátis</strong> para oferecer uma amostra antes da compra.</p>`],
+        <p><strong>Cursos pagos</strong> usam sua própria conta do Stripe (a mesma conexão da loja). Os compradores entram com um link de e-mail sem senha e são inscritos no momento em que pagam, depois assistem todas as aulas diretamente no seu site — também recebem um link de acesso privado por e-mail. <strong>Cursos gratuitos</strong> permanecem abertos para todos. Quer que o catálogo também seja privado? Ative <strong>🔒 Somente para membros</strong> no gerenciador de Cursos para que os visitantes precisem fazer login para navegar (requer o complemento <a href="#members">Membros</a>).</p>`],
+      ['members', 'Membros e login', `
+        <p>O complemento <strong>Membros</strong> permite que os visitantes criem uma conta gratuita no seu site e desbloqueiem conteúdo <strong>somente para membros</strong>. É um <strong>complemento de $5/mês</strong> (também incluso no pacote Creators &amp; Coaches); habilite-o a partir de <a href="/plugins">Plugins</a>.</p>
+        <ul>
+          <li><strong>Login sem senha</strong> — os visitantes inserem seu e-mail e recebem um link mágico de login (sem senha). Adicione uma caixa <strong>+ Adicionar seção → 👤 Login de membro</strong> em qualquer lugar para que as pessoas possam fazer login, ver sua conta e sair.</li>
+          <li><strong>Páginas somente para membros</strong> — no painel <strong>Páginas</strong>, marque <strong>🔒 Somente para membros</strong> em qualquer página. Após publicada, essa página mostra apenas uma caixa de login; o conteúdo real é entregue aos membros logados e nunca aparece na página pública.</li>
+          <li><strong>Seções somente para membros</strong> — quer restringir apenas parte de uma página? Abra o editor de uma seção e marque <strong>🔒 Somente para membros</strong>; o restante da página permanece público.</li>
+          <li><strong>Sua lista de membros</strong> — veja todos os que fizeram login sob <strong>Gerenciar ▾ → Membros</strong>: exporte para CSV, ou bloqueie e remova pessoas.</li>
+        </ul>
+        <p>"Somente para membros" significa que <em>os visitantes devem fazer login</em> — qualquer pessoa pode criar uma conta, então não é exclusivo por convite. Combine com <a href="#courses">Cursos</a> para criar uma área de aprendizado privada.</p>`],
       ['bookings', 'Reservas', `
         <p>Deixe os visitantes agendarem direto no seu site — serviços, horários, confirmações e cancelamentos inclusos (grátis em todos os planos, com limites por plano).</p>
         <ul>
@@ -1420,7 +1429,7 @@ export const pt = {
       ['A Caddisfly pode criar um logo para mim?', 'Sim — nos planos pagos, abra <strong>✨ Logo e marca</strong> no Personalizar e gere 4 opções de logo com IA por tentativa (10 créditos); clique em uma para usá-la como logo do cabeçalho, favicon e imagem de compartilhamento. Em qualquer plano você pode enviar o seu próprio logo. Ver <a href="#logo">Logo e marca</a>.'],
       ['Posso vender produtos no meu site?', 'Sim — a partir do plano Starter ($9/mês). Conecte sua própria conta Stripe na página <strong>🛍 Loja</strong>, adicione produtos (a IA pode escrever descrições e gerar fotos — ou importe seu catálogo do Stripe em um clique) e publique. Ver <a href="#store">Loja online</a>.'],
       ['Vocês ficam com uma parte das minhas vendas?', 'Não. O pagamento é processado na sua própria conta Stripe, então o dinheiro vai direto para você. Você paga apenas as tarifas padrão do Stripe — a Caddisfly não adiciona nada em cima.'],
-      ['Posso vender assinaturas ou planos recorrentes?', 'Sim — adicione uma seção de <strong>Preços</strong>, edite-a e anexe um preço recorrente do Stripe a um cartão de plano (ou crie um ali mesmo). O botão do cartão vira um <strong>Assinar</strong> com pagamento real; seu Stripe cuida das renovações e faturas. Ver <a href="#store">Loja online</a>.'],
+      ['Posso vender assinaturas ou planos recorrentes?', 'Sim. Para cobrança recorrente, adicione uma seção <strong>Precificação</strong> e vincule um preço recorrente do Stripe a uma carta de plano — o botão se torna um checkout ativo de <strong>Assinar</strong> e o Stripe gerencia as renovações. Para colocar conteúdo atrás de um login, adicione o complemento <strong>Membros</strong> e marque páginas ou seções como <strong>somente para membros</strong> (veja <a href="#members">Membros e login</a>).'],
       ['Posso comprar um domínio pela Caddisfly?', 'Sim — abra <strong>🌐 Compre um domínio</strong> no seu Painel, pesquise um nome e compre. Nós o registramos em seu nome e o conectamos ao seu site automaticamente com SSL — sem configurar DNS. <strong>Importante:</strong> após a primeira compra você precisa clicar em 15 dias no link de verificação da ICANN enviado por e-mail, ou o domínio é suspenso. Os domínios renovam a cada ano (você pode desativar). Ver <a href="#buy-domain">Comprar um domínio</a>.'],
       ['Como funciona o blog com IA?', 'Abra <strong>📝 Blog</strong>, dê à IA algumas frases e ela redige uma publicação completa no idioma do seu site — você edita, publica e republica o site para colocá-la no ar. Com um clique ela também gera uma imagem de capa e posts prontos para X, Instagram e LinkedIn. Você ainda pode <strong>publicar por email</strong> e <strong>compartilhar automaticamente</strong> no Discord, Slack, Telegram ou Mastodon. Ver <a href="#blog">Blog, email e redes</a>.'],
       ['Posso publicar no meu blog por email?', 'Sim, em planos pagos. No gerenciador do <strong>📝 Blog</strong>, gere o seu endereço privado de “publicar por email” e depois envie um assunto e algumas frases. A IA transforma num <strong>rascunho</strong> com imagem de capa para você revisar — nada é publicado até você aprovar, e só são aceitos emails do endereço da sua conta. Ver <a href="#blog">Blog, email e redes</a>.'],
@@ -1436,6 +1445,8 @@ export const pt = {
       ['Posso transferir um site para um cliente ou outra conta?', 'Sim, nos planos Pro e Agency. Abra o site em <strong>Personalizar → ⇄ Transferir</strong>, insira o e-mail do destinatário e eles aceitarão por meio de um link por e-mail. Uma vez aceito, eles possuem completamente o site — será cobrado e gerido conforme o plano deles, sem nada herdado da sua conta. Você pode optar por <strong>manter o acesso do criador</strong> para continuar editando-o como Gerente. Veja <a href="#transfer">Transferir um site e o acesso</a>.'],
       ['Posso limitar um membro da equipe a certos sites?', 'Sim. Quando você convida alguém (Painel → Equipe), escolha <strong>Todos os sites</strong> ou selecione <strong>sites específicos</strong> e defina seu papel. Você pode alterar quais sites eles podem acessar a qualquer momento na linha dele. Veja <a href="#team">Membros da equipe</a>.'],
       ['O que acontece se eu tiver mais sites publicados do que o meu novo plano permite?', 'Seus sites publicados permanecem online — nunca os desligamos automaticamente — mas você não poderá publicar mais sites até voltar a ficar dentro do limite do seu plano. Você verá um banner indicando que deve despublicar um site ou fazer upgrade. Isso pode acontecer após uma redução de plano ou após aceitar uma transferência de site.'],
+      ['Posso tornar parte do meu site somente para membros?', 'Sim — com o complemento <strong>Membros</strong> você pode exigir um login gratuito para visualizar qualquer página ou seção, até mesmo todo o catálogo de cursos. Os visitantes fazem login com um link de e-mail sem senha; você gerencia quem tem acesso sob <strong>Gerenciar ▾ → Membros</strong>. Veja <a href="#members">Membros e login</a>.'],
+      ['As pessoas precisam de uma conta para fazer meus cursos?', 'Cursos gratuitos estão abertos para todos. Para <strong>cursos pagos</strong>, os compradores fazem login e são inscritos ao pagar, depois assistem todas as aulas no seu site (com um link de acesso de backup por e-mail). Veja <a href="#courses">Cursos e treinamento</a>.'],
       ['Preciso de ajuda ou encontrei um erro.', 'Abra um ticket em <a href="/support">Suporte</a> — descreva o problema ou pedido e responderemos por e-mail.'],
     ],
   },

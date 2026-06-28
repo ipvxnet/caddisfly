@@ -418,7 +418,7 @@ export const en = {
     vs_small: '— where the big builders give you <strong>2 GB for $17</strong>. Storage barely costs us anything, so we don’t charge you much for it. Simple as that.',
     note: 'All plans include the AI builder, multi-page sites, live editing, themes & one-click publish. Cancel anytime.',
     compare_link: 'See the side-by-side vs Wix →',
-    plugins_note: 'Need more? Optional plugins — Catalogue, CRM &amp; Advanced Store — $5/mo each, or all three for $10/mo →',
+    plugins_note: 'Need more? Optional plugins — Courses, Members, Catalogue, CRM &amp; Advanced Store — $5/mo each, or save with a bundle →',
     speed_link: 'See how fast our sites are →',
     faq_title: 'Questions',
     cta_title: 'Start building — free', cta_sub: 'Your first site is a minute away.', cta_btn: '✨ Build with AI',
@@ -1269,7 +1269,7 @@ export const en = {
     toc: [
       ['getting-started', 'Getting started'], ['customizing', 'Customizing your site'],
       ['logo', 'Logo & branding'],
-      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'], ['courses', 'Courses & training'], ['bookings', 'Bookings'],
+      ['publishing', 'Publishing'], ['qr', 'QR code'], ['store', 'Online store'], ['courses', 'Courses & training'], ['members', 'Members & sign-in'], ['bookings', 'Bookings'],
       ['blog', 'Blog, email & social'], ['messages', 'Contact form & inbox'],
       ['versions', 'Versions, backups & export'], ['seo', 'SEO & getting found'],
       ['performance', 'Speed & performance'],
@@ -1328,7 +1328,16 @@ export const en = {
           <li><strong>Add lessons</strong> — each lesson is a video, rich text, a PDF, an external link, or a self-check quiz. Group them into sections, set a price (or leave it free), add a cover image and instructor, then publish.</li>
           <li><strong>On your site</strong> — published courses get a <strong>Courses</strong> page and menu link automatically, with a built-in player: a lesson sidebar, video/PDF/text content, and quizzes that grade instantly in the browser. Feature courses anywhere with <strong>+ Add section → 📚 Courses</strong>.</li>
         </ol>
-        <p><strong>Paid courses</strong> use your own Stripe account (the same connection as the store). Buyers check out securely, then receive a private access link by email that unlocks every lesson — no account required. Mark individual lessons as a <strong>free preview</strong> to give a taste before purchase.</p>`],
+        <p><strong>Paid courses</strong> use your own Stripe account (the same connection as the store). Buyers sign in with a passwordless email link and are enrolled the moment they pay, then watch every lesson right on your site — they also get a private backup access link by email. <strong>Free courses</strong> stay open to everyone. Want the catalog private too? Turn on <strong>🔒 Members only</strong> in the Courses manager so visitors must sign in to browse (requires the <a href="#members">Members</a> plugin).</p>`],
+      ['members', 'Members & sign-in', `
+        <p>The <strong>Members</strong> plugin lets visitors create a free account on your site and unlocks <strong>members-only</strong> content. It's a <strong>$5/mo add-on</strong> (also in the Creators &amp; Coaches bundle); enable it from <a href="/plugins">Plugins</a>.</p>
+        <ul>
+          <li><strong>Passwordless sign-in</strong> — visitors enter their email and get a magic sign-in link (no password). Add a <strong>+ Add section → 👤 Member sign-in</strong> box anywhere so people can log in, see their account, and log out.</li>
+          <li><strong>Members-only pages</strong> — in the <strong>Pages</strong> panel, tick <strong>🔒 Members only</strong> on any page. Once published, that page shows only a sign-in box; the real content is delivered to signed-in members and never appears in the public page.</li>
+          <li><strong>Members-only sections</strong> — want to gate just part of a page? Open a section's editor and tick <strong>🔒 Members only</strong>; the rest of the page stays public.</li>
+          <li><strong>Your member list</strong> — see everyone who has signed in under <strong>Manage ▾ → Members</strong>: export to CSV, or block and remove people.</li>
+        </ul>
+        <p>"Members only" means <em>visitors must sign in</em> — anyone can create an account, so it isn't invite-only. Pair it with <a href="#courses">Courses</a> to run a private learning area.</p>`],
       ['bookings', 'Bookings', `
         <p>Let visitors book appointments right on your site — services, time slots, confirmations, and cancellations are built in (free on every plan, with per-plan limits).</p>
         <ul>
@@ -1428,7 +1437,7 @@ export const en = {
       ['Can Caddisfly create a logo for me?', 'Yes — on paid plans, open <strong>✨ Logo &amp; Brand</strong> in Customize and generate 4 AI logo options per run (10 credits); click one to use it as your header logo, favicon, and share image. On any plan you can upload your own logo instead. See <a href="#logo">Logo &amp; branding</a>.'],
       ['Can I sell products on my site?', 'Yes — from the Starter plan ($9/mo). Connect your own Stripe account on the <strong>🛍 Store</strong> page, add products (AI can write descriptions and generate photos — or import your Stripe catalog in one click), and publish. See <a href="#store">Online store</a>.'],
       ['Do you take a cut of my sales?', 'No. Checkout runs on your own Stripe account, so the money goes straight to you. You pay only Stripe’s standard processing fees — Caddisfly adds nothing on top.'],
-      ['Can I sell subscriptions or memberships?', 'Yes — add a <strong>Pricing</strong> section, edit it, and attach a recurring Stripe price to a plan card (or create one in place). The card’s button becomes a live <strong>Subscribe</strong> checkout; your Stripe handles renewals and invoices. See <a href="#store">Online store</a>.'],
+      ['Can I sell subscriptions or memberships?', 'Yes. For recurring billing, add a <strong>Pricing</strong> section and attach a recurring Stripe price to a plan card — the button becomes a live <strong>Subscribe</strong> checkout and Stripe handles renewals. To put content behind a login, add the <strong>Members</strong> plugin and mark pages or sections <strong>members-only</strong> (see <a href="#members">Members &amp; sign-in</a>).'],
       ['Can I buy a domain through Caddisfly?', 'Yes — open <strong>🌐 Buy a domain</strong> on your Dashboard, search a name, and buy it. We register it to you and connect it to your site automatically with SSL — no DNS setup. <strong>Important:</strong> after your first purchase you must click the ICANN verification link emailed to you within 15 days, or the domain is suspended. Domains auto-renew yearly (you can turn that off). See <a href="#buy-domain">Buying a domain</a>.'],
       ['How does the AI blog work?', 'Open <strong>📝 Blog</strong>, give the AI a few sentences, and it drafts a full post in your site’s language — you edit, publish, and re-publish your site to put it live. One click also generates a cover image and ready-to-share social posts for X, Instagram and LinkedIn. You can even <strong>post by email</strong> and <strong>auto-share</strong> to Discord, Slack, Telegram or Mastodon. See <a href="#blog">Blog, email &amp; social</a>.'],
       ['Can I post to my blog by email?', 'Yes, on paid plans. In the <strong>📝 Blog</strong> manager, generate your private “post by email” address, then email it a subject and a few sentences. AI turns it into a <strong>draft</strong> post with a cover image for you to review — nothing publishes until you approve it, and only emails from your account address are accepted. See <a href="#blog">Blog, email &amp; social</a>.'],
@@ -1444,6 +1453,8 @@ export const en = {
       ['Can I transfer a website to a client or another account?', 'Yes, on Pro and Agency plans. Open the site in <strong>Customize → ⇄ Transfer</strong>, enter the recipient’s email, and they accept via an emailed link. Once accepted they fully own the site — it’s billed and gated by their plan, with nothing inherited from yours. You can optionally <strong>keep Builder access</strong> to keep editing it as a Manager. See <a href="#transfer">Transferring a site &amp; access</a>.'],
       ['Can I limit a team member to certain sites?', 'Yes. When you invite someone (Dashboard → Team), choose <strong>All sites</strong> or pick <strong>specific sites</strong>, and set their role. You can change which sites they can access anytime from their row. See <a href="#team">Team members</a>.'],
       ['What happens if I have more published sites than my new plan allows?', 'Your live sites stay online — we never take them down automatically — but you can’t publish additional sites until you’re within your plan’s limit. You’ll see a banner prompting you to unpublish a site or upgrade. This can happen after a downgrade or after accepting a site transfer.'],
+      ['Can I make part of my site members-only?', 'Yes — with the <strong>Members</strong> plugin you can require a free sign-in to view any page or section, and even the whole course catalog. Visitors sign in with a passwordless email link; you manage who has access under <strong>Manage ▾ → Members</strong>. See <a href="#members">Members &amp; sign-in</a>.'],
+      ['Do people need an account to take my courses?', 'Free courses are open to everyone. For <strong>paid</strong> courses, buyers sign in and are enrolled when they pay, then watch every lesson on your site (with a backup access link by email). See <a href="#courses">Courses &amp; training</a>.'],
       ['I need help or found a bug.', 'Open a ticket from <a href="/support">Support</a> — describe the issue or request and we’ll get back to you by email.'],
     ],
   },
