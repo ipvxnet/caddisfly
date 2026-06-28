@@ -20,7 +20,7 @@ const DEFAULTS = {
     cta: ['Ready to get started?', ''],
     contact: ['Get in Touch', 'We’d love to hear from you'],
     instagram_feed: ["What's happening", 'Our latest posts'],
-    members: ['Members', 'Sign in to access members-only content.'],
+    members: ['Member sign-in', 'Sign in to your account.'],
   },
   es: {
     hero: ['Bienvenido', 'El eslogan de tu negocio'],
@@ -34,7 +34,7 @@ const DEFAULTS = {
     cta: ['¿Listo para empezar?', ''],
     contact: ['Contáctanos', 'Nos encantaría saber de ti'],
     instagram_feed: ['Lo último', 'Nuestras publicaciones recientes'],
-    members: ['Miembros', 'Inicia sesión para ver el contenido exclusivo.'],
+    members: ['Acceso de miembros', 'Inicia sesión en tu cuenta.'],
   },
   pt: {
     hero: ['Bem-vindo', 'O slogan do seu negócio'],
@@ -48,7 +48,7 @@ const DEFAULTS = {
     cta: ['Pronto para começar?', ''],
     contact: ['Fale Conosco', 'Adoraríamos ouvir você'],
     instagram_feed: ['O que há de novo', 'Nossas publicações recentes'],
-    members: ['Membros', 'Entre para acessar o conteúdo exclusivo.'],
+    members: ['Acesso de membros', 'Entre na sua conta.'],
   },
 };
 

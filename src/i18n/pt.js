@@ -1091,7 +1091,7 @@ export const pt = {
     igf_feed_id: 'ID do feed do Instagram',
     igf_feed_hint: 'Crie um feed grátis no Behold, conecte seu Instagram e cole aqui o ID do feed —',
     igf_count: 'Publicações a exibir',
-    mbr_heading_ph: 'Membros',
+    mbr_heading_ph: 'Acesso de membros',
     mbr_hint: 'Os visitantes entram com um link mágico (sem senha). Gerencie sua lista de membros na página Membros do painel.',
   },
 

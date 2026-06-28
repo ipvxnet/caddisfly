@@ -1098,7 +1098,7 @@ export const en = {
     igf_feed_id: 'Instagram feed ID',
     igf_feed_hint: 'Create a free feed at Behold, connect your Instagram, and paste the feed ID here —',
     igf_count: 'Posts to show',
-    mbr_heading_ph: 'Members',
+    mbr_heading_ph: 'Member sign-in',
     mbr_hint: 'Visitors sign in with a magic link (no password). Manage your member list from the dashboard Members page.',
   },
 
