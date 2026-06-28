@@ -932,6 +932,9 @@ const DARK_CARD_SURFACES = [
   '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.step-card', '.hq-card', '.cta-split-copy', '.vt-card', '.tp-card',
   '.bkg-card', '.bkg-panel', '.crs-card', '.crsec-card', '.igf-card', '.mbr-card', '.mbr-input', '.mbr-gate-card', '.mbr-gate-input',
   '.crsgate-card', '.crsgate-input', '.crsgate-sec', '.crsgate-sectitle',
+  // Booking panel controls + slots, service-modal media tile — light #fff/#f8f9fc
+  // boxes that otherwise stay light (with now-light text) on a dark theme.
+  '.bkg-nav button', '.bkg-close', '.bkg-slot', '.svc-media',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -983,6 +986,8 @@ function surfaceLayerCss(rootSel, p, s) {
     ${j(['.crsgate-input::placeholder'])} { color: ${s.muted} !important; }
     ${j(['.crs-text', '.crs-pane-title', '.crs-text h2', '.crs-text h3', '.crs-side-h', '.crs-q-text', '.crs-title', '.crs-price', '.crs-free', '.crsec-title', '.crsec-price', '.crsec-free'])} { color: ${s.text} !important; }
     ${j(['.crs-desc', '.crs-expl', '.crs-lesson-item', '.crs-sec-title', '.crs-li-dur', '.crs-sub', '.crs-meta', '.crs-empty', '.crsec-sub', '.crsec-desc', '.crsec-empty'])} { color: ${s.muted} !important; }
+    ${j(['.mbr-who span', '.mbr-logout', '.hq-badge', '.step-title', '.footer-minimal-social a', '.bkg-slot'])} { color: ${s.text} !important; }
+    ${j(['.hq-card-label', '.step-desc', '.footer-minimal-copy', '.author-role', '.stat-label', '.bkg-day-col h4', '.cf-svc-modal__x'])} { color: ${s.muted} !important; }
     ${j(['.contact-form input', '.contact-form textarea', '.contact-form select'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
     ${j(['.contact-form input::placeholder', '.contact-form textarea::placeholder'])} { color: ${s.muted} !important; }`;
 }
