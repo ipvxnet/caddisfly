@@ -163,6 +163,8 @@ export async function handleAIBuilderCustomize(ctx) {
     // Courses (Training/LMS) — manager tool + a gated `courses` section; the
     // manager link shows when entitled.
     const hasCourses = await hasPlugin(env, ctx.billingEmail, 'courses');
+    // Members (Auth) — manager tool (roster) + a gated `members` widget section.
+    const hasMembers = await hasPlugin(env, ctx.billingEmail, 'members');
 
     // Layout variants per addable section type (for the add-time layout picker).
     const sectionVariants = Object.fromEntries(addableSections.map((s) => [s.type, getAvailableVariants(s.type)]));
@@ -782,6 +784,7 @@ export async function handleAIBuilderCustomize(ctx) {
           <a href="/ai-builder/store/${project.project_id}" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
           ${hasCrm ? `<a href="/ai-builder/crm/${project.project_id}" title="${tr('cust.crm')}">${tr('cust.crm')}</a>` : ''}
           ${hasCourses ? `<a href="/ai-builder/courses/${project.project_id}" title="${tr('cust.courses_title')}">${tr('cust.courses')}</a>` : ''}
+          ${hasMembers ? `<a href="/ai-builder/members/${project.project_id}" title="${tr('cust.members_title')}">${tr('cust.members')}</a>` : ''}
           ${role === 'owner' ? `<a href="/ai-builder/${project.project_id}/transfer" title="Transfer this website to another account">⇄ Transfer</a>` : ''}
         </div>
       </div>
@@ -845,6 +848,7 @@ export async function handleAIBuilderCustomize(ctx) {
           </label>
           <label class="menu-org-row"><input type="checkbox" ${currentPage.is_visible ? 'checked' : ''} onchange="setPageVisible(${currentPage.id}, this.checked)"> ${tr('cust.menu_show') || 'Show in menu'}</label>
           <label class="menu-org-row"><input type="checkbox" ${currentPage.show_sections_in_nav ? 'checked' : ''} onchange="setShowSections(${currentPage.id}, this.checked)"> ${tr('cust.menu_sections_sub') || 'Sections as submenu'}</label>
+          ${hasMembers ? `<label class="menu-org-row" title="${tr('cust.members_only_hint') || 'Visitors must sign in (as a member) to view this page'}"><input type="checkbox" ${currentPage.members_only ? 'checked' : ''} onchange="setMembersOnly(${currentPage.id}, this.checked)"> 🔒 ${tr('cust.members_only') || 'Members only'}</label>` : ''}
         </div>`;
             })()
           : ''}
@@ -1328,6 +1332,7 @@ export async function handleAIBuilderCustomize(ctx) {
     function setPageParent(id, parentId) { updatePageField(id, { parent_id: parentId ? Number(parentId) : null }); }
     function setPageVisible(id, vis) { updatePageField(id, { is_visible: vis ? 1 : 0 }); }
     function setShowSections(id, val) { updatePageField(id, { show_sections_in_nav: val ? 1 : 0 }); }
+    function setMembersOnly(id, val) { updatePageField(id, { members_only: val ? 1 : 0 }); }
     async function reorderMenuScope(ids) {
       try {
         const r = await fetch(\`/api/ai-builder/\${projectId}/pages/reorder\`, {

@@ -18,7 +18,7 @@ import { defaultItems, uiText } from '../templates/ai-builder/section-defaults.j
  *   the editor matches what the page renders — e.g. PT defaults, not EN)
  * @returns {string} Modal HTML
  */
-export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null, catCategories = null) {
+export function generateSectionEditorModal(section, projectId, lang = 'en', linkData = null, siteLang = null, catCategories = null, hasMembers = false) {
   const tr = translator(lang);
   const contentLang = siteLang || lang;
   const content = JSON.parse(section.content_json || '{}');
@@ -52,6 +52,12 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
             </select>
             <small>${tr('sed.appearance_hint')}</small>
           </div>`}
+
+          ${hasMembers && !['header', 'footer'].includes(section.section_type) ? `
+          <div class="form-group">
+            <label class="sed-check"><input type="checkbox" name="_members_only" value="1"${content._members_only ? ' checked' : ''}> 🔒 ${tr('sed.members_only')}</label>
+            <small>${tr('sed.members_only_hint')}</small>
+          </div>` : ''}
 
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="closeModal()">${tr('sed.cancel')}</button>
@@ -449,6 +455,12 @@ async function saveSectionChanges(event) {
     try { content[base] = JSON.parse(content[k]) || []; } catch (e) { content[base] = []; }
     delete content[k];
   });
+
+  // Checkboxes are absent from FormData when unchecked — send the boolean
+  // explicitly so unchecking actually CLEARS the flag (merge keeps the old value
+  // otherwise). Only when the control is present (entitled owners).
+  const moCheck = form.querySelector('input[name="_members_only"]');
+  if (moCheck) content._members_only = moCheck.checked;
 
   saveBtn.disabled = true;
   saveBtn.textContent = ${JSON.stringify(tr('sed.saving'))};
@@ -935,6 +947,8 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
       return generateBookingFields(content, tr, projectId);
     case 'instagram_feed':
       return generateInstagramFeedFields(content, tr);
+    case 'members':
+      return generateMembersFields(content, tr);
     default:
       return `<p>${tr('sed.not_supported')}</p>`;
   }
@@ -1028,6 +1042,27 @@ function generateInstagramFeedFields(content, tr) {
         ${[4, 6, 8, 12].map((n) => `<option value="${n}"${n === count ? ' selected' : ''}>${n}</option>`).join('')}
       </select>
     </div>
+  `;
+}
+
+/**
+ * 👤 Member sign-in: heading/subheading only. The widget itself (login form /
+ * account state) is self-contained and talks to the member API at render time.
+ * Manage the member list from the dashboard Members manager.
+ */
+function generateMembersFields(content, tr) {
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${tr('sed.mbr_heading_ph')}">
+    </div>
+
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+
+    <p style="color: #718096; font-size: .85rem;">${tr('sed.mbr_hint')}</p>
   `;
 }
 

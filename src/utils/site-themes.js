@@ -920,7 +920,7 @@ const DARK_SURFACE_SECTIONS = [
   '.shop-list-section', '.shop-product-section', '.shop-feat-section',
   '.bkg-section', '.cat-section',
   '.crs-section', '.crsec-section', '.crs-player-page', '.crs-main', '.crs-side',
-  '.igf-section',
+  '.igf-section', '.mbr-section', '.mbr-gate',
 ];
 
 // Inner card/well surfaces (light) — flipped to the slightly lighter surface.card.
@@ -929,7 +929,7 @@ const DARK_CARD_SURFACES = [
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
   '.team-card', '.feature-item', '.blog-card', '.shop-card', '.shop-feat-card', '.cat-card',
   '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.step-card', '.hq-card', '.cta-split-copy', '.vt-card', '.tp-card',
-  '.bkg-card', '.bkg-panel', '.crs-card', '.crsec-card', '.igf-card',
+  '.bkg-card', '.bkg-panel', '.crs-card', '.crsec-card', '.igf-card', '.mbr-card', '.mbr-input', '.mbr-gate-card', '.mbr-gate-input',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).

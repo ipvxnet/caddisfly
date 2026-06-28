@@ -75,6 +75,8 @@ import { coursePlayerTemplate } from './courses/player.js';
 import { coursesSectionTemplate } from './courses/section.js';
 // Instagram Feed (plugin) — addable body section; live client-side feed fetch
 import { instagramFeedSectionTemplate } from './instagram_feed/section.js';
+// Members (plugin) — passwordless sign-in / account widget
+import { membersSectionTemplate } from './members/section.js';
 
 /**
  * Template registry
@@ -192,6 +194,10 @@ export const TEMPLATE_REGISTRY = {
   instagram_feed: {
     default: instagramFeedSectionTemplate,
     grid: instagramFeedSectionTemplate,
+  },
+  members: {
+    default: membersSectionTemplate,
+    card: membersSectionTemplate,
   },
 };
 

@@ -36,8 +36,31 @@ export function applyCorsHeaders(response, options = {}) {
   if (credentials) {
     newResponse.headers.set('Access-Control-Allow-Credentials', 'true');
   }
+  // A reflected (non-wildcard) origin means the response varies by Origin — set
+  // Vary so caches don't serve one origin's ACAO to another.
+  if (origin !== '*') newResponse.headers.append('Vary', 'Origin');
 
   return newResponse;
+}
+
+/**
+ * Credentialed CORS preflight that reflects the request Origin (wildcard ACAO is
+ * forbidden when credentials are allowed). Used for /api/members/* so the member
+ * session cookie rides cross-site fetches from published customer sites.
+ */
+export function handleCredentialedPreflight(request) {
+  const origin = request.headers.get('Origin') || '*';
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Max-Age': '86400',
+      Vary: 'Origin',
+    },
+  });
 }
 
 /**

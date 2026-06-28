@@ -268,6 +268,44 @@ export async function sendMagicLinkEmail(env, email, linkUrl) {
 }
 
 /**
+ * Magic-link sign-in email for a SITE MEMBER (Members/Auth plugin). Distinct
+ * from the billing magic link above: this signs the visitor into the merchant's
+ * published site, not the Caddisfly dashboard. Localized en/es/pt. Best-effort.
+ * @param {Object} env
+ * @param {Object} opts - { to, siteName, linkUrl, lang }
+ * @returns {Promise<boolean>}
+ */
+export async function sendMemberMagicLinkEmail(env, { to, siteName, linkUrl, lang = 'en' }) {
+  const isProduction = env.ENVIRONMENT === 'production';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const L = {
+    en: { subject: `Sign in to ${siteName || 'the site'}`, h: 'Your sign-in link', p: `Click below to sign in to <strong>${esc(siteName || 'the site')}</strong>. This link expires in 15 minutes and can only be used once.`, btn: 'Sign in', ignore: "If you didn't request this, you can ignore this email." },
+    es: { subject: `Inicia sesión en ${siteName || 'el sitio'}`, h: 'Tu enlace de acceso', p: `Haz clic abajo para iniciar sesión en <strong>${esc(siteName || 'el sitio')}</strong>. Este enlace caduca en 15 minutos y solo se puede usar una vez.`, btn: 'Iniciar sesión', ignore: 'Si no solicitaste esto, puedes ignorar este correo.' },
+    pt: { subject: `Entrar em ${siteName || 'o site'}`, h: 'Seu link de acesso', p: `Clique abaixo para entrar em <strong>${esc(siteName || 'o site')}</strong>. Este link expira em 15 minutos e só pode ser usado uma vez.`, btn: 'Entrar', ignore: 'Se você não solicitou isto, pode ignorar este e-mail.' },
+  };
+  const t = L[lang] || L.en;
+  const html = `
+    <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
+      <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h1 style="font-size:22px;margin:0 0 12px;">${esc(t.h)}</h1>
+        <p style="color:#444;line-height:1.6;">${t.p}</p>
+        <p style="margin:24px 0;"><a href="${linkUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">${esc(t.btn)}</a></p>
+        <p style="color:#888;font-size:13px;">${esc(t.ignore)}</p>
+      </div>
+    </body></html>`;
+  try {
+    const sent = await deliverEmail(env, { to, subject: t.subject, html });
+    if (sent) return true;
+    if (isProduction) { console.error('No email transport in production; cannot send member magic link'); return false; }
+  } catch (error) {
+    console.error('Failed to send member magic link:', error);
+    if (isProduction) return false;
+  }
+  console.warn(`[email stub] Member magic link to ${to}: ${linkUrl}`);
+  return true;
+}
+
+/**
  * Builds the HTML body for the billing magic-link email.
  * @param {string} linkUrl
  * @param {string} email

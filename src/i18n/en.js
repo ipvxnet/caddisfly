@@ -545,7 +545,7 @@ export const en = {
     analytics: '📊 Analytics', analytics_title: 'Traffic analytics for your published site',
     blog: '📝 Blog', blog_title: 'Write and publish blog posts with AI',
     store: '🛍 Store', store_title: 'Sell on your site — products, orders, Stripe payments',
-    crm: '👥 CRM', courses: '📚 Courses', courses_title: 'Online courses — lessons, videos, quizzes and sales', manage: 'Manage',
+    crm: '👥 CRM', courses: '📚 Courses', courses_title: 'Online courses — lessons, videos, quizzes and sales', members: '👤 Members', members_title: 'Your site members — sign-ins and members-only content', manage: 'Manage',
     full_preview: 'View Full Preview', deploy: 'Deploy Website', deploying: 'Deploying…',
     upgrade_title: 'Upgrade to unlock this', view_plans: 'View plans →', maybe_later: 'Maybe later',
     tab_content: 'Content', tab_design: 'Design',
@@ -557,7 +557,7 @@ export const en = {
     toast_snapshot_restored: 'Version restored', toast_seo_saved: 'SEO saved',
     toast_logo_updated: 'Logo updated', toast_logo_removed: 'Logo removed',
     pages: 'Pages', add_page: '+ Page', add_page_title: 'Add a page',
-    add_group: '+ Menu group', menu_parent: 'Menu parent', menu_top_level: 'Top level', menu_has_children: 'has submenu items', menu_show: 'Show in menu', menu_sections_sub: 'Sections as submenu', menu_ai: '✨ Organize menu', menu_ai_title: 'Let AI tidy your menu into groups & submenus — preview before applying', menu: 'Menu', menu_note: 'Organize how items appear in the top navigation. Groups are dropdown headers — nest pages under them with each page’s “Menu parent”.', menu_no_groups: 'No menu groups yet. Create one to nest pages under a dropdown.', menu_group_empty: 'Empty — set a page’s “Menu parent” to this group.', menu_move_up: 'Move up', menu_move_down: 'Move down', delete_group: 'Delete group', mnu_group_badge: 'group', mnu_group_name_prompt: 'Menu group name (a dropdown header — nest pages under it):', mnu_group_added: 'Menu group added', mnu_updated: 'Menu updated', mnu_update_fail: 'Could not update the menu', mnu_group_del_confirm: 'Delete this menu group? Pages under it move back to the top level.', mnu_group_deleted: 'Menu group deleted', mnu_asking: 'Asking AI to organize your menu…', mnu_suggest_fail: 'Could not suggest a menu', mnu_title: '✨ Suggested menu', mnu_sub: 'Here’s how AI would organize your navigation. Review, then apply.', mnu_cancel: 'Cancel', mnu_apply: 'Apply menu', mnu_applied: 'Menu organized', mnu_apply_fail: 'Could not apply the menu', mnu_badge_sections: '+ sections', mnu_badge_hidden: 'hidden',
+    add_group: '+ Menu group', menu_parent: 'Menu parent', menu_top_level: 'Top level', menu_has_children: 'has submenu items', menu_show: 'Show in menu', menu_sections_sub: 'Sections as submenu', members_only: 'Members only', members_only_hint: 'Visitors must sign in (as a member) to view this page', menu_ai: '✨ Organize menu', menu_ai_title: 'Let AI tidy your menu into groups & submenus — preview before applying', menu: 'Menu', menu_note: 'Organize how items appear in the top navigation. Groups are dropdown headers — nest pages under them with each page’s “Menu parent”.', menu_no_groups: 'No menu groups yet. Create one to nest pages under a dropdown.', menu_group_empty: 'Empty — set a page’s “Menu parent” to this group.', menu_move_up: 'Move up', menu_move_down: 'Move down', delete_group: 'Delete group', mnu_group_badge: 'group', mnu_group_name_prompt: 'Menu group name (a dropdown header — nest pages under it):', mnu_group_added: 'Menu group added', mnu_updated: 'Menu updated', mnu_update_fail: 'Could not update the menu', mnu_group_del_confirm: 'Delete this menu group? Pages under it move back to the top level.', mnu_group_deleted: 'Menu group deleted', mnu_asking: 'Asking AI to organize your menu…', mnu_suggest_fail: 'Could not suggest a menu', mnu_title: '✨ Suggested menu', mnu_sub: 'Here’s how AI would organize your navigation. Review, then apply.', mnu_cancel: 'Cancel', mnu_apply: 'Apply menu', mnu_applied: 'Menu organized', mnu_apply_fail: 'Could not apply the menu', mnu_badge_sections: '+ sections', mnu_badge_hidden: 'hidden',
     rename: 'Rename', delete_page: 'Delete page', home_page: 'Home page',
     sitewide: 'Site-wide', sitewide_note: '· shown on every page',
     sections_of: '{page} sections',
@@ -1035,6 +1035,7 @@ export const en = {
   sed: {
     appearance: 'Section appearance', appearance_auto: 'Auto (match theme)', appearance_light: 'Light', appearance_dark: 'Dark',
     appearance_hint: 'By default a section matches your theme. Force a light or dark background here if you want this one to stand out.',
+    members_only: 'Members only', members_only_hint: 'Hide this section behind a sign-in — only members who log in will see it.',
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',
     uploading: 'Uploading…', upload_complete: 'Upload complete!', upload_failed: 'Upload failed', upload_failed_p: 'Upload failed: ',
@@ -1097,6 +1098,8 @@ export const en = {
     igf_feed_id: 'Instagram feed ID',
     igf_feed_hint: 'Create a free feed at Behold, connect your Instagram, and paste the feed ID here —',
     igf_count: 'Posts to show',
+    mbr_heading_ph: 'Members',
+    mbr_hint: 'Visitors sign in with a magic link (no password). Manage your member list from the dashboard Members page.',
   },
 
   aip: {

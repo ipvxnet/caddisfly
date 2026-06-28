@@ -545,7 +545,7 @@ export const es = {
     analytics: '📊 Estadísticas', analytics_title: 'Estadísticas de tráfico de tu sitio publicado',
     blog: '📝 Blog', blog_title: 'Escribe y publica entradas de blog con IA',
     store: '🛍 Tienda', store_title: 'Vende en tu sitio — productos, pedidos, pagos con Stripe',
-    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos en línea — lecciones, videos, cuestionarios y ventas', manage: 'Gestionar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos en línea — lecciones, videos, cuestionarios y ventas', members: '👤 Miembros', members_title: 'Los miembros de tu sitio — inicios de sesión y contenido exclusivo', manage: 'Gestionar',
     full_preview: 'Ver vista previa completa', deploy: 'Publicar sitio', deploying: 'Publicando…',
     upgrade_title: 'Mejora tu plan para desbloquear', view_plans: 'Ver planes →', maybe_later: 'Quizás más tarde',
     tab_content: 'Contenido', tab_design: 'Diseño',
@@ -557,7 +557,7 @@ export const es = {
     toast_snapshot_restored: 'Versión restaurada', toast_seo_saved: 'SEO guardado',
     toast_logo_updated: 'Logo actualizado', toast_logo_removed: 'Logo eliminado',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Añadir una página',
-    add_group: '+ Grupo de menú', menu_parent: 'Menú superior', menu_top_level: 'Nivel superior', menu_has_children: 'tiene elementos de submenú', menu_show: 'Mostrar en el menú', menu_sections_sub: 'Secciones como submenú', menu_ai: '✨ Organizar menú', menu_ai_title: 'Deja que la IA ordene tu menú en grupos y submenús — vista previa antes de aplicar', menu: 'Menú', menu_note: 'Organiza cómo aparecen los elementos en la navegación superior. Los grupos son encabezados desplegables — anida páginas bajo ellos con el “Menú superior” de cada página.', menu_no_groups: 'Aún no hay grupos de menú. Crea uno para anidar páginas en un desplegable.', menu_group_empty: 'Vacío — asigna el “Menú superior” de una página a este grupo.', menu_move_up: 'Subir', menu_move_down: 'Bajar', delete_group: 'Eliminar grupo', mnu_group_badge: 'grupo', mnu_group_name_prompt: 'Nombre del grupo de menú (un encabezado desplegable — anida páginas debajo):', mnu_group_added: 'Grupo de menú añadido', mnu_updated: 'Menú actualizado', mnu_update_fail: 'No se pudo actualizar el menú', mnu_group_del_confirm: '¿Eliminar este grupo de menú? Las páginas que contiene volverán al nivel superior.', mnu_group_deleted: 'Grupo de menú eliminado', mnu_asking: 'Pidiendo a la IA que organice tu menú…', mnu_suggest_fail: 'No se pudo sugerir un menú', mnu_title: '✨ Menú sugerido', mnu_sub: 'Así organizaría la IA tu navegación. Revísalo y aplícalo.', mnu_cancel: 'Cancelar', mnu_apply: 'Aplicar menú', mnu_applied: 'Menú organizado', mnu_apply_fail: 'No se pudo aplicar el menú', mnu_badge_sections: '+ secciones', mnu_badge_hidden: 'oculto',
+    add_group: '+ Grupo de menú', menu_parent: 'Menú superior', menu_top_level: 'Nivel superior', menu_has_children: 'tiene elementos de submenú', menu_show: 'Mostrar en el menú', menu_sections_sub: 'Secciones como submenú', members_only: 'Solo para miembros', members_only_hint: 'Los visitantes deben iniciar sesión (como miembros) para ver esta página', menu_ai: '✨ Organizar menú', menu_ai_title: 'Deja que la IA ordene tu menú en grupos y submenús — vista previa antes de aplicar', menu: 'Menú', menu_note: 'Organiza cómo aparecen los elementos en la navegación superior. Los grupos son encabezados desplegables — anida páginas bajo ellos con el “Menú superior” de cada página.', menu_no_groups: 'Aún no hay grupos de menú. Crea uno para anidar páginas en un desplegable.', menu_group_empty: 'Vacío — asigna el “Menú superior” de una página a este grupo.', menu_move_up: 'Subir', menu_move_down: 'Bajar', delete_group: 'Eliminar grupo', mnu_group_badge: 'grupo', mnu_group_name_prompt: 'Nombre del grupo de menú (un encabezado desplegable — anida páginas debajo):', mnu_group_added: 'Grupo de menú añadido', mnu_updated: 'Menú actualizado', mnu_update_fail: 'No se pudo actualizar el menú', mnu_group_del_confirm: '¿Eliminar este grupo de menú? Las páginas que contiene volverán al nivel superior.', mnu_group_deleted: 'Grupo de menú eliminado', mnu_asking: 'Pidiendo a la IA que organice tu menú…', mnu_suggest_fail: 'No se pudo sugerir un menú', mnu_title: '✨ Menú sugerido', mnu_sub: 'Así organizaría la IA tu navegación. Revísalo y aplícalo.', mnu_cancel: 'Cancelar', mnu_apply: 'Aplicar menú', mnu_applied: 'Menú organizado', mnu_apply_fail: 'No se pudo aplicar el menú', mnu_badge_sections: '+ secciones', mnu_badge_hidden: 'oculto',
     rename: 'Renombrar', delete_page: 'Eliminar página', home_page: 'Página de inicio',
     sitewide: 'Todo el sitio', sitewide_note: '· se muestra en cada página',
     sections_of: 'Secciones de {page}',
@@ -1028,6 +1028,7 @@ export const es = {
   sed: {
     appearance: 'Apariencia de la sección', appearance_auto: 'Automático (según el tema)', appearance_light: 'Claro', appearance_dark: 'Oscuro',
     appearance_hint: 'Por defecto la sección sigue tu tema. Fuerza un fondo claro u oscuro aquí si quieres que esta destaque.',
+    members_only: 'Solo para miembros', members_only_hint: 'Oculta esta sección tras un inicio de sesión — solo los miembros que entren la verán.',
     edit_section: 'Editar sección', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Guardar cambios',
     saving: 'Guardando…', updated: '¡Sección actualizada!', save_failed: 'No se pudieron guardar los cambios', save_failed_p: 'No se pudo guardar: ',
     uploading: 'Subiendo…', upload_complete: '¡Subida completa!', upload_failed: 'Error al subir', upload_failed_p: 'Error al subir: ',
@@ -1090,6 +1091,8 @@ export const es = {
     igf_feed_id: 'ID del feed de Instagram',
     igf_feed_hint: 'Crea un feed gratis en Behold, conecta tu Instagram y pega aquí el ID del feed —',
     igf_count: 'Publicaciones a mostrar',
+    mbr_heading_ph: 'Miembros',
+    mbr_hint: 'Los visitantes inician sesión con un enlace mágico (sin contraseña). Gestiona tu lista de miembros desde la página Miembros del panel.',
   },
 
   aip: {

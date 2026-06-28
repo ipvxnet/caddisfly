@@ -165,6 +165,7 @@ export async function handleAIBuilderDeploy(ctx) {
     // to, so a lapsed plugin's sections never reach the published static HTML.
     const filterSections = await entitledSectionFilter(env, email);
     const hasAdvStore = await hasPlugin(env, email, 'advanced_store'); // mini-cart discount input gating
+    const hasMembers = await hasPlugin(env, email, 'members'); // members-only page gating (stage 2)
 
     const homePageRow = pages.find((p) => p.is_home) || pages.find((p) => p.slug === 'home') || null;
     const homeSections = filterSections(homePageRow
@@ -289,6 +290,11 @@ export async function handleAIBuilderDeploy(ctx) {
         canonicalUrl,
         pageTitle: page.title || null,
         business,
+        // Members-only page (stage 2a): sign-in gate instead of the real body.
+        // gateSections (2b): honor per-section _members_only flags. Both only
+        // when the owner is entitled to the Members plugin.
+        pageMembersOnly: !!(page.members_only && hasMembers),
+        gateSections: hasMembers,
       };
 
       // /site/:id copy (app worker).

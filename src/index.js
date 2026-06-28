@@ -3,7 +3,7 @@
 
 import { Router } from './router.js';
 import { handleError } from './middleware/error-handler.js';
-import { handleCorsPrelight, applyCorsHeaders } from './middleware/cors.js';
+import { handleCorsPrelight, applyCorsHeaders, handleCredentialedPreflight } from './middleware/cors.js';
 import { authMiddleware, adminMiddleware } from './middleware/auth.js';
 import { notFound } from './utils/response.js';
 
@@ -124,6 +124,8 @@ import { handleBookingReschedulePage, handleBookingRescheduleAction } from './ro
 import { handleBookingFeed } from './routes/public/booking-feed.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import { handleInstagramFeed } from './routes/public/instagram-feed.js';
+import { handleMemberLogin, handleMemberVerify, handleMemberMe, handleMemberLogout, handleMemberContent } from './routes/api/members.js';
+import { handleMembersManager, handleMemberSetStatus, handleMemberDelete, handleMembersCsv } from './routes/public/members-manager.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
   handleBookingHoursSave, handleBookingOverrideSave, handleBookingOverrideDelete, handleBookingHolidaysAdd,
@@ -345,6 +347,11 @@ router.put('/api/ai-builder/:project_id/courses/:course_id/lessons/:lesson_id', 
 router.delete('/api/ai-builder/:project_id/courses/:course_id/lessons/:lesson_id', handleLessonDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
 router.post('/api/ai-builder/:project_id/courses/:course_id/lessons/:lesson_id/questions', handleQuestionCreate, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
 router.delete('/api/ai-builder/:project_id/courses/:course_id/quiz/:quiz_id/questions/:question_id', handleQuestionDelete, [billingAuth, projectAccess, pluginGate('courses', { json: true })]);
+// Members plugin — dashboard roster manager (gated by the members entitlement).
+router.get('/ai-builder/members/:project_id', handleMembersManager, [billingAuth, projectAccess, pluginGate('members')]);
+router.get('/api/ai-builder/:project_id/members.csv', handleMembersCsv, [billingAuth, projectAccess, pluginGate('members')]);
+router.post('/api/ai-builder/:project_id/members/:email/status', handleMemberSetStatus, [billingAuth, projectAccess, pluginGate('members', { json: true })]);
+router.delete('/api/ai-builder/:project_id/members/:email', handleMemberDelete, [billingAuth, projectAccess, pluginGate('members', { json: true })]);
 // Public hosted quote page + PDF (token-authed, no session)
 router.get('/q/:token', handleQuoteView);
 router.get('/q/:token/pdf', handleQuotePdf);
@@ -434,6 +441,13 @@ router.post('/api/booking/:project_id/book', handleBookingCreate);
 // Instagram Feed plugin — public proxy for the merchant's Behold.so feed,
 // called cross-origin by the instagram_feed section on published sites.
 router.get('/api/instagram/feed', handleInstagramFeed);
+// Members plugin — PUBLIC member auth, called cross-origin by the member widget
+// on published sites (credentialed CORS handled in the fetch handler above).
+router.post('/api/members/:site/login', handleMemberLogin);
+router.get('/members/:site/verify', handleMemberVerify);
+router.get('/api/members/:site/me', handleMemberMe);
+router.post('/api/members/:site/logout', handleMemberLogout);
+router.get('/api/members/:site/content', handleMemberContent);
 // Video upload sink — PUBLIC, token-authorized; the xAI video model PUTs the
 // finished clip here under Zero Data Retention (see video-sink.js).
 router.put('/api/video-sink/:token', handleVideoSink);
@@ -654,9 +668,13 @@ router.delete('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteDelete, [a
 export default {
   async fetch(request, env, ctx) {
     try {
+      // Member API needs CREDENTIALED CORS (reflected origin, not wildcard) so
+      // the session cookie rides cross-site fetches from published sites.
+      const isMemberApi = new URL(request.url).pathname.startsWith('/api/members/');
+
       // Handle CORS preflight requests
       if (request.method === 'OPTIONS') {
-        return handleCorsPrelight();
+        return isMemberApi ? handleCredentialedPreflight(request) : handleCorsPrelight();
       }
 
       // Route the request
@@ -668,7 +686,9 @@ export default {
       }
 
       // Apply CORS headers to response
-      response = applyCorsHeaders(response);
+      response = isMemberApi
+        ? applyCorsHeaders(response, { origin: request.headers.get('Origin') || '*', credentials: true })
+        : applyCorsHeaders(response);
 
       return response;
     } catch (error) {

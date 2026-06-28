@@ -7,6 +7,7 @@ import { getTheme, darkModeCss, templateTokensCss, sectionAppearanceCss } from '
 import { optimizeStockImages, optimizeStockUrl } from './stock-image.js';
 import { translator } from '../i18n/index.js';
 import { SECTION_NAV_LABELS, rewriteLocalizedAnchors } from './anchor-normalize.js';
+import { memberGatePlaceholder, memberGateSectionPlaceholder, memberGateScript } from '../templates/ai-builder/members/gate.js';
 
 // Google Fonts that ship a single (400) weight only — requesting extra weights in
 // the css2 URL returns HTTP 400 and breaks the whole stylesheet, so omit the axis.
@@ -37,6 +38,14 @@ export function assemblePage(sections, config, project, opts = {}) {
     seoTitle = null, seoDescription = null, socialImage = null, heroImage = null, canonicalUrl = null, pageTitle = null, business = null,
     lang = 'en', products = null, bookingServices = null, holiday = null, homeSections = null, pageSections = null,
     hasAdvStore = false, courses = null,
+    // Members stage 2: when true, this whole page is members-only — ship a sign-in
+    // gate instead of the real body (the real content is served on demand to
+    // signed-in members via /api/members/:site/content). Set only at DEPLOY
+    // (public); preview stays ungated so the owner can edit the real content.
+    pageMembersOnly = false,
+    // Stage 2b: honor per-section `_members_only` flags (gate individual sections).
+    // Set at DEPLOY when the owner is entitled to the Members plugin.
+    gateSections = false,
   } = opts;
 
   // Inject nav context so the navbar can render page links (other templates
@@ -68,18 +77,34 @@ export function assemblePage(sections, config, project, opts = {}) {
     : visibleSections;
   renderConfig.sectionNav = buildSectionNav(navSource, lang);
 
+  // Members-only page: render ONLY a sign-in gate — the real body is never baked
+  // into the public HTML (it's served on demand to signed-in members). Skip the
+  // whole section render so nothing leaks.
+  let anySectionGated = false;
+  let renderedSections;
+  if (pageMembersOnly) {
+    renderedSections = `<main>${memberGatePlaceholder(lang, config.primary_color)}</main>`;
+  } else {
   const renderedParts = visibleSections
     .map((section) => {
       const contentData = section.content_json ? JSON.parse(section.content_json) : {};
       // Use html_template field if available, otherwise check contentData._variant
       const variant = section.html_template || contentData._variant || 'default';
 
-      const rendered = renderSection(section.section_type, contentData, renderConfig, variant);
+      const type = section.section_type;
+      // Per-section members-only gate (stage 2b): ship a placeholder instead of
+      // the real section; the real content is served on demand to signed-in
+      // members. Never gates header/footer.
+      const mo = contentData._members_only;
+      const sectionGated = gateSections && type !== 'header' && type !== 'footer' && (mo === true || mo === 1 || mo === '1');
+      if (sectionGated) anySectionGated = true;
+      const rendered = sectionGated
+        ? memberGateSectionPlaceholder(section.id, lang, config.primary_color)
+        : renderSection(section.section_type, contentData, renderConfig, variant);
       // Semantic anchor target (e.g. id="contact") so in-page links like
       // `#contact` resolve regardless of which variant rendered — but only the
       // FIRST section of each type, and only if the template didn't already emit
       // that id (avoids duplicate ids).
-      const type = section.section_type;
       let semanticAnchor = '';
       if (type && !seenTypes.has(type)) {
         seenTypes.add(type);
@@ -101,16 +126,17 @@ export function assemblePage(sections, config, project, opts = {}) {
   // Lighthouse "document has a main landmark"). The header (<header>/banner) and
   // footer (<footer>/contentinfo) stay OUTSIDE <main> so we don't create nested
   // top-level-landmark violations.
-  let renderedSections = '';
+  let acc = '';
   let mainOpen = false;
   for (const part of renderedParts) {
     const isChrome = part.type === 'header' || part.type === 'footer';
-    if (!isChrome && !mainOpen) { renderedSections += '<main>\n'; mainOpen = true; }
-    if (isChrome && mainOpen) { renderedSections += '</main>\n'; mainOpen = false; }
-    renderedSections += part.html + '\n\n';
+    if (!isChrome && !mainOpen) { acc += '<main>\n'; mainOpen = true; }
+    if (isChrome && mainOpen) { acc += '</main>\n'; mainOpen = false; }
+    acc += part.html + '\n\n';
   }
-  if (mainOpen) renderedSections += '</main>\n';
-  renderedSections = renderedSections.trim();
+  if (mainOpen) acc += '</main>\n';
+  renderedSections = acc.trim();
+  }
 
   // Multi-page link fix: a `#contact`-style link whose target section lives on a
   // DIFFERENT page can't resolve in-page — rewrite it to that page's route (same
@@ -119,7 +145,13 @@ export function assemblePage(sections, config, project, opts = {}) {
   // section anchors (e.g. `#Contato` → `#contact`) so localized/mis-cased
   // button links resolve to the real id="<type>" target.
   const routed = rewriteCrossPageAnchors(renderedSections, { pages, currentSlug, previewBase, embed, currentTypes });
-  const body = rewriteLocalizedAnchors(routed);
+  let body = rewriteLocalizedAnchors(routed);
+  // Ship the one-per-page gate client script whenever the page has ANY gate
+  // (whole-page or per-section): checks /me, reveals real content for signed-in
+  // members via /content, else drives the sign-in form(s).
+  if (pageMembersOnly || anySectionGated) {
+    body += memberGateScript({ siteId: trackId, appOrigin, slug: currentSlug, lang });
+  }
 
   // Build complete HTML document
   const html = buildHTMLDocument({

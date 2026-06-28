@@ -545,7 +545,7 @@ export const pt = {
     analytics: '📊 Estatísticas', analytics_title: 'Estatísticas de tráfego do seu site publicado',
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
     store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
-    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', manage: 'Gerenciar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', members: '👤 Membros', members_title: 'Os membros do seu site — acessos e conteúdo exclusivo', manage: 'Gerenciar',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site', deploying: 'Publicando…',
     upgrade_title: 'Faça upgrade para desbloquear', view_plans: 'Ver planos →', maybe_later: 'Talvez depois',
     tab_content: 'Conteúdo', tab_design: 'Design',
@@ -557,7 +557,7 @@ export const pt = {
     toast_snapshot_restored: 'Versão restaurada', toast_seo_saved: 'SEO salvo',
     toast_logo_updated: 'Logo atualizado', toast_logo_removed: 'Logo removido',
     pages: 'Páginas', add_page: '+ Página', add_page_title: 'Adicionar uma página',
-    add_group: '+ Grupo de menu', menu_parent: 'Menu pai', menu_top_level: 'Nível principal', menu_has_children: 'tem itens de submenu', menu_show: 'Mostrar no menu', menu_sections_sub: 'Seções como submenu', menu_ai: '✨ Organizar menu', menu_ai_title: 'Deixe a IA organizar seu menu em grupos e submenus — pré-visualize antes de aplicar', menu: 'Menu', menu_note: 'Organize como os itens aparecem na navegação superior. Grupos são cabeçalhos suspensos — aninhe páginas neles com o “Menu pai” de cada página.', menu_no_groups: 'Ainda não há grupos de menu. Crie um para aninhar páginas num menu suspenso.', menu_group_empty: 'Vazio — defina o “Menu pai” de uma página para este grupo.', menu_move_up: 'Mover para cima', menu_move_down: 'Mover para baixo', delete_group: 'Excluir grupo', mnu_group_badge: 'grupo', mnu_group_name_prompt: 'Nome do grupo de menu (um cabeçalho suspenso — aninhe páginas nele):', mnu_group_added: 'Grupo de menu adicionado', mnu_updated: 'Menu atualizado', mnu_update_fail: 'Não foi possível atualizar o menu', mnu_group_del_confirm: 'Excluir este grupo de menu? As páginas nele voltam para o nível principal.', mnu_group_deleted: 'Grupo de menu excluído', mnu_asking: 'Pedindo à IA para organizar seu menu…', mnu_suggest_fail: 'Não foi possível sugerir um menu', mnu_title: '✨ Menu sugerido', mnu_sub: 'Veja como a IA organizaria sua navegação. Revise e aplique.', mnu_cancel: 'Cancelar', mnu_apply: 'Aplicar menu', mnu_applied: 'Menu organizado', mnu_apply_fail: 'Não foi possível aplicar o menu', mnu_badge_sections: '+ seções', mnu_badge_hidden: 'oculto',
+    add_group: '+ Grupo de menu', menu_parent: 'Menu pai', menu_top_level: 'Nível principal', menu_has_children: 'tem itens de submenu', menu_show: 'Mostrar no menu', menu_sections_sub: 'Seções como submenu', members_only: 'Somente para membros', members_only_hint: 'Os visitantes precisam entrar (como membros) para ver esta página', menu_ai: '✨ Organizar menu', menu_ai_title: 'Deixe a IA organizar seu menu em grupos e submenus — pré-visualize antes de aplicar', menu: 'Menu', menu_note: 'Organize como os itens aparecem na navegação superior. Grupos são cabeçalhos suspensos — aninhe páginas neles com o “Menu pai” de cada página.', menu_no_groups: 'Ainda não há grupos de menu. Crie um para aninhar páginas num menu suspenso.', menu_group_empty: 'Vazio — defina o “Menu pai” de uma página para este grupo.', menu_move_up: 'Mover para cima', menu_move_down: 'Mover para baixo', delete_group: 'Excluir grupo', mnu_group_badge: 'grupo', mnu_group_name_prompt: 'Nome do grupo de menu (um cabeçalho suspenso — aninhe páginas nele):', mnu_group_added: 'Grupo de menu adicionado', mnu_updated: 'Menu atualizado', mnu_update_fail: 'Não foi possível atualizar o menu', mnu_group_del_confirm: 'Excluir este grupo de menu? As páginas nele voltam para o nível principal.', mnu_group_deleted: 'Grupo de menu excluído', mnu_asking: 'Pedindo à IA para organizar seu menu…', mnu_suggest_fail: 'Não foi possível sugerir um menu', mnu_title: '✨ Menu sugerido', mnu_sub: 'Veja como a IA organizaria sua navegação. Revise e aplique.', mnu_cancel: 'Cancelar', mnu_apply: 'Aplicar menu', mnu_applied: 'Menu organizado', mnu_apply_fail: 'Não foi possível aplicar o menu', mnu_badge_sections: '+ seções', mnu_badge_hidden: 'oculto',
     rename: 'Renomear', delete_page: 'Excluir página', home_page: 'Página inicial',
     sitewide: 'Todo o site', sitewide_note: '· aparece em todas as páginas',
     sections_of: 'Seções de {page}',
@@ -1028,6 +1028,7 @@ export const pt = {
   sed: {
     appearance: 'Aparência da seção', appearance_auto: 'Automático (conforme o tema)', appearance_light: 'Claro', appearance_dark: 'Escuro',
     appearance_hint: 'Por padrão a seção segue o seu tema. Force um fundo claro ou escuro aqui se quiser que esta se destaque.',
+    members_only: 'Somente para membros', members_only_hint: 'Oculte esta seção atrás de um login — só os membros que entrarem a verão.',
     edit_section: 'Editar seção', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Salvar alterações',
     saving: 'Salvando…', updated: 'Seção atualizada com sucesso!', save_failed: 'Não foi possível salvar as alterações', save_failed_p: 'Não foi possível salvar: ',
     uploading: 'Enviando…', upload_complete: 'Envio concluído!', upload_failed: 'Falha no envio', upload_failed_p: 'Falha no envio: ',
@@ -1090,6 +1091,8 @@ export const pt = {
     igf_feed_id: 'ID do feed do Instagram',
     igf_feed_hint: 'Crie um feed grátis no Behold, conecte seu Instagram e cole aqui o ID do feed —',
     igf_count: 'Publicações a exibir',
+    mbr_heading_ph: 'Membros',
+    mbr_hint: 'Os visitantes entram com um link mágico (sem senha). Gerencie sua lista de membros na página Membros do painel.',
   },
 
   aip: {
