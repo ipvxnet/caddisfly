@@ -76,3 +76,25 @@ export function coursePlayerSection(course, base, currency, lang = 'en', unlocke
   };
   return { section_type: 'course_player', html_template: 'default', content_json: JSON.stringify(data), is_visible: 1, id: null, section_order: 1 };
 }
+
+/** Synthetic course_gate section (Courses v2): replaces the baked player on a
+ *  PUBLISHED course with an enrollment gate. Carries only the title-level data the
+ *  gate shows (hero + curriculum outline, NO lesson content) — the real player is
+ *  fetched on demand from /api/courses/:site/player for enrolled members. */
+export function coursePlayerGateSection(course, currency, lang = 'en') {
+  const data = {
+    currency, lang,
+    course: {
+      slug: course.slug,
+      title: course.title,
+      subtitle: course.subtitle || '',
+      image: course.image || '',
+      price_cents: course.price_cents || 0,
+      sections: (course.sections || []).map((s) => ({
+        title: s.title,
+        lessons: (s.lessons || []).map((l) => ({ title: l.title, type: l.type, duration: l.duration || '' })),
+      })),
+    },
+  };
+  return { section_type: 'course_gate', html_template: 'default', content_json: JSON.stringify(data), is_visible: 1, id: null, section_order: 1 };
+}

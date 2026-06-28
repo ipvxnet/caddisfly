@@ -72,6 +72,7 @@ import { bookingWidgetTemplate } from './booking/widget.js';
 // Courses (plugin) — synthetic /courses + /courses/:slug pages (like shop)
 import { courseListTemplate } from './courses/list.js';
 import { coursePlayerTemplate } from './courses/player.js';
+import { coursePlayerGateTemplate } from './courses/gate.js';
 import { coursesSectionTemplate } from './courses/section.js';
 // Instagram Feed (plugin) — addable body section; live client-side feed fetch
 import { instagramFeedSectionTemplate } from './instagram_feed/section.js';
@@ -186,6 +187,9 @@ export const TEMPLATE_REGISTRY = {
   },
   course_player: {
     default: coursePlayerTemplate,
+  },
+  course_gate: {
+    default: coursePlayerGateTemplate,
   },
   courses: {
     default: coursesSectionTemplate,

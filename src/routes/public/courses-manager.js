@@ -6,6 +6,7 @@ import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { resolveStoreProject, getOrCreateConfig } from '../api/ai-builder/store.js';
 import { getCoursesByProject } from '../../db/courses.js';
+import { countEnrollmentsByCourse } from '../../db/course-enrollments.js';
 
 const T = {
   en: {
@@ -13,7 +14,7 @@ const T = {
     sub: 'Build training courses for your site — lessons, videos, PDFs and quizzes. {count} {label}.',
     course_one: 'course', course_many: 'courses',
     new_course: '＋ New course', new_ph: 'Course title', create: 'Create', cancel: 'Cancel',
-    th_title: 'Course', th_status: 'Status', th_price: 'Price', th_cat: 'Category', edit: 'Edit', del: 'Delete',
+    th_title: 'Course', th_status: 'Status', th_price: 'Price', th_cat: 'Category', th_enrolled: 'Enrolled', edit: 'Edit', del: 'Delete',
     publish: 'Publish', unpublish: 'Unpublish', free: 'Free',
     st_draft: 'Draft', st_published: 'Published',
     empty: 'No courses yet — create your first one above.',
@@ -27,7 +28,7 @@ const T = {
     sub: 'Crea cursos de formación para tu sitio — lecciones, videos, PDFs y cuestionarios. {count} {label}.',
     course_one: 'curso', course_many: 'cursos',
     new_course: '＋ Nuevo curso', new_ph: 'Título del curso', create: 'Crear', cancel: 'Cancelar',
-    th_title: 'Curso', th_status: 'Estado', th_price: 'Precio', th_cat: 'Categoría', edit: 'Editar', del: 'Eliminar',
+    th_title: 'Curso', th_status: 'Estado', th_price: 'Precio', th_cat: 'Categoría', th_enrolled: 'Inscritos', edit: 'Editar', del: 'Eliminar',
     publish: 'Publicar', unpublish: 'Despublicar', free: 'Gratis',
     st_draft: 'Borrador', st_published: 'Publicado',
     empty: 'No hay cursos aún — crea el primero arriba.',
@@ -41,7 +42,7 @@ const T = {
     sub: 'Crie cursos de treinamento para seu site — aulas, vídeos, PDFs e quizzes. {count} {label}.',
     course_one: 'curso', course_many: 'cursos',
     new_course: '＋ Novo curso', new_ph: 'Título do curso', create: 'Criar', cancel: 'Cancelar',
-    th_title: 'Curso', th_status: 'Status', th_price: 'Preço', th_cat: 'Categoria', edit: 'Editar', del: 'Excluir',
+    th_title: 'Curso', th_status: 'Status', th_price: 'Preço', th_cat: 'Categoria', th_enrolled: 'Inscritos', edit: 'Editar', del: 'Excluir',
     publish: 'Publicar', unpublish: 'Despublicar', free: 'Grátis',
     st_draft: 'Rascunho', st_published: 'Publicado',
     empty: 'Ainda não há cursos — crie o primeiro acima.',
@@ -71,6 +72,7 @@ export async function handleCoursesManager(ctx) {
   const config = await getOrCreateConfig(env.DB, r.projectKey);
   const currency = (config && config.currency) || 'usd';
   const courses = await getCoursesByProject(env.DB, r.projectKey);
+  const enrollCounts = await countEnrollmentsByCourse(env.DB, courses.map((c) => c.id));
 
   const rows = courses.map((c) => {
     const published = c.status === 'published';
@@ -79,6 +81,7 @@ export async function handleCoursesManager(ctx) {
       <td><span class="cm-badge ${published ? 'pub' : 'draft'}">${published ? t.st_published : t.st_draft}</span></td>
       <td>${c.price_cents > 0 ? money(c.price_cents, currency) : t.free}</td>
       <td>${esc(c.category || '—')}</td>
+      <td class="cm-enrolled">${enrollCounts[c.id] || 0}</td>
       <td class="cm-actions">
         <a class="btn ghost sm" href="/ai-builder/courses/${esc(params.project_id)}/${c.id}">${t.edit}</a>
         <button class="btn ghost sm cm-pub" type="button" onclick="togglePublish(this)">${published ? t.unpublish : t.publish}</button>
@@ -111,7 +114,7 @@ export async function handleCoursesManager(ctx) {
     </div>
 
     ${courses.length ? `<div class="cm-tablewrap"><table class="cm-table">
-      <thead><tr><th>${t.th_title}</th><th>${t.th_status}</th><th>${t.th_price}</th><th>${t.th_cat}</th><th></th></tr></thead>
+      <thead><tr><th>${t.th_title}</th><th>${t.th_status}</th><th>${t.th_price}</th><th>${t.th_cat}</th><th>${t.th_enrolled}</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>` : `<div class="cm-empty">${t.empty}</div>`}
     <div id="cm-msg"></div>

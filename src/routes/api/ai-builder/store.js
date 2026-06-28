@@ -40,6 +40,8 @@ import { slugify } from '../../../db/blog-posts.js';
 import { insertOrderIfNew, getOrdersByProject, markOrdersRead } from '../../../db/store-orders.js';
 import { sendOrderBuyerEmail, sendOrderMerchantEmail, sendTicketEmail } from '../../../utils/email.js';
 import { recordCoursePurchase, getCourseById } from '../../../db/courses.js';
+import { upsertMember } from '../../../db/site-members.js';
+import { enrollMember } from '../../../db/course-enrollments.js';
 import { t } from '../../../i18n/index.js';
 import {
   createProduct, getProductsByProject, getProductById, updateProduct, deleteProduct,
@@ -1116,6 +1118,17 @@ export async function settleCoursePurchase(env, publicId, session) {
     amountCents: session.amount_total || 0,
     currency: session.currency || 'usd',
   });
+  // Courses v2: tie the purchase to a member enrollment so the buyer can watch
+  // inline after signing in on the site (and shows up in the roster/enroll count).
+  // Prefer the signed-in member's email (metadata) over the Stripe-collected one.
+  // Idempotent (upsert + enroll on conflict), so safe on the webhook retry too.
+  const enrollEmail = String(meta.member_email || details.email || '').trim().toLowerCase();
+  if (enrollEmail) {
+    try {
+      const m = await upsertMember(env.DB, r.projectKey, { email: enrollEmail });
+      if (m) await enrollMember(env.DB, r.projectKey, { courseId, memberId: m.id, source: 'paid' });
+    } catch (e) { console.error('course enroll on purchase failed (non-fatal):', e.message); }
+  }
   if (isNew && details.email) {
     const course = await getCourseById(env.DB, r.projectKey, courseId);
     const lang = r.language || 'en';
