@@ -126,8 +126,8 @@ export async function handleMembersManager(ctx) {
       .mm-empty{border:2px dashed var(--line,#e2e8f0);border-radius:14px;padding:2.5rem 1.5rem;text-align:center;color:#718096;max-width:640px}
     </style>`;
 
-  const html = `<!DOCTYPE html><html lang="${lang}"><head>${headTags({ title: t.meta_title, description: 'Manage your site members.', origin })}${baseCss()}</head>
-    <body>${siteHeader(lang)}<main class="container" style="max-width:980px;margin:0 auto;padding:1.5rem 1.25rem 4rem">${inner}</main>${siteFooter(lang)}</body></html>`;
+  const html = `<!DOCTYPE html><html lang="${lang}"><head>${headTags({ title: t.meta_title, description: 'Manage your site members.', origin })}<style>${baseCss()}</style></head>
+    <body>${siteHeader('/dashboard', {})}<main class="container" style="max-width:980px;margin:0 auto;padding:1.5rem 1.25rem 4rem">${inner}</main>${siteFooter({ lang })}</body></html>`;
   return htmlResponse(html);
 }
 
