@@ -125,6 +125,7 @@ import { handleBookingFeed } from './routes/public/booking-feed.js';
 import { handleBookingServices, handleBookingSlots, handleBookingCreate } from './routes/api/booking.js';
 import { handleInstagramFeed } from './routes/public/instagram-feed.js';
 import { handleMemberLogin, handleMemberVerify, handleMemberMe, handleMemberLogout, handleMemberContent } from './routes/api/members.js';
+import { handleCourseAccessState, handleCourseEnroll, handleCoursePlayer } from './routes/api/courses.js';
 import { handleMembersManager, handleMemberSetStatus, handleMemberDelete, handleMembersCsv } from './routes/public/members-manager.js';
 import {
   handleBookingServiceList, handleBookingServiceCreate, handleBookingServiceUpdate, handleBookingServiceDelete, handleBookingServiceDescribe,
@@ -448,6 +449,11 @@ router.get('/members/:site/verify', handleMemberVerify);
 router.get('/api/members/:site/me', handleMemberMe);
 router.post('/api/members/:site/logout', handleMemberLogout);
 router.get('/api/members/:site/content', handleMemberContent);
+// Courses v2 — PUBLIC enrollment endpoints, called cross-origin by the course
+// enroll gate on published sites (credentialed CORS handled in the fetch handler).
+router.get('/api/courses/:site/access', handleCourseAccessState);
+router.post('/api/courses/:site/enroll', handleCourseEnroll);
+router.get('/api/courses/:site/player', handleCoursePlayer);
 // Video upload sink — PUBLIC, token-authorized; the xAI video model PUTs the
 // finished clip here under Zero Data Retention (see video-sink.js).
 router.put('/api/video-sink/:token', handleVideoSink);
@@ -668,9 +674,11 @@ router.delete('/api/admin/leads/:id/quotes/:quote_id', handleLeadQuoteDelete, [a
 export default {
   async fetch(request, env, ctx) {
     try {
-      // Member API needs CREDENTIALED CORS (reflected origin, not wildcard) so
-      // the session cookie rides cross-site fetches from published sites.
-      const isMemberApi = new URL(request.url).pathname.startsWith('/api/members/');
+      // Member + Courses-v2 APIs need CREDENTIALED CORS (reflected origin, not
+      // wildcard) so the cf_member session cookie rides cross-site fetches from
+      // published sites (course enrollment reuses the member session).
+      const reqPath = new URL(request.url).pathname;
+      const isMemberApi = reqPath.startsWith('/api/members/') || reqPath.startsWith('/api/courses/');
 
       // Handle CORS preflight requests
       if (request.method === 'OPTIONS') {

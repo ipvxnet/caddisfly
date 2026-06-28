@@ -27,7 +27,7 @@ import { getServices } from '../../../db/bookings.js';
 import { parseHolidaySettings } from '../../../utils/holiday-themes.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
 import { getCoursesByProject, getCourseFull } from '../../../db/courses.js';
-import { courseNavPage, courseListSection, coursePlayerSection } from '../../../utils/course-render.js';
+import { courseNavPage, courseListSection, coursePlayerGateSection } from '../../../utils/course-render.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -415,9 +415,12 @@ export async function handleAIBuilderDeploy(ctx) {
     }
 
     // Bake courses: /courses index + one player page per published course, in
-    // BOTH copies (/site/:id and the subdomain). Gated by the courses entitlement;
-    // self-check quizzes run client-side; no paywall yet (Phase 5). Course images
-    // from Drive get rehosted by the copy-on-publish pass like other assets.
+    // BOTH copies (/site/:id and the subdomain). Gated by the courses entitlement.
+    // Courses v2: each player page ships an ENROLLMENT GATE (hero + curriculum
+    // outline + enroll/sign-in CTA) — the real lessons are NEVER baked into the
+    // public HTML; an enrolled member's browser fetches them from
+    // /api/courses/:site/player and injects them (real gate). Course images from
+    // Drive get rehosted by the copy-on-publish pass like other assets.
     if (publishedCourses.length) {
       const courseCommon = {
         pages: navPages,
@@ -449,7 +452,7 @@ export async function handleAIBuilderDeploy(ctx) {
         if (!full) continue;
         await writeCoursePage(
           `courses/${course.slug}`,
-          (base) => coursePlayerSection(full, base, storeCurrency, siteLang),
+          () => coursePlayerGateSection(full, storeCurrency, siteLang),
           {
             canonicalUrl: `${subdomainBase}/courses/${course.slug}`,
             pageTitle: course.title,
