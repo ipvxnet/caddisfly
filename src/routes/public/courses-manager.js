@@ -2,11 +2,13 @@
 // Lists the project's courses; create / publish / delete here, edit content in
 // the per-course editor (courses-editor.js). Gated by pluginGate('courses') in
 // index.js. i18n: local dict (en/es/pt) by ctx.lang. Adapted from the 4vrxp LMS.
-import { htmlResponse, redirect } from '../../utils/response.js';
+import { htmlResponse, redirect, jsonResponse } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import { resolveStoreProject, getOrCreateConfig } from '../api/ai-builder/store.js';
 import { getCoursesByProject } from '../../db/courses.js';
 import { countEnrollmentsByCourse } from '../../db/course-enrollments.js';
+import { updateWebsiteConfigById } from '../../db/ai-config.js';
+import { hasPlugin } from '../../plugins/entitlements.js';
 
 const T = {
   en: {
@@ -15,6 +17,8 @@ const T = {
     course_one: 'course', course_many: 'courses',
     new_course: '＋ New course', new_ph: 'Course title', create: 'Create', cancel: 'Cancel',
     th_title: 'Course', th_status: 'Status', th_price: 'Price', th_cat: 'Category', th_enrolled: 'Enrolled', edit: 'Edit', del: 'Delete',
+    catalog_gate: '🔒 Members only — require sign-in to browse courses',
+    catalog_gate_hint: 'When on, your public /courses page shows a sign-in box; only signed-in members see the course list. (Individual paid courses always require enrolling.)',
     publish: 'Publish', unpublish: 'Unpublish', free: 'Free',
     st_draft: 'Draft', st_published: 'Published',
     empty: 'No courses yet — create your first one above.',
@@ -29,6 +33,8 @@ const T = {
     course_one: 'curso', course_many: 'cursos',
     new_course: '＋ Nuevo curso', new_ph: 'Título del curso', create: 'Crear', cancel: 'Cancelar',
     th_title: 'Curso', th_status: 'Estado', th_price: 'Precio', th_cat: 'Categoría', th_enrolled: 'Inscritos', edit: 'Editar', del: 'Eliminar',
+    catalog_gate: '🔒 Solo miembros — requiere iniciar sesión para ver los cursos',
+    catalog_gate_hint: 'Cuando está activado, tu página pública /courses muestra un inicio de sesión; solo los miembros que inician sesión ven la lista de cursos. (Los cursos de pago siempre requieren inscripción.)',
     publish: 'Publicar', unpublish: 'Despublicar', free: 'Gratis',
     st_draft: 'Borrador', st_published: 'Publicado',
     empty: 'No hay cursos aún — crea el primero arriba.',
@@ -43,6 +49,8 @@ const T = {
     course_one: 'curso', course_many: 'cursos',
     new_course: '＋ Novo curso', new_ph: 'Título do curso', create: 'Criar', cancel: 'Cancelar',
     th_title: 'Curso', th_status: 'Status', th_price: 'Preço', th_cat: 'Categoria', th_enrolled: 'Inscritos', edit: 'Editar', del: 'Excluir',
+    catalog_gate: '🔒 Somente membros — exige login para navegar pelos cursos',
+    catalog_gate_hint: 'Quando ativado, sua página pública /courses mostra um login; apenas membros conectados veem a lista de cursos. (Cursos pagos sempre exigem inscrição.)',
     publish: 'Publicar', unpublish: 'Despublicar', free: 'Grátis',
     st_draft: 'Rascunho', st_published: 'Publicado',
     empty: 'Ainda não há cursos — crie o primeiro acima.',
@@ -71,6 +79,7 @@ export async function handleCoursesManager(ctx) {
   if (!r) return redirect('/dashboard', 303);
   const config = await getOrCreateConfig(env.DB, r.projectKey);
   const currency = (config && config.currency) || 'usd';
+  const hasMembers = await hasPlugin(env, r.email, 'members'); // catalog gate needs the Members plugin
   const courses = await getCoursesByProject(env.DB, r.projectKey);
   const enrollCounts = await countEnrollmentsByCourse(env.DB, courses.map((c) => c.id));
 
@@ -112,6 +121,10 @@ export async function handleCoursesManager(ctx) {
       <button class="btn" type="button" onclick="createCourse(this)">${t.create}</button>
       <button class="btn ghost" type="button" onclick="toggleNew()">${t.cancel}</button>
     </div>
+    ${hasMembers ? `<div class="cm-setting">
+      <label class="cm-toggle"><input type="checkbox" id="cm-membersonly"${config.courses_members_only ? ' checked' : ''} onchange="setCatalogGate(this)"> ${t.catalog_gate}</label>
+      <small>${t.catalog_gate_hint}</small>
+    </div>` : ''}
 
     ${courses.length ? `<div class="cm-tablewrap"><table class="cm-table">
       <thead><tr><th>${t.th_title}</th><th>${t.th_status}</th><th>${t.th_price}</th><th>${t.th_cat}</th><th>${t.th_enrolled}</th><th></th></tr></thead>
@@ -123,6 +136,15 @@ export async function handleCoursesManager(ctx) {
       var EDIT = '/ai-builder/courses/' + ${JSON.stringify(params.project_id)} + '/';
       var S = ${JSON.stringify({ err: t.err, confirmDel: t.confirm_del })};
       var GEN = ${JSON.stringify({ generating: t.generating, genErr: t.gen_err, generate: t.generate })};
+      async function setCatalogGate(el){
+        el.disabled=true;
+        try{
+          var res=await fetch(BASE+'/members-only',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:el.checked})});
+          if(!((await res.json())||{}).success) throw 0;
+          document.getElementById('cm-msg').textContent='';
+        }catch(e){ el.checked=!el.checked; document.getElementById('cm-msg').textContent=S.err; }
+        el.disabled=false;
+      }
       function toggleNew(){ var f=document.getElementById('newform'); var on=f.style.display==='flex'; f.style.display=on?'none':'flex'; if(!on) document.getElementById('nc-title').focus(); }
       function toggleGen(){ var f=document.getElementById('genform'); var on=f.style.display==='flex'; f.style.display=on?'none':'flex'; if(!on) document.getElementById('gen-topic').focus(); }
       async function genCourse(btn){
@@ -191,6 +213,10 @@ export async function handleCoursesManager(ctx) {
     .sub{color:var(--body);margin:.3rem 0 1.6rem}
     .cm-toolbar{margin-bottom:1rem}
     .cm-newform{display:none;gap:.6rem;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fff;padding:1rem 1.1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+    .cm-setting{border:1px solid var(--line);border-radius:14px;background:#fff;padding:.85rem 1.1rem;margin-bottom:1.2rem}
+    .cm-toggle{display:flex;align-items:center;gap:.55rem;font-weight:700;cursor:pointer}
+    .cm-toggle input{width:1.15rem;height:1.15rem;flex:0 0 auto;cursor:pointer}
+    .cm-setting small{display:block;color:var(--muted);margin-top:.4rem;font-size:.85rem}
     .cm-newform input{flex:1;min-width:220px;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:.95rem}
     .cm-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
     .cm-table{width:100%;border-collapse:collapse;font-size:.92rem}
@@ -216,4 +242,17 @@ export async function handleCoursesManager(ctx) {
 </html>`;
 
   return htmlResponse(html);
+}
+
+/** PUT /api/ai-builder/:project_id/courses/members-only — toggle the catalog gate
+ *  (require sign-in to browse /courses). Stored on the website config; honored at
+ *  publish when the owner also has the Members plugin (see deploy.js + members.js). */
+export async function handleCoursesMembersOnly(ctx) {
+  const { env, params, request } = ctx;
+  const r = await resolveStoreProject(env, params.project_id);
+  if (!r) return jsonResponse({ success: false, error: 'not_found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const config = await getOrCreateConfig(env.DB, r.projectKey);
+  await updateWebsiteConfigById(env.DB, config.id, { courses_members_only: body.enabled ? 1 : 0 });
+  return jsonResponse({ success: true, enabled: !!body.enabled });
 }

@@ -100,7 +100,7 @@ export async function getConfigByIcalToken(db, token) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfigById(db, configId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token', 'holiday_themes_json', 'crm_dedup_key'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token', 'holiday_themes_json', 'crm_dedup_key', 'courses_members_only'];
 
   const updates = [];
   const values = [];
@@ -135,7 +135,7 @@ export async function updateWebsiteConfigById(db, configId, data) {
  * @returns {object} Updated configuration
  */
 export async function updateWebsiteConfig(db, aiProjectId, data) {
-  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token', 'holiday_themes_json', 'crm_dedup_key'];
+  const allowedFields = ['primary_color', 'secondary_color', 'font_heading', 'font_body', 'style_theme', 'social_image', 'auto_snapshot', 'stripe_account_id', 'store_currency', 'logo_url', 'notify_email', 'social_connections_json', 'booking_settings_json', 'booking_ical_token', 'holiday_themes_json', 'crm_dedup_key', 'courses_members_only'];
 
   const updates = [];
   const values = [];

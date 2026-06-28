@@ -25,6 +25,8 @@ import { getProductsByProject } from '../../db/products.js';
 import { annotateProductsWithVariants } from '../../db/variants.js';
 import { getServices } from '../../db/bookings.js';
 import { getCoursesByProject } from '../../db/courses.js';
+import { courseListSection } from '../../utils/course-render.js';
+import { renderSection } from '../../templates/ai-builder/registry.js';
 import { assemblePage } from '../../utils/ai-page-assembler.js';
 
 const appOrigin = (env) => (env.APP_URL && env.APP_URL.startsWith('http') ? env.APP_URL : 'https://caddisfly.ai');
@@ -101,6 +103,19 @@ export async function handleMemberContent(ctx) {
   if (!(await hasPlugin(env, site.ownerEmail, 'members'))) return jsonResponse({ html: '' });
 
   const slug = (url.searchParams.get('page') || '').trim();
+
+  // Synthetic course catalog gate (/courses is baked, not an ai_pages row): when
+  // the owner turned on "members only" for the catalog, the public page shipped
+  // just the sign-in gate — serve the real course list here to signed-in members.
+  if (slug === 'courses') {
+    if (!(await hasPlugin(env, site.ownerEmail, 'courses'))) return jsonResponse({ html: '' });
+    const courses = await getCoursesByProject(env.DB, site.projectKey, { publishedOnly: true });
+    const section = courseListSection(courses, '', (site.config && site.config.store_currency) || 'usd', site.lang);
+    const html = renderSection('course_list', JSON.parse(section.content_json),
+      { ...(site.config || {}), lang: site.lang, appOrigin: env.APP_URL || '', trackId: params.site }, 'default');
+    return jsonResponse({ html });
+  }
+
   const page = slug ? await getPageBySlug(env.DB, site.projectKey, slug) : await getHomePage(env.DB, site.projectKey);
   if (!page) return jsonResponse({ html: '' });
 
