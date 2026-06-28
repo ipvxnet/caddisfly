@@ -27,7 +27,7 @@ import { getServices } from '../../../db/bookings.js';
 import { parseHolidaySettings } from '../../../utils/holiday-themes.js';
 import { shopNavPage, shopListSection, shopProductSection } from '../../../utils/shop-render.js';
 import { getCoursesByProject, getCourseFull } from '../../../db/courses.js';
-import { courseNavPage, courseListSection, coursePlayerGateSection } from '../../../utils/course-render.js';
+import { courseNavPage, courseListSection, coursePlayerSection, coursePlayerGateSection } from '../../../utils/course-render.js';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -416,11 +416,12 @@ export async function handleAIBuilderDeploy(ctx) {
 
     // Bake courses: /courses index + one player page per published course, in
     // BOTH copies (/site/:id and the subdomain). Gated by the courses entitlement.
-    // Courses v2: each player page ships an ENROLLMENT GATE (hero + curriculum
-    // outline + enroll/sign-in CTA) — the real lessons are NEVER baked into the
-    // public HTML; an enrolled member's browser fetches them from
-    // /api/courses/:site/player and injects them (real gate). Course images from
-    // Drive get rehosted by the copy-on-publish pass like other assets.
+    // Courses v2: FREE courses bake the real, fully-open player (no sign-in). PAID
+    // courses bake an ENROLLMENT GATE (hero + curriculum outline + enroll CTA) —
+    // their real lessons are NEVER baked into public HTML; after purchase the
+    // enrolled member's browser fetches them from /api/courses/:site/player and
+    // injects them (real gate). Course images from Drive get rehosted by the
+    // copy-on-publish pass like other assets.
     if (publishedCourses.length) {
       const courseCommon = {
         pages: navPages,
@@ -450,9 +451,13 @@ export async function handleAIBuilderDeploy(ctx) {
       for (const course of publishedCourses) {
         const full = await getCourseFull(env.DB, projectKey, course.id);
         if (!full) continue;
+        // FREE → open player; PAID → enrollment gate (real lessons served on demand).
+        const isPaid = (course.price_cents || 0) > 0;
         await writeCoursePage(
           `courses/${course.slug}`,
-          () => coursePlayerGateSection(full, storeCurrency, siteLang),
+          isPaid
+            ? () => coursePlayerGateSection(full, storeCurrency, siteLang)
+            : (base) => coursePlayerSection(full, base, storeCurrency, siteLang),
           {
             canonicalUrl: `${subdomainBase}/courses/${course.slug}`,
             pageTitle: course.title,

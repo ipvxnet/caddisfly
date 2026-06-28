@@ -58,7 +58,7 @@ export function renderDomainsPanel({ projectId, domains = [], subdomain = '', sa
   const currentLine = subdomain
     ? (published
         ? `<div class="sub-current">${tr('dom.addr_current')} <a href="https://${esc(fullHost)}" target="_blank" rel="noopener">${esc(fullHost)}</a></div>`
-        : `<div class="sub-current">${tr('dom.addr_reserved')} <code class="sub-host">${esc(fullHost)}</code> <span class="sub-muted">${tr('dom.addr_reserved_note')}</span></div>`)
+        : `<div class="sub-current">${tr('dom.addr_reserved_label')} <code class="sub-host">${esc(fullHost)}</code> <span class="sub-muted">${tr('dom.addr_reserved_note')}</span></div>`)
     : '';
   const addr = subdomainLocked
     ? `<div class="sub-panel">${currentLine}<p class="sub-locked">${tr('dom.addr_locked')}</p></div>`
