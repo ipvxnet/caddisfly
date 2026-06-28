@@ -931,7 +931,7 @@ const DARK_CARD_SURFACES = [
   '.team-card', '.feature-item', '.blog-card', '.shop-card', '.shop-feat-card', '.cat-card',
   '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.step-card', '.hq-card', '.cta-split-copy', '.vt-card', '.tp-card',
   '.bkg-card', '.bkg-panel', '.crs-card', '.crsec-card', '.igf-card', '.mbr-card', '.mbr-input', '.mbr-gate-card', '.mbr-gate-input',
-  '.crsgate-card', '.crsgate-input', '.crsgate-sec',
+  '.crsgate-card', '.crsgate-input', '.crsgate-sec', '.crsgate-sectitle',
   // Service detail modal — keep it on-theme (its title is an h3 inside the
   // services section, so the dark heading override would otherwise be invisible
   // on a white card).
@@ -977,6 +977,10 @@ function surfaceLayerCss(rootSel, p, s) {
     ${j(['.blog-post-body', '.blog-card-meta', '.blog-post-date', '.blog-post-body blockquote'])} { color: ${s.muted} !important; }
     ${j(['.shop-card-excerpt', '.shop-product-desc', '.shop-card-price', '.shop-feat-sub', '.shop-feat-excerpt'])} { color: ${s.muted} !important; }
     ${j(['.shop-card-body h3', '.shop-product-name', '.shop-feat-price'])} { color: ${s.text} !important; }
+    ${j(['.crsgate-price'])} { color: ${s.text} !important; }
+    ${j(['.crsgate-sectitle', '.crsgate-count', '.crsgate-loading', '.crsgate-ldur', '.crsgate-msg'])} { color: ${s.muted} !important; }
+    ${j(['.crsgate-input'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
+    ${j(['.crsgate-input::placeholder'])} { color: ${s.muted} !important; }
     ${j(['.contact-form input', '.contact-form textarea', '.contact-form select'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
     ${j(['.contact-form input::placeholder', '.contact-form textarea::placeholder'])} { color: ${s.muted} !important; }`;
 }
