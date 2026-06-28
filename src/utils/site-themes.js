@@ -981,7 +981,7 @@ function surfaceLayerCss(rootSel, p, s) {
     ${j(['.crsgate-sectitle', '.crsgate-count', '.crsgate-loading', '.crsgate-ldur', '.crsgate-msg'])} { color: ${s.muted} !important; }
     ${j(['.crsgate-input'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
     ${j(['.crsgate-input::placeholder'])} { color: ${s.muted} !important; }
-    ${j(['.crs-text', '.crs-side-h', '.crs-q-text', '.crs-title', '.crs-price', '.crs-free', '.crsec-title', '.crsec-price', '.crsec-free'])} { color: ${s.text} !important; }
+    ${j(['.crs-text', '.crs-pane-title', '.crs-text h2', '.crs-text h3', '.crs-side-h', '.crs-q-text', '.crs-title', '.crs-price', '.crs-free', '.crsec-title', '.crsec-price', '.crsec-free'])} { color: ${s.text} !important; }
     ${j(['.crs-desc', '.crs-expl', '.crs-lesson-item', '.crs-sec-title', '.crs-li-dur', '.crs-sub', '.crs-meta', '.crs-empty', '.crsec-sub', '.crsec-desc', '.crsec-empty'])} { color: ${s.muted} !important; }
     ${j(['.contact-form input', '.contact-form textarea', '.contact-form select'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
     ${j(['.contact-form input::placeholder', '.contact-form textarea::placeholder'])} { color: ${s.muted} !important; }`;
