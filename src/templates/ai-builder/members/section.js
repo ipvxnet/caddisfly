@@ -10,9 +10,9 @@ function esc(s) {
 }
 
 const T = {
-  en: { heading: 'Members', sub: 'Sign in to access members-only content.', email_ph: 'you@email.com', send: 'Email me a sign-in link', sent: 'Check your email for a sign-in link.', signed_in: 'Signed in as', logout: 'Log out', err: 'Something went wrong. Please try again.' },
-  es: { heading: 'Miembros', sub: 'Inicia sesión para ver el contenido exclusivo.', email_ph: 'tu@correo.com', send: 'Envíame un enlace de acceso', sent: 'Revisa tu correo para el enlace de acceso.', signed_in: 'Sesión iniciada como', logout: 'Cerrar sesión', err: 'Algo salió mal. Inténtalo de nuevo.' },
-  pt: { heading: 'Membros', sub: 'Entre para acessar o conteúdo exclusivo.', email_ph: 'voce@email.com', send: 'Enviar link de acesso', sent: 'Verifique seu e-mail para o link de acesso.', signed_in: 'Conectado como', logout: 'Sair', err: 'Algo deu errado. Tente novamente.' },
+  en: { heading: 'Member sign-in', sub: 'Sign in to your account.', email_ph: 'you@email.com', send: 'Email me a sign-in link', sent: 'Check your email for a sign-in link.', signed_in: 'Signed in as', logout: 'Log out', err: 'Something went wrong. Please try again.' },
+  es: { heading: 'Acceso de miembros', sub: 'Inicia sesión en tu cuenta.', email_ph: 'tu@correo.com', send: 'Envíame un enlace de acceso', sent: 'Revisa tu correo para el enlace de acceso.', signed_in: 'Sesión iniciada como', logout: 'Cerrar sesión', err: 'Algo salió mal. Inténtalo de nuevo.' },
+  pt: { heading: 'Acesso de membros', sub: 'Entre na sua conta.', email_ph: 'voce@email.com', send: 'Enviar link de acesso', sent: 'Verifique seu e-mail para o link de acesso.', signed_in: 'Conectado como', logout: 'Sair', err: 'Algo deu errado. Tente novamente.' },
 };
 
 export function membersSectionTemplate(data, config) {

@@ -182,6 +182,28 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
   resize: vertical;
 }
 
+/* Inline checkbox row (e.g. "Members only") — the generic .form-group input rule
+   above would otherwise blow the checkbox up to a full-width bordered box with the
+   label wrapping underneath. Lay it out as a normal checkbox + inline label. */
+.sed-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sed-check input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
+  border-width: 1.5px;
+  border-radius: 5px;
+  box-shadow: none;
+  cursor: pointer;
+}
+
 .form-group small {
   display: block;
   color: #718096;

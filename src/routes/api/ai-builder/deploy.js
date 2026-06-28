@@ -443,10 +443,14 @@ export async function handleAIBuilderDeploy(ctx) {
         const subHtml = assemblePage(subSections, config, projectView, { ...courseCommon, ...seo, previewBase: '' });
         await uploadToR2(env.STORAGE, `sites/${subdomain}/${slugPath}.html`, subHtml, 'text/html; charset=utf-8');
       };
+      // Optional members-only gate on the catalog itself (requires Members plugin):
+      // ship just the sign-in gate; the real list is served on demand to members
+      // via /api/members/:site/content?page=courses (handled in members.js).
+      const coursesMembersOnly = !!(config.courses_members_only && hasMembers);
       await writeCoursePage(
         'courses',
         (base) => courseListSection(publishedCourses, base, storeCurrency, siteLang),
-        { canonicalUrl: `${subdomainBase}/courses`, pageTitle: 'Courses' }
+        { canonicalUrl: `${subdomainBase}/courses`, pageTitle: 'Courses', pageMembersOnly: coursesMembersOnly }
       );
       for (const course of publishedCourses) {
         const full = await getCourseFull(env.DB, projectKey, course.id);
