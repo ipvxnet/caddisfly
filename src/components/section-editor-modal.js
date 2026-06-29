@@ -253,13 +253,28 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
 }
 .gallery-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
   padding: 0.4rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
 }
+.gallery-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.gallery-finput {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.gallery-finput.gallery-flink { font-size: 0.75rem; color: #475569; }
 .gallery-row.drag-over {
   border-color: #7c3aed;
   background: #faf5ff;
@@ -627,7 +642,11 @@ function galleryRender() {
     return '<div class="gallery-row" data-gi="' + i + '" ondragover="galleryDragOver(event)" ondragleave="galleryDragLeave(event)" ondrop="galleryDrop(event,' + i + ')">'
       + '<span class="gallery-drag" draggable="true" title="' + ${JSON.stringify(tr('sed.g_drag'))} + '" ondragstart="galleryDragStart(event,' + i + ')" ondragend="galleryDragEnd(event)">⋮⋮</span>'
       + '<img class="gallery-thumb" src="' + galleryEsc(img.url || '') + '" alt="">'
-      + '<input class="gallery-alt" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_alt_ph'))} + '" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
+      + '<div class="gallery-fields">'
+      + '<input class="gallery-finput" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_title_ph'))} + '" value="' + galleryEsc(img.title || '') + '" oninput="gallerySetTitle(' + i + ', this.value)">'
+      + '<input class="gallery-finput" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_desc_ph'))} + '" value="' + galleryEsc(img.caption || '') + '" oninput="gallerySetCaption(' + i + ', this.value)">'
+      + '<input class="gallery-finput gallery-flink" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_link_ph'))} + '" value="' + galleryEsc(img.link || '') + '" oninput="gallerySetLink(' + i + ', this.value)">'
+      + '</div>'
       + '<div class="gallery-row-actions">'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.g_replace_t'))} + '" onclick="galleryReplace(' + i + ')">' + ${JSON.stringify(tr('sed.g_replace'))} + '</button>'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_url'))} + '" onclick="galleryUrl(' + i + ')">🔗</button>'
@@ -637,14 +656,16 @@ function galleryRender() {
       + '</div></div>';
   }).join('');
 }
-function gallerySetAlt(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].alt = val; galleryWrite(imgs); } }
+function gallerySetTitle(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].title = val; galleryWrite(imgs); } }
+function gallerySetCaption(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].caption = val; galleryWrite(imgs); } }
+function gallerySetLink(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].link = val; galleryWrite(imgs); } }
 function galleryRemove(i) { const imgs = galleryRead(); imgs.splice(i, 1); galleryWrite(imgs); galleryRender(); }
 // Grounding query for a photo: its alt text, else the section heading.
 function galleryQuery(i) {
   const imgs = galleryRead();
-  const alt = (imgs[i] && imgs[i].alt) || '';
+  const q = (imgs[i] && (imgs[i].title || imgs[i].alt)) || '';
   const h = (document.getElementById('heading') || {}).value || '';
-  return alt || h || 'business';
+  return q || h || 'business';
 }
 function galleryUrl(i) {
   const u = prompt(${JSON.stringify(tr('sed.img_url_prompt'))});
@@ -728,7 +749,7 @@ async function galleryUploadFile(file) {
 }
 async function galleryAddImage(input) {
   const file = input.files[0]; if (!file) return; input.value = '';
-  try { const url = await galleryUploadFile(file); const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); }
+  try { const url = await galleryUploadFile(file); const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '', title: '', link: '' }); galleryWrite(imgs); galleryRender(); }
   catch (e) { alert(${JSON.stringify(tr('sed.upload_failed_p'))} + e.message); }
 }
 async function galleryReplaceUpload(input) {
@@ -740,11 +761,15 @@ async function galleryReplaceUpload(input) {
 // Add a Drive image to the gallery (uses the shared picker; appends to the list).
 function galleryAddFromDrive() {
   if (!window.__drivePicker) return;
-  window.__drivePicker(function (url) { const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); });
+  window.__drivePicker(function (url) { const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '', title: '', link: '' }); galleryWrite(imgs); galleryRender(); });
 }
 
-// Initialise the gallery manager if this section has one (runs on inject).
+// Initialise the gallery manager if this section has one. The editor modal is
+// injected via innerHTML and its scripts are re-executed by editSection; a
+// synchronous render here intermittently painted nothing (existing photos only
+// appeared after a click), so also defer one tick to run after inject settles.
 galleryRender();
+setTimeout(galleryRender, 0);
 
 // ---- Pricing plans editor (plans_json hidden field; runs on inject) -------
 const PLANS_T = ${JSON.stringify({

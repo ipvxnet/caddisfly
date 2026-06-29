@@ -1066,7 +1066,7 @@ export const es = {
     link_label: 'Texto del enlace', add_link: '＋ Añadir enlace', link_remove: 'Quitar enlace',
     ph_about_us: 'Sobre nosotros', ph_our_services: 'Nuestros servicios', ph_testimonials: 'Testimonios', ph_get_in_touch: 'Contáctanos',
     ph_send_message: 'Enviar mensaje', ph_gallery: 'Galería', ph_get_started: 'Empezar',
-    no_photos: 'Aún no hay fotos — haz clic en “Añadir foto”.', g_drag: 'Arrastra para reordenar', g_alt_ph: 'Describe esta foto (texto alternativo)',
+    no_photos: 'Aún no hay fotos — haz clic en “Añadir foto”.', g_drag: 'Arrastra para reordenar', g_alt_ph: 'Describe esta foto (texto alternativo)', g_title_ph: 'Título (opcional)', g_desc_ph: 'Descripción (opcional)', g_link_ph: 'Enlace — #sección o https://… (opcional)',
     g_replace: 'Reemplazar', g_replace_t: 'Reemplazar foto', g_remove_t: 'Quitar foto',
     plans: 'Planes', plans_hint: 'Adjunta un precio de Stripe a un plan y su botón se convierte en un “Suscribirse” con pago real en tu sitio publicado.',
     add_plan: '＋ Añadir plan',
