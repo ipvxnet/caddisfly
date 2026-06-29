@@ -7,7 +7,7 @@ import { htmlResponse, redirect } from '../../utils/response.js';
 import { headTags, baseCss, siteHeader, siteFooter } from '../../components/brand.js';
 import {
   getDriveUsage, listDriveFiles, addDriveFile, deleteDriveFile, getDriveFileByToken,
-  getDriveFileById, moveDriveFile, listFolders, listAllFolders, getFolder, createFolder,
+  getDriveFileById, moveDriveFile, moveFolder, listFolders, listAllFolders, getFolder, createFolder,
   renameFolder, collectFolderTree, purgeFolderTree, listDriveImages,
   ensureSharedFolder, listSharedDriveImages,
   softDeleteFile, softDeleteTree, restoreTree, restoreFile, getDeletedFile, getDeletedFolder,
@@ -71,7 +71,7 @@ const DRV = {
     err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: 'For security, executable and system files can’t be uploaded.', err_quota: 'Not enough space. Delete some files or upgrade your plan.', err_empty: 'This file is empty or could not be read.', up_ok: '{n} uploaded', up_skip: '{n} skipped (empty or too large)', up_fail: '{n} failed',
     new_folder: 'New folder', folder_name_prompt: 'Folder name:', rename: 'Rename', rename_prompt: 'New name:',
     shared_badge: 'Shared with managers', shared_tip: 'Files you move into this folder are visible to anyone managing your sites. Everything else in your Drive stays private.',
-    move: 'Move', copy: 'Copy', move_title: 'Move "{name}" to:', copy_title: 'Copy "{name}" to:', root_label: 'Drive (root)',
+    move: 'Move', copy: 'Copy', move_title: 'Move "{name}" to:', copy_title: 'Copy "{name}" to:', root_label: 'Drive (root)', move_cycle: "You can't move a folder into itself or one of its own subfolders.",
     confirm: 'Confirm', cancel: 'Cancel', folder_del_confirm: 'Move this folder to the Trash?', folder_not_empty: "The folder isn't empty — move or delete its contents first.", folder_del_full: 'This folder contains {files} file(s) and {folders} subfolder(s). Deleting it moves EVERYTHING inside to the Trash, and links will stop working until you restore them.', folder_del_title: 'Delete “{name}”?', del_type_hint: 'Type DELETE to confirm',
     trash_title: 'Trash', trash_link: '🗑 Trash', trash_sub: 'Deleted files and folders stay here until you restore them or delete them forever. They still count toward your storage until purged.', trash_none: 'Trash is empty.', th_deleted: 'Deleted', items: '{n} items', restore: 'Restore', restoring: 'Restoring…', del_forever: 'Delete forever', del_forever_confirm: 'Permanently delete “{name}”? This frees the space but can’t be undone.', empty_trash: 'Empty trash', empty_trash_confirm: 'Permanently delete everything in the Trash? This can’t be undone.', trash_size: '{size} in trash',
   },
@@ -84,7 +84,7 @@ const DRV = {
     err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Por seguridad, no se pueden subir archivos ejecutables o de sistema.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.', err_empty: 'Este archivo está vacío o no se pudo leer.', up_ok: '{n} subidos', up_skip: '{n} omitidos (vacíos o muy grandes)', up_fail: '{n} fallidos',
     new_folder: 'Nueva carpeta', folder_name_prompt: 'Nombre de la carpeta:', rename: 'Renombrar', rename_prompt: 'Nuevo nombre:',
     shared_badge: 'Compartido con gestores', shared_tip: 'Los archivos que muevas a esta carpeta son visibles para quienes gestionan tus sitios. Todo lo demás en tu Drive permanece privado.',
-    move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" a:', copy_title: 'Copiar "{name}" a:', root_label: 'Drive (raíz)',
+    move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" a:', copy_title: 'Copiar "{name}" a:', root_label: 'Drive (raíz)', move_cycle: 'No puedes mover una carpeta dentro de sí misma o de una de sus subcarpetas.',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: '¿Mover esta carpeta a la Papelera?', folder_not_empty: 'La carpeta no está vacía — mueve o elimina su contenido primero.', folder_del_full: 'Esta carpeta contiene {files} archivo(s) y {folders} subcarpeta(s). Al eliminarla se mueve TODO su contenido a la Papelera, y los enlaces dejarán de funcionar hasta que los restaures.', folder_del_title: '¿Eliminar “{name}”?', del_type_hint: 'Escribe DELETE para confirmar',
     trash_title: 'Papelera', trash_link: '🗑 Papelera', trash_sub: 'Los archivos y carpetas eliminados quedan aquí hasta que los restaures o los elimines para siempre. Siguen contando para tu almacenamiento hasta que se purguen.', trash_none: 'La papelera está vacía.', th_deleted: 'Eliminado', items: '{n} elementos', restore: 'Restaurar', restoring: 'Restaurando…', del_forever: 'Eliminar para siempre', del_forever_confirm: '¿Eliminar “{name}” para siempre? Libera el espacio pero no se puede deshacer.', empty_trash: 'Vaciar papelera', empty_trash_confirm: '¿Eliminar para siempre todo el contenido de la papelera? No se puede deshacer.', trash_size: '{size} en la papelera',
   },
@@ -97,7 +97,7 @@ const DRV = {
     err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Por segurança, arquivos executáveis e de sistema não podem ser enviados.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.', err_empty: 'Este arquivo está vazio ou não pôde ser lido.', up_ok: '{n} enviados', up_skip: '{n} ignorados (vazios ou muito grandes)', up_fail: '{n} falharam',
     new_folder: 'Nova pasta', folder_name_prompt: 'Nome da pasta:', rename: 'Renomear', rename_prompt: 'Novo nome:',
     shared_badge: 'Compartilhado com gestores', shared_tip: 'Os arquivos que você mover para esta pasta ficam visíveis para quem gerencia seus sites. Todo o resto do seu Drive permanece privado.',
-    move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" para:', copy_title: 'Copiar "{name}" para:', root_label: 'Drive (raiz)',
+    move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" para:', copy_title: 'Copiar "{name}" para:', root_label: 'Drive (raiz)', move_cycle: 'Você não pode mover uma pasta para dentro dela mesma ou de uma de suas subpastas.',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: 'Mover esta pasta para a Lixeira?', folder_not_empty: 'A pasta não está vazia — mova ou exclua seu conteúdo primeiro.', folder_del_full: 'Esta pasta contém {files} arquivo(s) e {folders} subpasta(s). Ao excluí-la, TUDO dentro vai para a Lixeira, e os links deixarão de funcionar até você restaurá-los.', folder_del_title: 'Excluir “{name}”?', del_type_hint: 'Digite DELETE para confirmar',
     trash_title: 'Lixeira', trash_link: '🗑 Lixeira', trash_sub: 'Arquivos e pastas excluídos ficam aqui até você restaurá-los ou excluí-los definitivamente. Eles continuam contando para o seu armazenamento até serem removidos.', trash_none: 'A lixeira está vazia.', th_deleted: 'Excluído', items: '{n} itens', restore: 'Restaurar', restoring: 'Restaurando…', del_forever: 'Excluir definitivamente', del_forever_confirm: 'Excluir “{name}” definitivamente? Libera o espaço, mas não pode ser desfeito.', empty_trash: 'Esvaziar lixeira', empty_trash_confirm: 'Excluir definitivamente tudo na lixeira? Não pode ser desfeito.', trash_size: '{size} na lixeira',
   },
@@ -184,7 +184,7 @@ export async function handleDrive(ctx) {
     return `<tr class="dr-folder">
       <td><a href="/drive?folder=${f.id}" class="dr-fname">📁 ${esc(f.name)}</a>${badge}</td>
       <td class="muted">—</td><td class="muted">${esc(f.created_at ? new Date(f.created_at * 1000).toISOString().slice(0, 10) : '')}</td>
-      <td class="dr-acts"><button class="link-btn dr-frename" data-id="${f.id}" data-name="${esc(f.name)}">${T.rename}</button><button class="link-btn danger dr-fdel" data-id="${f.id}" data-name="${esc(f.name)}">${T.del}</button></td></tr>`;
+      <td class="dr-acts"><button class="link-btn dr-fmove" data-id="${f.id}" data-name="${esc(f.name)}">${T.move}</button><button class="link-btn dr-frename" data-id="${f.id}" data-name="${esc(f.name)}">${T.rename}</button><button class="link-btn danger dr-fdel" data-id="${f.id}" data-name="${esc(f.name)}">${T.del}</button></td></tr>`;
   }).join('');
 
   const fileRows = files.map((f) => `<tr>
@@ -199,6 +199,10 @@ export async function handleDrive(ctx) {
       </td></tr>`).join('');
 
   const folderOpts = `<option value="">${T.root_label}</option>` + allFolders.map((f) => `<option value="${f.id}">${esc(folderPath(f, byId))}</option>`).join('');
+  // id → parent_id, so the client can disable a folder's own subtree as a move
+  // destination (cycle guard); the server enforces it too via moveFolder.
+  const parentMap = {};
+  allFolders.forEach((f) => { parentMap[f.id] = f.parent_id == null ? null : f.parent_id; });
 
   const inner = `
     <div class="dr-head"><h1>🗂 ${T.title}</h1><a class="btn ghost" href="/dashboard">${T.back}</a></div>
@@ -232,7 +236,8 @@ export async function handleDrive(ctx) {
     <script>
       var MAX = ${DRIVE_MAX_FILE};
       var CUR = ${curId == null ? 'null' : curId};
-      var S = ${JSON.stringify({ uploading: T.uploading, err: T.err, errSize: T.err_size, upOk: T.up_ok, upSkip: T.up_skip, upFail: T.up_fail, copied: T.copied, copy: T.copy_link, delConfirm: T.del_confirm, folderName: T.folder_name_prompt, renamePrompt: T.rename_prompt, folderDel: T.folder_del_confirm, folderDelFull: T.folder_del_full, folderDelTitle: T.folder_del_title, delTypeHint: T.del_type_hint, notEmpty: T.folder_not_empty, moveTitle: T.move_title, copyTitle: T.copy_title })};
+      var FOLDER_PARENTS = ${JSON.stringify(parentMap)};
+      var S = ${JSON.stringify({ uploading: T.uploading, err: T.err, errSize: T.err_size, upOk: T.up_ok, upSkip: T.up_skip, upFail: T.up_fail, copied: T.copied, copy: T.copy_link, delConfirm: T.del_confirm, folderName: T.folder_name_prompt, renamePrompt: T.rename_prompt, folderDel: T.folder_del_confirm, folderDelFull: T.folder_del_full, folderDelTitle: T.folder_del_title, delTypeHint: T.del_type_hint, notEmpty: T.folder_not_empty, moveTitle: T.move_title, copyTitle: T.copy_title, moveCycle: T.move_cycle })};
       function post(u, body){ return fetch(u, { method:'POST', headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); }); }
       // upload (into current folder)
       var input=document.getElementById('dr-input'), drop=document.getElementById('dr-drop'), msg=document.getElementById('dr-msg');
@@ -315,14 +320,20 @@ export async function handleDrive(ctx) {
       // move / copy modal
       var modal=document.getElementById('mc-modal'), mcTitle=document.getElementById('mc-title'), mcFolder=document.getElementById('mc-folder'), mcGo=document.getElementById('mc-go');
       var mcState={ id:null, mode:null };
-      function openMC(id, name, mode){ mcState={id:id,mode:mode}; mcTitle.textContent=(mode==='move'?S.moveTitle:S.copyTitle).replace('{name}', name); mcFolder.value=CUR!=null?String(CUR):''; modal.hidden=false; }
+      function openMC(id, name, mode){ mcState={id:id,mode:mode}; mcTitle.textContent=(mode==='move'?S.moveTitle:S.copyTitle).replace('{name}', name); for(var i=0;i<mcFolder.options.length;i++) mcFolder.options[i].disabled=false; mcFolder.value=CUR!=null?String(CUR):''; modal.hidden=false; }
+      // A folder can't move into itself or its own subtree — disable that subtree.
+      function fInvalid(folderId){ var ch={}; Object.keys(FOLDER_PARENTS).forEach(function(k){ var p=FOLDER_PARENTS[k]; var pk=(p==null?'null':String(p)); (ch[pk]=ch[pk]||[]).push(Number(k)); }); var bad={}; var st=[Number(folderId)]; while(st.length){ var x=st.pop(); bad[x]=1; (ch[String(x)]||[]).forEach(function(c){ st.push(c); }); } return bad; }
+      function openMCFolder(id, name){ mcState={id:id,mode:'fmove'}; mcTitle.textContent=S.moveTitle.replace('{name}', name); var bad=fInvalid(id); for(var i=0;i<mcFolder.options.length;i++){ var opt=mcFolder.options[i]; var v=opt.value?Number(opt.value):null; opt.disabled=(v!=null&&bad[v]===1); } if(mcFolder.selectedOptions[0]&&mcFolder.selectedOptions[0].disabled) mcFolder.value=''; modal.hidden=false; }
       document.querySelectorAll('.dr-move').forEach(function(b){ b.addEventListener('click', function(){ openMC(b.dataset.id, b.dataset.name, 'move'); }); });
       document.querySelectorAll('.dr-cp').forEach(function(b){ b.addEventListener('click', function(){ openMC(b.dataset.id, b.dataset.name, 'copy'); }); });
+      document.querySelectorAll('.dr-fmove').forEach(function(b){ b.addEventListener('click', function(){ openMCFolder(b.dataset.id, b.dataset.name); }); });
       document.getElementById('mc-cancel').addEventListener('click', function(){ modal.hidden=true; });
       modal.addEventListener('click', function(e){ if(e.target===modal) modal.hidden=true; });
       mcGo.addEventListener('click', async function(){ mcGo.disabled=true; var fid=mcFolder.value?Number(mcFolder.value):null;
-        var r=await post('/api/drive/'+mcState.id+'/'+mcState.mode, { folder_id: fid });
-        mcGo.disabled=false; if(r.ok&&r.d.success){ location.reload(); return; } alert((r.d&&r.d.error)||S.err); });
+        var r = mcState.mode==='fmove'
+          ? await post('/api/drive/folder/'+mcState.id+'/move', { parent_id: fid })
+          : await post('/api/drive/'+mcState.id+'/'+mcState.mode, { folder_id: fid });
+        mcGo.disabled=false; if(r.ok&&r.d.success){ location.reload(); return; } alert((r.d&&(r.d.code==='cycle'?S.moveCycle:r.d.error))||S.err); });
     </script>`;
 
   return htmlResponse(`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -572,6 +583,22 @@ export async function handleFileMove(ctx) {
   if (folderId != null && !(await getFolder(env.DB, email, folderId))) return json({ success: false, error: 'Invalid folder' }, 400);
   await moveDriveFile(env.DB, email, id, folderId);
   audit(ctx, 'drive.file.move', { resourceType: 'file', resourceId: id, resourceName: f.name, metadata: { from: f.folder_id, to: folderId } });
+  return json({ success: true });
+}
+
+/** POST /api/drive/folder/:id/move — { parent_id } move a folder under another (NULL = root). */
+export async function handleFolderMove(ctx) {
+  const { env, request, params } = ctx;
+  const email = ctx.billingEmail;
+  if (!email) return json({ success: false, error: 'Please sign in.' }, 401);
+  const id = Number(params.id);
+  const f = await getFolder(env.DB, email, id);
+  if (!f) return json({ success: false, error: 'Not found' }, 404);
+  const body = await request.json().catch(() => ({}));
+  const parentId = body.parent_id == null || body.parent_id === '' ? null : Number(body.parent_id);
+  const res = await moveFolder(env.DB, email, id, parentId);
+  if (!res.ok) return json({ success: false, code: res.error, error: 'Could not move the folder.' }, 400);
+  audit(ctx, 'drive.folder.move', { resourceType: 'folder', resourceId: id, resourceName: f.name, metadata: { from: f.parent_id, to: parentId } });
   return json({ success: true });
 }
 

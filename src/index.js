@@ -77,7 +77,7 @@ import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleC
 import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
 import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
-import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages, handleProjectDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash, handleSiteAsset } from './routes/public/drive.js';
+import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFolderMove, handleFileCopy, handleDriveImages, handleProjectDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash, handleSiteAsset } from './routes/public/drive.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove, handleTeamSites } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
@@ -382,6 +382,7 @@ router.put('/api/drive/folder/:id', handleFolderRename, [billingAuth]);
 router.post('/api/drive/folder/:id/restore', handleFolderRestore, [billingAuth]);
 router.delete('/api/drive/folder/:id/purge', handleFolderPurge, [billingAuth]);
 router.delete('/api/drive/folder/:id', handleFolderDelete, [billingAuth]);
+router.post('/api/drive/folder/:id/move', handleFolderMove, [billingAuth]);
 router.post('/api/drive/trash/empty', handleEmptyTrash, [billingAuth]);
 router.post('/api/drive/:id/move', handleFileMove, [billingAuth]);
 router.post('/api/drive/:id/copy', handleFileCopy, [billingAuth]);
