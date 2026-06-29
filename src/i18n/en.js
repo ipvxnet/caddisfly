@@ -1109,7 +1109,7 @@ export const en = {
   aip: {
     title: '✨ AI Edit', sub: 'Tell the AI what to change — it’ll confirm before applying.', send: 'Send',
     own_summary: '📎 Use my own image (upload or URL)', own_summary_video: '📎 Use my own image / video (upload or URL)',
-    upload_file: 'Upload a file', or_paste_url: '…or paste a URL', use: 'Use',
+    upload_file: 'Upload a file', from_drive: 'Pick from Drive', or_paste_url: '…or paste a URL', use: 'Use',
     remove_media: '🗑 Remove current image', remove_media_video: '🗑 Remove current image / video',
     gen_video: '🎬 Generate background video',
     gen_video_ph: 'Optional: describe the motion (e.g. slow zoom, drifting clouds)',

@@ -51,6 +51,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
       </div>` : ''}
       <label class="ai-edit-own-label">${tr('aip.upload_file')}</label>
       <input type="file" id="ai-edit-file" accept="image/*${isHero ? ',video/mp4,video/webm' : ''}" onchange="aiEditUpload(this)">
+      <button type="button" class="ai-edit-send" style="margin-top:.4rem" onclick="aiEditDrive()">🗂 ${tr('aip.from_drive')}</button>
       <label class="ai-edit-own-label">${tr('aip.or_paste_url')}</label>
       <div class="ai-edit-url-row">
         <input type="text" id="ai-edit-url" class="ai-edit-input" placeholder="https://…">
@@ -296,6 +297,19 @@ async function aiEditUpload(input) {
   } catch (error) {
     status.textContent = '⚠️ ' + error.message;
   }
+}
+
+// Pick an image from Drive (reuses the section editor's shared picker). Drive is
+// image-only, so this always applies as an image (never a video).
+function aiEditDrive() {
+  if (!window.__drivePicker) return;
+  const status = document.getElementById('ai-edit-own-status');
+  window.__drivePicker(function (url) {
+    status.textContent = ${JSON.stringify(tr('aip.applying'))};
+    aiEditPostApply(aiEditMediaPayload(url, false))
+      .then(function () { status.textContent = ${JSON.stringify(tr('aip.applied_dot'))}; })
+      .catch(function (e) { status.textContent = '⚠️ ' + e.message; });
+  });
 }
 
 async function aiEditRemoveMedia() {

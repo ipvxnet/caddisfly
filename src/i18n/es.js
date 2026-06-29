@@ -1102,7 +1102,7 @@ export const es = {
   aip: {
     title: '✨ Edición con IA', sub: 'Dile a la IA qué cambiar — lo confirmará antes de aplicarlo.', send: 'Enviar',
     own_summary: '📎 Usar mi propia imagen (subir o URL)', own_summary_video: '📎 Usar mi propia imagen / vídeo (subir o URL)',
-    upload_file: 'Subir un archivo', or_paste_url: '…o pega una URL', use: 'Usar',
+    upload_file: 'Subir un archivo', from_drive: 'Elegir de Drive', or_paste_url: '…o pega una URL', use: 'Usar',
     remove_media: '🗑 Quitar la imagen actual', remove_media_video: '🗑 Quitar la imagen / vídeo actual',
     gen_video: '🎬 Generar vídeo de fondo',
     gen_video_ph: 'Opcional: describe el movimiento (p. ej. zoom lento, nubes a la deriva)',
