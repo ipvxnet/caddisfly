@@ -40,6 +40,7 @@ import { galleryCarouselTemplate } from './gallery/carousel.js';
 import { galleryCardsTemplate } from './gallery/cards.js';
 import { galleryBannerTemplate } from './gallery/banner.js';
 import { galleryLogosTemplate } from './gallery/logos.js';
+import { galleryLogosMarqueeTemplate } from './gallery/logos-marquee.js';
 
 // Contact templates
 import { contactFormTemplate } from './contact/form.js';
@@ -132,6 +133,7 @@ export const TEMPLATE_REGISTRY = {
     cards: galleryCardsTemplate,
     banner: galleryBannerTemplate,
     logos: galleryLogosTemplate,
+    'logos-rotating': galleryLogosMarqueeTemplate,
     default: galleryMasonryTemplate,
   },
   contact: {
