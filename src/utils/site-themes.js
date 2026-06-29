@@ -911,7 +911,7 @@ const DARK_SURFACE_SECTIONS = [
   '.about-section', '.about-team', '.about-timeline',
   '.services-cards', '.services-section', '.features-grid',
   '.testimonials-section', '.testimonials-quotes', '.testimonials-spotlight',
-  '.gallery-section', '.gallery-carousel',
+  '.gallery-section', '.gallery-carousel', '.gallery-cards-section', '.gallery-banner-section',
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
   '.features-actions', '.features-steps',
@@ -971,8 +971,8 @@ function surfaceLayerCss(rootSel, p, s) {
     ${j(DARK_SURFACE_SECTIONS)} { background: ${s.bg} !important; }
     ${j(DARK_CARD_SURFACES)} { background: ${s.card} !important; border-color: ${s.border} !important; }
     ${j(['section h1', 'section h2', 'section h3', 'section h4', 'section h5', 'section h6'])} { color: ${s.text} !important; }
-    ${j(['section p', 'section li', '.service-card p', '.testimonial-card p', '.quote-card p', '.pricing-card li', '.timeline-content p', '.svc-num-desc', '.hero-showcase-sub', '.about-founder-role', '.cta-split-desc', '.vt-quote', '.vt-role', '.tp-quote', '.tp-role'])} { color: ${s.muted} !important; }
-    ${j(['.quote-text', '.author-name', '.testimonial-text', '.testimonial-author', '.contact-info-item', '.contact-social-link', '.contact-form label', '.form-group label', '.footer-minimal-links a', '.footer-minimal-brand', '.cta-boxed-desc', '.svc-num-title', '.tspot-quote', '.tspot-author', '.action-title', '.value-item', '.about-founder-quote', '.about-founder-name', '.vt-name', '.tp-name', '.bkg-panel-head strong', '.bkg-pick'])} { color: ${s.text} !important; }
+    ${j(['section p', 'section li', '.service-card p', '.testimonial-card p', '.quote-card p', '.pricing-card li', '.timeline-content p', '.svc-num-desc', '.hero-showcase-sub', '.about-founder-role', '.cta-split-desc', '.vt-quote', '.vt-role', '.tp-quote', '.tp-role', '.gcard-desc'])} { color: ${s.muted} !important; }
+    ${j(['.quote-text', '.author-name', '.testimonial-text', '.testimonial-author', '.contact-info-item', '.contact-social-link', '.contact-form label', '.form-group label', '.footer-minimal-links a', '.footer-minimal-brand', '.cta-boxed-desc', '.svc-num-title', '.tspot-quote', '.tspot-author', '.action-title', '.value-item', '.about-founder-quote', '.about-founder-name', '.vt-name', '.tp-name', '.bkg-panel-head strong', '.bkg-pick', '.gcard-title'])} { color: ${s.text} !important; }
     ${j(['.bkg-sub', '.bkg-tz', '.bkg-desc'])} { color: ${s.muted} !important; }
     ${j(['.bkg-form input', '.bkg-form textarea'])} { background: ${s.card} !important; color: ${s.text} !important; border-color: ${s.border} !important; }
     ${j(['.bkg-form input::placeholder', '.bkg-form textarea::placeholder'])} { color: ${s.muted} !important; }

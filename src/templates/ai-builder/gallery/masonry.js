@@ -32,12 +32,14 @@ export function galleryMasonryTemplate(data, config) {
     <div class="gallery-grid">
       ${images
         .map(
-          (image) => `
-        <div class="gallery-item">
-          <img src="${image.url || 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&auto=format&q=70'}" alt="${image.alt || image.caption || ''}" width="800" height="600" loading="lazy" />
-          ${image.caption && image.caption !== 'undefined' ? `<div class="gallery-caption">${image.caption}</div>` : ''}
-        </div>
-      `
+          (image) => {
+            const inner = `
+          <img src="${image.url || 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&auto=format&q=70'}" alt="${image.alt || image.title || image.caption || ''}" width="800" height="600" loading="lazy" />
+          ${(image.title || image.caption) && image.caption !== 'undefined' ? `<div class="gallery-caption">${[image.title ? `<strong>${image.title}</strong>` : '', image.caption || ''].filter(Boolean).join('<br>')}</div>` : ''}`;
+            return image.link
+              ? `<a class="gallery-item" href="${image.link}"${image.newtab ? ' target="_blank" rel="noopener"' : ''}>${inner}</a>`
+              : `<div class="gallery-item">${inner}</div>`;
+          }
         )
         .join('')}
     </div>

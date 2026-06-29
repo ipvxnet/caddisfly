@@ -253,13 +253,30 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
 }
 .gallery-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem;
+  gap: 0.45rem 0.6rem;
+  padding: 0.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
 }
+.gallery-fields {
+  flex: 1 1 100%;
+  order: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.gallery-finput {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.gallery-finput.gallery-flink { font-size: 0.75rem; color: #475569; }
 .gallery-row.drag-over {
   border-color: #7c3aed;
   background: #faf5ff;
@@ -294,6 +311,8 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
   display: flex;
   gap: 0.25rem;
   flex: 0 0 auto;
+  order: 1;
+  margin-left: auto;
 }
 .gallery-row-actions button {
   padding: 0.35rem 0.5rem;
@@ -627,7 +646,11 @@ function galleryRender() {
     return '<div class="gallery-row" data-gi="' + i + '" ondragover="galleryDragOver(event)" ondragleave="galleryDragLeave(event)" ondrop="galleryDrop(event,' + i + ')">'
       + '<span class="gallery-drag" draggable="true" title="' + ${JSON.stringify(tr('sed.g_drag'))} + '" ondragstart="galleryDragStart(event,' + i + ')" ondragend="galleryDragEnd(event)">⋮⋮</span>'
       + '<img class="gallery-thumb" src="' + galleryEsc(img.url || '') + '" alt="">'
-      + '<input class="gallery-alt" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_alt_ph'))} + '" value="' + galleryEsc(img.alt || '') + '" oninput="gallerySetAlt(' + i + ', this.value)">'
+      + '<div class="gallery-fields">'
+      + '<input class="gallery-finput" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_title_ph'))} + '" value="' + galleryEsc(img.title || '') + '" oninput="gallerySetTitle(' + i + ', this.value)">'
+      + '<input class="gallery-finput" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_desc_ph'))} + '" value="' + galleryEsc(img.caption || '') + '" oninput="gallerySetCaption(' + i + ', this.value)">'
+      + '<input class="gallery-finput gallery-flink" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_link_ph'))} + '" value="' + galleryEsc(img.link || '') + '" oninput="gallerySetLink(' + i + ', this.value)">'
+      + '</div>'
       + '<div class="gallery-row-actions">'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.g_replace_t'))} + '" onclick="galleryReplace(' + i + ')">' + ${JSON.stringify(tr('sed.g_replace'))} + '</button>'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.img_url'))} + '" onclick="galleryUrl(' + i + ')">🔗</button>'
@@ -637,14 +660,16 @@ function galleryRender() {
       + '</div></div>';
   }).join('');
 }
-function gallerySetAlt(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].alt = val; galleryWrite(imgs); } }
+function gallerySetTitle(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].title = val; galleryWrite(imgs); } }
+function gallerySetCaption(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].caption = val; galleryWrite(imgs); } }
+function gallerySetLink(i, val) { const imgs = galleryRead(); if (imgs[i]) { imgs[i].link = val; galleryWrite(imgs); } }
 function galleryRemove(i) { const imgs = galleryRead(); imgs.splice(i, 1); galleryWrite(imgs); galleryRender(); }
 // Grounding query for a photo: its alt text, else the section heading.
 function galleryQuery(i) {
   const imgs = galleryRead();
-  const alt = (imgs[i] && imgs[i].alt) || '';
+  const q = (imgs[i] && (imgs[i].title || imgs[i].alt)) || '';
   const h = (document.getElementById('heading') || {}).value || '';
-  return alt || h || 'business';
+  return q || h || 'business';
 }
 function galleryUrl(i) {
   const u = prompt(${JSON.stringify(tr('sed.img_url_prompt'))});
@@ -728,7 +753,7 @@ async function galleryUploadFile(file) {
 }
 async function galleryAddImage(input) {
   const file = input.files[0]; if (!file) return; input.value = '';
-  try { const url = await galleryUploadFile(file); const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); }
+  try { const url = await galleryUploadFile(file); const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '', title: '', link: '' }); galleryWrite(imgs); galleryRender(); }
   catch (e) { alert(${JSON.stringify(tr('sed.upload_failed_p'))} + e.message); }
 }
 async function galleryReplaceUpload(input) {
@@ -740,11 +765,15 @@ async function galleryReplaceUpload(input) {
 // Add a Drive image to the gallery (uses the shared picker; appends to the list).
 function galleryAddFromDrive() {
   if (!window.__drivePicker) return;
-  window.__drivePicker(function (url) { const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '' }); galleryWrite(imgs); galleryRender(); });
+  window.__drivePicker(function (url) { const imgs = galleryRead(); imgs.push({ url: url, alt: '', caption: '', title: '', link: '' }); galleryWrite(imgs); galleryRender(); });
 }
 
-// Initialise the gallery manager if this section has one (runs on inject).
+// Initialise the gallery manager if this section has one. The editor modal is
+// injected via innerHTML and its scripts are re-executed by editSection; a
+// synchronous render here intermittently painted nothing (existing photos only
+// appeared after a click), so also defer one tick to run after inject settles.
 galleryRender();
+setTimeout(galleryRender, 0);
 
 // ---- Pricing plans editor (plans_json hidden field; runs on inject) -------
 const PLANS_T = ${JSON.stringify({
@@ -1009,7 +1038,7 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
     case 'contact':
       return generateContactFields(content, tr);
     case 'gallery':
-      return generateGalleryFields(content, tr);
+      return generateGalleryFields(content, tr, variant);
     case 'footer':
       return generateFooterFields(content, tr);
     case 'header':
@@ -1680,8 +1709,56 @@ function generateContactFormFields(content, tr) {
   `;
 }
 
-function generateGalleryFields(content, tr) {
+// Server-rendered gallery row — MUST match the client galleryRender() markup so
+// the rows are visible the instant the modal opens (the inline JS init proved
+// unreliable: existing photos only appeared after a click). galleryRender() then
+// re-renders identical markup on the first interaction.
+function galleryRowHtml(img, i, tr) {
+  const e = (s) => escapeHtml(s == null ? '' : String(s));
+  return `<div class="gallery-row" data-gi="${i}" ondragover="galleryDragOver(event)" ondragleave="galleryDragLeave(event)" ondrop="galleryDrop(event,${i})">`
+    + `<span class="gallery-drag" draggable="true" title="${e(tr('sed.g_drag'))}" ondragstart="galleryDragStart(event,${i})" ondragend="galleryDragEnd(event)">⋮⋮</span>`
+    + `<img class="gallery-thumb" src="${e(img.url || '')}" alt="">`
+    + `<div class="gallery-fields">`
+    + `<input class="gallery-finput" type="text" placeholder="${e(tr('sed.g_title_ph'))}" value="${e(img.title || '')}" oninput="gallerySetTitle(${i}, this.value)">`
+    + `<input class="gallery-finput" type="text" placeholder="${e(tr('sed.g_desc_ph'))}" value="${e(img.caption || '')}" oninput="gallerySetCaption(${i}, this.value)">`
+    + `<input class="gallery-finput gallery-flink" type="text" placeholder="${e(tr('sed.g_link_ph'))}" value="${e(img.link || '')}" oninput="gallerySetLink(${i}, this.value)">`
+    + `</div>`
+    + `<div class="gallery-row-actions">`
+    + `<button type="button" title="${e(tr('sed.g_replace_t'))}" onclick="galleryReplace(${i})">${e(tr('sed.g_replace'))}</button>`
+    + `<button type="button" title="${e(tr('sed.img_url'))}" onclick="galleryUrl(${i})">🔗</button>`
+    + `<button type="button" title="${e(tr('sed.img_photo'))}" onclick="galleryStock(${i}, this)">📷</button>`
+    + `<button type="button" title="${e(tr('sed.img_ai'))}" onclick="galleryAI(${i}, this)">✨</button>`
+    + `<button type="button" class="gallery-del" title="${e(tr('sed.g_remove_t'))}" onclick="galleryRemove(${i})">🗑</button>`
+    + `</div></div>`;
+}
+
+function generateGalleryFields(content, tr, variant = 'masonry') {
   const images = Array.isArray(content.images) ? content.images : [];
+  const initialRows = images.length
+    ? images.map((img, i) => galleryRowHtml(img, i, tr)).join('')
+    : `<p style="color:#718096;font-size:.85rem;margin:.25rem 0">${escapeHtml(tr('sed.no_photos'))}</p>`;
+  // The "banner" layout adds a hero header: background image + heading/intro + CTA.
+  const bannerFields = variant === 'banner' ? `
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.g_banner_image'))}</label>
+      <input type="hidden" id="banner_image" name="banner_image" value="${escapeHtml(content.banner_image || '')}">
+      <div class="image-upload-area" onclick="document.getElementById('gallery-banner-input').click()">
+        <p>${tr('sed.click_upload')}</p>
+        <p style="font-size:0.875rem;color:#718096;">${tr('sed.img_formats')}</p>
+        <img src="${escapeHtml(content.banner_image || '')}" class="image-preview" style="display:${content.banner_image ? 'block' : 'none'}">
+        <div class="upload-progress"></div>
+      </div>
+      <input type="file" id="gallery-banner-input" accept="image/*" style="display:none" onchange="uploadImage(this, 'banner_image')">
+      <button type="button" class="dp-from-btn" data-drive-btn style="margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer" onclick="window.__drivePicker&&window.__drivePicker(function(url){var f=document.getElementById('banner_image');if(f){f.value=url;var p=f.closest('.form-group').querySelector('.image-preview');if(p){p.src=url;p.style.display='block';}}})">${tr('sed.from_drive')}</button>
+    </div>
+    <div class="form-group">
+      <label for="cta_text">${escapeHtml(tr('sed.g_cta_text'))}</label>
+      <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || '')}" placeholder="${escapeHtml(tr('sed.g_cta_text_ph'))}">
+    </div>
+    <div class="form-group">
+      <label for="cta_link">${escapeHtml(tr('sed.g_cta_link'))}</label>
+      <input type="text" id="cta_link" name="cta_link" value="${escapeHtml(content.cta_link || '')}" placeholder="${escapeHtml(tr('sed.g_link_ph'))}">
+    </div>` : '';
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -1692,14 +1769,16 @@ function generateGalleryFields(content, tr) {
       <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
+    ${bannerFields}
 
     <div class="form-group">
       <label>${tr('sed.photos')} <span style="color:#718096;font-weight:400;font-size:.8rem">${tr('sed.photos_hint')}</span></label>
       <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
-      <div id="gallery-manager" class="gallery-manager"></div>
+      <div id="gallery-manager" class="gallery-manager">${initialRows}</div>
       <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">${tr('sed.add_photo')}</button>
       <button type="button" class="gallery-add-btn" onclick="galleryAddFromDrive()">${tr('sed.from_drive')}</button>
       <button type="button" class="gallery-add-btn" onclick="gallerySwapAll()">🖼 ${tr('sed.swap_all')}</button>
+      <button type="button" class="gallery-add-btn" onclick="galleryRender()" title="${escapeHtml(tr('sed.g_show_hint'))}">↻ ${escapeHtml(tr('sed.g_show'))}</button>
       <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
       <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
     </div>
