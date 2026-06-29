@@ -1076,6 +1076,7 @@ export const en = {
     footer_links: 'Footer links', footer_links_hint: 'Quick links in the footer. Pick a page/section or paste a web address.',
     social_links: 'Social links', social_links_hint: 'Paste your profile URLs — only the ones you fill in are shown.',
     social_display: 'Show social as', social_letters: 'Letters (F, I…)', social_icons: 'Brand icons',
+    feat_items: 'Items', add_feature: '＋ Add item', item_feature: 'Item', feat_intro_image: 'Intro panel image (columns layout)',
     link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',

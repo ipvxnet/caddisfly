@@ -8,7 +8,7 @@ import { translator } from '../i18n/index.js';
 import { TESTIMONIAL_DEFAULTS } from '../templates/ai-builder/testimonials/cards.js';
 import { TEAM_IMAGES } from '../templates/ai-builder/about/team.js';
 import { TIMELINE_YEARS } from '../templates/ai-builder/about/timeline.js';
-import { defaultItems, uiText } from '../templates/ai-builder/section-defaults.js';
+import { defaultItems, uiText, sectionDefault } from '../templates/ai-builder/section-defaults.js';
 
 /**
  * Generate section editor modal HTML
@@ -983,6 +983,8 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
       return generateAboutFields(content, tr, variant, contentLang);
     case 'catalogue':
       return generateCatalogueFields(content, tr, catCategories);
+    case 'features':
+      return generateFeaturesFields(content, tr, contentLang, variant);
     case 'services':
       return generateServicesFields(content, tr);
     case 'testimonials':
@@ -1512,6 +1514,50 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
         sync();
       })();
     </script>
+  `;
+}
+
+// Features section — heading + description + an items repeater (icon/title/desc).
+// The "columns" variant also takes an intro-panel background image.
+function generateFeaturesFields(content, tr, contentLang, variant) {
+  const isColumns = variant === 'columns';
+  const defKey = ['grid', 'actions', 'steps', 'columns'].includes(variant) ? 'features-' + variant : 'features-grid';
+  const items = (Array.isArray(content.features) && content.features.length) ? content.features : defaultItems(contentLang, defKey);
+  const introImg = isColumns ? `
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.feat_intro_image'))}</label>
+      <input type="hidden" id="background_image" name="background_image" value="${escapeHtml(content.background_image || '')}">
+      <div class="image-upload-area" onclick="document.getElementById('feat-bg-input').click()">
+        <p>${tr('sed.click_upload')}</p>
+        <p style="font-size:0.875rem;color:#718096;">${tr('sed.img_formats')}</p>
+        <img src="${escapeHtml(content.background_image || '')}" class="image-preview" style="display:${content.background_image ? 'block' : 'none'}">
+        <div class="upload-progress"></div>
+      </div>
+      <input type="file" id="feat-bg-input" accept="image/*" style="display:none" onchange="uploadImage(this, 'background_image')">
+      <button type="button" class="dp-from-btn" data-drive-btn style="margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer" onclick="window.__drivePicker&&window.__drivePicker(function(url){var f=document.getElementById('background_image');if(f){f.value=url;var p=f.closest('.form-group').querySelector('.image-preview');if(p){p.src=url;p.style.display='block';}}})">${tr('sed.from_drive')}</button>
+    </div>` : '';
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || sectionDefault(contentLang, 'features', 0))}" required>
+    </div>
+    <div class="form-group">
+      <label for="description">${tr('sed.description')}</label>
+      <input type="text" id="description" name="description" value="${escapeHtml(content.description || '')}" placeholder="${escapeHtml(tr('sed.ph_optional'))}">
+    </div>
+    ${introImg}
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.feat_items'))}</label>
+      ${buildRepeater({
+        jsonKey: 'features', items,
+        addLabel: tr('sed.add_feature'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_feature'),
+        fields: [
+          { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '⚡' },
+          { key: 'title', label: tr('sed.f_title'), ph: '' },
+          { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: '' },
+        ],
+      })}
+    </div>
   `;
 }
 

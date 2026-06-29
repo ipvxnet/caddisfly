@@ -128,6 +128,12 @@ const ITEMS = {
       { icon: '📞', title: 'Call Us', description: 'We’re happy to help', link: '#contact' },
       { icon: '📍', title: 'Find Us', description: 'Get directions', link: '#contact' },
     ],
+    'features-columns': [
+      { title: 'Top Quality', description: 'Genuine, tested products from leading brands' },
+      { title: 'Fast Shipping', description: 'Quick, reliable delivery wherever you are' },
+      { title: 'Expert Support', description: 'Real help from people who know the field' },
+      { title: 'Ready Stock', description: 'A wide range available and ready to ship' },
+    ],
     'features-steps': [
       { icon: '💬', title: 'Reach Out', description: 'Book a free, no-pressure consultation to share what’s on your mind.' },
       { icon: '🤝', title: 'First Session', description: 'We get to know each other and shape a plan that fits your goals.' },
@@ -187,6 +193,12 @@ const ITEMS = {
       { icon: '📞', title: 'Llámanos', description: 'Con gusto te ayudamos', link: '#contact' },
       { icon: '📍', title: 'Cómo Llegar', description: 'Obtén indicaciones', link: '#contact' },
     ],
+    'features-columns': [
+      { title: 'Máxima Calidad', description: 'Productos genuinos y probados de marcas líderes' },
+      { title: 'Envío Rápido', description: 'Entrega ágil y confiable donde estés' },
+      { title: 'Soporte Experto', description: 'Ayuda real de quienes dominan el rubro' },
+      { title: 'Stock Disponible', description: 'Amplia variedad lista para enviar' },
+    ],
     'features-steps': [
       { icon: '💬', title: 'Contáctanos', description: 'Reserva una consulta gratuita y sin compromiso para contarnos lo que te preocupa.' },
       { icon: '🤝', title: 'Primera Sesión', description: 'Nos conocemos y creamos un plan a la medida de tus objetivos.' },
@@ -245,6 +257,12 @@ const ITEMS = {
       { icon: '📅', title: 'Agendar', description: 'Agende online em segundos', link: '#contact' },
       { icon: '📞', title: 'Ligue para Nós', description: 'Teremos prazer em ajudar', link: '#contact' },
       { icon: '📍', title: 'Como Chegar', description: 'Ver direções', link: '#contact' },
+    ],
+    'features-columns': [
+      { title: 'Alta Qualidade', description: 'Produtos genuínos e testados das melhores marcas' },
+      { title: 'Envio Rápido', description: 'Entrega ágil e confiável onde você estiver' },
+      { title: 'Suporte Especializado', description: 'Ajuda real de quem entende do assunto' },
+      { title: 'Pronta Entrega', description: 'Ampla variedade pronta para enviar' },
     ],
     'features-steps': [
       { icon: '💬', title: 'Fale Conosco', description: 'Agende uma consulta gratuita e sem compromisso para compartilhar o que está sentindo.' },

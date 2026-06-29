@@ -54,6 +54,7 @@ import { pricingTablesTemplate } from './pricing/tables.js';
 import { featuresGridTemplate } from './features/grid.js';
 import { featuresActionsTemplate } from './features/actions.js';
 import { featuresStepsTemplate } from './features/steps.js';
+import { featuresColumnsTemplate } from './features/columns.js';
 import { ctaBannerTemplate } from './cta/banner.js';
 import { ctaBoxedTemplate } from './cta/boxed.js';
 import { ctaSplitImageTemplate } from './cta/split-image.js';
@@ -151,6 +152,7 @@ export const TEMPLATE_REGISTRY = {
     grid: featuresGridTemplate,
     actions: featuresActionsTemplate,
     steps: featuresStepsTemplate,
+    columns: featuresColumnsTemplate,
     default: featuresGridTemplate,
   },
   cta: {
