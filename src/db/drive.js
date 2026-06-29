@@ -100,6 +100,22 @@ export async function moveDriveFile(db, ownerEmail, fileId, folderId) {
   return res.meta.changes > 0;
 }
 
+/** Move a folder under another folder (NULL = root). Rejects a cycle (moving a
+ *  folder into itself or one of its own descendants). Returns { ok } / { error }. */
+export async function moveFolder(db, ownerEmail, folderId, newParentId) {
+  const id = Number(folderId);
+  const np = newParentId == null ? null : Number(newParentId);
+  if (np === id) return { ok: false, error: 'cycle' };
+  if (np != null) {
+    const dest = await getFolder(db, ownerEmail, np); // active + owned only
+    if (!dest) return { ok: false, error: 'dest_missing' };
+    const { folderIds } = await collectFolderTree(db, ownerEmail, id); // self + descendants
+    if (folderIds.includes(np)) return { ok: false, error: 'cycle' };
+  }
+  const res = await db.prepare('UPDATE drive_folders SET parent_id = ? WHERE id = ? AND owner_email = ?').bind(np, id, lc(ownerEmail)).run();
+  return { ok: (res.meta.changes || 0) > 0 };
+}
+
 // ---- folders ----------------------------------------------------------------
 
 /** Subfolders of `parentId` (NULL = root), alphabetical. */
