@@ -70,6 +70,7 @@ const DRV = {
     copy_link: 'Copy link', copied: 'Copied ✓', del: 'Delete', del_confirm: 'Move this file to the Trash? Links to it will stop working until you restore it.',
     err: 'Something went wrong.', err_size: 'File too large — the limit is 50 MB.', err_type: 'For security, executable and system files can’t be uploaded.', err_quota: 'Not enough space. Delete some files or upgrade your plan.', err_empty: 'This file is empty or could not be read.', up_ok: '{n} uploaded', up_skip: '{n} skipped (empty or too large)', up_fail: '{n} failed',
     new_folder: 'New folder', folder_name_prompt: 'Folder name:', rename: 'Rename', rename_prompt: 'New name:',
+    shared_badge: 'Shared with managers', shared_tip: 'Files you move into this folder are visible to anyone managing your sites. Everything else in your Drive stays private.',
     move: 'Move', copy: 'Copy', move_title: 'Move "{name}" to:', copy_title: 'Copy "{name}" to:', root_label: 'Drive (root)',
     confirm: 'Confirm', cancel: 'Cancel', folder_del_confirm: 'Move this folder to the Trash?', folder_not_empty: "The folder isn't empty — move or delete its contents first.", folder_del_full: 'This folder contains {files} file(s) and {folders} subfolder(s). Deleting it moves EVERYTHING inside to the Trash, and links will stop working until you restore them.', folder_del_title: 'Delete “{name}”?', del_type_hint: 'Type DELETE to confirm',
     trash_title: 'Trash', trash_link: '🗑 Trash', trash_sub: 'Deleted files and folders stay here until you restore them or delete them forever. They still count toward your storage until purged.', trash_none: 'Trash is empty.', th_deleted: 'Deleted', items: '{n} items', restore: 'Restore', restoring: 'Restoring…', del_forever: 'Delete forever', del_forever_confirm: 'Permanently delete “{name}”? This frees the space but can’t be undone.', empty_trash: 'Empty trash', empty_trash_confirm: 'Permanently delete everything in the Trash? This can’t be undone.', trash_size: '{size} in trash',
@@ -82,6 +83,7 @@ const DRV = {
     copy_link: 'Copiar enlace', copied: 'Copiado ✓', del: 'Eliminar', del_confirm: '¿Mover este archivo a la Papelera? Los enlaces a él dejarán de funcionar hasta que lo restaures.',
     err: 'Algo salió mal.', err_size: 'Archivo demasiado grande — el límite es 50 MB.', err_type: 'Por seguridad, no se pueden subir archivos ejecutables o de sistema.', err_quota: 'No hay suficiente espacio. Elimina algunos archivos o actualiza tu plan.', err_empty: 'Este archivo está vacío o no se pudo leer.', up_ok: '{n} subidos', up_skip: '{n} omitidos (vacíos o muy grandes)', up_fail: '{n} fallidos',
     new_folder: 'Nueva carpeta', folder_name_prompt: 'Nombre de la carpeta:', rename: 'Renombrar', rename_prompt: 'Nuevo nombre:',
+    shared_badge: 'Compartido con gestores', shared_tip: 'Los archivos que muevas a esta carpeta son visibles para quienes gestionan tus sitios. Todo lo demás en tu Drive permanece privado.',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" a:', copy_title: 'Copiar "{name}" a:', root_label: 'Drive (raíz)',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: '¿Mover esta carpeta a la Papelera?', folder_not_empty: 'La carpeta no está vacía — mueve o elimina su contenido primero.', folder_del_full: 'Esta carpeta contiene {files} archivo(s) y {folders} subcarpeta(s). Al eliminarla se mueve TODO su contenido a la Papelera, y los enlaces dejarán de funcionar hasta que los restaures.', folder_del_title: '¿Eliminar “{name}”?', del_type_hint: 'Escribe DELETE para confirmar',
     trash_title: 'Papelera', trash_link: '🗑 Papelera', trash_sub: 'Los archivos y carpetas eliminados quedan aquí hasta que los restaures o los elimines para siempre. Siguen contando para tu almacenamiento hasta que se purguen.', trash_none: 'La papelera está vacía.', th_deleted: 'Eliminado', items: '{n} elementos', restore: 'Restaurar', restoring: 'Restaurando…', del_forever: 'Eliminar para siempre', del_forever_confirm: '¿Eliminar “{name}” para siempre? Libera el espacio pero no se puede deshacer.', empty_trash: 'Vaciar papelera', empty_trash_confirm: '¿Eliminar para siempre todo el contenido de la papelera? No se puede deshacer.', trash_size: '{size} en la papelera',
@@ -94,6 +96,7 @@ const DRV = {
     copy_link: 'Copiar link', copied: 'Copiado ✓', del: 'Excluir', del_confirm: 'Mover este arquivo para a Lixeira? Os links para ele deixarão de funcionar até você restaurá-lo.',
     err: 'Algo deu errado.', err_size: 'Arquivo muito grande — o limite é 50 MB.', err_type: 'Por segurança, arquivos executáveis e de sistema não podem ser enviados.', err_quota: 'Espaço insuficiente. Exclua alguns arquivos ou atualize seu plano.', err_empty: 'Este arquivo está vazio ou não pôde ser lido.', up_ok: '{n} enviados', up_skip: '{n} ignorados (vazios ou muito grandes)', up_fail: '{n} falharam',
     new_folder: 'Nova pasta', folder_name_prompt: 'Nome da pasta:', rename: 'Renomear', rename_prompt: 'Novo nome:',
+    shared_badge: 'Compartilhado com gestores', shared_tip: 'Os arquivos que você mover para esta pasta ficam visíveis para quem gerencia seus sites. Todo o resto do seu Drive permanece privado.',
     move: 'Mover', copy: 'Copiar', move_title: 'Mover "{name}" para:', copy_title: 'Copiar "{name}" para:', root_label: 'Drive (raiz)',
     confirm: 'Confirmar', cancel: 'Cancelar', folder_del_confirm: 'Mover esta pasta para a Lixeira?', folder_not_empty: 'A pasta não está vazia — mova ou exclua seu conteúdo primeiro.', folder_del_full: 'Esta pasta contém {files} arquivo(s) e {folders} subpasta(s). Ao excluí-la, TUDO dentro vai para a Lixeira, e os links deixarão de funcionar até você restaurá-los.', folder_del_title: 'Excluir “{name}”?', del_type_hint: 'Digite DELETE para confirmar',
     trash_title: 'Lixeira', trash_link: '🗑 Lixeira', trash_sub: 'Arquivos e pastas excluídos ficam aqui até você restaurá-los ou excluí-los definitivamente. Eles continuam contando para o seu armazenamento até serem removidos.', trash_none: 'A lixeira está vazia.', th_deleted: 'Excluído', items: '{n} itens', restore: 'Restaurar', restoring: 'Restaurando…', del_forever: 'Excluir definitivamente', del_forever_confirm: 'Excluir “{name}” definitivamente? Libera o espaço, mas não pode ser desfeito.', empty_trash: 'Esvaziar lixeira', empty_trash_confirm: 'Excluir definitivamente tudo na lixeira? Não pode ser desfeito.', trash_size: '{size} na lixeira',
@@ -172,10 +175,17 @@ export async function handleDrive(ctx) {
   while (c && g++ < 25) { crumbs.unshift(c); c = c.parent_id != null ? byId.get(c.parent_id) : null; }
   const breadcrumb = `<a href="/drive">🗂 ${T.title}</a>` + crumbs.map((cr) => ` <span class="bc-sep">/</span> <a href="/drive?folder=${cr.id}">${esc(cr.name)}</a>`).join('');
 
-  const folderRows = folders.map((f) => `<tr class="dr-folder">
-      <td><a href="/drive?folder=${f.id}" class="dr-fname">📁 ${esc(f.name)}</a></td>
+  const folderRows = folders.map((f) => {
+    // Badge the owner's top-level "Shared" folder so its purpose is obvious.
+    const isShared = curId == null && String(f.name).toLowerCase() === 'shared';
+    const badge = isShared
+      ? ` <span class="dr-shared" title="${esc(T.shared_tip)}" style="display:inline-block;margin-left:.5rem;font-size:.72rem;font-weight:700;color:#3730a3;background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;padding:.05rem .5rem;vertical-align:middle">👥 ${esc(T.shared_badge)}</span>`
+      : '';
+    return `<tr class="dr-folder">
+      <td><a href="/drive?folder=${f.id}" class="dr-fname">📁 ${esc(f.name)}</a>${badge}</td>
       <td class="muted">—</td><td class="muted">${esc(f.created_at ? new Date(f.created_at * 1000).toISOString().slice(0, 10) : '')}</td>
-      <td class="dr-acts"><button class="link-btn dr-frename" data-id="${f.id}" data-name="${esc(f.name)}">${T.rename}</button><button class="link-btn danger dr-fdel" data-id="${f.id}" data-name="${esc(f.name)}">${T.del}</button></td></tr>`).join('');
+      <td class="dr-acts"><button class="link-btn dr-frename" data-id="${f.id}" data-name="${esc(f.name)}">${T.rename}</button><button class="link-btn danger dr-fdel" data-id="${f.id}" data-name="${esc(f.name)}">${T.del}</button></td></tr>`;
+  }).join('');
 
   const fileRows = files.map((f) => `<tr>
       <td><a href="/drive/f/${esc(f.token)}" target="_blank" rel="noopener" title="${esc(f.name)}">${esc(f.name)}</a></td>
