@@ -1616,6 +1616,7 @@ function generateContactFields(content, tr) {
     </div>
 
     ${generateContactFormFields(content, tr)}
+    ${socialLinksEditor(content, tr, 'social_links')}
   `;
 }
 
@@ -1736,6 +1737,50 @@ function generateGalleryFields(content, tr, variant = 'masonry') {
   `;
 }
 
+// Social-links editor — footer stores content.social, contact stores
+// content.social_links. A fixed set of platforms each get a URL input, synced to
+// a hidden <key>_json blob that saveSectionChanges expands into content[key].
+function socialLinksEditor(content, tr, key) {
+  const PLATFORMS = [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['x', 'X (Twitter)'], ['linkedin', 'LinkedIn'], ['youtube', 'YouTube'], ['tiktok', 'TikTok']];
+  const social = Array.isArray(content[key]) ? content[key] : [];
+  const byKey = {};
+  social.forEach((s) => { if (s && s.platform) byKey[String(s.platform).toLowerCase()] = s.url || ''; });
+  if (byKey.twitter && !byKey.x) byKey.x = byKey.twitter;
+  const rows = PLATFORMS.map(([k, label]) => `
+      <div class="social-row" data-platform="${k}">
+        <span class="social-key">${escapeHtml(label)}</span>
+        <input type="url" class="social-url" placeholder="https://…" value="${escapeHtml(byKey[k] || '')}">
+      </div>`).join('');
+  return `
+    <input type="hidden" id="${key}_json" name="${key}_json" value="${escapeHtml(JSON.stringify(social))}">
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.social_links'))}</label>
+      <small style="display:block;color:#718096;margin-bottom:.4rem">${escapeHtml(tr('sed.social_links_hint'))}</small>
+      <div id="social-editor-wrap">${rows}</div>
+    </div>
+    <style>
+      .social-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem}
+      .social-row .social-key{flex:0 0 32%;font-size:.85rem;font-weight:600;color:#4a5568}
+      .social-row .social-url{flex:1;min-width:0;padding:.5rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem}
+    </style>
+    <script>
+      (function(){
+        var wrap = document.getElementById('social-editor-wrap');
+        if (!wrap || wrap.__soReady) return; wrap.__soReady = true;
+        function sync(){
+          var arr = [];
+          wrap.querySelectorAll('.social-row').forEach(function(r){
+            var url = ((r.querySelector('.social-url')||{}).value || '').trim();
+            if (url) arr.push({ platform: r.getAttribute('data-platform'), url: url });
+          });
+          var h = document.getElementById('${key}_json'); if (h) h.value = JSON.stringify(arr);
+        }
+        wrap.addEventListener('input', sync);
+        sync();
+      })();
+    </script>`;
+}
+
 function generateFooterFields(content, tr) {
   return `
     <div class="form-group">
@@ -1806,6 +1851,7 @@ function generateFooterFields(content, tr) {
     </script>
   `;
     })()}
+    ${socialLinksEditor(content, tr, 'social')}
   `;
 }
 
