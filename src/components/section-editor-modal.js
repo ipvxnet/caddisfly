@@ -486,7 +486,7 @@ async function saveSectionChanges(event) {
 
   // Contact optional form-fields: serialize the catalog checkboxes explicitly
   // into [{key,required}] (FormData omits unchecked boxes, so an uncheck must
-  // actively clear; these controls carry no `name` to avoid stray content keys).
+  // actively clear; these controls carry no name attr to avoid stray keys).
   const ffEnables = form.querySelectorAll('input[data-ff-enable]');
   if (ffEnables.length) {
     const fields = [];
