@@ -1204,6 +1204,16 @@ export const en = {
     locked: 'AI logo generation is available on paid plans.',
     upgrade: 'Upgrade to unlock',
     disclaimer: 'AI-generated marks are not checked against existing trademarks — review before commercial use.',
+    from_drive: 'Pick from Drive',
+  },
+  favicon: {
+    summary: 'Favicon (browser tab icon)',
+    hint: "The small icon in the browser tab. Leave blank to use your logo. Square PNG or SVG works best.",
+    none: 'Using your logo as the favicon.',
+    upload: 'Upload a favicon (PNG, SVG, ICO):',
+    remove: 'Remove favicon',
+    updated: 'Favicon updated',
+    removed: 'Favicon removed — using your logo',
   },
 
   pick: {

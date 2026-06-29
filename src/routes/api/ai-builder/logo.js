@@ -19,6 +19,14 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
+// A logo/favicon URL must be either this project's uploaded asset or a Drive
+// image (which copy-on-publish rehosts under the site at deploy, owner-scoped).
+function isOwnBrandAsset(url, projectId) {
+  const prefix = `/preview-asset/${projectId}/`;
+  if (url.startsWith(prefix)) return /^[A-Za-z0-9._-]+$/.test(url.slice(prefix.length));
+  return /\/drive\/f\/[A-Za-z0-9._-]+$/.test(url); // /drive/f/<token> (absolute or relative)
+}
+
 // Four style lenses so one batch gives genuinely different directions.
 const LOGO_STYLES = [
   'minimal flat geometric logo mark, clean simple shapes, generous negative space',
@@ -119,13 +127,10 @@ export async function handleLogoSet(ctx) {
     const body = await request.json();
     const url = (body.url || '').toString().trim();
 
-    // Only our own served assets for THIS project (or empty = remove).
-    if (url) {
-      const prefix = `/preview-asset/${params.project_id}/`;
-      const file = url.startsWith(prefix) ? url.slice(prefix.length) : null;
-      if (!file || !/^[A-Za-z0-9._-]+$/.test(file)) {
-        return json({ success: false, error: 'Invalid logo URL' }, 400);
-      }
+    // Only our own served assets for THIS project, a Drive image (rehosted at
+    // publish by copy-on-publish, owner-scoped), or empty = remove.
+    if (url && !isOwnBrandAsset(url, params.project_id)) {
+      return json({ success: false, error: 'Invalid logo URL' }, 400);
     }
 
     const config = await getOrCreateConfig(env.DB, r.projectKey);
@@ -145,5 +150,31 @@ export async function handleLogoSet(ctx) {
   } catch (error) {
     console.error('Error in logo set:', error);
     return json({ success: false, error: 'Failed to update logo', details: error.message }, 500);
+  }
+}
+
+/**
+ * POST /api/ai-builder/:project_id/favicon — set or remove a SEPARATE favicon
+ * (browser tab icon). Body: { url } (own asset or Drive image) or '' to remove.
+ * When unset the favicon falls back to the logo. Does NOT touch the header.
+ */
+export async function handleFaviconSet(ctx) {
+  const { request, env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+
+    const body = await request.json();
+    const url = (body.url || '').toString().trim();
+    if (url && !isOwnBrandAsset(url, params.project_id)) {
+      return json({ success: false, error: 'Invalid favicon URL' }, 400);
+    }
+
+    const config = await getOrCreateConfig(env.DB, r.projectKey);
+    await updateWebsiteConfigById(env.DB, config.id, { favicon_url: url || null });
+    return json({ success: true, favicon_url: url || null });
+  } catch (error) {
+    console.error('Error in favicon set:', error);
+    return json({ success: false, error: 'Failed to update favicon', details: error.message }, 500);
   }
 }

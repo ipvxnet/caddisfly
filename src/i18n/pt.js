@@ -1197,6 +1197,16 @@ export const pt = {
     locked: 'A geração de logo com IA está disponível nos planos pagos.',
     upgrade: 'Faça upgrade para desbloquear',
     disclaimer: 'Logos gerados por IA não são verificados contra marcas registradas existentes — revise antes de uso comercial.',
+    from_drive: 'Escolher do Drive',
+  },
+  favicon: {
+    summary: 'Favicon (ícone da aba)',
+    hint: 'O ícone pequeno na aba do navegador. Deixe em branco para usar seu logo. Um PNG ou SVG quadrado funciona melhor.',
+    none: 'Usando seu logo como favicon.',
+    upload: 'Envie um favicon (PNG, SVG, ICO):',
+    remove: 'Remover favicon',
+    updated: 'Favicon atualizado',
+    removed: 'Favicon removido — usando seu logo',
   },
 
   pick: {
