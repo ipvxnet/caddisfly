@@ -1102,7 +1102,7 @@ export const pt = {
   aip: {
     title: '✨ Edição com IA', sub: 'Diga à IA o que mudar — ela confirma antes de aplicar.', send: 'Enviar',
     own_summary: '📎 Usar a minha própria imagem (enviar ou URL)', own_summary_video: '📎 Usar a minha própria imagem / vídeo (enviar ou URL)',
-    upload_file: 'Enviar um arquivo', or_paste_url: '…ou cole uma URL', use: 'Usar',
+    upload_file: 'Enviar um arquivo', from_drive: 'Escolher do Drive', or_paste_url: '…ou cole uma URL', use: 'Usar',
     remove_media: '🗑 Remover a imagem atual', remove_media_video: '🗑 Remover a imagem / vídeo atual',
     gen_video: '🎬 Gerar vídeo de fundo',
     gen_video_ph: 'Opcional: descreva o movimento (ex.: zoom lento, nuvens passando)',
@@ -1197,6 +1197,16 @@ export const pt = {
     locked: 'A geração de logo com IA está disponível nos planos pagos.',
     upgrade: 'Faça upgrade para desbloquear',
     disclaimer: 'Logos gerados por IA não são verificados contra marcas registradas existentes — revise antes de uso comercial.',
+    from_drive: 'Escolher do Drive',
+  },
+  favicon: {
+    summary: 'Favicon (ícone da aba)',
+    hint: 'O ícone pequeno na aba do navegador. Deixe em branco para usar seu logo. Um PNG ou SVG quadrado funciona melhor.',
+    none: 'Usando seu logo como favicon.',
+    upload: 'Envie um favicon (PNG, SVG, ICO):',
+    remove: 'Remover favicon',
+    updated: 'Favicon atualizado',
+    removed: 'Favicon removido — usando seu logo',
   },
 
   pick: {

@@ -968,7 +968,20 @@ export async function handleAIBuilderCustomize(ctx) {
               <p class="seo-hint">${tr('logo.cost', { n: CREDIT_COSTS.logo })}</p>
               <div id="logo-options"></div>`}
               <label class="logo-upload">${tr('logo.upload')} <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadLogo(this)"></label>
+              <button type="button" class="add-section-btn" style="margin-top:.5rem" onclick="pickLogoFromDrive()">🗂 ${tr('logo.from_drive')}</button>
               <p class="logo-disclaimer">${tr('logo.disclaimer')}</p>
+
+              <div class="favicon-block" style="margin-top:1rem;border-top:1px solid #edf0f7;padding-top:.8rem">
+                <strong style="font-size:.92rem">${tr('favicon.summary')}</strong>
+                <p class="seo-hint">${tr('favicon.hint')}</p>
+                <div id="favicon-current">
+                  ${config.favicon_url
+                    ? `<img src="${esc(config.favicon_url)}" alt="favicon" style="width:32px;height:32px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;vertical-align:middle"> <button class="link-btn danger" onclick="removeFavicon()">${tr('favicon.remove')}</button>`
+                    : `<p class="seo-hint">${tr('favicon.none')}</p>`}
+                </div>
+                <label class="logo-upload">${tr('favicon.upload')} <input type="file" accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp" onchange="uploadFavicon(this)"></label>
+                <button type="button" class="add-section-btn" style="margin-top:.5rem" onclick="pickFaviconFromDrive()">🗂 ${tr('logo.from_drive')}</button>
+              </div>
             </div>
           </details>
 
@@ -1197,6 +1210,14 @@ export async function handleAIBuilderCustomize(ctx) {
       remove: tr('logo.remove'),
       err: tr('logo.err'),
     })};
+    const FAV_T = ${JSON.stringify({
+      none: tr('favicon.none'), remove: tr('favicon.remove'),
+      updated: tr('favicon.updated'), removed: tr('favicon.removed'),
+    })};
+    const DPC_T = ${JSON.stringify({
+      title: tr('sed.drive_title'), loading: tr('sed.drive_loading'), empty: tr('sed.drive_empty'),
+      err: tr('sed.drive_err'), site: tr('sed.drive_site'), mine: tr('sed.drive_mine'),
+    })};
     async function generateLogos(btn) {
       btn.disabled = true; btn.textContent = LOGO_T.generating;
       try {
@@ -1262,6 +1283,89 @@ export async function handleAIBuilderCustomize(ctx) {
       } catch (e) { alert(e.message || LOGO_T.err); }
       finally { input.value = ''; }
     }
+
+    // ---- Favicon (separate from the logo; falls back to the logo when unset) ----
+    async function setFavicon(url) {
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/favicon', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url }),
+        });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || LOGO_T.err);
+        renderCurrentFavicon(d.favicon_url);
+        const f = document.getElementById('preview-iframe'); f.src = f.src;
+        showNotification(url ? FAV_T.updated : FAV_T.removed, 'success');
+      } catch (e) { alert(e.message || LOGO_T.err); }
+    }
+    function removeFavicon() { setFavicon(''); }
+    function renderCurrentFavicon(url) {
+      const box = document.getElementById('favicon-current'); box.innerHTML = '';
+      if (!url) { box.innerHTML = '<p class="seo-hint">' + FAV_T.none + '</p>'; return; }
+      const img = document.createElement('img'); img.src = url; img.alt = 'favicon';
+      img.style.cssText = 'width:32px;height:32px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;vertical-align:middle';
+      const btn = document.createElement('button'); btn.className = 'link-btn danger'; btn.type = 'button';
+      btn.textContent = FAV_T.remove; btn.onclick = removeFavicon;
+      box.appendChild(img); box.appendChild(document.createTextNode(' ')); box.appendChild(btn);
+    }
+    async function uploadFavicon(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const fd = new FormData(); fd.append('file', file); fd.append('asset_type', 'favicon');
+      try {
+        const r = await fetch('/api/ai-builder/' + projectId + '/upload', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (!r.ok || !d.success) throw new Error((d && d.error) || LOGO_T.err);
+        await setFavicon(d.url);
+      } catch (e) { alert(e.message || LOGO_T.err); }
+      finally { input.value = ''; }
+    }
+
+    // ---- Compact Drive picker for the Design panel (logo + favicon) ----
+    // Reuses the project drive-images endpoint (owner-scoped for managers, with
+    // the Site/My Drive toggle); window.__drivePicker only exists in the section
+    // editor modal, so the Design panel gets its own lightweight picker.
+    let __dpcOverlay = null, __dpcCb = null;
+    function dpcEnsure() {
+      if (__dpcOverlay) return __dpcOverlay;
+      const o = document.createElement('div');
+      o.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10050;padding:1rem';
+      o.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem"><strong>' + DPC_T.title + '</strong><button type="button" class="dpc-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dpc-toggle" style="display:none;gap:.4rem;margin-bottom:.6rem"></div><div class="dpc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:.5rem"></div></div>';
+      document.body.appendChild(o);
+      o.addEventListener('click', function (e) { if (e.target === o) o.style.display = 'none'; });
+      o.querySelector('.dpc-x').addEventListener('click', function () { o.style.display = 'none'; });
+      __dpcOverlay = o; return o;
+    }
+    function dpcTgl(label, active, on) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'border:1px solid ' + (active ? '#7c3aed' : '#cbd5e0') + ';background:' + (active ? '#7c3aed' : '#fff') + ';color:' + (active ? '#fff' : '#4a5568') + ';border-radius:8px;padding:.3rem .75rem;font-size:.82rem;font-weight:600;cursor:pointer';
+      b.addEventListener('click', on); return b;
+    }
+    async function dpcLoad(source) {
+      const o = dpcEnsure(); const grid = o.querySelector('.dpc-grid'); const tog = o.querySelector('.dpc-toggle');
+      grid.innerHTML = '<p style="color:#718096">' + DPC_T.loading + '</p>';
+      try {
+        const res = await fetch('/api/ai-builder/' + projectId + '/drive/images?source=' + source);
+        const d = await res.json(); const imgs = (d && d.images) || [];
+        if (d && d.can_switch) {
+          const cur = (d && d.source) || 'owner';
+          tog.style.display = 'flex'; tog.innerHTML = '';
+          tog.appendChild(dpcTgl(DPC_T.site, cur === 'owner', function () { dpcLoad('owner'); }));
+          tog.appendChild(dpcTgl(DPC_T.mine, cur === 'mine', function () { dpcLoad('mine'); }));
+        } else { tog.style.display = 'none'; }
+        if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + DPC_T.empty + '</p>'; return; }
+        grid.innerHTML = '';
+        imgs.forEach(function (im) {
+          const b = document.createElement('button'); b.type = 'button'; b.title = im.name;
+          b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
+          const img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+          b.appendChild(img); b.addEventListener('click', function () { o.style.display = 'none'; if (__dpcCb) __dpcCb(im.url); });
+          grid.appendChild(b);
+        });
+      } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + DPC_T.err + '</p>'; }
+    }
+    function openDrivePickerCustom(cb) { __dpcCb = cb; dpcEnsure().style.display = 'flex'; dpcLoad('owner'); }
+    function pickLogoFromDrive() { openDrivePickerCustom(function (u) { setLogo(u); }); }
+    function pickFaviconFromDrive() { openDrivePickerCustom(function (u) { setFavicon(u); }); }
 
     // ---- Pages (multi-page) ----
     function gotoPage(slug) {

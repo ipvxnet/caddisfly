@@ -1109,7 +1109,7 @@ export const en = {
   aip: {
     title: '✨ AI Edit', sub: 'Tell the AI what to change — it’ll confirm before applying.', send: 'Send',
     own_summary: '📎 Use my own image (upload or URL)', own_summary_video: '📎 Use my own image / video (upload or URL)',
-    upload_file: 'Upload a file', or_paste_url: '…or paste a URL', use: 'Use',
+    upload_file: 'Upload a file', from_drive: 'Pick from Drive', or_paste_url: '…or paste a URL', use: 'Use',
     remove_media: '🗑 Remove current image', remove_media_video: '🗑 Remove current image / video',
     gen_video: '🎬 Generate background video',
     gen_video_ph: 'Optional: describe the motion (e.g. slow zoom, drifting clouds)',
@@ -1204,6 +1204,16 @@ export const en = {
     locked: 'AI logo generation is available on paid plans.',
     upgrade: 'Upgrade to unlock',
     disclaimer: 'AI-generated marks are not checked against existing trademarks — review before commercial use.',
+    from_drive: 'Pick from Drive',
+  },
+  favicon: {
+    summary: 'Favicon (browser tab icon)',
+    hint: "The small icon in the browser tab. Leave blank to use your logo. Square PNG or SVG works best.",
+    none: 'Using your logo as the favicon.',
+    upload: 'Upload a favicon (PNG, SVG, ICO):',
+    remove: 'Remove favicon',
+    updated: 'Favicon updated',
+    removed: 'Favicon removed — using your logo',
   },
 
   pick: {

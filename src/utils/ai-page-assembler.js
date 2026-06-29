@@ -273,17 +273,19 @@ export function buildHTMLDocument({ title, body, config, seo = null, sections = 
   // them to modern-format + capped-width delivery (auto=format/compress, ≤1280w).
   body = optimizeStockImages(body);
 
-  // Brand favicon from the site logo (AI-generated or uploaded). Relative
-  // /preview-asset/ URLs resolve on the app origin, subdomains, and custom
-  // domains alike (the sites worker serves them from R2).
+  // Brand favicon: a separate favicon_url if set, else the site logo. Relative
+  // /preview-asset/ + /drive/f/ URLs resolve on the app origin, subdomains, and
+  // custom domains alike (drive URLs are rehosted at publish by copy-on-publish).
   const logoUrl = config.logo_url || '';
-  const faviconMime = logoUrl.endsWith('.svg') ? 'image/svg+xml'
-    : logoUrl.endsWith('.png') ? 'image/png'
-    : logoUrl.endsWith('.webp') ? 'image/webp'
+  const faviconUrl = config.favicon_url || logoUrl;
+  const faviconMime = faviconUrl.endsWith('.svg') ? 'image/svg+xml'
+    : faviconUrl.endsWith('.png') ? 'image/png'
+    : faviconUrl.endsWith('.webp') ? 'image/webp'
+    : faviconUrl.endsWith('.ico') ? 'image/x-icon'
     : 'image/jpeg';
-  const faviconTags = logoUrl
-    ? `<link rel="icon" type="${faviconMime}" href="${escapeHtml(logoUrl)}">
-  <link rel="apple-touch-icon" href="${escapeHtml(logoUrl)}">`
+  const faviconTags = faviconUrl
+    ? `<link rel="icon" type="${faviconMime}" href="${escapeHtml(faviconUrl)}">
+  <link rel="apple-touch-icon" href="${escapeHtml(faviconUrl)}">`
     : '';
 
   // Dark themes carry surface tokens; inject a global override layer when active.
