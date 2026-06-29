@@ -916,6 +916,7 @@ const DARK_SURFACE_SECTIONS = [
   '.services-spotlight', '.services-numbered', '.footer-minimal',
   '.features-actions', '.features-steps',
   '.hero-showcase', '.hero-quote', '.about-founder', '.cta-split', '.testimonials-video', '.testimonials-portrait',
+  '.videos-section',
   '.blog-list-section', '.blog-post-section',
   '.shop-list-section', '.shop-product-section', '.shop-feat-section',
   '.bkg-section', '.cat-section',
@@ -928,7 +929,7 @@ const DARK_SURFACE_SECTIONS = [
 const DARK_CARD_SURFACES = [
   '.service-card', '.service-card-inner', '.testimonial-card', '.quote-card',
   '.pricing-card', '.contact-form', '.contact-info-item', '.timeline-content',
-  '.team-card', '.feature-item', '.blog-card', '.shop-card', '.shop-feat-card', '.cat-card',
+  '.team-card', '.feature-item', '.blog-card', '.shop-card', '.shop-feat-card', '.cat-card', '.vg-card',
   '.footer-minimal-social a', '.hero-overlap-card', '.action-card', '.step-card', '.hq-card', '.cta-split-copy', '.vt-card', '.tp-card',
   '.bkg-card', '.bkg-panel', '.crs-card', '.crsec-card', '.igf-card', '.mbr-card', '.mbr-input', '.mbr-gate-card', '.mbr-gate-input',
   '.crsgate-card', '.crsgate-input', '.crsgate-sec', '.crsgate-sectitle',

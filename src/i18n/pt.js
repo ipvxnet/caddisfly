@@ -1070,6 +1070,7 @@ export const pt = {
     social_links: 'Redes sociais', social_links_hint: 'Cole as URLs dos seus perfis — só aparecem as que você preencher.',
     social_display: 'Mostrar redes como', social_letters: 'Letras (F, I…)', social_icons: 'Ícones das marcas',
     feat_items: 'Itens', add_feature: '＋ Adicionar item', item_feature: 'Item', feat_intro_image: 'Imagem do painel de introdução (layout colunas)',
+    videos_items: 'Vídeos', videos_hint: 'Cole um link do YouTube, Vimeo ou Loom (ou envie um arquivo). A miniatura carrega sozinha, a menos que você defina uma imagem personalizada.', add_video: '＋ Adicionar vídeo', item_video: 'Vídeo', video_thumb: 'Miniatura personalizada (opcional)',
     link_label: 'Texto do link', add_link: '＋ Adicionar link', link_remove: 'Remover link',
     ph_about_us: 'Sobre nós', ph_our_services: 'Os nossos serviços', ph_testimonials: 'Depoimentos', ph_get_in_touch: 'Fale conosco',
     ph_send_message: 'Enviar mensagem', ph_gallery: 'Galeria', ph_get_started: 'Começar',

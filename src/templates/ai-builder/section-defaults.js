@@ -14,6 +14,7 @@ const DEFAULTS = {
     services: ['Our Services', 'What we offer'],
     features: ['Why Choose Us', 'What sets us apart'],
     gallery: ['Gallery', 'Our Work'],
+    videos: ['Watch & Learn', 'See us in action'],
     testimonials: ['What Our Customers Say', ''],
     pricing: ['Pricing', 'Simple, honest pricing'],
     stats: ['By the Numbers', ''],
@@ -28,6 +29,7 @@ const DEFAULTS = {
     services: ['Nuestros Servicios', 'Lo que ofrecemos'],
     features: ['Por Qué Elegirnos', 'Lo que nos distingue'],
     gallery: ['Galería', 'Nuestro Trabajo'],
+    videos: ['Míranos en acción', 'Conoce más en video'],
     testimonials: ['Lo Que Dicen Nuestros Clientes', ''],
     pricing: ['Precios', 'Precios simples y honestos'],
     stats: ['En Números', ''],
@@ -42,6 +44,7 @@ const DEFAULTS = {
     services: ['Nossos Serviços', 'O que oferecemos'],
     features: ['Por Que Nos Escolher', 'O que nos diferencia'],
     gallery: ['Galeria', 'Nosso Trabalho'],
+    videos: ['Veja em ação', 'Saiba mais em vídeo'],
     testimonials: ['O Que Dizem Nossos Clientes', ''],
     pricing: ['Preços', 'Preços simples e honestos'],
     stats: ['Em Números', ''],
@@ -139,6 +142,11 @@ const ITEMS = {
       { icon: '🤝', title: 'First Session', description: 'We get to know each other and shape a plan that fits your goals.' },
       { icon: '🌱', title: 'Ongoing Support', description: 'Regular sessions and steady progress, at a pace that feels right.' },
     ],
+    'videos-grid': [
+      { video_url: '', title: 'Our Story', description: 'A quick look at who we are.' },
+      { video_url: '', title: 'How It Works', description: 'See the process step by step.' },
+      { video_url: '', title: 'Customer Spotlight', description: 'Hear from the people we serve.' },
+    ],
     stats: [
       { number: '10K+', label:'Happy Customers' },
       { number: '50K+', label:'Projects Completed' },
@@ -204,6 +212,11 @@ const ITEMS = {
       { icon: '🤝', title: 'Primera Sesión', description: 'Nos conocemos y creamos un plan a la medida de tus objetivos.' },
       { icon: '🌱', title: 'Apoyo Continuo', description: 'Sesiones regulares y progreso constante, a un ritmo que te resulte cómodo.' },
     ],
+    'videos-grid': [
+      { video_url: '', title: 'Nuestra Historia', description: 'Un vistazo rápido a quiénes somos.' },
+      { video_url: '', title: 'Cómo Funciona', description: 'Conoce el proceso paso a paso.' },
+      { video_url: '', title: 'Historias de Clientes', description: 'Escucha a quienes confían en nosotros.' },
+    ],
     stats: [
       { number: '10K+', label:'Clientes Satisfechos' },
       { number: '50K+', label:'Proyectos Completados' },
@@ -268,6 +281,11 @@ const ITEMS = {
       { icon: '💬', title: 'Fale Conosco', description: 'Agende uma consulta gratuita e sem compromisso para compartilhar o que está sentindo.' },
       { icon: '🤝', title: 'Primeira Sessão', description: 'Nos conhecemos e montamos um plano sob medida para seus objetivos.' },
       { icon: '🌱', title: 'Apoio Contínuo', description: 'Sessões regulares e progresso constante, no ritmo certo para você.' },
+    ],
+    'videos-grid': [
+      { video_url: '', title: 'Nossa História', description: 'Um resumo rápido de quem somos.' },
+      { video_url: '', title: 'Como Funciona', description: 'Veja o processo passo a passo.' },
+      { video_url: '', title: 'Histórias de Clientes', description: 'Ouça quem confia na gente.' },
     ],
     stats: [
       { number: '10K+', label:'Clientes Satisfeitos' },
