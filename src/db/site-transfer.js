@@ -83,6 +83,14 @@ export async function executeTransfer(db, projectKey, { fromEmail, toEmail, keep
     // SQLITE_CONSTRAINT_NOTNULL and rolls back the whole transfer batch (the
     // transfer-accept 500). Clear to '' (the column's default) instead.
     db.prepare(`UPDATE ai_website_configs SET stripe_account_id = '', social_connections_json = NULL, notify_email = NULL, updated_at = unixepoch() WHERE ${k.col} = ?`).bind(k.val),
+    // Give the NEW owner a top-level "Shared" Drive folder (idempotent) — the
+    // boundary a site manager may see of their Drive. The owner moves only what
+    // they want to share into it; managers never browse the rest. See db/drive.js.
+    db.prepare(
+      `INSERT INTO drive_folders (owner_email, name, parent_id)
+       SELECT ?, 'Shared', NULL
+       WHERE NOT EXISTS (SELECT 1 FROM drive_folders WHERE owner_email = ? AND parent_id IS NULL AND lower(name) = 'shared' AND deleted_at IS NULL)`
+    ).bind(to, to),
   ];
   if (keepBuilder) {
     // NOTE: the unique index is PARTIAL, so the conflict target must repeat its WHERE.

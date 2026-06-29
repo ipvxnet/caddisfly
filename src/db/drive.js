@@ -32,6 +32,63 @@ export async function listDriveImages(db, ownerEmail) {
   return results || [];
 }
 
+// A top-level "Shared" folder is the boundary a site MANAGER may see of the
+// owner's Drive: the owner moves only what they want to share into it, so a
+// manager never browses the owner's whole (possibly private) Drive.
+export const SHARED_FOLDER_NAME = 'Shared';
+
+/** The owner's top-level "Shared" folder row, or null. */
+export async function getSharedFolder(db, ownerEmail) {
+  return db
+    .prepare("SELECT id, name FROM drive_folders WHERE owner_email = ? AND parent_id IS NULL AND lower(name) = 'shared' AND deleted_at IS NULL")
+    .bind(lc(ownerEmail))
+    .first();
+}
+
+/** Get-or-create the owner's top-level "Shared" folder; returns its id. */
+export async function ensureSharedFolder(db, ownerEmail) {
+  const existing = await getSharedFolder(db, ownerEmail);
+  if (existing) return existing.id;
+  const res = await db
+    .prepare('INSERT INTO drive_folders (owner_email, name, parent_id) VALUES (?, ?, NULL)')
+    .bind(lc(ownerEmail), SHARED_FOLDER_NAME)
+    .run();
+  return res && res.meta && res.meta.last_row_id;
+}
+
+/** IMAGE files inside the owner's "Shared" folder (and its subfolders) — what a
+ *  site manager may pick from. Empty if there's no Shared folder yet. */
+export async function listSharedDriveImages(db, ownerEmail) {
+  const shared = await getSharedFolder(db, ownerEmail);
+  if (!shared) return [];
+  // Shared + every descendant folder (folders are few; walk in memory).
+  const all = await allFoldersRaw(db, ownerEmail);
+  const childrenOf = new Map();
+  for (const f of all) {
+    const p = f.parent_id == null ? null : Number(f.parent_id);
+    if (!childrenOf.has(p)) childrenOf.set(p, []);
+    childrenOf.get(p).push(Number(f.id));
+  }
+  const ids = [];
+  const stack = [Number(shared.id)];
+  while (stack.length) {
+    const id = stack.pop();
+    ids.push(id);
+    for (const c of childrenOf.get(id) || []) stack.push(c);
+  }
+  const out = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const chunk = ids.slice(i, i + 50);
+    const ph = chunk.map(() => '?').join(',');
+    const { results } = await db
+      .prepare(`SELECT token, name FROM drive_files WHERE owner_email = ? AND folder_id IN (${ph}) AND content_type LIKE 'image/%' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200`)
+      .bind(lc(ownerEmail), ...chunk)
+      .all();
+    for (const r of results || []) out.push(r);
+  }
+  return out;
+}
+
 /** One file by id (owner-scoped) — for move/copy. */
 export async function getDriveFileById(db, ownerEmail, id) {
   return db.prepare('SELECT id, token, name, r2_key, size, content_type, folder_id FROM drive_files WHERE id = ? AND owner_email = ? AND deleted_at IS NULL').bind(Number(id), lc(ownerEmail)).first();

@@ -9,6 +9,7 @@ import {
   getDriveUsage, listDriveFiles, addDriveFile, deleteDriveFile, getDriveFileByToken,
   getDriveFileById, moveDriveFile, listFolders, listAllFolders, getFolder, createFolder,
   renameFolder, collectFolderTree, purgeFolderTree, listDriveImages,
+  ensureSharedFolder, listSharedDriveImages,
   softDeleteFile, softDeleteTree, restoreTree, restoreFile, getDeletedFile, getDeletedFolder,
   getTrashStats, listTrashRoots, listAllDeleted,
 } from '../../db/drive.js';
@@ -601,23 +602,37 @@ export async function handleDriveImages(ctx) {
 }
 
 /** GET /api/ai-builder/:project_id/drive/images?source=owner|mine — Drive images
- *  for the editor picker, scoped to the SITE OWNER by default so a manager edits
- *  with the site's real asset library (matches deploy's owner-scoped asset
- *  lookup, so picked images survive copy-on-publish). A manager can switch
- *  source=mine to use their own Drive. Gated by projectAccess. */
+ *  for the editor picker. A site MANAGER (acting user != owner) sees only the
+ *  owner's "Shared" folder by default (the owner moves in only what they want
+ *  shared — never their whole, possibly private, Drive); they can switch
+ *  source=mine to use their own full Drive. The OWNER editing their own site
+ *  sees their whole Drive as before. Gated by projectAccess. */
 export async function handleProjectDriveImages(ctx) {
   const { env, url } = ctx;
   const mine = ctx.billingEmail;
   if (!mine) return json({ success: false, error: 'Please sign in.' }, 401);
   const owner = ctx.projectOwner || mine;
-  const canSwitch = String(owner).toLowerCase() !== String(mine).toLowerCase();
+  const isManager = String(owner).toLowerCase() !== String(mine).toLowerCase();
   const source = ctx.query && ctx.query.source === 'mine' ? 'mine' : 'owner';
-  const email = source === 'mine' ? mine : owner;
-  const rows = await listDriveImages(env.DB, email);
+
+  let rows;
+  let scoped = false;
+  if (!isManager) {
+    rows = await listDriveImages(env.DB, owner); // owner on their own site → whole Drive
+  } else if (source === 'mine') {
+    rows = await listDriveImages(env.DB, mine); // manager's own full Drive
+  } else {
+    // Manager viewing the site's Drive → only the owner's Shared folder. Ensure
+    // it exists so the owner can find + populate it (covers pre-existing sites).
+    await ensureSharedFolder(env.DB, owner);
+    rows = await listSharedDriveImages(env.DB, owner);
+    scoped = true;
+  }
   return json({
     success: true,
     source,
-    can_switch: canSwitch,
+    can_switch: isManager,
+    scoped,
     images: rows.map((r) => ({ token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}` })),
   });
 }
