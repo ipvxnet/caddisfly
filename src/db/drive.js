@@ -26,9 +26,22 @@ export async function addDriveFile(db, ownerEmail, { token, name, r2_key, size, 
   return { token };
 }
 
-/** The owner's IMAGE files (for the editor "Insert from Drive" picker), newest first. */
-export async function listDriveImages(db, ownerEmail) {
-  const { results } = await db.prepare("SELECT token, name FROM drive_files WHERE owner_email = ? AND content_type LIKE 'image/%' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200").bind(lc(ownerEmail)).all();
+// SQL content-type condition for a Drive picker "kind" (literals only, no binds).
+export function driveKindWhere(kind) {
+  switch (kind) {
+    case 'pdf': return "content_type = 'application/pdf'";
+    case 'video': return "content_type LIKE 'video/%'";
+    case 'media': return "(content_type LIKE 'image/%' OR content_type LIKE 'video/%')";
+    case 'doc': return "(content_type LIKE 'text/%' OR content_type IN ('text/csv','application/csv','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/json','application/pdf'))";
+    case 'all': return '1=1';
+    case 'image':
+    default: return "content_type LIKE 'image/%'";
+  }
+}
+
+/** The owner's files of a given kind (for the editor Drive picker), newest first. */
+export async function listDriveImages(db, ownerEmail, kind = 'image') {
+  const { results } = await db.prepare(`SELECT token, name, content_type, size FROM drive_files WHERE owner_email = ? AND ${driveKindWhere(kind)} AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 300`).bind(lc(ownerEmail)).all();
   return results || [];
 }
 
@@ -58,12 +71,12 @@ export async function ensureSharedFolder(db, ownerEmail) {
 
 /** IMAGE files directly inside ONE folder (NULL = root), newest first — for the
  *  picker's per-folder view. */
-export async function listDriveImagesInFolder(db, ownerEmail, folderId) {
+export async function listDriveImagesInFolder(db, ownerEmail, folderId, kind = 'image') {
   const fid = folderId == null ? null : Number(folderId);
   const where = fid == null ? 'folder_id IS NULL' : 'folder_id = ?';
   const binds = fid == null ? [lc(ownerEmail)] : [lc(ownerEmail), fid];
   const { results } = await db
-    .prepare(`SELECT token, name FROM drive_files WHERE owner_email = ? AND ${where} AND content_type LIKE 'image/%' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200`)
+    .prepare(`SELECT token, name, content_type, size FROM drive_files WHERE owner_email = ? AND ${where} AND ${driveKindWhere(kind)} AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 300`)
     .bind(...binds)
     .all();
   return results || [];
@@ -71,7 +84,7 @@ export async function listDriveImagesInFolder(db, ownerEmail, folderId) {
 
 /** IMAGE files inside the owner's "Shared" folder (and its subfolders) — what a
  *  site manager may pick from. Empty if there's no Shared folder yet. */
-export async function listSharedDriveImages(db, ownerEmail) {
+export async function listSharedDriveImages(db, ownerEmail, kind = 'image') {
   const shared = await getSharedFolder(db, ownerEmail);
   if (!shared) return [];
   // Shared + every descendant folder (folders are few; walk in memory).
@@ -94,7 +107,7 @@ export async function listSharedDriveImages(db, ownerEmail) {
     const chunk = ids.slice(i, i + 50);
     const ph = chunk.map(() => '?').join(',');
     const { results } = await db
-      .prepare(`SELECT token, name FROM drive_files WHERE owner_email = ? AND folder_id IN (${ph}) AND content_type LIKE 'image/%' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200`)
+      .prepare(`SELECT token, name, content_type, size FROM drive_files WHERE owner_email = ? AND folder_id IN (${ph}) AND ${driveKindWhere(kind)} AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 300`)
       .bind(lc(ownerEmail), ...chunk)
       .all();
     for (const r of results || []) out.push(r);

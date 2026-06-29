@@ -545,7 +545,7 @@ export const en = {
     analytics: '📊 Analytics', analytics_title: 'Traffic analytics for your published site',
     blog: '📝 Blog', blog_title: 'Write and publish blog posts with AI',
     store: '🛍 Store', store_title: 'Sell on your site — products, orders, Stripe payments',
-    crm: '👥 CRM', courses: '📚 Courses', courses_title: 'Online courses — lessons, videos, quizzes and sales', members: '👤 Members', members_title: 'Your site members — sign-ins and members-only content', manage: 'Manage',
+    crm: '👥 CRM', courses: '📚 Courses', courses_title: 'Online courses — lessons, videos, quizzes and sales', members: '👤 Members', members_title: 'Your site members — sign-ins and members-only content', manage: 'Manage', drive_browse: '📂 Browse Drive', drive_browse_title: 'Browse files in Drive — open shared docs, PDFs and spreadsheets',
     full_preview: 'View Full Preview', deploy: 'Deploy Website', deploying: 'Deploying…',
     upgrade_title: 'Upgrade to unlock this', view_plans: 'View plans →', maybe_later: 'Maybe later',
     tab_content: 'Content', tab_design: 'Design',
@@ -1034,6 +1034,10 @@ export const en = {
     sec_contact: 'Contact', sec_services: 'Services', sec_about: 'About', sec_pricing: 'Pricing',
     sec_gallery: 'Gallery', sec_testimonials: 'Testimonials', sec_features: 'Features',
     sec_cta: 'Call to action', sec_blog: 'Blog', sec_shop: 'Shop', sec_products: 'Products', sec_stats: 'Stats',
+  },
+  drivex: {
+    title: 'Insert from Drive', open: 'Open ↗', use: 'Use',
+    no_files: 'No matching files in Drive yet.',
   },
   sed: {
     appearance: 'Section appearance', appearance_auto: 'Auto (match theme)', appearance_light: 'Light', appearance_dark: 'Dark',

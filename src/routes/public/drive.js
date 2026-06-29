@@ -652,6 +652,8 @@ export async function handleProjectDriveImages(ctx) {
   const isManager = String(owner).toLowerCase() !== String(mine).toLowerCase();
   const source = ctx.query && ctx.query.source === 'mine' ? 'mine' : 'owner';
   const reqFolder = ctx.query && ctx.query.folder ? Number(ctx.query.folder) : null;
+  const KINDS = ['image', 'pdf', 'video', 'media', 'doc', 'all'];
+  const kind = ctx.query && KINDS.includes(ctx.query.kind) ? ctx.query.kind : 'image';
 
   // Which account's Drive, and the boundary a manager may browse. A manager on
   // the site's Drive is confined to the owner's "Shared" subtree; everyone else
@@ -685,8 +687,8 @@ export async function handleProjectDriveImages(ctx) {
   // Images: root → flattened (whole Drive / whole Shared subtree); a folder →
   // that folder's direct images.
   let rows;
-  if (curId == null) rows = sharedScope ? await listSharedDriveImages(env.DB, account) : await listDriveImages(env.DB, account);
-  else rows = await listDriveImagesInFolder(env.DB, account, curId);
+  if (curId == null) rows = sharedScope ? await listSharedDriveImages(env.DB, account, kind) : await listDriveImages(env.DB, account, kind);
+  else rows = await listDriveImagesInFolder(env.DB, account, curId, kind);
 
   // Subfolders at this level (children of the current folder, or of the root).
   const childParent = curId == null ? rootId : curId; // rootId is null for own-Drive root
@@ -703,15 +705,21 @@ export async function handleProjectDriveImages(ctx) {
     }
   }
 
+  const files = rows.map((r) => ({
+    token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}`,
+    content_type: r.content_type || '', size: r.size || 0,
+  }));
   return json({
     success: true,
     source,
     can_switch: isManager,
     scoped: sharedScope,
+    kind,
     folder: curId,
     subfolders,
     breadcrumb,
-    images: rows.map((r) => ({ token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}` })),
+    images: files, // back-compat key (image pickers read .images)
+    files,
   });
 }
 

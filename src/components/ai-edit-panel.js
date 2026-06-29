@@ -299,17 +299,19 @@ async function aiEditUpload(input) {
   }
 }
 
-// Pick an image from Drive (reuses the section editor's shared picker). Drive is
-// image-only, so this always applies as an image (never a video).
+// Pick media from Drive (shared picker). Hero accepts image OR video; other
+// sections take an image. Video is detected from the picked file's type.
 function aiEditDrive() {
   if (!window.__drivePicker) return;
   const status = document.getElementById('ai-edit-own-status');
-  window.__drivePicker(function (url) {
+  const kind = window.aiEditIsHero ? 'media' : 'image';
+  window.__drivePicker(function (url, file) {
+    const isVideo = !!(window.aiEditIsHero && /^video\\//.test((file && file.content_type) || ''));
     status.textContent = ${JSON.stringify(tr('aip.applying'))};
-    aiEditPostApply(aiEditMediaPayload(url, false))
+    aiEditPostApply(aiEditMediaPayload(url, isVideo))
       .then(function () { status.textContent = ${JSON.stringify(tr('aip.applied_dot'))}; })
       .catch(function (e) { status.textContent = '⚠️ ' + e.message; });
-  });
+  }, { kind: kind });
 }
 
 async function aiEditRemoveMedia() {
