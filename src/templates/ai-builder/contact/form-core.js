@@ -4,6 +4,7 @@
 // (split, etc.) compose these.
 
 import { t } from '../../../i18n/index.js';
+import { optionalFieldsHtml } from './form-fields.js';
 
 export const attr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
@@ -69,6 +70,7 @@ export function contactFormBlock(data, config) {
           <input type="email" id="email" name="email" required />
         </div>
       </div>
+      ${optionalFieldsHtml(data, lang)}
       <div class="form-group">
         <label for="message">${t(lang, 'formw.message')}</label>
         <textarea id="message" name="message" rows="5" required></textarea>
@@ -93,12 +95,18 @@ export function contactFormBlock(data, config) {
     if (!form.dataset.cfSite) { show(form.dataset.msgPreview, true); return; }
     var hp = form.querySelector('.cf-hp');
     var val = function (n) { var el = form.querySelector('[name=' + n + ']'); return el ? el.value : ''; };
+    var extra = {};
+    var ffs = form.querySelectorAll('[data-ff]');
+    for (var i = 0; i < ffs.length; i++) {
+      var k = ffs[i].getAttribute('data-ff');
+      if (ffs[i].value) extra[k] = ffs[i].value;
+    }
     if (btn) btn.disabled = true;
     show(form.dataset.msgSending, true);
     fetch(form.dataset.cfEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ s: form.dataset.cfSite, p: location.pathname, name: val('name'), email: val('email'), message: val('message'), hp: hp ? hp.value : '' })
+      body: JSON.stringify({ s: form.dataset.cfSite, p: location.pathname, name: val('name'), email: val('email'), message: val('message'), extra: extra, hp: hp ? hp.value : '' })
     })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok && d.success, d: d }; }); })
       .then(function (res) {
@@ -128,8 +136,9 @@ a.contact-info-item:hover { color: ${primary_color}; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
 .form-group { margin-bottom: 1.5rem; }
 .form-group label { display: block; font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.form-group input, .form-group textarea { width: 100%; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: var(--cf-radius-sm, 8px); font-size: 1rem; font-family: inherit; transition: all 0.3s ease; }
-.form-group input:focus, .form-group textarea:focus { outline: none; border-color: ${primary_color}; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: var(--cf-radius-sm, 8px); font-size: 1rem; font-family: inherit; transition: all 0.3s ease; background: #fff; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: ${primary_color}; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+.form-group .ff-req { color: #e53e3e; }
 .form-group textarea { resize: vertical; min-height: 120px; }
 .contact-submit { width: 100%; padding: 1rem 2rem; background: ${primary_color}; color: var(--on-primary, #fff); border: none; border-radius: var(--cf-btn-radius, 8px); font-size: 1.125rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
 .contact-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5); }

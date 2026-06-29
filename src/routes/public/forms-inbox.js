@@ -9,6 +9,7 @@ import { getAIProjectByProjectId } from '../../db/ai-projects.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } from '../../db/ai-config.js';
 import { getSubmissionsBySite, markAllRead } from '../../db/form-submissions.js';
+import { extraFieldList } from '../../templates/ai-builder/contact/form-fields.js';
 import { translator } from '../../i18n/index.js';
 
 function esc(s) {
@@ -52,8 +53,19 @@ export async function handleFormsInbox(ctx) {
 
   const rows = subs.length
     ? subs
-        .map(
-          (s) => `
+        .map((s) => {
+          const extra = extraFieldList(s.extra_json, lang);
+          const extraHtml = extra.length
+            ? `<div class="msg-extra">${extra
+                .map(
+                  (f) =>
+                    `<span class="ff"><b>${esc(f.label)}:</b> ${
+                      f.key === 'phone' ? `<a href="tel:${esc(f.value)}">${esc(f.value)}</a>` : esc(f.value)
+                    }</span>`
+                )
+                .join('')}</div>`
+            : '';
+          return `
       <div class="msg" data-id="${s.id}">
         <div class="msg-head">
           <div class="msg-who">
@@ -68,13 +80,14 @@ export async function handleFormsInbox(ctx) {
             ${s.email_status === 'skipped' ? `<span class="pill mail skip" title="${tr('finbox.mail_skipped_title')}">✉ —</span>` : ''}
           </div>
         </div>
+        ${extraHtml}
         <p class="msg-body">${esc(s.message)}</p>
         <div class="msg-actions">
           <a class="btn btn-ghost sm" href="mailto:${esc(s.email)}?subject=${encodeURIComponent('Re: ' + name)}">${tr('finbox.reply')}</a>
           <button class="link-btn danger" onclick="delMsg(this, ${s.id})">${tr('finbox.delete')}</button>
         </div>
-      </div>`
-        )
+      </div>`;
+        })
         .join('')
     : `<p class="empty">${tr('finbox.empty')}</p>`;
 
@@ -100,6 +113,9 @@ export async function handleFormsInbox(ctx) {
     .msg-email:hover{text-decoration:underline}
     .msg-meta{color:var(--muted);font-size:.82rem}
     .msg-page{font-weight:700}
+    .msg-extra{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;margin:.5rem 0 0;font-size:.85rem;color:var(--muted)}
+    .msg-extra .ff b{color:var(--ink);font-weight:600}
+    .msg-extra .ff a{color:var(--p2);text-decoration:none}
     .msg-body{color:var(--body);margin:.7rem 0;white-space:pre-wrap;line-height:1.55}
     .msg-actions{display:flex;align-items:center;gap:.8rem}
     .btn.sm,.btn-ghost.sm{padding:.35rem .7rem;font-size:.82rem}
