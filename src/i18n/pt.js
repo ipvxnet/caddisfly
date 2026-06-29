@@ -1068,6 +1068,7 @@ export const pt = {
     form_fields: 'Campos extras do formulário', form_fields_hint: 'Campos opcionais que os visitantes podem preencher. Marque um para exibi-lo; marque como obrigatório se necessário.', ff_required: 'Obrigatório',
     footer_links: 'Links do rodapé', footer_links_hint: 'Links rápidos no rodapé. Escolha uma página/seção ou cole um endereço web.',
     social_links: 'Redes sociais', social_links_hint: 'Cole as URLs dos seus perfis — só aparecem as que você preencher.',
+    social_display: 'Mostrar redes como', social_letters: 'Letras (F, I…)', social_icons: 'Ícones das marcas',
     link_label: 'Texto do link', add_link: '＋ Adicionar link', link_remove: 'Remover link',
     ph_about_us: 'Sobre nós', ph_our_services: 'Os nossos serviços', ph_testimonials: 'Depoimentos', ph_get_in_touch: 'Fale conosco',
     ph_send_message: 'Enviar mensagem', ph_gallery: 'Galeria', ph_get_started: 'Começar',

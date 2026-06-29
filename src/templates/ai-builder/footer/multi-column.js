@@ -1,6 +1,7 @@
 // Footer Section with Multiple Columns
 
 import { uiText } from '../section-defaults.js';
+import { socialIconSvg } from '../social-icons.js';
 
 /**
  * Generates a footer section with multiple columns
@@ -20,6 +21,7 @@ export function footerMultiColumnTemplate(data, config) {
       { label: uiText(lang, 'nav_contact'), url: '#contact' },
     ],
     social = [],
+    social_style = 'letters',
   } = data;
   const { primary_color = '#667eea', font_heading = 'Inter' } = config;
 
@@ -28,7 +30,9 @@ export function footerMultiColumnTemplate(data, config) {
     (s) => s && s.url && s.url !== '#'
   );
 
+  const useIcons = social_style === 'icons';
   const getSocialIcon = (platform) => {
+    if (useIcons) { const svg = socialIconSvg(platform); if (svg) return svg; }
     const icons = {
       facebook: 'F',
       instagram: 'I',

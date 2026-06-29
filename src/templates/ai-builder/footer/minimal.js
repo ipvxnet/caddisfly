@@ -3,6 +3,7 @@
 // (social icon radius). Same content shape as the multi-column footer.
 
 import { uiText } from '../section-defaults.js';
+import { socialIconSvg } from '../social-icons.js';
 
 export function footerMinimalTemplate(data, config) {
   const lang = config.lang || 'en';
@@ -16,11 +17,14 @@ export function footerMinimalTemplate(data, config) {
       { label: uiText(lang, 'nav_contact'), url: '#contact' },
     ],
     social = [],
+    social_style = 'letters',
   } = data;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter' } = config;
 
   const socialLinks = (Array.isArray(social) ? social : []).filter((s) => s && s.url && s.url !== '#');
+  const useIcons = social_style === 'icons';
   const getSocialIcon = (platform) => {
+    if (useIcons) { const svg = socialIconSvg(platform); if (svg) return svg; }
     const icons = { facebook: 'F', instagram: 'I', twitter: 'T', x: 'X', linkedin: 'in', youtube: 'Y', tiktok: 'TT' };
     return icons[String(platform).toLowerCase()] || '•';
   };
