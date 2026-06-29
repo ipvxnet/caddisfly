@@ -556,10 +556,13 @@ async function uploadImage(input, fieldName) {
   const file = input.files[0];
   if (!file) return;
 
-  const uploadArea = input.closest('.image-upload-area');
-  uploadArea.classList.add('uploading');
+  // The file <input> is a SIBLING of the .image-upload-area (not inside it), so
+  // input.closest('.image-upload-area') is null — find it within the form-group.
+  const fg = input.closest('.form-group');
+  const uploadArea = input.closest('.image-upload-area') || (fg && fg.querySelector('.image-upload-area')) || null;
+  if (uploadArea) uploadArea.classList.add('uploading');
 
-  const progressDiv = uploadArea.querySelector('.upload-progress');
+  const progressDiv = uploadArea && uploadArea.querySelector('.upload-progress');
   if (progressDiv) progressDiv.textContent = ${JSON.stringify(tr('sed.uploading'))};
 
   const formData = new FormData();
@@ -580,7 +583,7 @@ async function uploadImage(input, fieldName) {
       if (urlInput) urlInput.value = data.url;
 
       // Show preview
-      const preview = uploadArea.querySelector('.image-preview');
+      const preview = uploadArea && uploadArea.querySelector('.image-preview');
       if (preview) {
         preview.src = data.url;
         preview.style.display = 'block';
@@ -593,7 +596,7 @@ async function uploadImage(input, fieldName) {
   } catch (error) {
     alert(${JSON.stringify(tr('sed.upload_failed_p'))} + error.message);
   } finally {
-    uploadArea.classList.remove('uploading');
+    if (uploadArea) uploadArea.classList.remove('uploading');
   }
 }
 
