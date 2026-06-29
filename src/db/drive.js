@@ -56,6 +56,19 @@ export async function ensureSharedFolder(db, ownerEmail) {
   return res && res.meta && res.meta.last_row_id;
 }
 
+/** IMAGE files directly inside ONE folder (NULL = root), newest first — for the
+ *  picker's per-folder view. */
+export async function listDriveImagesInFolder(db, ownerEmail, folderId) {
+  const fid = folderId == null ? null : Number(folderId);
+  const where = fid == null ? 'folder_id IS NULL' : 'folder_id = ?';
+  const binds = fid == null ? [lc(ownerEmail)] : [lc(ownerEmail), fid];
+  const { results } = await db
+    .prepare(`SELECT token, name FROM drive_files WHERE owner_email = ? AND ${where} AND content_type LIKE 'image/%' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200`)
+    .bind(...binds)
+    .all();
+  return results || [];
+}
+
 /** IMAGE files inside the owner's "Shared" folder (and its subfolders) — what a
  *  site manager may pick from. Empty if there's no Shared folder yet. */
 export async function listSharedDriveImages(db, ownerEmail) {
