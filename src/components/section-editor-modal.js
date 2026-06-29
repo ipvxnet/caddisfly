@@ -933,6 +933,7 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
     var field = fg && fg.querySelector('input[type=hidden]');
     var prev = area.querySelector('.image-preview');
     if (!field) return;
+    if (fg.querySelector('[data-drive-btn]')) return; // a server-rendered From-Drive button already exists
     var btn = document.createElement('button'); btn.type = 'button'; btn.textContent = DP.btn;
     btn.style.cssText = 'margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer';
     btn.addEventListener('click', function(e){ e.stopPropagation(); window.__drivePicker(function(url){ field.value = url; if (prev) { prev.src = url; prev.style.display = 'block'; } }); });
@@ -1194,6 +1195,7 @@ function generateHeroFields(content, tr) {
         <div class="upload-progress"></div>
       </div>
       <input type="file" id="hero-image-input" accept="image/*" style="display: none" onchange="uploadImage(this, 'image_url')">
+      <button type="button" class="dp-from-btn" data-drive-btn style="margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer" onclick="window.__drivePicker&&window.__drivePicker(function(url){var f=document.getElementById('image_url');if(f){f.value=url;var p=f.closest('.form-group').querySelector('.image-preview');if(p){p.src=url;p.style.display='block';}}})">${tr('sed.from_drive')}</button>
     </div>
   `;
 }
