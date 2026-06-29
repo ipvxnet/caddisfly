@@ -878,24 +878,41 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
 // injected here; repeatable-item images + the gallery call __drivePicker from
 // their own server-rendered buttons (repImgDrive / galleryAddFromDrive).
 (function(){
-  var DP = ${JSON.stringify({ btn: tr('sed.from_drive'), title: tr('sed.drive_title'), empty: tr('sed.drive_empty'), loading: tr('sed.drive_loading'), err: tr('sed.drive_err') })};
+  var DP = ${JSON.stringify({ btn: tr('sed.from_drive'), title: tr('sed.drive_title'), empty: tr('sed.drive_empty'), loading: tr('sed.drive_loading'), err: tr('sed.drive_err'), site: tr('sed.drive_site'), mine: tr('sed.drive_mine'), shared_hint: tr('sed.drive_shared_hint'), shared_empty: tr('sed.drive_shared_empty') })};
   var overlay = null, applyFn = null;
   function ensureOverlay(){
     if (overlay) return overlay;
     overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10002;padding:1rem';
-    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + DP.title + '</strong><button type="button" class="dp-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + DP.title + '</strong><button type="button" class="dp-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dp-toggle" style="display:none;gap:.4rem;margin-bottom:.5rem"></div><div class="dp-hint" style="display:none;font-size:.8rem;color:#718096;margin-bottom:.7rem"></div><div class="dp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.style.display = 'none'; });
     overlay.querySelector('.dp-x').addEventListener('click', function(){ overlay.style.display = 'none'; });
     return overlay;
   }
-  window.__drivePicker = async function(apply){
-    applyFn = apply; var o = ensureOverlay(); var grid = o.querySelector('.dp-grid');
-    grid.innerHTML = '<p style="color:#718096">' + DP.loading + '</p>'; o.style.display = 'flex';
+  // When editing a site you MANAGE, the picker defaults to the site OWNER's Drive
+  // (the site's real asset library; matches publish). A manager can flip to their
+  // own Drive via the toggle, which the endpoint reports as can_switch.
+  function tglBtn(label, active, onClick){
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+    b.style.cssText = 'border:1px solid ' + (active ? '#7c3aed' : '#cbd5e0') + ';background:' + (active ? '#7c3aed' : '#fff') + ';color:' + (active ? '#fff' : '#4a5568') + ';border-radius:8px;padding:.3rem .75rem;font-size:.82rem;font-weight:600;cursor:pointer';
+    b.addEventListener('click', onClick); return b;
+  }
+  async function loadImages(source){
+    var o = ensureOverlay(); var grid = o.querySelector('.dp-grid'); var tog = o.querySelector('.dp-toggle'); var hint = o.querySelector('.dp-hint');
+    grid.innerHTML = '<p style="color:#718096">' + DP.loading + '</p>';
+    var pid = window.currentProjectId;
     try {
-      var res = await fetch('/api/drive/images'); var d = await res.json(); var imgs = (d && d.images) || [];
-      if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + DP.empty + '</p>'; return; }
+      var res = await fetch('/api/ai-builder/' + pid + '/drive/images?source=' + source);
+      var d = await res.json(); var imgs = (d && d.images) || [];
+      if (d && d.can_switch) {
+        var cur = (d && d.source) || 'owner';
+        tog.style.display = 'flex'; tog.innerHTML = '';
+        tog.appendChild(tglBtn(DP.site, cur === 'owner', function(){ loadImages('owner'); }));
+        tog.appendChild(tglBtn(DP.mine, cur === 'mine', function(){ loadImages('mine'); }));
+      } else { tog.style.display = 'none'; }
+      if (hint) { if (d && d.scoped) { hint.textContent = DP.shared_hint; hint.style.display = 'block'; } else { hint.style.display = 'none'; } }
+      if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + ((d && d.scoped) ? DP.shared_empty : DP.empty) + '</p>'; return; }
       grid.innerHTML = '';
       imgs.forEach(function(im){
         var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
@@ -905,6 +922,10 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
         grid.appendChild(b);
       });
     } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + DP.err + '</p>'; }
+  }
+  window.__drivePicker = function(apply){
+    applyFn = apply; var o = ensureOverlay(); o.style.display = 'flex';
+    loadImages('owner');
   };
   // Single-image upload areas (hero/about/etc.): inject a "From Drive" button.
   var modal = document.getElementById('section-editor-modal');
@@ -913,6 +934,7 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
     var field = fg && fg.querySelector('input[type=hidden]');
     var prev = area.querySelector('.image-preview');
     if (!field) return;
+    if (fg.querySelector('[data-drive-btn]')) return; // a server-rendered From-Drive button already exists
     var btn = document.createElement('button'); btn.type = 'button'; btn.textContent = DP.btn;
     btn.style.cssText = 'margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer';
     btn.addEventListener('click', function(e){ e.stopPropagation(); window.__drivePicker(function(url){ field.value = url; if (prev) { prev.src = url; prev.style.display = 'block'; } }); });
@@ -1174,6 +1196,7 @@ function generateHeroFields(content, tr) {
         <div class="upload-progress"></div>
       </div>
       <input type="file" id="hero-image-input" accept="image/*" style="display: none" onchange="uploadImage(this, 'image_url')">
+      <button type="button" class="dp-from-btn" data-drive-btn style="margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer" onclick="window.__drivePicker&&window.__drivePicker(function(url){var f=document.getElementById('image_url');if(f){f.value=url;var p=f.closest('.form-group').querySelector('.image-preview');if(p){p.src=url;p.style.display='block';}}})">${tr('sed.from_drive')}</button>
     </div>
   `;
 }
