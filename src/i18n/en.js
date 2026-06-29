@@ -1042,7 +1042,7 @@ export const en = {
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',
     uploading: 'Uploading…', upload_complete: 'Upload complete!', upload_failed: 'Upload failed', upload_failed_p: 'Upload failed: ',
-    from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.', drive_site: "Site's Drive", drive_mine: 'My Drive', drive_shared_hint: "The site owner's shared files (their Drive “Shared” folder).", drive_shared_empty: "The owner hasn't shared any images yet — they can move files into their “Shared” folder in Drive.",
+    from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.', drive_site: "Site's Drive", drive_mine: 'My Drive', drive_shared_hint: "The site owner's shared files (their Drive “Shared” folder).", drive_shared_empty: "The owner hasn't shared any images yet — they can move files into their “Shared” folder in Drive.", drive_all_folders: 'All', drive_folder_empty: 'This folder has no images.',
     not_supported: 'Section type not supported for editing yet.',
     heading: 'Heading', hl_hint: 'Main headline (max 60 characters)',
     subheading: 'Subheading', sub_hint: 'Supporting text (max 120 characters)',

@@ -9,7 +9,7 @@ import {
   getDriveUsage, listDriveFiles, addDriveFile, deleteDriveFile, getDriveFileByToken,
   getDriveFileById, moveDriveFile, moveFolder, listFolders, listAllFolders, getFolder, createFolder,
   renameFolder, collectFolderTree, purgeFolderTree, listDriveImages,
-  ensureSharedFolder, listSharedDriveImages,
+  ensureSharedFolder, listSharedDriveImages, listDriveImagesInFolder,
   softDeleteFile, softDeleteTree, restoreTree, restoreFile, getDeletedFile, getDeletedFolder,
   getTrashStats, listTrashRoots, listAllDeleted,
 } from '../../db/drive.js';
@@ -651,25 +651,66 @@ export async function handleProjectDriveImages(ctx) {
   const owner = ctx.projectOwner || mine;
   const isManager = String(owner).toLowerCase() !== String(mine).toLowerCase();
   const source = ctx.query && ctx.query.source === 'mine' ? 'mine' : 'owner';
+  const reqFolder = ctx.query && ctx.query.folder ? Number(ctx.query.folder) : null;
 
-  let rows;
-  let scoped = false;
-  if (!isManager) {
-    rows = await listDriveImages(env.DB, owner); // owner on their own site → whole Drive
-  } else if (source === 'mine') {
-    rows = await listDriveImages(env.DB, mine); // manager's own full Drive
-  } else {
-    // Manager viewing the site's Drive → only the owner's Shared folder. Ensure
-    // it exists so the owner can find + populate it (covers pre-existing sites).
-    await ensureSharedFolder(env.DB, owner);
-    rows = await listSharedDriveImages(env.DB, owner);
-    scoped = true;
+  // Which account's Drive, and the boundary a manager may browse. A manager on
+  // the site's Drive is confined to the owner's "Shared" subtree; everyone else
+  // browses their own whole Drive.
+  const sharedScope = isManager && source === 'owner';
+  const account = sharedScope ? owner : (source === 'mine' ? mine : owner);
+  const rootId = sharedScope ? Number(await ensureSharedFolder(env.DB, account)) : null;
+
+  // Active folder map for this account (server-side only — manager never sees
+  // names outside the Shared subtree).
+  const folders = await listAllFolders(env.DB, account);
+  const byId = new Map(folders.map((f) => [Number(f.id), { id: Number(f.id), name: f.name, parent_id: f.parent_id == null ? null : Number(f.parent_id) }]));
+  const childrenOf = new Map();
+  for (const f of byId.values()) { const p = f.parent_id; if (!childrenOf.has(p)) childrenOf.set(p, []); childrenOf.get(p).push(f.id); }
+
+  // Folders the viewer may open (Shared subtree, or everything for own Drive).
+  let allowed = null;
+  if (sharedScope) {
+    allowed = new Set(); const st = [rootId];
+    while (st.length) { const x = st.pop(); allowed.add(x); for (const c of (childrenOf.get(x) || [])) st.push(c); }
   }
+
+  // Current folder: requested one if valid + in scope, else "All" (root).
+  // For the Shared scope, Shared itself counts as root ("All", flattened).
+  let curId = null;
+  if (reqFolder != null && byId.has(reqFolder)) {
+    if (sharedScope) { if (allowed.has(reqFolder) && reqFolder !== rootId) curId = reqFolder; }
+    else curId = reqFolder;
+  }
+
+  // Images: root → flattened (whole Drive / whole Shared subtree); a folder →
+  // that folder's direct images.
+  let rows;
+  if (curId == null) rows = sharedScope ? await listSharedDriveImages(env.DB, account) : await listDriveImages(env.DB, account);
+  else rows = await listDriveImagesInFolder(env.DB, account, curId);
+
+  // Subfolders at this level (children of the current folder, or of the root).
+  const childParent = curId == null ? rootId : curId; // rootId is null for own-Drive root
+  const subfolders = (childrenOf.get(childParent) || []).map((id) => byId.get(id)).filter(Boolean).map((f) => ({ id: f.id, name: f.name }));
+
+  // Breadcrumb from "All" down to the current folder (Shared itself is "All").
+  const breadcrumb = [];
+  if (curId != null) {
+    let c = byId.get(curId); let guard = 0;
+    while (c && guard++ < 25) {
+      if (sharedScope && c.id === rootId) break;
+      breadcrumb.unshift({ id: c.id, name: c.name });
+      c = c.parent_id != null ? byId.get(c.parent_id) : null;
+    }
+  }
+
   return json({
     success: true,
     source,
     can_switch: isManager,
-    scoped,
+    scoped: sharedScope,
+    folder: curId,
+    subfolders,
+    breadcrumb,
     images: rows.map((r) => ({ token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}` })),
   });
 }

@@ -878,13 +878,13 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
 // injected here; repeatable-item images + the gallery call __drivePicker from
 // their own server-rendered buttons (repImgDrive / galleryAddFromDrive).
 (function(){
-  var DP = ${JSON.stringify({ btn: tr('sed.from_drive'), title: tr('sed.drive_title'), empty: tr('sed.drive_empty'), loading: tr('sed.drive_loading'), err: tr('sed.drive_err'), site: tr('sed.drive_site'), mine: tr('sed.drive_mine'), shared_hint: tr('sed.drive_shared_hint'), shared_empty: tr('sed.drive_shared_empty') })};
+  var DP = ${JSON.stringify({ btn: tr('sed.from_drive'), title: tr('sed.drive_title'), empty: tr('sed.drive_empty'), loading: tr('sed.drive_loading'), err: tr('sed.drive_err'), site: tr('sed.drive_site'), mine: tr('sed.drive_mine'), shared_hint: tr('sed.drive_shared_hint'), shared_empty: tr('sed.drive_shared_empty'), all_folders: tr('sed.drive_all_folders'), folder_empty: tr('sed.drive_folder_empty') })};
   var overlay = null, applyFn = null;
   function ensureOverlay(){
     if (overlay) return overlay;
     overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10002;padding:1rem';
-    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + DP.title + '</strong><button type="button" class="dp-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dp-toggle" style="display:none;gap:.4rem;margin-bottom:.5rem"></div><div class="dp-hint" style="display:none;font-size:.8rem;color:#718096;margin-bottom:.7rem"></div><div class="dp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + DP.title + '</strong><button type="button" class="dp-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dp-toggle" style="display:none;gap:.4rem;margin-bottom:.5rem"></div><div class="dp-hint" style="display:none;font-size:.8rem;color:#718096;margin-bottom:.6rem"></div><div class="dp-nav" style="display:none;margin-bottom:.7rem"></div><div class="dp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.style.display = 'none'; });
     overlay.querySelector('.dp-x').addEventListener('click', function(){ overlay.style.display = 'none'; });
@@ -898,34 +898,52 @@ if (document.getElementById('plans-editor')) { plansRender(); plansLoadPrices();
     b.style.cssText = 'border:1px solid ' + (active ? '#7c3aed' : '#cbd5e0') + ';background:' + (active ? '#7c3aed' : '#fff') + ';color:' + (active ? '#fff' : '#4a5568') + ';border-radius:8px;padding:.3rem .75rem;font-size:.82rem;font-weight:600;cursor:pointer';
     b.addEventListener('click', onClick); return b;
   }
-  async function loadImages(source){
-    var o = ensureOverlay(); var grid = o.querySelector('.dp-grid'); var tog = o.querySelector('.dp-toggle'); var hint = o.querySelector('.dp-hint');
+  function dpEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]; }); }
+  var dpSource = 'owner', dpFolder = null;
+  function renderNav(nav, d){
+    if (!nav) return;
+    var crumbs = (d && d.breadcrumb) || [], subs = (d && d.subfolders) || [];
+    if (!crumbs.length && !subs.length) { nav.style.display = 'none'; nav.innerHTML = ''; return; }
+    var bc = ['<a href="#" data-f="" class="dp-crumb" style="color:#7c3aed;text-decoration:none;font-weight:600">' + dpEsc(DP.all_folders) + '</a>'];
+    crumbs.forEach(function(c){ bc.push('<a href="#" data-f="' + c.id + '" class="dp-crumb" style="color:#7c3aed;text-decoration:none;font-weight:600">' + dpEsc(c.name) + '</a>'); });
+    var html = '<div style="font-size:.85rem;margin-bottom:.4rem">' + bc.join(' <span style="color:#cbd5e0">/</span> ') + '</div>';
+    if (subs.length) html += '<div style="display:flex;flex-wrap:wrap;gap:.4rem">' + subs.map(function(s){ return '<button type="button" class="dp-sub" data-f="' + s.id + '" style="border:1px solid #cbd5e0;background:#f8fafc;border-radius:8px;padding:.3rem .65rem;font-size:.82rem;font-weight:600;color:#334155;cursor:pointer">📁 ' + dpEsc(s.name) + '</button>'; }).join('') + '</div>';
+    nav.innerHTML = html; nav.style.display = 'block';
+    nav.querySelectorAll('[data-f]').forEach(function(el){ el.addEventListener('click', function(ev){ ev.preventDefault(); var f = el.getAttribute('data-f'); loadImages(dpSource, f ? Number(f) : null); }); });
+  }
+  function renderGrid(grid, o, imgs){
+    grid.innerHTML = '';
+    imgs.forEach(function(im){
+      var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
+      b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
+      var img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover'; b.appendChild(img);
+      b.addEventListener('click', function(){ if (applyFn) applyFn(im.url); o.style.display = 'none'; });
+      grid.appendChild(b);
+    });
+  }
+  async function loadImages(source, folder){
+    dpSource = source; dpFolder = (folder == null ? null : folder);
+    var o = ensureOverlay(); var grid = o.querySelector('.dp-grid'); var tog = o.querySelector('.dp-toggle'); var hint = o.querySelector('.dp-hint'); var nav = o.querySelector('.dp-nav');
     grid.innerHTML = '<p style="color:#718096">' + DP.loading + '</p>';
     var pid = window.currentProjectId;
     try {
-      var res = await fetch('/api/ai-builder/' + pid + '/drive/images?source=' + source);
+      var res = await fetch('/api/ai-builder/' + pid + '/drive/images?source=' + source + (dpFolder != null ? '&folder=' + dpFolder : ''));
       var d = await res.json(); var imgs = (d && d.images) || [];
       if (d && d.can_switch) {
         var cur = (d && d.source) || 'owner';
         tog.style.display = 'flex'; tog.innerHTML = '';
-        tog.appendChild(tglBtn(DP.site, cur === 'owner', function(){ loadImages('owner'); }));
-        tog.appendChild(tglBtn(DP.mine, cur === 'mine', function(){ loadImages('mine'); }));
+        tog.appendChild(tglBtn(DP.site, cur === 'owner', function(){ loadImages('owner', null); }));
+        tog.appendChild(tglBtn(DP.mine, cur === 'mine', function(){ loadImages('mine', null); }));
       } else { tog.style.display = 'none'; }
-      if (hint) { if (d && d.scoped) { hint.textContent = DP.shared_hint; hint.style.display = 'block'; } else { hint.style.display = 'none'; } }
-      if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + ((d && d.scoped) ? DP.shared_empty : DP.empty) + '</p>'; return; }
-      grid.innerHTML = '';
-      imgs.forEach(function(im){
-        var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
-        b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
-        var img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover'; b.appendChild(img);
-        b.addEventListener('click', function(){ if (applyFn) applyFn(im.url); o.style.display = 'none'; });
-        grid.appendChild(b);
-      });
+      if (hint) { if (d && d.scoped && dpFolder == null) { hint.textContent = DP.shared_hint; hint.style.display = 'block'; } else { hint.style.display = 'none'; } }
+      renderNav(nav, d);
+      if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + (dpFolder != null ? DP.folder_empty : (d && d.scoped ? DP.shared_empty : DP.empty)) + '</p>'; return; }
+      renderGrid(grid, o, imgs);
     } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + DP.err + '</p>'; }
   }
   window.__drivePicker = function(apply){
     applyFn = apply; var o = ensureOverlay(); o.style.display = 'flex';
-    loadImages('owner');
+    loadImages('owner', null);
   };
   // Single-image upload areas (hero/about/etc.): inject a "From Drive" button.
   var modal = document.getElementById('section-editor-modal');
