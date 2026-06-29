@@ -545,7 +545,7 @@ export const pt = {
     analytics: '📊 Estatísticas', analytics_title: 'Estatísticas de tráfego do seu site publicado',
     blog: '📝 Blog', blog_title: 'Escreva e publique posts de blog com IA',
     store: '🛍 Loja', store_title: 'Venda no seu site — produtos, pedidos, pagamentos com Stripe',
-    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', members: '👤 Membros', members_title: 'Os membros do seu site — acessos e conteúdo exclusivo', manage: 'Gerenciar',
+    crm: '👥 CRM', courses: '📚 Cursos', courses_title: 'Cursos online — aulas, vídeos, quizzes e vendas', members: '👤 Membros', members_title: 'Os membros do seu site — acessos e conteúdo exclusivo', manage: 'Gerenciar', drive_browse: '📂 Explorar Drive', drive_browse_title: 'Explore arquivos no Drive — abra documentos, PDFs e planilhas compartilhados',
     full_preview: 'Ver pré-visualização completa', deploy: 'Publicar site', deploying: 'Publicando…',
     upgrade_title: 'Faça upgrade para desbloquear', view_plans: 'Ver planos →', maybe_later: 'Talvez depois',
     tab_content: 'Conteúdo', tab_design: 'Design',
@@ -1027,6 +1027,10 @@ export const pt = {
     sec_contact: 'Contato', sec_services: 'Serviços', sec_about: 'Sobre', sec_pricing: 'Preços',
     sec_gallery: 'Galeria', sec_testimonials: 'Avaliações', sec_features: 'Recursos',
     sec_cta: 'Chamada para ação', sec_blog: 'Blog', sec_shop: 'Loja', sec_products: 'Produtos', sec_stats: 'Estatísticas',
+  },
+  drivex: {
+    title: 'Inserir do Drive', open: 'Abrir ↗', use: 'Usar',
+    no_files: 'Ainda não há arquivos correspondentes no Drive.',
   },
   sed: {
     appearance: 'Aparência da seção', appearance_auto: 'Automático (conforme o tema)', appearance_light: 'Claro', appearance_dark: 'Escuro',

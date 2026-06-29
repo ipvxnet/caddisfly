@@ -376,7 +376,9 @@ router.get('/drive/trash', handleTrash, [billingAuth]);
 router.post('/api/drive/upload', handleDriveUpload, [billingAuth]);
 router.get('/api/drive/images', handleDriveImages, [billingAuth]);
 // Editor picker, owner-scoped: a manager sees the SITE OWNER's Drive by default.
+// ?kind=image|pdf|video|media|doc|all — /files is the general (file-type) alias.
 router.get('/api/ai-builder/:project_id/drive/images', handleProjectDriveImages, [billingAuth, projectAccess]);
+router.get('/api/ai-builder/:project_id/drive/files', handleProjectDriveImages, [billingAuth, projectAccess]);
 router.post('/api/drive/folder', handleFolderCreate, [billingAuth]);
 router.put('/api/drive/folder/:id', handleFolderRename, [billingAuth]);
 router.post('/api/drive/folder/:id/restore', handleFolderRestore, [billingAuth]);

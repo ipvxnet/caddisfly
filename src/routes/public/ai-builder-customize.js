@@ -7,6 +7,7 @@ import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId } fro
 import { ensurePagesForProject, getPagesByProject, getPageBySlug, getHomePage } from '../../db/ai-pages.js';
 import { getProjectByPreviewId } from '../../db/projects.js';
 import { generateColorPicker } from '../../components/color-picker.js';
+import { drivePickerAssets } from '../../components/drive-picker.js';
 import { generateTemplatePicker } from '../../components/template-picker.js';
 import { selectTemplate } from '../../utils/site-themes.js';
 import { inferIndustry } from '../../utils/industry-style.js';
@@ -779,6 +780,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <div class="hdr-menu">
         <button type="button" class="btn btn-secondary" id="manage-btn" aria-haspopup="true" aria-expanded="false">${tr('cust.manage')} <span class="caret">▾</span></button>
         <div class="hdr-dropdown" id="manage-menu" hidden>
+          <a href="#" onclick="window.__driveExplorer&&window.__driveExplorer();return false;" title="${tr('cust.drive_browse_title')}">📂 ${tr('cust.drive_browse')}</a>
           <a href="/ai-builder/analytics/${project.project_id}" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
           <a href="/ai-builder/blog/${project.project_id}" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
           <a href="/ai-builder/store/${project.project_id}" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
@@ -1019,8 +1021,10 @@ export async function handleAIBuilderCustomize(ctx) {
     </div>
   </div>
 
+  ${drivePickerAssets(lang)}
   <script>
     const projectId = '${project.project_id}';
+    window.currentProjectId = projectId; // shared Drive picker reads this
     const currentPageSlug = '${currentSlug}';
     const seoPageId = ${currentPage ? currentPage.id : 'null'};
     let draggedElement = null;
@@ -1214,10 +1218,6 @@ export async function handleAIBuilderCustomize(ctx) {
       none: tr('favicon.none'), remove: tr('favicon.remove'),
       updated: tr('favicon.updated'), removed: tr('favicon.removed'),
     })};
-    const DPC_T = ${JSON.stringify({
-      title: tr('sed.drive_title'), loading: tr('sed.drive_loading'), empty: tr('sed.drive_empty'),
-      err: tr('sed.drive_err'), site: tr('sed.drive_site'), mine: tr('sed.drive_mine'),
-    })};
     async function generateLogos(btn) {
       btn.disabled = true; btn.textContent = LOGO_T.generating;
       try {
@@ -1320,52 +1320,10 @@ export async function handleAIBuilderCustomize(ctx) {
       finally { input.value = ''; }
     }
 
-    // ---- Compact Drive picker for the Design panel (logo + favicon) ----
-    // Reuses the project drive-images endpoint (owner-scoped for managers, with
-    // the Site/My Drive toggle); window.__drivePicker only exists in the section
-    // editor modal, so the Design panel gets its own lightweight picker.
-    let __dpcOverlay = null, __dpcCb = null;
-    function dpcEnsure() {
-      if (__dpcOverlay) return __dpcOverlay;
-      const o = document.createElement('div');
-      o.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10050;padding:1rem';
-      o.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem"><strong>' + DPC_T.title + '</strong><button type="button" class="dpc-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="dpc-toggle" style="display:none;gap:.4rem;margin-bottom:.6rem"></div><div class="dpc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:.5rem"></div></div>';
-      document.body.appendChild(o);
-      o.addEventListener('click', function (e) { if (e.target === o) o.style.display = 'none'; });
-      o.querySelector('.dpc-x').addEventListener('click', function () { o.style.display = 'none'; });
-      __dpcOverlay = o; return o;
-    }
-    function dpcTgl(label, active, on) {
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
-      b.style.cssText = 'border:1px solid ' + (active ? '#7c3aed' : '#cbd5e0') + ';background:' + (active ? '#7c3aed' : '#fff') + ';color:' + (active ? '#fff' : '#4a5568') + ';border-radius:8px;padding:.3rem .75rem;font-size:.82rem;font-weight:600;cursor:pointer';
-      b.addEventListener('click', on); return b;
-    }
-    async function dpcLoad(source) {
-      const o = dpcEnsure(); const grid = o.querySelector('.dpc-grid'); const tog = o.querySelector('.dpc-toggle');
-      grid.innerHTML = '<p style="color:#718096">' + DPC_T.loading + '</p>';
-      try {
-        const res = await fetch('/api/ai-builder/' + projectId + '/drive/images?source=' + source);
-        const d = await res.json(); const imgs = (d && d.images) || [];
-        if (d && d.can_switch) {
-          const cur = (d && d.source) || 'owner';
-          tog.style.display = 'flex'; tog.innerHTML = '';
-          tog.appendChild(dpcTgl(DPC_T.site, cur === 'owner', function () { dpcLoad('owner'); }));
-          tog.appendChild(dpcTgl(DPC_T.mine, cur === 'mine', function () { dpcLoad('mine'); }));
-        } else { tog.style.display = 'none'; }
-        if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + DPC_T.empty + '</p>'; return; }
-        grid.innerHTML = '';
-        imgs.forEach(function (im) {
-          const b = document.createElement('button'); b.type = 'button'; b.title = im.name;
-          b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
-          const img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
-          b.appendChild(img); b.addEventListener('click', function () { o.style.display = 'none'; if (__dpcCb) __dpcCb(im.url); });
-          grid.appendChild(b);
-        });
-      } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + DPC_T.err + '</p>'; }
-    }
-    function openDrivePickerCustom(cb) { __dpcCb = cb; dpcEnsure().style.display = 'flex'; dpcLoad('owner'); }
-    function pickLogoFromDrive() { openDrivePickerCustom(function (u) { setLogo(u); }); }
-    function pickFaviconFromDrive() { openDrivePickerCustom(function (u) { setFavicon(u); }); }
+    // Logo + favicon use the shared Drive picker (window.__drivePicker from
+    // drive-picker.js, included on this page). Image kind only.
+    function pickLogoFromDrive() { if (window.__drivePicker) window.__drivePicker(function (u) { setLogo(u); }, { kind: 'image' }); }
+    function pickFaviconFromDrive() { if (window.__drivePicker) window.__drivePicker(function (u) { setFavicon(u); }, { kind: 'image' }); }
 
     // ---- Pages (multi-page) ----
     function gotoPage(slug) {

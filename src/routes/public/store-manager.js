@@ -9,6 +9,7 @@ import { getProjectByPreviewId } from '../../db/projects.js';
 import { hasPlugin } from '../../plugins/entitlements.js';
 import { translator } from '../../i18n/index.js';
 import { STORE_CURRENCIES } from '../../utils/currencies.js';
+import { drivePickerAssets } from '../../components/drive-picker.js';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -178,6 +179,7 @@ export async function handleStoreManager(ctx) {
           <label>${tr('storem.media_files')} <span class="hint">${tr('storem.media_files_hint')}</span></label>
           <textarea id="np-files" rows="2" placeholder="${tr('storem.media_files_ph')}"></textarea>
           <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">${tr('storem.upload_pdf')}</button>
+          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickPdfFromDrive(this.previousElementSibling.previousElementSibling)">🗂 ${tr('storem.from_drive')}</button>
           <label>${tr('storem.media_links')} <span class="hint">${tr('storem.media_links_hint')}</span></label>
           <textarea id="np-links" rows="2" placeholder="${tr('storem.media_links_ph')}"></textarea>
         </details>
@@ -217,8 +219,10 @@ export async function handleStoreManager(ctx) {
     </div>` : ''}
   </div></main>
   ${siteFooter({ lang })}
+  ${drivePickerAssets(lang)}
   <script>
     var PID = ${JSON.stringify(publicId)};
+    window.currentProjectId = PID; // shared Drive picker reads this
     var ADV = ${hasAdvStore ? 'true' : 'false'};
     var T = {
       connected: ${JSON.stringify(tr('storem.connected_as'))},
@@ -440,6 +444,7 @@ export async function handleStoreManager(ctx) {
         '<label>' + T.mediaVideos + ' <span class="hint">' + T.mediaPerline + '</span></label><textarea class="m-videos" rows="2">' + esc(mt.videos) + '</textarea>' +
         '<label>' + T.mediaFiles + ' <span class="hint">' + T.mediaFilesHint + '</span></label><textarea class="m-files" rows="2">' + esc(mt.files) + '</textarea>' +
         '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">' + T.uploadPdf + '</button>' +
+        '<button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickPdfFromDrive(this.previousElementSibling.previousElementSibling)">🗂 ' + T.fromDrive + '</button>' +
         '<label>' + T.mediaLinks + ' <span class="hint">' + T.mediaLinksHint + '</span></label><textarea class="m-links" rows="2">' + esc(mt.links) + '</textarea>' +
         '</details>' +
         (ADV ? '<details class="var-wrap" data-pid="' + p.id + '" ontoggle="if(this.open)loadVariants(' + p.id + ')">' +
@@ -571,6 +576,15 @@ export async function handleStoreManager(ctx) {
         btn.disabled = false; btn.textContent = old;
       };
       inp.click();
+    }
+    // Pick a PDF from Drive → append "name | url" to the files textarea.
+    function pickPdfFromDrive(ta) {
+      if (!ta || !window.__drivePicker) return;
+      window.__drivePicker(function (url, file) {
+        var name = (file && file.name) || 'PDF';
+        var line = name + ' | ' + url;
+        ta.value = ta.value ? (ta.value + '\\n' + line) : line;
+      }, { kind: 'pdf' });
     }
 
     async function createProduct(btn) {
