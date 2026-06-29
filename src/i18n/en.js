@@ -613,6 +613,9 @@ export const en = {
     err_rate: 'Too many messages — please try again later.',
     heading: 'Get In Touch', sub: "We'd love to hear from you",
     name: 'Your Name', email: 'Email Address', message: 'Message', send: 'Send Message',
+    field_phone: 'Phone Number', field_company: 'Company Name', field_subject: 'Subject',
+    field_address: 'Address', field_preferred_contact: 'Preferred Contact Method',
+    pref_email: 'Email', pref_phone: 'Phone', pref_either: 'Either', choose: 'Choose…',
   },
 
   act: {
@@ -1065,6 +1068,7 @@ export const en = {
     business_name: 'Business Name', tagline: 'Tagline', copyright: 'Copyright Text',
     phone: 'Phone', description: 'Description',
     email: 'Email', address: 'Address', contact_details_hint: 'Shown next to the form — leave a field blank to hide it.',
+    form_fields: 'Extra form fields', form_fields_hint: 'Optional fields visitors can fill in. Tick one to show it; mark it required if needed.', ff_required: 'Required',
     footer_links: 'Footer links', footer_links_hint: 'Quick links in the footer. Pick a page/section or paste a web address.',
     link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',

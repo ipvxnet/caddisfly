@@ -19,6 +19,7 @@ import { getProjectByPreviewId } from '../../db/projects.js';
 import { createSubmission, countRecentByHash, countSince, deleteSubmission, setEmailStatus } from '../../db/form-submissions.js';
 import { getWebsiteConfigByAIProjectId, getWebsiteConfigByRegularProjectId, updateWebsiteConfigById, createWebsiteConfig } from '../../db/ai-config.js';
 import { sendFormSubmissionEmail, isValidEmail } from '../../utils/email.js';
+import { sanitizeExtra, extraFieldList } from '../../templates/ai-builder/contact/form-fields.js';
 import { limitsDisabled } from '../../utils/rate-limiter.js';
 import { t } from '../../i18n/index.js';
 
@@ -104,6 +105,8 @@ export async function handleFormSubmit(ctx) {
     if (!name || !message || !isValidEmail(email)) {
       return jsonResponse({ success: false, error: t(ctx.lang, 'formw.err_fields') }, 400);
     }
+    const extra = sanitizeExtra(body.extra);
+    const extraJson = Object.keys(extra).length ? JSON.stringify(extra) : null;
     const pagePath = (body.p || '/').toString().slice(0, 200);
 
     // Same pseudonymous daily key as the analytics beacon — IP+UA hashed with
@@ -133,6 +136,7 @@ export async function handleFormSubmit(ctx) {
       message,
       page_path: pagePath,
       visitor_hash: visitorHash,
+      extra_json: extraJson,
       created_at: ts,
     });
     const submissionId = submission && submission.id;
@@ -148,6 +152,7 @@ export async function handleFormSubmit(ctx) {
         fromName: name,
         fromEmail: email,
         message,
+        extra: extraFieldList(extraJson, ctx.lang),
         pagePath,
         inboxUrl,
       });

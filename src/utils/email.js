@@ -453,15 +453,19 @@ export async function sendTicketEmail(env, { to, subject, heading, intro, body, 
  * @param {Object} opts - { to, siteName, fromName, fromEmail, message, pagePath, inboxUrl }
  * @returns {Promise<boolean>}
  */
-export async function sendFormSubmissionEmail(env, { to, siteName, fromName, fromEmail, message, pagePath, inboxUrl }) {
+export async function sendFormSubmissionEmail(env, { to, siteName, fromName, fromEmail, message, extra, pagePath, inboxUrl }) {
   const isProduction = env.ENVIRONMENT === 'production';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const extraHtml = Array.isArray(extra) && extra.length
+    ? extra.map((f) => `<p style="color:#444;line-height:1.6;margin:2px 0;"><strong>${esc(f.label)}:</strong> ${esc(f.value)}</p>`).join('')
+    : '';
   const html = `
     <html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6fa;padding:32px;">
       <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
         <h1 style="font-size:20px;margin:0 0 12px;">New message from your website</h1>
         <p style="color:#444;line-height:1.6;">Someone filled out the contact form on <strong>${esc(siteName)}</strong>${pagePath ? ` (page ${esc(pagePath)})` : ''}.</p>
         <p style="color:#444;line-height:1.6;margin:14px 0 4px;"><strong>${esc(fromName)}</strong> &lt;${esc(fromEmail)}&gt;</p>
+        ${extraHtml}
         <blockquote style="border-left:3px solid #cbd5e0;margin:6px 0 14px;padding:6px 14px;color:#555;white-space:pre-wrap;">${esc(message)}</blockquote>
         <p style="color:#666;font-size:13px;">Reply to this email to answer them directly.</p>
         ${inboxUrl ? `<p style="margin:24px 0 0;"><a href="${inboxUrl}" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block;">Open inbox</a></p>` : ''}

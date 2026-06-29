@@ -31,8 +31,9 @@ export async function getCrmContacts(db, projectKey, publicId, dedupKey = 'email
   const rows = async (sql, ...bind) => ((await db.prepare(sql).bind(...bind).all()).results || []);
 
   const forms = publicId
-    ? await rows(`SELECT lower(email) AS email, name, created_at FROM form_submissions WHERE public_id = ? AND email <> ''`, publicId)
+    ? await rows(`SELECT lower(email) AS email, name, extra_json, created_at FROM form_submissions WHERE public_id = ? AND email <> ''`, publicId)
     : [];
+  const exPhone = (j) => { try { const o = JSON.parse(j || '{}'); return o && o.phone ? String(o.phone) : ''; } catch { return ''; } };
   const books = await rows(`SELECT lower(customer_email) AS email, customer_name AS name, created_at FROM bookings WHERE ${k.col} = ? AND customer_email <> ''`, k.val);
   const orders = await rows(`SELECT lower(customer_email) AS email, customer_name AS name, amount_total, created_at FROM store_orders WHERE ${k.col} = ? AND customer_email <> ''`, k.val);
   const overlay = await rows(`SELECT lower(email) AS email, name, phone, status, notes, source, created_at FROM crm_contacts WHERE ${k.col} = ?`, k.val);
@@ -41,7 +42,7 @@ export async function getCrmContacts(db, projectKey, publicId, dedupKey = 'email
   // Flatten every source (+ manual contacts) into comparable records first, so
   // the chosen dedup key can group them however the owner wants.
   const recs = [];
-  for (const f of forms) recs.push({ email: f.email, name: f.name || '', phone: '', src: 'message', ts: f.created_at, spend: 0 });
+  for (const f of forms) recs.push({ email: f.email, name: f.name || '', phone: exPhone(f.extra_json), src: 'message', ts: f.created_at, spend: 0 });
   for (const b of books) recs.push({ email: b.email, name: b.name || '', phone: '', src: 'booking', ts: b.created_at, spend: 0 });
   for (const o of orders) recs.push({ email: o.email, name: o.name || '', phone: '', src: 'order', ts: o.created_at, spend: o.amount_total || 0 });
   for (const o of overlay) {

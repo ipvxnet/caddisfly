@@ -2,13 +2,13 @@
 // Submissions are keyed by the published site's public_id, like site_events —
 // no bridge columns needed; ownership is resolved through the project tables.
 
-export async function createSubmission(db, { public_id, name, email, message, page_path, visitor_hash, created_at }) {
+export async function createSubmission(db, { public_id, name, email, message, page_path, visitor_hash, extra_json, created_at }) {
   return db
     .prepare(
-      `INSERT INTO form_submissions (public_id, name, email, message, page_path, visitor_hash, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO form_submissions (public_id, name, email, message, page_path, visitor_hash, extra_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
-    .bind(public_id, name || '', email || '', message || '', page_path || '', visitor_hash || null, created_at)
+    .bind(public_id, name || '', email || '', message || '', page_path || '', visitor_hash || null, extra_json || null, created_at)
     .first();
 }
 

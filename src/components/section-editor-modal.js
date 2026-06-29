@@ -484,6 +484,21 @@ async function saveSectionChanges(event) {
   const moCheck = form.querySelector('input[name="_members_only"]');
   if (moCheck) content._members_only = moCheck.checked;
 
+  // Contact optional form-fields: serialize the catalog checkboxes explicitly
+  // into [{key,required}] (FormData omits unchecked boxes, so an uncheck must
+  // actively clear; these controls carry no `name` to avoid stray content keys).
+  const ffEnables = form.querySelectorAll('input[data-ff-enable]');
+  if (ffEnables.length) {
+    const fields = [];
+    ffEnables.forEach((cb) => {
+      if (!cb.checked) return;
+      const key = cb.getAttribute('data-ff-enable');
+      const reqCb = form.querySelector('input[data-ff-required="' + key + '"]');
+      fields.push({ key, required: !!(reqCb && reqCb.checked) });
+    });
+    content.form_fields = fields;
+  }
+
   saveBtn.disabled = true;
   saveBtn.textContent = ${JSON.stringify(tr('sed.saving'))};
 
@@ -1577,6 +1592,45 @@ function generateContactFields(content, tr) {
     <div class="form-group">
       <label for="button_text">${tr('sed.submit_button')}</label>
       <input type="text" id="button_text" name="button_text" value="${escapeHtml(content.button_text || tr('sed.ph_send_message'))}" required>
+    </div>
+
+    ${generateContactFormFields(content, tr)}
+  `;
+}
+
+// The optional fields a visitor can fill in (Phone, Company, …). The owner ticks
+// which show + whether each is required; serialized to content.form_fields in
+// saveSectionChanges (checkboxes are absent from FormData when unchecked).
+function generateContactFormFields(content, tr) {
+  const catalog = ['phone', 'company', 'subject', 'address', 'preferred_contact'];
+  const enabled = new Map(
+    (Array.isArray(content.form_fields) ? content.form_fields : [])
+      .map((f) => [f && f.key, !!(f && f.required)])
+      .filter(([k]) => k)
+  );
+  const rows = catalog
+    .map((key) => {
+      const on = enabled.has(key);
+      const req = enabled.get(key);
+      return `
+      <div class="ff-row" style="display:flex;align-items:center;gap:.75rem;padding:.3rem 0;">
+        <label style="display:flex;align-items:center;gap:.5rem;flex:1;margin:0;text-transform:none;font-weight:500;cursor:pointer;">
+          <input type="checkbox" data-ff-enable="${key}"${on ? ' checked' : ''}
+            onchange="this.closest('.ff-row').querySelector('[data-ff-required]').disabled=!this.checked">
+          ${escapeHtml(tr('formw.field_' + key))}
+        </label>
+        <label style="display:flex;align-items:center;gap:.35rem;margin:0;text-transform:none;font-weight:500;font-size:.82rem;color:#64748b;cursor:pointer;">
+          <input type="checkbox" data-ff-required="${key}"${req ? ' checked' : ''}${on ? '' : ' disabled'}>
+          ${escapeHtml(tr('sed.ff_required'))}
+        </label>
+      </div>`;
+    })
+    .join('');
+  return `
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.form_fields'))}</label>
+      <small style="display:block;margin:-.25rem 0 .5rem;">${escapeHtml(tr('sed.form_fields_hint'))}</small>
+      ${rows}
     </div>
   `;
 }

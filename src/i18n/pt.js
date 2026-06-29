@@ -610,6 +610,9 @@ export const pt = {
     err_rate: 'Muitas mensagens — tente novamente mais tarde.',
     heading: 'Entre em contato', sub: 'Adoraríamos ouvir você',
     name: 'Seu nome', email: 'E-mail', message: 'Mensagem', send: 'Enviar mensagem',
+    field_phone: 'Número de telefone', field_company: 'Nome da empresa', field_subject: 'Assunto',
+    field_address: 'Endereço', field_preferred_contact: 'Forma de contato preferida',
+    pref_email: 'E-mail', pref_phone: 'Telefone', pref_either: 'Qualquer uma', choose: 'Escolher…',
   },
 
   act: {
@@ -1058,6 +1061,7 @@ export const pt = {
     business_name: 'Nome do negócio', tagline: 'Slogan', copyright: 'Texto de copyright',
     phone: 'Telefone', description: 'Descrição',
     email: 'E-mail', address: 'Endereço', contact_details_hint: 'Aparece ao lado do formulário — deixe um campo vazio para ocultá-lo.',
+    form_fields: 'Campos extras do formulário', form_fields_hint: 'Campos opcionais que os visitantes podem preencher. Marque um para exibi-lo; marque como obrigatório se necessário.', ff_required: 'Obrigatório',
     footer_links: 'Links do rodapé', footer_links_hint: 'Links rápidos no rodapé. Escolha uma página/seção ou cole um endereço web.',
     link_label: 'Texto do link', add_link: '＋ Adicionar link', link_remove: 'Remover link',
     ph_about_us: 'Sobre nós', ph_our_services: 'Os nossos serviços', ph_testimonials: 'Depoimentos', ph_get_in_touch: 'Fale conosco',

@@ -610,6 +610,9 @@ export const es = {
     err_rate: 'Demasiados mensajes — inténtalo de nuevo más tarde.',
     heading: 'Ponte en contacto', sub: 'Nos encantaría saber de ti',
     name: 'Tu nombre', email: 'Correo electrónico', message: 'Mensaje', send: 'Enviar mensaje',
+    field_phone: 'Número de teléfono', field_company: 'Nombre de la empresa', field_subject: 'Asunto',
+    field_address: 'Dirección', field_preferred_contact: 'Método de contacto preferido',
+    pref_email: 'Correo', pref_phone: 'Teléfono', pref_either: 'Cualquiera', choose: 'Elegir…',
   },
 
   act: {
@@ -1058,6 +1061,7 @@ export const es = {
     business_name: 'Nombre del negocio', tagline: 'Eslogan', copyright: 'Texto de copyright',
     phone: 'Teléfono', description: 'Descripción',
     email: 'Correo electrónico', address: 'Dirección', contact_details_hint: 'Se muestra junto al formulario — deja un campo vacío para ocultarlo.',
+    form_fields: 'Campos adicionales del formulario', form_fields_hint: 'Campos opcionales que los visitantes pueden completar. Marca uno para mostrarlo; márcalo como obligatorio si es necesario.', ff_required: 'Obligatorio',
     footer_links: 'Enlaces del pie', footer_links_hint: 'Enlaces rápidos del pie. Elige una página/sección o pega una dirección web.',
     link_label: 'Texto del enlace', add_link: '＋ Añadir enlace', link_remove: 'Quitar enlace',
     ph_about_us: 'Sobre nosotros', ph_our_services: 'Nuestros servicios', ph_testimonials: 'Testimonios', ph_get_in_touch: 'Contáctanos',
