@@ -1743,9 +1743,20 @@ function generateGalleryFields(content, tr, variant = 'masonry') {
 // Social-links editor — footer stores content.social, contact stores
 // content.social_links. A fixed set of platforms each get a URL input, synced to
 // a hidden <key>_json blob that saveSectionChanges expands into content[key].
-function socialLinksEditor(content, tr, key) {
+function socialLinksEditor(content, tr, key, opts = {}) {
   const PLATFORMS = [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['x', 'X (Twitter)'], ['linkedin', 'LinkedIn'], ['youtube', 'YouTube'], ['tiktok', 'TikTok']];
   const social = Array.isArray(content[key]) ? content[key] : [];
+  // Optional "Letters vs Icons" display toggle (footer only).
+  const styleField = opts.styleField || '';
+  const curStyle = styleField ? (content[styleField] === 'icons' ? 'icons' : 'letters') : '';
+  const styleSelect = styleField ? `
+    <div class="form-group">
+      <label for="${styleField}">${escapeHtml(tr('sed.social_display'))}</label>
+      <select id="${styleField}" name="${styleField}">
+        <option value="letters"${curStyle !== 'icons' ? ' selected' : ''}>${escapeHtml(tr('sed.social_letters'))}</option>
+        <option value="icons"${curStyle === 'icons' ? ' selected' : ''}>${escapeHtml(tr('sed.social_icons'))}</option>
+      </select>
+    </div>` : '';
   const byKey = {};
   social.forEach((s) => { if (s && s.platform) byKey[String(s.platform).toLowerCase()] = s.url || ''; });
   if (byKey.twitter && !byKey.x) byKey.x = byKey.twitter;
@@ -1761,6 +1772,7 @@ function socialLinksEditor(content, tr, key) {
       <small style="display:block;color:#718096;margin-bottom:.4rem">${escapeHtml(tr('sed.social_links_hint'))}</small>
       <div id="social-editor-wrap">${rows}</div>
     </div>
+    ${styleSelect}
     <style>
       .social-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem}
       .social-row .social-key{flex:0 0 32%;font-size:.85rem;font-weight:600;color:#4a5568}
@@ -1854,7 +1866,7 @@ function generateFooterFields(content, tr) {
     </script>
   `;
     })()}
-    ${socialLinksEditor(content, tr, 'social')}
+    ${socialLinksEditor(content, tr, 'social', { styleField: 'social_style' })}
   `;
 }
 
