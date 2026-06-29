@@ -40,6 +40,7 @@ import { galleryCarouselTemplate } from './gallery/carousel.js';
 import { galleryCardsTemplate } from './gallery/cards.js';
 import { galleryBannerTemplate } from './gallery/banner.js';
 import { galleryLogosTemplate } from './gallery/logos.js';
+import { galleryLogosMarqueeTemplate } from './gallery/logos-marquee.js';
 
 // Contact templates
 import { contactFormTemplate } from './contact/form.js';
@@ -54,6 +55,7 @@ import { pricingTablesTemplate } from './pricing/tables.js';
 import { featuresGridTemplate } from './features/grid.js';
 import { featuresActionsTemplate } from './features/actions.js';
 import { featuresStepsTemplate } from './features/steps.js';
+import { featuresColumnsTemplate } from './features/columns.js';
 import { ctaBannerTemplate } from './cta/banner.js';
 import { ctaBoxedTemplate } from './cta/boxed.js';
 import { ctaSplitImageTemplate } from './cta/split-image.js';
@@ -131,6 +133,7 @@ export const TEMPLATE_REGISTRY = {
     cards: galleryCardsTemplate,
     banner: galleryBannerTemplate,
     logos: galleryLogosTemplate,
+    'logos-rotating': galleryLogosMarqueeTemplate,
     default: galleryMasonryTemplate,
   },
   contact: {
@@ -151,6 +154,7 @@ export const TEMPLATE_REGISTRY = {
     grid: featuresGridTemplate,
     actions: featuresActionsTemplate,
     steps: featuresStepsTemplate,
+    columns: featuresColumnsTemplate,
     default: featuresGridTemplate,
   },
   cta: {
