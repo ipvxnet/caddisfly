@@ -1608,19 +1608,23 @@ function generateContactFormFields(content, tr) {
       .map((f) => [f && f.key, !!(f && f.required)])
       .filter(([k]) => k)
   );
+  // Inline width:auto/flex:none on every checkbox — the modal's global
+  // `.form-group input { width:100% }` otherwise stretches the checkbox's box
+  // and shoves the label across the row.
+  const cb = 'width:auto;margin:0;flex:none;cursor:pointer;';
   const rows = catalog
     .map((key) => {
       const on = enabled.has(key);
       const req = enabled.get(key);
       return `
-      <div class="ff-row" style="display:flex;align-items:center;gap:.75rem;padding:.3rem 0;">
-        <label style="display:flex;align-items:center;gap:.5rem;flex:1;margin:0;text-transform:none;font-weight:500;cursor:pointer;">
-          <input type="checkbox" data-ff-enable="${key}"${on ? ' checked' : ''}
+      <div class="ff-row" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.45rem 0;border-bottom:1px solid #f1f5f9;">
+        <label style="display:flex;align-items:center;gap:.55rem;flex:1;min-width:0;margin:0;text-transform:none;letter-spacing:normal;font-weight:500;font-size:.95rem;color:#1f2937;cursor:pointer;">
+          <input type="checkbox" data-ff-enable="${key}"${on ? ' checked' : ''} style="${cb}"
             onchange="this.closest('.ff-row').querySelector('[data-ff-required]').disabled=!this.checked">
-          ${escapeHtml(tr('formw.field_' + key))}
+          <span>${escapeHtml(tr('formw.field_' + key))}</span>
         </label>
-        <label style="display:flex;align-items:center;gap:.35rem;margin:0;text-transform:none;font-weight:500;font-size:.82rem;color:#64748b;cursor:pointer;">
-          <input type="checkbox" data-ff-required="${key}"${req ? ' checked' : ''}${on ? '' : ' disabled'}>
+        <label style="display:flex;align-items:center;gap:.4rem;margin:0;text-transform:none;letter-spacing:normal;font-weight:500;font-size:.85rem;color:#64748b;white-space:nowrap;cursor:pointer;">
+          <input type="checkbox" data-ff-required="${key}"${req ? ' checked' : ''}${on ? '' : ' disabled'} style="${cb}">
           ${escapeHtml(tr('sed.ff_required'))}
         </label>
       </div>`;
