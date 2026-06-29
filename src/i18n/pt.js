@@ -1066,7 +1066,7 @@ export const pt = {
     link_label: 'Texto do link', add_link: '＋ Adicionar link', link_remove: 'Remover link',
     ph_about_us: 'Sobre nós', ph_our_services: 'Os nossos serviços', ph_testimonials: 'Depoimentos', ph_get_in_touch: 'Fale conosco',
     ph_send_message: 'Enviar mensagem', ph_gallery: 'Galeria', ph_get_started: 'Começar',
-    no_photos: 'Ainda não há fotos — clique em “Adicionar foto”.', g_drag: 'Arraste para reordenar', g_alt_ph: 'Descreva esta foto (texto alternativo)', g_title_ph: 'Título (opcional)', g_desc_ph: 'Descrição (opcional)', g_link_ph: 'Link — #seção ou https://… (opcional)',
+    no_photos: 'Ainda não há fotos — clique em “Adicionar foto”.', g_drag: 'Arraste para reordenar', g_alt_ph: 'Descreva esta foto (texto alternativo)', g_title_ph: 'Título (opcional)', g_desc_ph: 'Descrição (opcional)', g_link_ph: 'Link — #seção ou https://… (opcional)', g_show: 'Mostrar fotos', g_show_hint: 'Listar novamente as fotos já nesta seção',
     g_replace: 'Substituir', g_replace_t: 'Substituir foto', g_remove_t: 'Remover foto',
     plans: 'Planos', plans_hint: 'Anexe um preço do Stripe a um plano e o botão dele vira um “Assinar” com pagamento real no seu site publicado.',
     add_plan: '＋ Adicionar plano',

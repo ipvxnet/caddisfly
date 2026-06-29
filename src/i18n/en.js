@@ -1073,7 +1073,7 @@ export const en = {
     link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',
-    no_photos: 'No photos yet — click “Add photo”.', g_drag: 'Drag to reorder', g_alt_ph: 'Describe this photo (alt text)', g_title_ph: 'Title (optional)', g_desc_ph: 'Description (optional)', g_link_ph: 'Link — #section or https://… (optional)',
+    no_photos: 'No photos yet — click “Add photo”.', g_drag: 'Drag to reorder', g_alt_ph: 'Describe this photo (alt text)', g_title_ph: 'Title (optional)', g_desc_ph: 'Description (optional)', g_link_ph: 'Link — #section or https://… (optional)', g_show: 'Show photos', g_show_hint: 'Re-list the photos already on this section',
     g_replace: 'Replace', g_replace_t: 'Replace photo', g_remove_t: 'Remove photo',
     plans: 'Plans', plans_hint: 'Attach a Stripe price to a plan and its button becomes a live “Subscribe” checkout on your published site.',
     add_plan: '＋ Add plan',

@@ -253,19 +253,21 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
 }
 .gallery-row {
   display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  padding: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.6rem;
+  padding: 0.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
 }
 .gallery-fields {
-  flex: 1;
+  flex: 1 1 100%;
+  order: 2;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 .gallery-finput {
   width: 100%;
@@ -309,6 +311,8 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
   display: flex;
   gap: 0.25rem;
   flex: 0 0 auto;
+  order: 1;
+  margin-left: auto;
 }
 .gallery-row-actions button {
   padding: 0.35rem 0.5rem;
@@ -1705,8 +1709,34 @@ function generateContactFormFields(content, tr) {
   `;
 }
 
+// Server-rendered gallery row — MUST match the client galleryRender() markup so
+// the rows are visible the instant the modal opens (the inline JS init proved
+// unreliable: existing photos only appeared after a click). galleryRender() then
+// re-renders identical markup on the first interaction.
+function galleryRowHtml(img, i, tr) {
+  const e = (s) => escapeHtml(s == null ? '' : String(s));
+  return `<div class="gallery-row" data-gi="${i}" ondragover="galleryDragOver(event)" ondragleave="galleryDragLeave(event)" ondrop="galleryDrop(event,${i})">`
+    + `<span class="gallery-drag" draggable="true" title="${e(tr('sed.g_drag'))}" ondragstart="galleryDragStart(event,${i})" ondragend="galleryDragEnd(event)">⋮⋮</span>`
+    + `<img class="gallery-thumb" src="${e(img.url || '')}" alt="">`
+    + `<div class="gallery-fields">`
+    + `<input class="gallery-finput" type="text" placeholder="${e(tr('sed.g_title_ph'))}" value="${e(img.title || '')}" oninput="gallerySetTitle(${i}, this.value)">`
+    + `<input class="gallery-finput" type="text" placeholder="${e(tr('sed.g_desc_ph'))}" value="${e(img.caption || '')}" oninput="gallerySetCaption(${i}, this.value)">`
+    + `<input class="gallery-finput gallery-flink" type="text" placeholder="${e(tr('sed.g_link_ph'))}" value="${e(img.link || '')}" oninput="gallerySetLink(${i}, this.value)">`
+    + `</div>`
+    + `<div class="gallery-row-actions">`
+    + `<button type="button" title="${e(tr('sed.g_replace_t'))}" onclick="galleryReplace(${i})">${e(tr('sed.g_replace'))}</button>`
+    + `<button type="button" title="${e(tr('sed.img_url'))}" onclick="galleryUrl(${i})">🔗</button>`
+    + `<button type="button" title="${e(tr('sed.img_photo'))}" onclick="galleryStock(${i}, this)">📷</button>`
+    + `<button type="button" title="${e(tr('sed.img_ai'))}" onclick="galleryAI(${i}, this)">✨</button>`
+    + `<button type="button" class="gallery-del" title="${e(tr('sed.g_remove_t'))}" onclick="galleryRemove(${i})">🗑</button>`
+    + `</div></div>`;
+}
+
 function generateGalleryFields(content, tr) {
   const images = Array.isArray(content.images) ? content.images : [];
+  const initialRows = images.length
+    ? images.map((img, i) => galleryRowHtml(img, i, tr)).join('')
+    : `<p style="color:#718096;font-size:.85rem;margin:.25rem 0">${escapeHtml(tr('sed.no_photos'))}</p>`;
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -1721,10 +1751,11 @@ function generateGalleryFields(content, tr) {
     <div class="form-group">
       <label>${tr('sed.photos')} <span style="color:#718096;font-weight:400;font-size:.8rem">${tr('sed.photos_hint')}</span></label>
       <input type="hidden" id="gallery-images-json" name="images_json" value="${escapeHtml(JSON.stringify(images))}">
-      <div id="gallery-manager" class="gallery-manager"></div>
+      <div id="gallery-manager" class="gallery-manager">${initialRows}</div>
       <button type="button" class="gallery-add-btn" onclick="document.getElementById('gallery-add-input').click()">${tr('sed.add_photo')}</button>
       <button type="button" class="gallery-add-btn" onclick="galleryAddFromDrive()">${tr('sed.from_drive')}</button>
       <button type="button" class="gallery-add-btn" onclick="gallerySwapAll()">🖼 ${tr('sed.swap_all')}</button>
+      <button type="button" class="gallery-add-btn" onclick="galleryRender()" title="${escapeHtml(tr('sed.g_show_hint'))}">↻ ${escapeHtml(tr('sed.g_show'))}</button>
       <input type="file" id="gallery-add-input" accept="image/*" style="display:none" onchange="galleryAddImage(this)">
       <input type="file" id="gallery-replace-input" accept="image/*" style="display:none" onchange="galleryReplaceUpload(this)">
     </div>
