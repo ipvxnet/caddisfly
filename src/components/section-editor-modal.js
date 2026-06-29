@@ -649,7 +649,7 @@ function galleryRender() {
       + '<div class="gallery-fields">'
       + '<input class="gallery-finput" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_title_ph'))} + '" value="' + galleryEsc(img.title || '') + '" oninput="gallerySetTitle(' + i + ', this.value)">'
       + '<input class="gallery-finput" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_desc_ph'))} + '" value="' + galleryEsc(img.caption || '') + '" oninput="gallerySetCaption(' + i + ', this.value)">'
-      + '<input class="gallery-finput gallery-flink" type="text" placeholder="' + ${JSON.stringify(tr('sed.g_link_ph'))} + '" value="' + galleryEsc(img.link || '') + '" oninput="gallerySetLink(' + i + ', this.value)">'
+      + '<input class="gallery-finput gallery-flink" type="text" list="gallery-link-options" placeholder="' + ${JSON.stringify(tr('sed.g_link_ph'))} + '" value="' + galleryEsc(img.link || '') + '" oninput="gallerySetLink(' + i + ', this.value)">'
       + '</div>'
       + '<div class="gallery-row-actions">'
       + '<button type="button" title="' + ${JSON.stringify(tr('sed.g_replace_t'))} + '" onclick="galleryReplace(' + i + ')">' + ${JSON.stringify(tr('sed.g_replace'))} + '</button>'
@@ -774,6 +774,21 @@ function galleryAddFromDrive() {
 // appeared after a click), so also defer one tick to run after inject settles.
 galleryRender();
 setTimeout(galleryRender, 0);
+
+// Build a <datalist> of the site's pages + sections so the per-photo / CTA Link
+// fields offer them in a dropdown (value = the semantic #anchor the assembler
+// resolves to the right page route on any domain). Sourced from the link-picker
+// data already injected into the modal.
+(function () {
+  if (document.getElementById('gallery-link-options')) return;
+  var d = window.linkPickerData || {};
+  var dl = document.createElement('datalist'); dl.id = 'gallery-link-options';
+  (d.pages || []).concat(d.sections || []).forEach(function (p) {
+    if (!p || !p.anchor) return;
+    var o = document.createElement('option'); o.value = p.anchor; o.label = p.label || p.anchor; dl.appendChild(o);
+  });
+  document.body.appendChild(dl);
+})();
 
 // ---- Pricing plans editor (plans_json hidden field; runs on inject) -------
 const PLANS_T = ${JSON.stringify({
@@ -1721,7 +1736,7 @@ function galleryRowHtml(img, i, tr) {
     + `<div class="gallery-fields">`
     + `<input class="gallery-finput" type="text" placeholder="${e(tr('sed.g_title_ph'))}" value="${e(img.title || '')}" oninput="gallerySetTitle(${i}, this.value)">`
     + `<input class="gallery-finput" type="text" placeholder="${e(tr('sed.g_desc_ph'))}" value="${e(img.caption || '')}" oninput="gallerySetCaption(${i}, this.value)">`
-    + `<input class="gallery-finput gallery-flink" type="text" placeholder="${e(tr('sed.g_link_ph'))}" value="${e(img.link || '')}" oninput="gallerySetLink(${i}, this.value)">`
+    + `<input class="gallery-finput gallery-flink" type="text" list="gallery-link-options" placeholder="${e(tr('sed.g_link_ph'))}" value="${e(img.link || '')}" oninput="gallerySetLink(${i}, this.value)">`
     + `</div>`
     + `<div class="gallery-row-actions">`
     + `<button type="button" title="${e(tr('sed.g_replace_t'))}" onclick="galleryReplace(${i})">${e(tr('sed.g_replace'))}</button>`
@@ -1757,7 +1772,7 @@ function generateGalleryFields(content, tr, variant = 'masonry') {
     </div>
     <div class="form-group">
       <label for="cta_link">${escapeHtml(tr('sed.g_cta_link'))}</label>
-      <input type="text" id="cta_link" name="cta_link" value="${escapeHtml(content.cta_link || '')}" placeholder="${escapeHtml(tr('sed.g_link_ph'))}">
+      <input type="text" id="cta_link" name="cta_link" list="gallery-link-options" value="${escapeHtml(content.cta_link || '')}" placeholder="${escapeHtml(tr('sed.g_link_ph'))}">
     </div>` : '';
   return `
     <div class="form-group">
