@@ -77,7 +77,7 @@ import { handleBillingLogin, handleBillingCheckout, handleBillingPortal, handleC
 import { handlePluginSubscribe, handlePluginCancel } from './routes/api/plugins.js';
 import { handlePluginsMarketplace } from './routes/public/plugins.js';
 import { handleDashboard } from './routes/public/dashboard.js';
-import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash, handleSiteAsset } from './routes/public/drive.js';
+import { handleDrive, handleDriveUpload, handleDriveDelete, handleDriveFile, handleFolderCreate, handleFolderRename, handleFolderDelete, handleFileMove, handleFileCopy, handleDriveImages, handleProjectDriveImages, handleTrash, handleFileRestore, handleFilePurge, handleFolderRestore, handleFolderPurge, handleEmptyTrash, handleSiteAsset } from './routes/public/drive.js';
 import { handleTeamAccept } from './routes/public/team-accept.js';
 import { handleTeamInvite, handleTeamRole, handleTeamRemove, handleTeamSites } from './routes/api/team.js';
 import { handleHelp } from './routes/public/help.js';
@@ -375,6 +375,8 @@ router.get('/drive', handleDrive, [billingAuth]);
 router.get('/drive/trash', handleTrash, [billingAuth]);
 router.post('/api/drive/upload', handleDriveUpload, [billingAuth]);
 router.get('/api/drive/images', handleDriveImages, [billingAuth]);
+// Editor picker, owner-scoped: a manager sees the SITE OWNER's Drive by default.
+router.get('/api/ai-builder/:project_id/drive/images', handleProjectDriveImages, [billingAuth, projectAccess]);
 router.post('/api/drive/folder', handleFolderCreate, [billingAuth]);
 router.put('/api/drive/folder/:id', handleFolderRename, [billingAuth]);
 router.post('/api/drive/folder/:id/restore', handleFolderRestore, [billingAuth]);

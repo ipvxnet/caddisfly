@@ -600,6 +600,28 @@ export async function handleDriveImages(ctx) {
   return json({ success: true, images: rows.map((r) => ({ token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}` })) });
 }
 
+/** GET /api/ai-builder/:project_id/drive/images?source=owner|mine — Drive images
+ *  for the editor picker, scoped to the SITE OWNER by default so a manager edits
+ *  with the site's real asset library (matches deploy's owner-scoped asset
+ *  lookup, so picked images survive copy-on-publish). A manager can switch
+ *  source=mine to use their own Drive. Gated by projectAccess. */
+export async function handleProjectDriveImages(ctx) {
+  const { env, url } = ctx;
+  const mine = ctx.billingEmail;
+  if (!mine) return json({ success: false, error: 'Please sign in.' }, 401);
+  const owner = ctx.projectOwner || mine;
+  const canSwitch = String(owner).toLowerCase() !== String(mine).toLowerCase();
+  const source = ctx.query && ctx.query.source === 'mine' ? 'mine' : 'owner';
+  const email = source === 'mine' ? mine : owner;
+  const rows = await listDriveImages(env.DB, email);
+  return json({
+    success: true,
+    source,
+    can_switch: canSwitch,
+    images: rows.map((r) => ({ token: r.token, name: r.name, url: `${url.origin}/drive/f/${r.token}` })),
+  });
+}
+
 /** GET /drive/f/:token — serve a file publicly (token is the unguessable auth). */
 export async function handleDriveFile(ctx) {
   const { env, params } = ctx;

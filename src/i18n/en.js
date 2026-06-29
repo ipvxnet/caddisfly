@@ -1042,7 +1042,7 @@ export const en = {
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',
     uploading: 'Uploading…', upload_complete: 'Upload complete!', upload_failed: 'Upload failed', upload_failed_p: 'Upload failed: ',
-    from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.',
+    from_drive: '🗂 From Drive', drive_title: 'Insert from your Drive', drive_empty: 'No images in your Drive yet — upload some on the Drive page.', drive_loading: 'Loading…', drive_err: 'Could not load your Drive.', drive_site: "Site's Drive", drive_mine: 'My Drive',
     not_supported: 'Section type not supported for editing yet.',
     heading: 'Heading', hl_hint: 'Main headline (max 60 characters)',
     subheading: 'Subheading', sub_hint: 'Supporting text (max 120 characters)',
