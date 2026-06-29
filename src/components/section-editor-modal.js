@@ -1038,7 +1038,7 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
     case 'contact':
       return generateContactFields(content, tr);
     case 'gallery':
-      return generateGalleryFields(content, tr);
+      return generateGalleryFields(content, tr, variant);
     case 'footer':
       return generateFooterFields(content, tr);
     case 'header':
@@ -1732,11 +1732,33 @@ function galleryRowHtml(img, i, tr) {
     + `</div></div>`;
 }
 
-function generateGalleryFields(content, tr) {
+function generateGalleryFields(content, tr, variant = 'masonry') {
   const images = Array.isArray(content.images) ? content.images : [];
   const initialRows = images.length
     ? images.map((img, i) => galleryRowHtml(img, i, tr)).join('')
     : `<p style="color:#718096;font-size:.85rem;margin:.25rem 0">${escapeHtml(tr('sed.no_photos'))}</p>`;
+  // The "banner" layout adds a hero header: background image + heading/intro + CTA.
+  const bannerFields = variant === 'banner' ? `
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.g_banner_image'))}</label>
+      <input type="hidden" id="banner_image" name="banner_image" value="${escapeHtml(content.banner_image || '')}">
+      <div class="image-upload-area" onclick="document.getElementById('gallery-banner-input').click()">
+        <p>${tr('sed.click_upload')}</p>
+        <p style="font-size:0.875rem;color:#718096;">${tr('sed.img_formats')}</p>
+        <img src="${escapeHtml(content.banner_image || '')}" class="image-preview" style="display:${content.banner_image ? 'block' : 'none'}">
+        <div class="upload-progress"></div>
+      </div>
+      <input type="file" id="gallery-banner-input" accept="image/*" style="display:none" onchange="uploadImage(this, 'banner_image')">
+      <button type="button" class="dp-from-btn" data-drive-btn style="margin-top:.5rem;background:none;border:1px solid #cbd5e0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;color:#4a5568;cursor:pointer" onclick="window.__drivePicker&&window.__drivePicker(function(url){var f=document.getElementById('banner_image');if(f){f.value=url;var p=f.closest('.form-group').querySelector('.image-preview');if(p){p.src=url;p.style.display='block';}}})">${tr('sed.from_drive')}</button>
+    </div>
+    <div class="form-group">
+      <label for="cta_text">${escapeHtml(tr('sed.g_cta_text'))}</label>
+      <input type="text" id="cta_text" name="cta_text" value="${escapeHtml(content.cta_text || '')}" placeholder="${escapeHtml(tr('sed.g_cta_text_ph'))}">
+    </div>
+    <div class="form-group">
+      <label for="cta_link">${escapeHtml(tr('sed.g_cta_link'))}</label>
+      <input type="text" id="cta_link" name="cta_link" value="${escapeHtml(content.cta_link || '')}" placeholder="${escapeHtml(tr('sed.g_link_ph'))}">
+    </div>` : '';
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -1747,6 +1769,7 @@ function generateGalleryFields(content, tr) {
       <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
+    ${bannerFields}
 
     <div class="form-group">
       <label>${tr('sed.photos')} <span style="color:#718096;font-weight:400;font-size:.8rem">${tr('sed.photos_hint')}</span></label>

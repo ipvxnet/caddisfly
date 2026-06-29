@@ -38,6 +38,7 @@ import { testimonialsPortraitTemplate } from './testimonials/portrait.js';
 import { galleryMasonryTemplate } from './gallery/masonry.js';
 import { galleryCarouselTemplate } from './gallery/carousel.js';
 import { galleryCardsTemplate } from './gallery/cards.js';
+import { galleryBannerTemplate } from './gallery/banner.js';
 
 // Contact templates
 import { contactFormTemplate } from './contact/form.js';
@@ -127,6 +128,7 @@ export const TEMPLATE_REGISTRY = {
     masonry: galleryMasonryTemplate,
     carousel: galleryCarouselTemplate,
     cards: galleryCardsTemplate,
+    banner: galleryBannerTemplate,
     default: galleryMasonryTemplate,
   },
   contact: {

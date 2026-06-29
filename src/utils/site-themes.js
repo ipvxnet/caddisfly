@@ -911,7 +911,7 @@ const DARK_SURFACE_SECTIONS = [
   '.about-section', '.about-team', '.about-timeline',
   '.services-cards', '.services-section', '.features-grid',
   '.testimonials-section', '.testimonials-quotes', '.testimonials-spotlight',
-  '.gallery-section', '.gallery-carousel', '.gallery-cards-section',
+  '.gallery-section', '.gallery-carousel', '.gallery-cards-section', '.gallery-banner-section',
   '.contact-section', '.contact-split', '.pricing-tables',
   '.services-spotlight', '.services-numbered', '.footer-minimal',
   '.features-actions', '.features-steps',
