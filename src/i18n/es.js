@@ -1035,6 +1035,7 @@ export const es = {
   sed: {
     appearance: 'Apariencia de la sección', appearance_auto: 'Automático (según el tema)', appearance_light: 'Claro', appearance_dark: 'Oscuro',
     appearance_hint: 'Por defecto la sección sigue tu tema. Fuerza un fondo claro u oscuro aquí si quieres que esta destaque.',
+    nav_label: 'Nombre en el menú', nav_label_ph: 'p. ej. Componentes', nav_label_hint: 'Cómo se llama esta sección en el menú de navegación. Déjalo vacío para usar el predeterminado.',
     members_only: 'Solo para miembros', members_only_hint: 'Oculta esta sección tras un inicio de sesión — solo los miembros que entren la verán.',
     edit_section: 'Editar sección', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Guardar cambios',
     saving: 'Guardando…', updated: '¡Sección actualizada!', save_failed: 'No se pudieron guardar los cambios', save_failed_p: 'No se pudo guardar: ',
@@ -1071,6 +1072,7 @@ export const es = {
     social_display: 'Mostrar redes como', social_letters: 'Letras (F, I…)', social_icons: 'Iconos de marca',
     feat_items: 'Elementos', add_feature: '＋ Añadir elemento', item_feature: 'Elemento', feat_intro_image: 'Imagen del panel de introducción (diseño columnas)',
     videos_items: 'Videos', videos_hint: 'Pega un enlace de YouTube, Vimeo o Loom (o sube un archivo). La miniatura se carga sola, salvo que pongas una imagen personalizada.', add_video: '＋ Añadir video', item_video: 'Video', video_thumb: 'Miniatura personalizada (opcional)',
+    map_address: 'Dirección', map_address_ph: 'Calle 123, Ciudad, Provincia', map_address_hint: 'Se muestra en el mapa y se usa para el enlace de indicaciones. No requiere clave de API.', map_heading_ph: 'p. ej. Visítanos', map_dir_label: 'Botón de indicaciones', map_dir_show: 'Mostrar', map_dir_hide: 'Ocultar', map_button: 'Texto del botón', map_button_ph: 'Cómo Llegar',
     link_label: 'Texto del enlace', add_link: '＋ Añadir enlace', link_remove: 'Quitar enlace',
     ph_about_us: 'Sobre nosotros', ph_our_services: 'Nuestros servicios', ph_testimonials: 'Testimonios', ph_get_in_touch: 'Contáctanos',
     ph_send_message: 'Enviar mensaje', ph_gallery: 'Galería', ph_get_started: 'Empezar',

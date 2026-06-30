@@ -43,6 +43,13 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
         <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
           ${generateFormFields(section.section_type, content, tr, projectId, contentLang, catCategories, section.html_template)}
 
+          ${['header', 'footer'].includes(section.section_type) ? '' : `
+          <div class="form-group">
+            <label for="sed-nav-label">${tr('sed.nav_label')}</label>
+            <input type="text" id="sed-nav-label" name="_nav_label" value="${escapeHtml(content._nav_label || '')}" placeholder="${escapeHtml(tr('sed.nav_label_ph'))}">
+            <small>${tr('sed.nav_label_hint')}</small>
+          </div>`}
+
           ${['header', 'footer', 'hero'].includes(section.section_type) ? '' : `
           <div class="form-group">
             <label for="sed-appearance">${tr('sed.appearance')}</label>
@@ -987,6 +994,8 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
       return generateFeaturesFields(content, tr, contentLang, variant);
     case 'videos':
       return generateVideosFields(content, tr, contentLang);
+    case 'map':
+      return generateMapFields(content, tr);
     case 'services':
       return generateServicesFields(content, tr);
     case 'testimonials':
@@ -1592,6 +1601,38 @@ function generateVideosFields(content, tr, contentLang) {
             img: { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
         ],
       })}
+    </div>
+  `;
+}
+
+// Map section — a Google Maps embed (keyless) for an address + a directions
+// button. The address drives both the map and the "Get Directions" link.
+function generateMapFields(content, tr) {
+  const showDir = content.show_directions !== false && content.show_directions !== 'no';
+  return `
+    <div class="form-group">
+      <label for="address">${escapeHtml(tr('sed.map_address'))}</label>
+      <input type="text" id="address" name="address" value="${escapeHtml(content.address || '')}" placeholder="${escapeHtml(tr('sed.map_address_ph'))}">
+      <small style="display:block;color:#718096;margin-top:.3rem">${escapeHtml(tr('sed.map_address_hint'))}</small>
+    </div>
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')} <span style="color:#718096;font-weight:400;font-size:.8rem">(${escapeHtml(tr('sed.ph_optional'))})</span></label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || '')}" placeholder="${escapeHtml(tr('sed.map_heading_ph'))}">
+    </div>
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+    <div class="form-group">
+      <label for="map_directions">${escapeHtml(tr('sed.map_dir_label'))}</label>
+      <select id="map_directions" name="show_directions">
+        <option value="yes"${showDir ? ' selected' : ''}>${escapeHtml(tr('sed.map_dir_show'))}</option>
+        <option value="no"${showDir ? '' : ' selected'}>${escapeHtml(tr('sed.map_dir_hide'))}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="button_text">${escapeHtml(tr('sed.map_button'))}</label>
+      <input type="text" id="button_text" name="button_text" value="${escapeHtml(content.button_text || '')}" placeholder="${escapeHtml(tr('sed.map_button_ph'))}">
     </div>
   `;
 }
