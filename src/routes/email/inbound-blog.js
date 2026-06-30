@@ -161,6 +161,7 @@ export async function handleInboundEmail(message, env, ctx) {
       content: draft.content,
       cover_image: '',
       status: 'draft',
+      seo_description: draft.seo_description,
       source: 'email',
       source_message_id: messageId,
     });

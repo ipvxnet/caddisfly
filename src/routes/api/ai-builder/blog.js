@@ -138,6 +138,7 @@ export async function handleBlogAIDraft(ctx) {
       content: draft.content,
       cover_image: '',
       status: 'draft',
+      seo_description: draft.seo_description,
     });
     return json({ success: true, post }, 201);
   } catch (e) {
