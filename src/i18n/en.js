@@ -1078,6 +1078,7 @@ export const en = {
     social_display: 'Show social as', social_letters: 'Letters (F, I…)', social_icons: 'Brand icons',
     feat_items: 'Items', add_feature: '＋ Add item', item_feature: 'Item', feat_intro_image: 'Intro panel image (columns layout)',
     videos_items: 'Videos', videos_hint: 'Paste a YouTube, Vimeo or Loom link (or upload a file). The thumbnail loads automatically unless you set a custom picture.', add_video: '＋ Add video', item_video: 'Video', video_thumb: 'Custom thumbnail (optional)',
+    map_address: 'Address', map_address_ph: '123 Main St, City, State', map_address_hint: 'Shown on the map and used for the directions link. No API key needed.', map_heading_ph: 'e.g. Visit Us', map_dir_label: 'Directions button', map_dir_show: 'Show', map_dir_hide: 'Hide', map_button: 'Button text', map_button_ph: 'Get Directions',
     link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',

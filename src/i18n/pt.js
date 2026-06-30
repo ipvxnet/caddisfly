@@ -1071,6 +1071,7 @@ export const pt = {
     social_display: 'Mostrar redes como', social_letters: 'Letras (F, I…)', social_icons: 'Ícones das marcas',
     feat_items: 'Itens', add_feature: '＋ Adicionar item', item_feature: 'Item', feat_intro_image: 'Imagem do painel de introdução (layout colunas)',
     videos_items: 'Vídeos', videos_hint: 'Cole um link do YouTube, Vimeo ou Loom (ou envie um arquivo). A miniatura carrega sozinha, a menos que você defina uma imagem personalizada.', add_video: '＋ Adicionar vídeo', item_video: 'Vídeo', video_thumb: 'Miniatura personalizada (opcional)',
+    map_address: 'Endereço', map_address_ph: 'Rua 123, Cidade, Estado', map_address_hint: 'Aparece no mapa e é usado no link de direções. Não precisa de chave de API.', map_heading_ph: 'ex.: Visite-nos', map_dir_label: 'Botão de direções', map_dir_show: 'Mostrar', map_dir_hide: 'Ocultar', map_button: 'Texto do botão', map_button_ph: 'Como Chegar',
     link_label: 'Texto do link', add_link: '＋ Adicionar link', link_remove: 'Remover link',
     ph_about_us: 'Sobre nós', ph_our_services: 'Os nossos serviços', ph_testimonials: 'Depoimentos', ph_get_in_touch: 'Fale conosco',
     ph_send_message: 'Enviar mensagem', ph_gallery: 'Galeria', ph_get_started: 'Começar',
