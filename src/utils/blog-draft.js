@@ -56,12 +56,21 @@ The owner's brief for the post:
 ${brief}
 """
 
-Write an engaging, SEO-friendly blog post of 400-700 words based on the brief. Write ALL text in ${langName}.
+First decide the ONE primary keyword or phrase a reader would type into Google to find this post (infer it from the brief and the business). Then write a genuinely useful, engaging blog post of 400-700 words that targets that keyword — naturally, never keyword-stuffed. Write ALL text in ${langName}.
+
+SEO requirements (follow all):
+- Use the primary keyword in the TITLE, in the first sentence of the body, and in at least one "## " section heading — naturally.
+- Structure the post with several "## " section headings so it is easy to scan.
+- TITLE: specific and compelling, max 60 characters.
+- META_DESCRIPTION: a click-worthy 1-2 sentence summary that includes the primary keyword, 140-160 characters.
+
 Format the post body in simple markdown: "## " for section headings, "- " for bullet list items, "**bold**" for emphasis, blank lines between paragraphs. Do NOT use any other markdown syntax. Do not invent specific facts, prices, dates or statistics the brief doesn't mention.
 
 Respond in EXACTLY this format (plain text, no JSON, no commentary, keep the uppercase labels):
-TITLE: the post title, max 70 characters
-EXCERPT: a 1-2 sentence summary, max 160 characters
+KEYWORD: the primary keyword or phrase
+TITLE: the post title, max 60 characters
+META_DESCRIPTION: the meta description, 140-160 characters, includes the keyword
+EXCERPT: a 1-2 sentence summary for the blog card, max 160 characters
 CONTENT:
 the full post body in the markdown described above
 ${POLICY_INSTRUCTION}`;
@@ -69,9 +78,9 @@ ${POLICY_INSTRUCTION}`;
   const raw = await callWorkersAI(env, prompt, {
     max_tokens: 2048,
     temperature: 0.6,
-    system_message: 'You are a professional content writer for small-business websites.',
+    system_message: 'You are an SEO-savvy content writer for small-business websites.',
   });
-  const draft = parseLabeled(raw, ['TITLE', 'EXCERPT', 'CONTENT']);
+  const draft = parseLabeled(raw, ['KEYWORD', 'TITLE', 'META_DESCRIPTION', 'EXCERPT', 'CONTENT']);
   if (!draft || !draft.title || !draft.content) {
     const e = new Error('The AI draft came back malformed — please try again.');
     e.code = 'malformed';
@@ -79,16 +88,21 @@ ${POLICY_INSTRUCTION}`;
   }
   // CONTENT is the last label, so an echoed policy instruction lands in it.
   draft.content = stripPolicyEcho(draft.content);
-  const outScreen = screenContent(`${draft.title}\n${draft.content}`);
+  const outScreen = screenContent(`${draft.title}\n${draft.meta_description || ''}\n${draft.content}`);
   if (!outScreen.allowed) {
     const e = new Error(outScreen.message);
     e.code = 'policy';
     e.screen = outScreen;
     throw e;
   }
+  const excerpt = String(draft.excerpt || draft.meta_description || mdLiteExcerpt(draft.content)).slice(0, 300);
   return {
     title: String(draft.title).slice(0, 200),
-    excerpt: String(draft.excerpt || mdLiteExcerpt(draft.content)).slice(0, 300),
+    excerpt,
+    // Keyword-targeted meta description → stored as seo_description so the
+    // published <meta description> / OG / Twitter is optimized (not the excerpt).
+    seo_description: String(draft.meta_description || excerpt).slice(0, 200),
+    keyword: String(draft.keyword || '').slice(0, 120),
     content: String(draft.content).slice(0, 30000),
   };
 }

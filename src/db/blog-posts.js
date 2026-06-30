@@ -36,11 +36,11 @@ export async function uniquePostSlug(db, projectKey, title, excludeId = null) {
   return `${base}-${Date.now() % 10000}`;
 }
 
-export async function createPost(db, projectKey, { slug, title, excerpt, content, cover_image, status, source, source_message_id }) {
+export async function createPost(db, projectKey, { slug, title, excerpt, content, cover_image, status, source, source_message_id, seo_description }) {
   return db
     .prepare(
-      `INSERT INTO blog_posts (ai_project_id, project_id, slug, title, excerpt, content, cover_image, status, published_at, source, source_message_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO blog_posts (ai_project_id, project_id, slug, title, excerpt, content, cover_image, status, published_at, source, source_message_id, seo_description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       projectKey.aiProjectId != null ? projectKey.aiProjectId : null,
@@ -53,7 +53,8 @@ export async function createPost(db, projectKey, { slug, title, excerpt, content
       status === 'published' ? 'published' : 'draft',
       status === 'published' ? nowSec() : null,
       source === 'email' ? 'email' : 'manual',
-      source_message_id || null
+      source_message_id || null,
+      seo_description || null
     )
     .first();
 }

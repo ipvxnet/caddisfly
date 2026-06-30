@@ -316,6 +316,7 @@ export async function handleAIBuilderGenerate(ctx) {
         await createPost(env.DB, { aiProjectId: project.id }, {
           slug, title: draft.title, excerpt: draft.excerpt, content: draft.content,
           cover_image: null, status: 'draft', source: 'ai', source_message_id: null,
+          seo_description: draft.seo_description,
         });
         console.log('wizard blog: welcome draft seeded');
       } catch (e) {
