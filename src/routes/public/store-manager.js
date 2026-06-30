@@ -526,36 +526,16 @@ export async function handleStoreManager(ctx) {
       inp.click();
     }
 
-    // Insert an image from the user's Drive. target is an <input> (replace) or a
-    // <textarea> (append one URL per line). Reuses /api/drive/images.
-    var __drvOverlay = null, __drvApply = null;
-    function ensureDriveOverlay() {
-      if (__drvOverlay) return __drvOverlay;
-      __drvOverlay = document.createElement('div');
-      __drvOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:10002;padding:1rem';
-      __drvOverlay.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow:auto;padding:1.2rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><strong>' + T.driveTitle + '</strong><button type="button" class="drv-x" style="border:none;background:none;font-size:1.2rem;cursor:pointer">✕</button></div><div class="drv-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem"></div></div>';
-      document.body.appendChild(__drvOverlay);
-      __drvOverlay.addEventListener('click', function(e){ if (e.target === __drvOverlay) __drvOverlay.style.display = 'none'; });
-      __drvOverlay.querySelector('.drv-x').addEventListener('click', function(){ __drvOverlay.style.display = 'none'; });
-      return __drvOverlay;
-    }
-    async function pickImageFromDrive(target, append) {
-      if (!target) return;
-      __drvApply = function(url){ if (append) target.value = target.value ? (target.value + '\\n' + url) : url; else target.value = url; };
-      var o = ensureDriveOverlay(); var grid = o.querySelector('.drv-grid');
-      grid.innerHTML = '<p style="color:#718096">' + T.driveLoading + '</p>'; o.style.display = 'flex';
-      try {
-        var res = await fetch('/api/drive/images'); var d = await res.json(); var imgs = (d && d.images) || [];
-        if (!imgs.length) { grid.innerHTML = '<p style="color:#718096">' + T.driveEmpty + '</p>'; return; }
-        grid.innerHTML = '';
-        imgs.forEach(function(im){
-          var b = document.createElement('button'); b.type = 'button'; b.title = im.name;
-          b.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:0;cursor:pointer;background:#fff;overflow:hidden;aspect-ratio:1';
-          var img = document.createElement('img'); img.src = im.url; img.loading = 'lazy'; img.style.cssText = 'width:100%;height:100%;object-fit:cover'; b.appendChild(img);
-          b.addEventListener('click', function(){ if (__drvApply) __drvApply(im.url); o.style.display = 'none'; });
-          grid.appendChild(b);
-        });
-      } catch (e) { grid.innerHTML = '<p style="color:#b91c1c">' + T.driveErr + '</p>'; }
+    // Insert an image from Drive. target is an <input> (replace) or a <textarea>
+    // (append one URL per line). Uses the shared, OWNER-SCOPED picker
+    // (window.__drivePicker) so a manager sees the site owner's Shared Drive —
+    // not their own account Drive.
+    function pickImageFromDrive(target, append) {
+      if (!target || !window.__drivePicker) return;
+      window.__drivePicker(function(url){
+        if (append) target.value = target.value ? (target.value + '\\n' + url) : url;
+        else target.value = url;
+      }, { kind: 'image' });
     }
 
     // Upload a PDF → R2, append "name | url" to the given files textarea.
