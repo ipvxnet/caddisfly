@@ -1042,6 +1042,7 @@ export const en = {
   sed: {
     appearance: 'Section appearance', appearance_auto: 'Auto (match theme)', appearance_light: 'Light', appearance_dark: 'Dark',
     appearance_hint: 'By default a section matches your theme. Force a light or dark background here if you want this one to stand out.',
+    nav_label: 'Menu name', nav_label_ph: 'e.g. Components', nav_label_hint: 'What this section is called in the navigation menu. Leave blank to use the default.',
     members_only: 'Members only', members_only_hint: 'Hide this section behind a sign-in — only members who log in will see it.',
     edit_section: 'Edit section', edit_manual: '✏️ Edit fields manually', cancel: 'Cancel', save: 'Save Changes',
     saving: 'Saving…', updated: 'Section updated successfully!', save_failed: 'Failed to save changes', save_failed_p: 'Failed to save: ',

@@ -177,10 +177,21 @@ const SECTION_NAV_ORDER = ['hero', 'about', 'services', 'features', 'gallery', '
  */
 function buildSectionNav(visibleSections, lang = 'en') {
   const labels = SECTION_NAV_LABELS[lang] || SECTION_NAV_LABELS.en;
-  const present = new Set((visibleSections || []).map((s) => s.section_type));
+  // First visible section per type drives the single-page anchor nav; its
+  // content_json may carry a custom menu label (_nav_label) or hide it (_nav_hidden).
+  const byType = new Map();
+  for (const s of (visibleSections || [])) {
+    if (s && s.section_type && !byType.has(s.section_type)) byType.set(s.section_type, s);
+  }
   const nav = [];
   for (const type of SECTION_NAV_ORDER) {
-    if (present.has(type) && labels[type]) nav.push({ anchor: `#${type}`, label: labels[type] });
+    const s = byType.get(type);
+    if (!s) continue;
+    let meta = {};
+    try { meta = JSON.parse(s.content_json || '{}') || {}; } catch { meta = {}; }
+    if (meta._nav_hidden) continue;
+    const label = (meta._nav_label && String(meta._nav_label).trim()) || labels[type];
+    if (label) nav.push({ anchor: `#${type}`, label });
   }
   return nav;
 }

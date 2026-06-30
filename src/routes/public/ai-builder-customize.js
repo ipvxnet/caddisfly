@@ -186,7 +186,7 @@ export async function handleAIBuilderCustomize(ctx) {
             >
               <div class="section-header">
                 <span class="drag-handle" title="${tr('cust.drag_reorder')}">⋮⋮</span>
-                <span class="section-type">${section.section_type}</span>
+                <span class="section-type">${(() => { try { const m = JSON.parse(section.content_json || '{}'); return m && m._nav_label ? esc(m._nav_label) : section.section_type; } catch { return section.section_type; } })()}</span>
                 <button
                   class="visibility-toggle ${section.is_visible ? 'visible' : 'hidden'}"
                   data-section-id="${section.id}"

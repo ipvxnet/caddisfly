@@ -43,6 +43,13 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
         <form id="section-edit-form" data-section-id="${section.id}" onsubmit="saveSectionChanges(event)">
           ${generateFormFields(section.section_type, content, tr, projectId, contentLang, catCategories, section.html_template)}
 
+          ${['header', 'footer'].includes(section.section_type) ? '' : `
+          <div class="form-group">
+            <label for="sed-nav-label">${tr('sed.nav_label')}</label>
+            <input type="text" id="sed-nav-label" name="_nav_label" value="${escapeHtml(content._nav_label || '')}" placeholder="${escapeHtml(tr('sed.nav_label_ph'))}">
+            <small>${tr('sed.nav_label_hint')}</small>
+          </div>`}
+
           ${['header', 'footer', 'hero'].includes(section.section_type) ? '' : `
           <div class="form-group">
             <label for="sed-appearance">${tr('sed.appearance')}</label>
