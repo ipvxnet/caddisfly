@@ -32,6 +32,7 @@ import { testimonialsCardsTemplate } from './testimonials/cards.js';
 import { testimonialsQuotesTemplate } from './testimonials/quotes.js';
 import { testimonialsSpotlightTemplate } from './testimonials/spotlight.js';
 import { testimonialsVideoTemplate } from './testimonials/video.js';
+import { videosGridTemplate } from './videos/grid.js';
 import { testimonialsPortraitTemplate } from './testimonials/portrait.js';
 
 // Gallery templates
@@ -126,6 +127,10 @@ export const TEMPLATE_REGISTRY = {
     video: testimonialsVideoTemplate,
     portrait: testimonialsPortraitTemplate,
     default: testimonialsCardsTemplate,
+  },
+  videos: {
+    grid: videosGridTemplate,
+    default: videosGridTemplate,
   },
   gallery: {
     masonry: galleryMasonryTemplate,

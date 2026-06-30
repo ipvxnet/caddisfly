@@ -985,6 +985,8 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
       return generateCatalogueFields(content, tr, catCategories);
     case 'features':
       return generateFeaturesFields(content, tr, contentLang, variant);
+    case 'videos':
+      return generateVideosFields(content, tr, contentLang);
     case 'services':
       return generateServicesFields(content, tr);
     case 'testimonials':
@@ -1555,6 +1557,39 @@ function generateFeaturesFields(content, tr, contentLang, variant) {
           { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '⚡' },
           { key: 'title', label: tr('sed.f_title'), ph: '' },
           { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: '' },
+        ],
+      })}
+    </div>
+  `;
+}
+
+// Videos section — heading + subheading + an items repeater. Each item has a
+// video link (YouTube/Vimeo/Loom/upload, with From-Drive), title, description,
+// and an optional custom thumbnail (overrides the auto poster).
+function generateVideosFields(content, tr, contentLang) {
+  const items = (Array.isArray(content.videos) && content.videos.length) ? content.videos : defaultItems(contentLang, 'videos-grid');
+  return `
+    <div class="form-group">
+      <label for="heading">${tr('sed.section_heading')}</label>
+      <input type="text" id="heading" name="heading" value="${escapeHtml(content.heading || sectionDefault(contentLang, 'videos', 0))}" required>
+    </div>
+    <div class="form-group">
+      <label for="subheading">${tr('sed.subheading')}</label>
+      <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
+    </div>
+    <div class="form-group">
+      <label>${escapeHtml(tr('sed.videos_items'))}</label>
+      <small style="display:block;color:#718096;margin-bottom:.4rem">${escapeHtml(tr('sed.videos_hint'))}</small>
+      ${buildRepeater({
+        jsonKey: 'videos', items,
+        addLabel: tr('sed.add_video'), removeLabel: tr('sed.remove'), itemLabel: tr('sed.item_video'),
+        imgT: { urlPrompt: tr('sed.img_url_prompt'), uploading: tr('sed.uploading'), finding: tr('sed.img_finding'), generating: tr('sed.img_generating'), fail: tr('sed.img_fail') },
+        fields: [
+          { key: 'video_url', label: tr('sed.f_video'), kind: 'video', ph: tr('sed.video_ph') || 'YouTube, Vimeo or Loom link', vid: { upload: tr('sed.img_upload'), drive: tr('sed.img_drive') } },
+          { key: 'title', label: tr('sed.f_title'), ph: '' },
+          { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: '' },
+          { key: 'thumbnail', label: tr('sed.video_thumb'), kind: 'image',
+            img: { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
         ],
       })}
     </div>

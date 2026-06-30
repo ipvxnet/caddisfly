@@ -1077,6 +1077,7 @@ export const en = {
     social_links: 'Social links', social_links_hint: 'Paste your profile URLs — only the ones you fill in are shown.',
     social_display: 'Show social as', social_letters: 'Letters (F, I…)', social_icons: 'Brand icons',
     feat_items: 'Items', add_feature: '＋ Add item', item_feature: 'Item', feat_intro_image: 'Intro panel image (columns layout)',
+    videos_items: 'Videos', videos_hint: 'Paste a YouTube, Vimeo or Loom link (or upload a file). The thumbnail loads automatically unless you set a custom picture.', add_video: '＋ Add video', item_video: 'Video', video_thumb: 'Custom thumbnail (optional)',
     link_label: 'Link text', add_link: '＋ Add link', link_remove: 'Remove link',
     ph_about_us: 'About Us', ph_our_services: 'Our Services', ph_testimonials: 'Testimonials', ph_get_in_touch: 'Get In Touch',
     ph_send_message: 'Send Message', ph_gallery: 'Gallery', ph_get_started: 'Get Started',
