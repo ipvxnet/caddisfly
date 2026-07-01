@@ -672,6 +672,7 @@ export const pt = {
     preview_note: 'Pré-visualização — o pagamento funciona no seu site publicado.',
     not_accepting: 'Esta loja ainda não aceita pagamentos.',
     back_to_shop: 'Loja',
+    back: 'Voltar',
     no_products: 'Ainda não há produtos — volte em breve!',
     subscribe: 'Assinar',
     sub_busy: 'Iniciando o pagamento…',

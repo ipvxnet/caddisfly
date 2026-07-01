@@ -672,6 +672,7 @@ export const es = {
     preview_note: 'Vista previa — el pago funciona en tu sitio publicado.',
     not_accepting: 'Esta tienda aún no acepta pagos.',
     back_to_shop: 'Tienda',
+    back: 'Volver',
     no_products: 'Aún no hay productos — ¡vuelve pronto!',
     subscribe: 'Suscribirse',
     sub_busy: 'Iniciando el pago…',
