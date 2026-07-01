@@ -780,7 +780,7 @@ export async function handleAIBuilderCustomize(ctx) {
       <div class="hdr-menu">
         <button type="button" class="btn btn-secondary" id="manage-btn" aria-haspopup="true" aria-expanded="false">${tr('cust.manage')} <span class="caret">▾</span></button>
         <div class="hdr-dropdown" id="manage-menu" hidden>
-          <a href="#" onclick="window.__driveExplorer&&window.__driveExplorer();return false;" title="${tr('cust.drive_browse_title')}">📂 ${tr('cust.drive_browse')}</a>
+          <a href="#" onclick="window.__driveExplorer&&window.__driveExplorer();return false;" title="${tr('cust.drive_browse_title')}">${tr('cust.drive_browse')}</a>
           <a href="/ai-builder/analytics/${project.project_id}" title="${tr('cust.analytics_title')}">${tr('cust.analytics')}</a>
           <a href="/ai-builder/blog/${project.project_id}" title="${tr('cust.blog_title')}">${tr('cust.blog')}</a>
           <a href="/ai-builder/store/${project.project_id}" title="${tr('cust.store_title')}">${tr('cust.store')}</a>
