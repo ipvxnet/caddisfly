@@ -179,7 +179,7 @@ export async function handleStoreManager(ctx) {
           <label>${tr('storem.media_files')} <span class="hint">${tr('storem.media_files_hint')}</span></label>
           <textarea id="np-files" rows="2" placeholder="${tr('storem.media_files_ph')}"></textarea>
           <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="uploadPdf(this, this.previousElementSibling)">${tr('storem.upload_pdf')}</button>
-          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickPdfFromDrive(this.previousElementSibling.previousElementSibling)">🗂 ${tr('storem.from_drive')}</button>
+          <button type="button" class="btn ghost" style="margin-top:.3rem" onclick="pickPdfFromDrive(this.previousElementSibling.previousElementSibling)">${tr('storem.from_drive')}</button>
           <label>${tr('storem.media_links')} <span class="hint">${tr('storem.media_links_hint')}</span></label>
           <textarea id="np-links" rows="2" placeholder="${tr('storem.media_links_ph')}"></textarea>
         </details>

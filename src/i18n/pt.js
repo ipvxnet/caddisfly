@@ -1056,6 +1056,7 @@ export const pt = {
     testimonials_soon: 'A edição individual de avaliações chega em breve.', submit_button: 'Texto do botão de envio',
     remove: 'Remover',
     services: 'Serviços', add_service: '＋ Adicionar serviço', svc_title_ph: 'Nome do serviço', svc_desc_ph: 'Descrição breve',
+    svc_eyebrow: 'Rótulo superior', svc_eyebrow_ph: 'Pequeno rótulo acima do título (ex.: EMS7)', svc_bullets: 'Tópicos', svc_bullets_ph: 'Um por linha (opcional)', svc_cta_label: 'Texto do botão', svc_cta_label_ph: 'ex.: Saiba mais', svc_cta_link: 'Link do botão', svc_cta_link_ph: 'Uma página, #seção ou PDF/URL', svc_images: 'Mais imagens (collage)', svc_images_ph: 'Uma URL por linha — 2+ imagens formam um collage', svc_band_style: 'Estilo da faixa', band_light: 'Fundo claro', band_dark: 'Fundo escuro',
     testimonials: 'Avaliações', add_testimonial: '＋ Adicionar avaliação', tst_name_ph: 'Nome', tst_role_ph: 'Cargo / empresa', tst_text_ph: 'O que disseram',
     item_service: 'Serviço', item_testimonial: 'Avaliação',
     f_icon: 'Ícone (emoji)', f_title: 'Título', f_description: 'Descrição',
