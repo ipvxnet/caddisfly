@@ -997,7 +997,7 @@ function generateFormFields(sectionType, content, tr, projectId = '', contentLan
     case 'map':
       return generateMapFields(content, tr);
     case 'services':
-      return generateServicesFields(content, tr);
+      return generateServicesFields(content, tr, variant);
     case 'testimonials':
       return generateTestimonialsFields(content, tr, contentLang);
     case 'contact':
@@ -1637,7 +1637,38 @@ function generateMapFields(content, tr) {
   `;
 }
 
-function generateServicesFields(content, tr) {
+function generateServicesFields(content, tr, variant = 'default') {
+  // The "spotlight" variant doubles as a media+text "showcase" band, so it gets
+  // extra per-row fields (eyebrow, bullet list, CTA button, collage images) and a
+  // section-level light/dark band toggle. Other variants keep the simple set.
+  const isSpot = variant === 'spotlight';
+  const imgLabels = { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') };
+  const fields = isSpot
+    ? [
+        { key: 'eyebrow', label: tr('sed.svc_eyebrow'), ph: tr('sed.svc_eyebrow_ph') },
+        { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
+        { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.svc_desc_ph') },
+        { key: 'bullets', label: tr('sed.svc_bullets'), kind: 'textarea', ph: tr('sed.svc_bullets_ph') },
+        { key: 'cta_label', label: tr('sed.svc_cta_label'), ph: tr('sed.svc_cta_label_ph') },
+        { key: 'cta_link', label: tr('sed.svc_cta_link'), ph: tr('sed.svc_cta_link_ph') },
+        { key: 'image_url', label: tr('sed.f_image'), kind: 'image', img: imgLabels },
+        { key: 'images', label: tr('sed.svc_images'), kind: 'textarea', ph: tr('sed.svc_images_ph') },
+        { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
+      ]
+    : [
+        { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
+        { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
+        { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.svc_desc_ph') },
+        { key: 'image_url', label: tr('sed.f_image'), kind: 'image', img: imgLabels },
+      ];
+  const bandToggle = isSpot ? `
+    <div class="form-group">
+      <label for="theme">${tr('sed.svc_band_style')}</label>
+      <select id="theme" name="theme">
+        <option value="light"${(content.theme || 'light') !== 'dark' ? ' selected' : ''}>${tr('sed.band_light')}</option>
+        <option value="dark"${content.theme === 'dark' ? ' selected' : ''}>${tr('sed.band_dark')}</option>
+      </select>
+    </div>` : '';
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -1648,7 +1679,7 @@ function generateServicesFields(content, tr) {
       <label for="subheading">${tr('sed.subheading')}</label>
       <input type="text" id="subheading" name="subheading" value="${escapeHtml(content.subheading || '')}">
     </div>
-
+    ${bandToggle}
     <div class="form-group">
       <label>${tr('sed.services')}</label>
       <button type="button" class="btn-secondary" style="margin-bottom:.6rem" onclick="repImgSwapAll('services')">🖼 ${tr('sed.swap_all')}</button>
@@ -1662,13 +1693,7 @@ function generateServicesFields(content, tr) {
           urlPrompt: tr('sed.img_url_prompt'), uploading: tr('sed.uploading'),
           finding: tr('sed.img_finding'), generating: tr('sed.img_generating'), fail: tr('sed.img_fail'),
         },
-        fields: [
-          { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
-          { key: 'title', label: tr('sed.f_title'), ph: tr('sed.svc_title_ph') },
-          { key: 'description', label: tr('sed.f_description'), kind: 'textarea', ph: tr('sed.svc_desc_ph') },
-          { key: 'image_url', label: tr('sed.f_image'), kind: 'image',
-            img: { upload: tr('sed.img_upload'), drive: tr('sed.img_drive'), url: tr('sed.img_url'), photo: tr('sed.img_photo'), ai: tr('sed.img_ai'), remove: tr('sed.img_remove') } },
-        ],
+        fields,
       })}
     </div>
   `;
