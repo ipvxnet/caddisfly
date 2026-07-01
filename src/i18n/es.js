@@ -1050,7 +1050,7 @@ export const es = {
     f_tags: 'Etiquetas (píldoras)', tags_ph: 'De confianza, Con experiencia, Personalizado', tags_hint: 'Separadas por comas — se muestran en el diseño de hero con “etiquetas”.', button_text: 'Texto del botón', button_link: 'Enlace del botón',
     bg_image: 'Imagen de fondo', click_upload: '📸 Haz clic para subir una imagen', img_formats: 'JPG, PNG, WebP (máx. 5 MB)',
     section_heading: 'Título de la sección', your_story: 'Tu historia', story_hint: 'Cuenta tu historia (2-3 frases)', image: 'Imagen',
-    ph_optional: 'opcional', cat_filter: 'Mostrar categoría', cat_all: 'Todos los artículos', cat_filter_hint: 'Esta sección muestra solo los artículos de la categoría elegida — añade una sección de catálogo por categoría para repartirlos entre páginas.',
+    ph_optional: 'opcional', cat_filter: 'Mostrar categoría', cat_all: 'Todos los artículos', cat_filter_hint: 'Esta sección muestra solo los artículos de la categoría elegida — añade una sección de catálogo por categoría para repartirlos entre páginas.', cat_exclude: 'Excluir categorías', cat_exclude_hint: 'Al mostrar «Todos los artículos», oculta estas categorías (p. ej. garantía). Se ignora si eliges una sola categoría arriba.',
     team_members: 'Miembros del equipo', add_member: '＋ Añadir miembro', item_member: 'Miembro', f_bio: 'Biografía',
     milestones: 'Hitos', add_milestone: '＋ Añadir hito', item_milestone: 'Hito', f_year: 'Año',
     founder_name: 'Nombre del fundador', founder_role: 'Cargo del fundador',
