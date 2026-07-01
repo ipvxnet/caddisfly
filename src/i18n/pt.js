@@ -992,6 +992,7 @@ export const pt = {
     h_valentines: 'Dia dos Namorados (7–15 fev)', h_july4: '4 de Julho (28 jun – 5 jul)', h_easter: 'Páscoa (semana anterior – segunda de Páscoa)',
     decor: '✨ Decorações animadas (Papai Noel voando e companhia — discretas, não bloqueiam cliques, respeitam reduced-motion)',
     active_now: 'Ativo agora:',
+    turn_off_now: 'Desativar agora', turn_off_confirm: 'Desativar o tema de feriado agora? Isso restaura suas cores normais e republica o site.', turning_off: 'Desativando…', turned_off: 'Tema de feriado desativado e site republicado.',
     save: 'Salvar temas de festas', saved_note: 'Salvo — o agendador diário cuida do resto ✓',
   },
   bkres: {

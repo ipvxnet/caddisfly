@@ -992,6 +992,7 @@ export const es = {
     h_valentines: 'San Valentín (7–15 feb)', h_july4: '4 de julio (28 jun – 5 jul)', h_easter: 'Pascua (semana previa – lunes de Pascua)',
     decor: '✨ Decoraciones animadas (Papá Noel volando y compañía — discretas, no bloquean clics, respetan reduced-motion)',
     active_now: 'Activo ahora:',
+    turn_off_now: 'Desactivar ahora', turn_off_confirm: '¿Desactivar el tema de festividad ahora? Restaura tus colores normales y vuelve a publicar el sitio.', turning_off: 'Desactivando…', turned_off: 'Tema de festividad desactivado y sitio republicado.',
     save: 'Guardar temas festivos', saved_note: 'Guardado — el programador diario se encarga desde aquí ✓',
   },
   bkres: {

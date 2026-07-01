@@ -202,9 +202,9 @@ export function navbarTemplate(data, config) {
   text-decoration: none;
 }
 .nav-logo {
-  height: 40px;
+  height: 54px;
   width: auto;
-  max-width: 180px;
+  max-width: 220px;
   object-fit: contain;
 }
 .nav-brand-name {
@@ -279,7 +279,7 @@ export function navbarTemplate(data, config) {
 
 @media (max-width: 768px) {
   .site-nav-inner { padding: 0.6rem 1rem; }
-  .nav-logo { height: 32px; }
+  .nav-logo { height: 40px; }
   /* Multi-page sites: collapse the link row behind a hamburger dropdown. */
   .site-nav.has-menu .nav-toggle { display: inline-flex; }
   .site-nav.has-menu .nav-actions { display: none; }

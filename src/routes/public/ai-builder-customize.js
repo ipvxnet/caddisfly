@@ -1007,7 +1007,8 @@ export async function handleAIBuilderCustomize(ctx) {
             <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer;font-size:.9rem;margin-bottom:.6rem">
               <input type="checkbox" id="hol-decor"${holidaySettings.decor ? ' checked' : ''}> ${tr('hol.decor')}
             </label>
-            ${holidaySettings.applied ? `<p class="seo-hint" style="color:#92400e">${tr('hol.active_now')} ${HOLIDAY_SKINS[holidaySettings.applied.holiday] ? HOLIDAY_SKINS[holidaySettings.applied.holiday].emoji : ''} ${tr(`hol.h_${holidaySettings.applied.holiday}`)}</p>` : ''}
+            ${holidaySettings.applied ? `<p class="seo-hint" style="color:#92400e">${tr('hol.active_now')} ${HOLIDAY_SKINS[holidaySettings.applied.holiday] ? HOLIDAY_SKINS[holidaySettings.applied.holiday].emoji : ''} ${tr(`hol.h_${holidaySettings.applied.holiday}`)}
+              <button class="link-btn" style="font-weight:700;color:#b91c1c;margin-left:.4rem" onclick="revertHoliday(this)">${tr('hol.turn_off_now')}</button></p>` : ''}
             <button class="link-btn" style="font-weight:700" onclick="saveHolidays(this)">${tr('hol.save')}</button>
             <span class="seo-saved" id="hol-saved" hidden>${tr('cust.saved')}</span>
           </div>
@@ -1181,6 +1182,20 @@ export async function handleAIBuilderCustomize(ctx) {
         } else alert(d.error || ${JSON.stringify(tr('cust.err_network'))});
       } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; }
+    }
+    async function revertHoliday(btn) {
+      if (!confirm(${JSON.stringify(tr('hol.turn_off_confirm'))})) return;
+      const was = btn.textContent;
+      btn.disabled = true; btn.textContent = ${JSON.stringify(tr('hol.turning_off'))};
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/holiday-themes/revert\`, { method: 'POST' });
+        const d = await r.json().catch(() => ({}));
+        if (d.success) {
+          showNotification(${JSON.stringify(tr('hol.turned_off'))}, 'success');
+          var p = btn.closest('p'); if (p) p.remove();
+          var f = document.getElementById('preview-iframe'); if (f) f.contentWindow.location.reload();
+        } else { alert(d.error || ${JSON.stringify(tr('cust.err_network'))}); btn.disabled = false; btn.textContent = was; }
+      } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); btn.disabled = false; btn.textContent = was; }
     }
     async function aiSeoReview(btn) {
       btn.disabled = true;

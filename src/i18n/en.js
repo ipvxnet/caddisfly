@@ -999,6 +999,7 @@ export const en = {
     h_valentines: "Valentine's Day (Feb 7–15)", h_july4: 'July 4th (Jun 28 – Jul 5)', h_easter: 'Easter (week before – Easter Monday)',
     decor: '✨ Animated decorations (Santa flyby & friends — tasteful, click-through, honors reduced-motion)',
     active_now: 'Active now:',
+    turn_off_now: 'Turn off now', turn_off_confirm: 'Turn off the holiday theme now? This restores your normal colours and re-publishes the site.', turning_off: 'Turning off…', turned_off: 'Holiday theme turned off and site re-published.',
     save: 'Save holiday themes', saved_note: 'Saved — the daily scheduler takes it from here ✓',
   },
   bkres: {
