@@ -1230,6 +1230,15 @@ export const en = {
     removed: 'Favicon removed — using your logo',
   },
 
+  hdr: {
+    summary: 'Header style',
+    hint: 'Choose how the logo and menu are arranged at the top of your site.',
+    standard: 'Standard',
+    standard_desc: 'logo and menu on one bar',
+    extended: 'Extended',
+    extended_desc: 'a large logo band on top, menu bar below',
+  },
+
   pick: {
     tpl_title: '🧩 Choose a Template', tpl_hint: 'Restyle the whole site at once. Your text and colors are kept.', tpl_recommended: 'Recommended', tpl_browse: 'Browse all templates', tpl_count_suffix: 'templates',
     font_title: '🔤 Fonts', font_hint: 'Swap the typeface. Sizes and layout stay the same.',

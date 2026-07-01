@@ -145,6 +145,12 @@ export async function handleAIBuilderCustomize(ctx) {
     if (homePage) await rehomeOrphanedSections(env.DB, projectKey, homePage.id).catch(() => 0);
 
     const siteSections = await getSiteSections(env.DB, projectKey, false);
+    // Current header layout (stored on the header section's content) for the toggle.
+    const headerExtended = (() => {
+      const h = siteSections.find((s) => s.section_type === 'header');
+      if (!h) return false;
+      try { return !!(JSON.parse(h.content_json || '{}').extended); } catch { return false; }
+    })();
     const sections = currentPage && currentPage.is_home
       ? await getHomeBodySections(env.DB, projectKey, currentPage.id, false)
       : await getBodySectionsForPage(env.DB, currentPage ? currentPage.id : -1, false);
@@ -987,6 +993,22 @@ export async function handleAIBuilderCustomize(ctx) {
             </div>
           </details>
 
+        <details class="design-group" id="header-style-group">
+          <summary>${tr('hdr.summary')}</summary>
+          <div class="design-group-body">
+            <p class="seo-hint">${tr('hdr.hint')}</p>
+            <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer;margin-bottom:.5rem">
+              <input type="radio" name="header_style" value="standard"${headerExtended ? '' : ' checked'} onchange="saveHeaderStyle(false, this)">
+              <span><strong>${tr('hdr.standard')}</strong> — ${tr('hdr.standard_desc')}</span>
+            </label>
+            <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer">
+              <input type="radio" name="header_style" value="extended"${headerExtended ? ' checked' : ''} onchange="saveHeaderStyle(true, this)">
+              <span><strong>${tr('hdr.extended')}</strong> — ${tr('hdr.extended_desc')}</span>
+            </label>
+            <span class="seo-saved" id="hdr-saved" hidden>${tr('cust.saved')}</span>
+          </div>
+        </details>
+
         <details class="design-group" id="holiday-group">
           <summary>${tr('hol.summary')}</summary>
           <div class="design-group-body">
@@ -1182,6 +1204,22 @@ export async function handleAIBuilderCustomize(ctx) {
         } else alert(d.error || ${JSON.stringify(tr('cust.err_network'))});
       } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
       finally { btn.disabled = false; }
+    }
+    async function saveHeaderStyle(extended, el) {
+      if (el) el.disabled = true;
+      try {
+        const r = await fetch(\`/api/ai-builder/\${projectId}/header-style\`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ extended: !!extended }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (d.success) {
+          var ok = document.getElementById('hdr-saved');
+          if (ok) { ok.hidden = false; setTimeout(function () { ok.hidden = true; }, 1800); }
+          var f = document.getElementById('preview-iframe'); if (f) f.src = f.src;
+        } else alert(d.error || ${JSON.stringify(tr('cust.err_network'))});
+      } catch (_) { alert(${JSON.stringify(tr('cust.err_network'))}); }
+      finally { if (el) el.disabled = false; }
     }
     async function revertHoliday(btn) {
       if (!confirm(${JSON.stringify(tr('hol.turn_off_confirm'))})) return;

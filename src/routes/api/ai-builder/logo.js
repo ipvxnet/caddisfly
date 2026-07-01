@@ -178,3 +178,33 @@ export async function handleFaviconSet(ctx) {
     return json({ success: false, error: 'Failed to update favicon', details: error.message }, 500);
   }
 }
+
+/**
+ * POST /api/ai-builder/:project_id/header-style — toggle the two-tier "extended"
+ * header (large logo band on top, nav bar below). Body: { extended: bool }.
+ * Stored on the header section's content (content.extended) — the navbar renders
+ * the extended layout when set. No config column / migration needed.
+ */
+export async function handleHeaderStyle(ctx) {
+  const { request, env, params } = ctx;
+  try {
+    const r = await resolveProject(env, params.project_id);
+    if (!r) return json({ success: false, error: 'Project not found' }, 404);
+
+    const body = await request.json().catch(() => ({}));
+    const extended = !!body.extended;
+
+    const siteSections = await getSiteSections(env.DB, r.projectKey);
+    for (const section of siteSections) {
+      if (section.section_type !== 'header') continue;
+      let content = {};
+      try { content = JSON.parse(section.content_json || '{}'); } catch { /* keep {} */ }
+      content.extended = extended;
+      await updateSectionContent(env.DB, section.id, content);
+    }
+    return json({ success: true, extended });
+  } catch (error) {
+    console.error('Error in header style:', error);
+    return json({ success: false, error: 'Failed to update header style' }, 500);
+  }
+}
