@@ -676,6 +676,7 @@ export const en = {
     preview_note: 'Preview — checkout works on your published site.',
     not_accepting: 'This store isn’t accepting payments yet.',
     back_to_shop: 'Shop',
+    back: 'Back',
     no_products: 'No products yet — check back soon!',
     subscribe: 'Subscribe',
     sub_busy: 'Starting checkout…',

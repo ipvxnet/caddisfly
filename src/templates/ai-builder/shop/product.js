@@ -45,6 +45,9 @@ export function shopProductTemplate(data, config) {
   const firstBuyable = inStockVariants[0] || variants[0] || null;
   const displayPrice = hasVariants ? (firstBuyable ? firstBuyable.price_cents : 0) : (p.price_cents || 0);
   const soldOut = t(lang, 'varw.sold_out');
+  // Display-only ("Not for sale") items read as documentation, not store pages —
+  // a neutral "← Back" label rather than "Back to Shop".
+  const displayOnly = p.for_sale === 0;
 
   // Rich catalogue detail (body + media) — only present on catalogue items.
   const detail = [];
@@ -65,7 +68,7 @@ export function shopProductTemplate(data, config) {
   return `
 <section id="shop" class="shop-product-section">
   <div class="shop-product-container">
-    <a class="shop-back" href="${esc(`${base}/shop`)}">← ${t(lang, 'shopw.back_to_shop')}</a>
+    <a class="shop-back" href="${esc(`${base}/shop`)}" data-shop-back>← ${t(lang, displayOnly ? 'shopw.back' : 'shopw.back_to_shop')}</a>
     <div class="shop-product-grid">
       <div class="shop-product-media">
         ${p.image ? `<img class="shop-product-img" src="${esc(p.image)}" alt="${esc(p.name)}">` : '<div class="shop-product-img shop-product-img-empty"></div>'}
@@ -120,5 +123,18 @@ export function shopProductTemplate(data, config) {
 @media (max-width: 768px) { .shop-product-grid { grid-template-columns: 1fr; gap: 1.6rem; } .shop-product-section { padding: 3rem 1.5rem 4rem; } }
 </style>
 ${cartScript(config)}
+<script>
+(function(){
+  var b = document.querySelector('a.shop-back[data-shop-back]');
+  if (!b) return;
+  // Return to the exact section the visitor came from (in-site history) instead
+  // of the shop index the href points to. Use e.preventDefault() — an inline
+  // "return false" does NOT reliably cancel the link's default navigation here.
+  b.addEventListener('click', function(e){
+    if (!document.referrer) return;              // direct/external load → keep the /shop fallback
+    try { if (new URL(document.referrer).host === location.host) { e.preventDefault(); history.back(); } } catch (_) {}
+  });
+})();
+</script>
   `.trim();
 }
