@@ -7,8 +7,10 @@ import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 export function servicesNumberedTemplate(data, config) {
   const lang = config.lang || 'en';
-  const { heading = sectionDefault(lang, 'services', 0), subheading = '', description = '', services } = data;
-  const sub = subheading || description;
+  // subheading is the editor field; fall back to description only when it was
+  // never set (an explicitly-empty subheading means "no sub-line").
+  const { heading = sectionDefault(lang, 'services', 0), subheading, description = '', services } = data;
+  const sub = subheading !== undefined ? subheading : description;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter' } = config;
   const labels = serviceLabels(lang);
 

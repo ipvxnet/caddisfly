@@ -9,8 +9,11 @@ export function servicesCardsTemplate(data, config) {
   const lang = config.lang || 'en';
   // The editor saves the sub-line as `subheading`; older/generated sections used
   // `description`. Read subheading first, fall back to description.
-  const { heading = sectionDefault(lang, 'services', 0), subheading = '', description = '', services } = data;
-  const sub = subheading || description;
+  // Prefer `subheading` (the editor field); fall back to `description` ONLY when
+  // subheading was never set (older/AI sections). An explicitly-empty subheading
+  // means "no sub-line" — don't resurrect a stale description.
+  const { heading = sectionDefault(lang, 'services', 0), subheading, description = '', services } = data;
+  const sub = subheading !== undefined ? subheading : description;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
   const labels = serviceLabels(lang);
 

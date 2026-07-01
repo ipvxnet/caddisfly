@@ -19,8 +19,10 @@ const lines = (s) => String(s == null ? '' : s).split(/[\n,]+/).map((x) => x.tri
 
 export function servicesSpotlightTemplate(data, config) {
   const lang = config.lang || 'en';
-  const { heading = sectionDefault(lang, 'services', 0), subheading = '', description = '', services, theme = '' } = data;
-  const sub = subheading || description;
+  // subheading is the editor field; fall back to description only when it was
+  // never set (an explicitly-empty subheading means "no sub-line").
+  const { heading = sectionDefault(lang, 'services', 0), subheading, description = '', services, theme = '' } = data;
+  const sub = subheading !== undefined ? subheading : description;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter' } = config;
   const labels = serviceLabels(lang);
   const dark = String(theme).toLowerCase() === 'dark';

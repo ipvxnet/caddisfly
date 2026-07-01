@@ -1036,6 +1036,7 @@ export const es = {
   sed: {
     appearance: 'Apariencia de la sección', appearance_auto: 'Automático (según el tema)', appearance_light: 'Claro', appearance_dark: 'Oscuro',
     appearance_hint: 'Por defecto la sección sigue tu tema. Fuerza un fondo claro u oscuro aquí si quieres que esta destaque.',
+    nav_show: 'Mostrar en el menú', nav_show_hint: 'Incluye esta sección como un elemento del menú de navegación.',
     nav_label: 'Nombre en el menú', nav_label_ph: 'p. ej. Componentes', nav_label_hint: 'Cómo se llama esta sección en el menú de navegación. Déjalo vacío para usar el predeterminado.',
     members_only: 'Solo para miembros', members_only_hint: 'Oculta esta sección tras un inicio de sesión — solo los miembros que entren la verán.',
     edit_section: 'Editar sección', edit_manual: '✏️ Editar campos manualmente', cancel: 'Cancelar', save: 'Guardar cambios',
