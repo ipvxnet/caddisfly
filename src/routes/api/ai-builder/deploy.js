@@ -134,7 +134,19 @@ export async function handleAIBuilderDeploy(ctx) {
     const activeProducts = await getProductsByProject(env.DB, projectKey, true);
     await annotateProductsWithVariants(env.DB, projectKey, activeProducts); // option selectors
     const storeCurrency = config.store_currency || 'usd';
-    if (activeProducts.length) navPages.push(shopNavPage(siteLang));
+    // The /shop index + its nav link are for BUYABLE products only — a $0 or
+    // "not for sale" item (a catalogue/spec entry) shouldn't appear as an
+    // "Add to cart" card. Their detail pages are still baked below (the catalogue
+    // section links to /shop/<slug>), just not listed in the shop or its menu.
+    const isSellable = (p) => {
+      if (p.for_sale === 0) return false;
+      const prices = (p.has_variants && Array.isArray(p.variants) && p.variants.length)
+        ? p.variants.filter((v) => v.stock == null || v.stock > 0).map((v) => v.price_cents || 0)
+        : [p.price_cents || 0];
+      return prices.some((c) => c > 0);
+    };
+    const sellableProducts = activeProducts.filter(isSellable);
+    if (sellableProducts.length) navPages.push(shopNavPage(siteLang));
 
     // Courses (plugin): published courses become /courses + /courses/<slug>
     // pages with a Courses nav link (synthetic, like the shop). Gated by the
@@ -393,11 +405,17 @@ export async function handleAIBuilderDeploy(ctx) {
         await uploadToR2(env.STORAGE, `sites/${subdomain}/${slugPath}.html`, subHtml, 'text/html; charset=utf-8');
       };
 
-      await writeShopPage(
-        'shop',
-        (base) => shopListSection(activeProducts, base, storeCurrency, siteLang),
-        { canonicalUrl: `${subdomainBase}/shop`, pageTitle: 'Shop' }
-      );
+      // The shop INDEX lists only buyable products (skip it entirely when there
+      // are none — the nav link is already withheld above). Detail pages are
+      // still baked for EVERY active product so catalogue links to /shop/<slug>
+      // keep resolving.
+      if (sellableProducts.length) {
+        await writeShopPage(
+          'shop',
+          (base) => shopListSection(sellableProducts, base, storeCurrency, siteLang),
+          { canonicalUrl: `${subdomainBase}/shop`, pageTitle: 'Shop' }
+        );
+      }
       for (const product of activeProducts) {
         await writeShopPage(
           `shop/${product.slug}`,
