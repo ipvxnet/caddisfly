@@ -39,7 +39,7 @@ export async function handleGenerateHeroVideo(ctx) {
     if (!r) return json({ success: false, error: 'Project not found' }, 404);
 
     let brief = '', sectionId = 0;
-    try { const body = await request.json(); brief = (body.brief || '').toString().trim().slice(0, 200); sectionId = parseInt(body.section_id, 10) || 0; } catch { /* empty ok */ }
+    try { const body = await request.json(); brief = (body.brief || '').toString().trim().slice(0, 600); sectionId = parseInt(body.section_id, 10) || 0; } catch { /* empty ok */ }
     if (brief) { const screen = screenContent(brief); if (!screen.allowed) return json(policyError(screen), 422); }
 
     // Paid feature (prod-gated, like logo/Flux).

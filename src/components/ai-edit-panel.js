@@ -45,7 +45,7 @@ export function generateAIEditPanel(section, projectId, lang = 'en') {
     <summary>${isHero ? tr('aip.own_summary_video') : tr('aip.own_summary')}</summary>
     <div class="ai-edit-own-body">
       ${isHero ? `<div class="ai-edit-genvid">
-        <input type="text" id="ai-edit-genvid-prompt" class="ai-edit-input" maxlength="200" placeholder="${tr('aip.gen_video_ph')}">
+        <input type="text" id="ai-edit-genvid-prompt" class="ai-edit-input" maxlength="600" placeholder="${tr('aip.gen_video_ph')}">
         <button type="button" class="ai-edit-genvid-btn" id="ai-edit-genvid-btn" onclick="aiEditGenVideo()">${tr('aip.gen_video')}</button>
         <p class="ai-edit-genvid-note">${tr('aip.gen_video_note')}</p>
       </div>` : ''}
