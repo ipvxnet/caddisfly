@@ -1400,6 +1400,10 @@ function buildRepeater({ jsonKey, items, fields, addLabel, removeLabel, itemLabe
         <input type="file" accept="video/mp4,video/webm" class="rep-vid-file" style="display:none" onchange="repVidFile(this)">
       </div>`;
     }
+    if (f.kind === 'select') {
+      const opts = (f.options || []).map((o) => `<option value="${escapeHtml(o.value)}"${String(v) === String(o.value) ? ' selected' : ''}>${escapeHtml(o.label)}</option>`).join('');
+      return `<div class="rep-field"><label>${escapeHtml(f.label || f.key)}</label><select class="rep-input" data-k="${f.key}">${opts}</select></div>`;
+    }
     const input = f.kind === 'textarea'
       ? `<textarea class="rep-input" data-k="${f.key}"${num} rows="2" placeholder="${escapeHtml(f.ph || '')}">${escapeHtml(v)}</textarea>`
       : `<input type="text" class="rep-input${f.kind === 'short' ? ' rep-short' : ''}" data-k="${f.key}"${num} placeholder="${escapeHtml(f.ph || '')}" value="${escapeHtml(v)}">`;
@@ -1653,6 +1657,10 @@ function generateServicesFields(content, tr, variant = 'default') {
         { key: 'cta_link', label: tr('sed.svc_cta_link'), ph: tr('sed.svc_cta_link_ph') },
         { key: 'image_url', label: tr('sed.f_image'), kind: 'image', img: imgLabels },
         { key: 'images', label: tr('sed.svc_images'), kind: 'textarea', ph: tr('sed.svc_images_ph') },
+        { key: 'img_fit', label: tr('sed.svc_img_fit'), kind: 'select', options: [
+          { value: '', label: tr('sed.fit_fill') },
+          { value: 'contain', label: tr('sed.fit_whole') },
+        ] },
         { key: 'icon', label: tr('sed.f_icon'), kind: 'short', ph: '🚀' },
       ]
     : [
@@ -1667,13 +1675,6 @@ function generateServicesFields(content, tr, variant = 'default') {
       <select id="theme" name="theme">
         <option value="light"${(content.theme || 'light') !== 'dark' ? ' selected' : ''}>${tr('sed.band_light')}</option>
         <option value="dark"${content.theme === 'dark' ? ' selected' : ''}>${tr('sed.band_dark')}</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="img_fit">${tr('sed.svc_img_fit')}</label>
-      <select id="img_fit" name="img_fit">
-        <option value="cover"${content.img_fit !== 'contain' ? ' selected' : ''}>${tr('sed.fit_fill')}</option>
-        <option value="contain"${content.img_fit === 'contain' ? ' selected' : ''}>${tr('sed.fit_whole')}</option>
       </select>
     </div>` : '';
   return `
