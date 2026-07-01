@@ -7,7 +7,10 @@ import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 export function servicesCardsTemplate(data, config) {
   const lang = config.lang || 'en';
-  const { heading = sectionDefault(lang, 'services', 0), description = '', services } = data;
+  // The editor saves the sub-line as `subheading`; older/generated sections used
+  // `description`. Read subheading first, fall back to description.
+  const { heading = sectionDefault(lang, 'services', 0), subheading = '', description = '', services } = data;
+  const sub = subheading || description;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter', font_body: fontBody = 'Inter' } = config;
   const labels = serviceLabels(lang);
 
@@ -19,7 +22,7 @@ export function servicesCardsTemplate(data, config) {
   <div class="services-cards-container">
     <div class="services-cards-header">
       <h2 style="font-family: ${fontHeading};">${heading}</h2>
-      <p style="font-family: ${fontBody};">${description}</p>
+      ${sub ? `<p style="font-family: ${fontBody};">${sub}</p>` : ''}
     </div>
 
     <div class="services-grid">

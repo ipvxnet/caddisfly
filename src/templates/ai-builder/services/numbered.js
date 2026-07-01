@@ -7,7 +7,8 @@ import { sectionDefault, defaultItems } from '../section-defaults.js';
 
 export function servicesNumberedTemplate(data, config) {
   const lang = config.lang || 'en';
-  const { heading = sectionDefault(lang, 'services', 0), description = '', services } = data;
+  const { heading = sectionDefault(lang, 'services', 0), subheading = '', description = '', services } = data;
+  const sub = subheading || description;
   const { primary_color: primaryColor = '#667eea', font_heading: fontHeading = 'Inter' } = config;
   const labels = serviceLabels(lang);
 
@@ -30,7 +31,7 @@ export function servicesNumberedTemplate(data, config) {
   <div class="svc-num-container">
     <div class="svc-num-header">
       <h2 style="font-family: ${fontHeading};">${heading}</h2>
-      ${description ? `<p>${description}</p>` : ''}
+      ${sub ? `<p>${sub}</p>` : ''}
     </div>
     <div class="svc-num-list">${rows}</div>
   </div>
