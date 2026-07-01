@@ -19,7 +19,8 @@ const lines = (s) => String(s == null ? '' : s).split(/[\n,]+/).map((x) => x.tri
 
 export function servicesSpotlightTemplate(data, config) {
   const lang = config.lang || 'en';
-  const { heading = sectionDefault(lang, 'services', 0), description = '', services, theme = '' } = data;
+  const { heading = sectionDefault(lang, 'services', 0), subheading = '', description = '', services, theme = '' } = data;
+  const sub = subheading || description;
   const { primary_color: primaryColor = '#667eea', secondary_color: secondaryColor = '#764ba2', font_heading: fontHeading = 'Inter' } = config;
   const labels = serviceLabels(lang);
   const dark = String(theme).toLowerCase() === 'dark';
@@ -84,7 +85,7 @@ export function servicesSpotlightTemplate(data, config) {
   <div class="svc-spot-container">
     <div class="svc-spot-header">
       <h2 style="font-family: ${fontHeading};">${heading}</h2>
-      ${description ? `<p>${description}</p>` : ''}
+      ${sub ? `<p>${sub}</p>` : ''}
     </div>
     <div class="svc-spot-rows">${rows}</div>
   </div>
