@@ -53,6 +53,52 @@ export async function handleHolidayThemesSave(ctx) {
   }
 }
 
+/**
+ * POST /holiday-themes/revert — turn off the applied holiday skin for THIS site
+ * NOW: restore the pre-holiday colors, clear `applied`, and republish. Works even
+ * when scheduled holidays are disabled (the daily cron skips disabled sites, so
+ * without this a lingering skin could never be cleared from the UI). Leaves the
+ * enabled/holidays/decor opt-in untouched.
+ */
+export async function handleHolidayThemesRevert(ctx) {
+  const { env, params } = ctx;
+  try {
+    const ai = await getAIProjectByProjectId(env.DB, params.project_id);
+    let projectKey = null;
+    let email = '';
+    if (ai) { projectKey = { aiProjectId: ai.id }; email = ai.customer_email; }
+    else {
+      const rp = await getProjectByPreviewId(env.DB, params.project_id);
+      if (!rp) return json({ success: false, error: 'Project not found' }, 404);
+      projectKey = { projectId: rp.id };
+      email = rp.customer_email;
+    }
+    const config = await getOrCreateConfig(env.DB, projectKey);
+    const hs = parseHolidaySettings(config);
+    if (!hs.applied) return json({ success: true, reverted: false, message: 'No holiday theme is active.' });
+
+    // Restore the colors saved when the skin was applied; clear the applied skin.
+    await updateWebsiteConfigById(env.DB, config.id, {
+      primary_color: hs.applied.prev_primary || config.primary_color,
+      secondary_color: hs.applied.prev_secondary || config.secondary_color,
+      holiday_themes_json: JSON.stringify({ enabled: hs.enabled, holidays: hs.holidays, decor: hs.decor, applied: null }),
+    });
+
+    // Republish so the live (baked) site reflects the revert immediately.
+    let republished = false;
+    const proj = await projectForConfig(env, config);
+    if (proj) {
+      try { await republish(env, ctx.ctx, proj.publicId, proj.email); republished = true; }
+      catch (e) { console.error('holiday revert republish failed:', e.message); }
+    }
+    audit(ctx, 'site.holiday_revert', { teamOwner: email, resourceType: 'site', resourceId: params.project_id, metadata: { holiday: hs.applied.holiday, republished } });
+    return json({ success: true, reverted: true, republished });
+  } catch (e) {
+    console.error('holiday revert error:', e);
+    return json({ success: false, error: 'Could not turn off the holiday theme.' }, 500);
+  }
+}
+
 /** Resolve a config row to its publishable project view, or null. */
 async function projectForConfig(env, config) {
   if (config.ai_project_id != null) {

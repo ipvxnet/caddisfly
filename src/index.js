@@ -163,7 +163,7 @@ import { handleDomainSearch, handleDomainCheckout, handleDomainReceipt, handleDo
 import { handleDomainsStorePage } from './routes/public/domains-store-page.js';
 import { processRenewals } from './routes/api/domains-renew.js';
 import { processBookingReminders } from './routes/api/bookings-remind.js';
-import { handleHolidayThemesSave, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
+import { handleHolidayThemesSave, handleHolidayThemesRevert, processHolidayThemes } from './routes/api/ai-builder/holiday-themes.js';
 import { processPluginGraceHides } from './plugins/grace-cron.js';
 import { handleOffboardStatus, handleUnpublish, handleDeleteSite } from './routes/api/ai-builder/offboard.js';
 import { handleListManagers, handleRemoveManager } from './routes/api/ai-builder/managers.js';
@@ -558,6 +558,7 @@ router.post('/api/ai-builder/:project_id/booking/holidays', handleBookingHoliday
 router.delete('/api/ai-builder/:project_id/booking/overrides/:override_id', handleBookingOverrideDelete, PROJ);
 router.put('/api/ai-builder/:project_id/booking/settings', handleBookingSettingsSave, PROJ);
 router.put('/api/ai-builder/:project_id/holiday-themes', handleHolidayThemesSave, PROJ);
+router.post('/api/ai-builder/:project_id/holiday-themes/revert', handleHolidayThemesRevert, PROJ);
 router.post('/api/ai-builder/:project_id/booking/ical-token', handleBookingIcalToken, PROJ);
 router.post('/api/ai-builder/:project_id/booking/:booking_id/cancel', handleBookingOwnerCancel, PROJ);
 router.get('/api/ai-builder/:project_id/blog', handleBlogList, PROJ);
