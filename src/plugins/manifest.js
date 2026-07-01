@@ -64,6 +64,14 @@ export const PLUGINS = {
     priceVar: 'STRIPE_PRICE_PLUGIN_MEMBERS',
     sectionTypes: ['members'],
   },
+  newsletter: {
+    key: 'newsletter',
+    label: 'Newsletter',
+    summary: 'Collect subscribers with a signup section and send email newsletters — right from your site.',
+    priceCents: 500,
+    priceVar: 'STRIPE_PRICE_PLUGIN_NEWSLETTER',
+    sectionTypes: ['newsletter_signup'],
+  },
 };
 
 /**
@@ -135,6 +143,7 @@ const PLUGIN_I18N = {
     courses: { label: 'Cursos', summary: 'Vende y comparte cursos en línea — lecciones, videos, PDFs y cuestionarios creados con IA en tu sitio.' },
     instagram_feed: { label: 'Feed de Instagram', summary: 'Una sección «Lo último» que muestra tus publicaciones más recientes de Instagram, actualizadas automáticamente.' },
     members: { label: 'Miembros', summary: 'Permite que los visitantes inicien sesión en tu sitio (sin contraseña) y reserva páginas o secciones solo para miembros.' },
+    newsletter: { label: 'Boletín', summary: 'Reúne suscriptores con una sección de registro y envía boletines por correo — desde tu propio sitio.' },
     commerce: { label: 'Commerce', summary: 'Todo para vender en línea — un catálogo completo más inventario, descuentos y variantes, y un CRM de clientes.', bestFor: 'Tiendas en línea, retail y boutiques' },
     creators: { label: 'Creadores y Coaches', summary: 'Vende cursos en línea, mantén contenido exclusivo tras inicio de sesión y muestra tus últimas publicaciones de Instagram.', bestFor: 'Coaches, fitness y yoga, educadores, sitios de membresía' },
     local_pro: { label: 'Local Pro', summary: 'Capta y gestiona leads con un CRM, muestra un menú de servicios o portafolio, y mantén tu feed de Instagram al día.', bestFor: 'Salones, barberías, dentistas, contratistas, fotógrafos' },
@@ -147,6 +156,7 @@ const PLUGIN_I18N = {
     courses: { label: 'Cursos', summary: 'Venda e compartilhe cursos online — aulas, vídeos, PDFs e quizzes criados com IA no seu site.' },
     instagram_feed: { label: 'Feed do Instagram', summary: 'Uma seção «O que há de novo» que mostra suas publicações mais recentes do Instagram, atualizadas automaticamente.' },
     members: { label: 'Membros', summary: 'Permita que visitantes entrem no seu site (sem senha) e mantenha páginas ou seções exclusivas para membros.' },
+    newsletter: { label: 'Newsletter', summary: 'Reúna assinantes com uma seção de inscrição e envie newsletters por e-mail — direto do seu site.' },
     commerce: { label: 'Commerce', summary: 'Tudo para vender online — um catálogo completo mais estoque, descontos e variações, e um CRM de clientes.', bestFor: 'Lojas online, varejo e boutiques' },
     creators: { label: 'Criadores e Coaches', summary: 'Venda cursos online, mantenha conteúdo exclusivo atrás de login e exiba suas publicações mais recentes do Instagram.', bestFor: 'Coaches, fitness e yoga, educadores, sites de assinatura' },
     local_pro: { label: 'Local Pro', summary: 'Capte e gerencie leads com um CRM, mostre um menu de serviços ou portfólio, e mantenha seu feed do Instagram atualizado.', bestFor: 'Salões, barbearias, dentistas, prestadores, fotógrafos' },
