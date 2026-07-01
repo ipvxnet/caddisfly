@@ -1056,7 +1056,7 @@ export const es = {
     testimonials_soon: 'La edición individual de reseñas llega pronto.', submit_button: 'Texto del botón de envío',
     remove: 'Quitar',
     services: 'Servicios', add_service: '＋ Añadir servicio', svc_title_ph: 'Nombre del servicio', svc_desc_ph: 'Descripción breve',
-    svc_eyebrow: 'Etiqueta superior', svc_eyebrow_ph: 'Pequeña etiqueta sobre el título (p. ej. EMS7)', svc_bullets: 'Viñetas', svc_bullets_ph: 'Una por línea (opcional)', svc_cta_label: 'Texto del botón', svc_cta_label_ph: 'p. ej. Saber más', svc_cta_link: 'Enlace del botón', svc_cta_link_ph: 'Una página, #sección o PDF/URL', svc_images: 'Más imágenes (collage)', svc_images_ph: 'Una URL por línea — 2+ imágenes forman un collage', svc_band_style: 'Estilo de banda', band_light: 'Fondo claro', band_dark: 'Fondo oscuro',
+    svc_eyebrow: 'Etiqueta superior', svc_eyebrow_ph: 'Pequeña etiqueta sobre el título (p. ej. EMS7)', svc_bullets: 'Viñetas', svc_bullets_ph: 'Una por línea (opcional)', svc_cta_label: 'Texto del botón', svc_cta_label_ph: 'p. ej. Saber más', svc_cta_link: 'Enlace del botón', svc_cta_link_ph: 'Una página, #sección o PDF/URL', svc_images: 'Más imágenes (collage)', svc_images_ph: 'Una URL por línea — 2+ imágenes forman un collage', svc_band_style: 'Estilo de banda', band_light: 'Fondo claro', band_dark: 'Fondo oscuro', svc_img_fit: 'Tamaño de imagen', fit_fill: 'Rellenar (puede recortar)', fit_whole: 'Mostrar imagen completa',
     testimonials: 'Reseñas', add_testimonial: '＋ Añadir reseña', tst_name_ph: 'Nombre', tst_role_ph: 'Cargo / empresa', tst_text_ph: 'Lo que dijeron',
     item_service: 'Servicio', item_testimonial: 'Reseña',
     f_icon: 'Icono (emoji)', f_title: 'Título', f_description: 'Descripción',

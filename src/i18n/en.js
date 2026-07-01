@@ -1063,7 +1063,7 @@ export const en = {
     testimonials_soon: 'Individual testimonial editing coming soon.', submit_button: 'Submit Button Text',
     remove: 'Remove',
     services: 'Services', add_service: '＋ Add service', svc_title_ph: 'Service name', svc_desc_ph: 'Short description',
-    svc_eyebrow: 'Eyebrow label', svc_eyebrow_ph: 'Small label above the title (e.g. EMS7)', svc_bullets: 'Bullet points', svc_bullets_ph: 'One per line (optional)', svc_cta_label: 'Button label', svc_cta_label_ph: 'e.g. Find out more', svc_cta_link: 'Button link', svc_cta_link_ph: 'A page, #section, or PDF/URL', svc_images: 'More images (collage)', svc_images_ph: 'One URL per line — 2+ images make a collage', svc_band_style: 'Band style', band_light: 'Light background', band_dark: 'Dark background',
+    svc_eyebrow: 'Eyebrow label', svc_eyebrow_ph: 'Small label above the title (e.g. EMS7)', svc_bullets: 'Bullet points', svc_bullets_ph: 'One per line (optional)', svc_cta_label: 'Button label', svc_cta_label_ph: 'e.g. Find out more', svc_cta_link: 'Button link', svc_cta_link_ph: 'A page, #section, or PDF/URL', svc_images: 'More images (collage)', svc_images_ph: 'One URL per line — 2+ images make a collage', svc_band_style: 'Band style', band_light: 'Light background', band_dark: 'Dark background', svc_img_fit: 'Image size', fit_fill: 'Fill box (may crop)', fit_whole: 'Show whole image',
     testimonials: 'Testimonials', add_testimonial: '＋ Add testimonial', tst_name_ph: 'Name', tst_role_ph: 'Role / company', tst_text_ph: 'What they said',
     item_service: 'Service', item_testimonial: 'Testimonial',
     f_icon: 'Icon (emoji)', f_title: 'Title', f_description: 'Description',

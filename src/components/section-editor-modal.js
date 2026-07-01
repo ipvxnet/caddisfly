@@ -1668,6 +1668,13 @@ function generateServicesFields(content, tr, variant = 'default') {
         <option value="light"${(content.theme || 'light') !== 'dark' ? ' selected' : ''}>${tr('sed.band_light')}</option>
         <option value="dark"${content.theme === 'dark' ? ' selected' : ''}>${tr('sed.band_dark')}</option>
       </select>
+    </div>
+    <div class="form-group">
+      <label for="img_fit">${tr('sed.svc_img_fit')}</label>
+      <select id="img_fit" name="img_fit">
+        <option value="cover"${content.img_fit !== 'contain' ? ' selected' : ''}>${tr('sed.fit_fill')}</option>
+        <option value="contain"${content.img_fit === 'contain' ? ' selected' : ''}>${tr('sed.fit_whole')}</option>
+      </select>
     </div>` : '';
   return `
     <div class="form-group">
