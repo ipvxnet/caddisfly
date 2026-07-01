@@ -166,15 +166,33 @@ export function navbarTemplate(data, config) {
         onclick="var n=this.closest('.site-nav');var o=n.classList.toggle('nav-open');this.setAttribute('aria-expanded',o);this.textContent=o?'✕':'☰'">☰</button>`
     : '';
 
-  return `
-<header class="site-nav${navLinks ? ' has-menu' : ''}">
-  <div class="site-nav-inner">
+  // "Extended" header: a large logo band on top, the nav menu on its own bar
+  // below (data.extended, set from the design panel). Standard = single row.
+  const extendedHeader = !!data.extended;
+  const ctaFallback = `<a class="nav-cta" href="${escapeAttr(cta_link)}"${cta_link_new_tab ? ' target="_blank" rel="noopener"' : ''}>${escapeHtml(contactLabel)}</a>`;
+
+  const innerHtml = extendedHeader
+    ? `<div class="site-nav-brandrow">
+    <a class="nav-brand nav-brand-ext" href="${escapeAttr(homeHref)}">${brand}</a>
+    <div class="nav-brandrow-aside">${phoneLink}</div>
+    ${toggle}
+  </div>
+  <div class="site-nav-menurow">
+    <nav class="nav-actions">
+      ${navLinks || ctaFallback}
+    </nav>
+  </div>`
+    : `<div class="site-nav-inner">
     <a class="nav-brand" href="${escapeAttr(homeHref)}">${brand}</a>
     ${toggle}
     <nav class="nav-actions">
       ${actions}
     </nav>
-  </div>
+  </div>`;
+
+  return `
+<header class="site-nav${extendedHeader ? ' site-nav-ext' : ''}${navLinks ? ' has-menu' : ''}">
+  ${innerHtml}
 </header>
 
 <style>
@@ -277,6 +295,20 @@ export function navbarTemplate(data, config) {
 .nav-toggle { display: none; background: none; border: 1.5px solid rgba(0,0,0,0.12); border-radius: 8px;
   font-size: 1.05rem; line-height: 1; padding: 0.4rem 0.6rem; cursor: pointer; color: #2d3748; }
 
+/* ---- Extended header: big logo band on top, nav bar below ---- */
+.site-nav-ext .site-nav-brandrow {
+  max-width: 1200px; margin: 0 auto; padding: 1.1rem 2rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.site-nav-ext .nav-brand-ext .nav-logo { height: 84px; max-width: 340px; }
+.site-nav-ext .nav-brand-ext .nav-brand-name { font-size: 1.7rem; }
+.site-nav-ext .nav-brandrow-aside { display: flex; align-items: center; gap: 1.25rem; }
+.site-nav-ext .site-nav-menurow { border-top: 1px solid rgba(0,0,0,0.06); }
+.site-nav-ext .site-nav-menurow .nav-actions {
+  max-width: 1200px; margin: 0 auto; padding: 0.55rem 2rem;
+  justify-content: center; flex-wrap: wrap; gap: 1.75rem;
+}
+
 @media (max-width: 768px) {
   .site-nav-inner { padding: 0.6rem 1rem; }
   .nav-logo { height: 40px; }
@@ -301,6 +333,16 @@ export function navbarTemplate(data, config) {
   /* Single-page anchor nav: keep the compact wrap behavior. */
   .site-nav:not(.has-menu) .site-nav-inner { flex-wrap: wrap; }
   .site-nav:not(.has-menu) .nav-phone { display: none; }
+  /* Extended header on mobile: brand row (logo + hamburger), menu row drops down. */
+  .site-nav-ext .site-nav-brandrow { padding: 0.7rem 1rem; }
+  .site-nav-ext .nav-brand-ext .nav-logo { height: 52px; }
+  .site-nav-ext .nav-brandrow-aside { display: none; }
+  .site-nav-ext.has-menu .site-nav-menurow { display: none; }
+  .site-nav-ext.has-menu.nav-open .site-nav-menurow { display: block; }
+  .site-nav-ext .site-nav-menurow .nav-actions {
+    display: flex !important; position: static; flex-direction: column; align-items: flex-start;
+    gap: 0.95rem; padding: 1rem 1.25rem 1.2rem; box-shadow: none; border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
   .site-nav:not(.has-menu) .nav-actions { gap: 0.85rem; flex-wrap: wrap; }
 }
 </style>

@@ -1223,6 +1223,15 @@ export const es = {
     removed: 'Favicon eliminado — se usa tu logo',
   },
 
+  hdr: {
+    summary: 'Estilo del encabezado',
+    hint: 'Elige cómo se organizan el logo y el menú en la parte superior de tu sitio.',
+    standard: 'Estándar',
+    standard_desc: 'logo y menú en una sola barra',
+    extended: 'Extendido',
+    extended_desc: 'una banda grande con el logo arriba y la barra de menú debajo',
+  },
+
   pick: {
     tpl_title: '🧩 Elige una plantilla', tpl_hint: 'Cambia el estilo de todo el sitio de una vez. Tu texto y colores se conservan.', tpl_recommended: 'Recomendado', tpl_browse: 'Ver todas las plantillas', tpl_count_suffix: 'plantillas',
     font_title: '🔤 Fuentes', font_hint: 'Cambia la tipografía. Los tamaños y el diseño no cambian.',

@@ -1223,6 +1223,15 @@ export const pt = {
     removed: 'Favicon removido — usando seu logo',
   },
 
+  hdr: {
+    summary: 'Estilo do cabeçalho',
+    hint: 'Escolha como o logo e o menu ficam organizados no topo do seu site.',
+    standard: 'Padrão',
+    standard_desc: 'logo e menu em uma só barra',
+    extended: 'Estendido',
+    extended_desc: 'uma faixa grande com o logo em cima e a barra de menu embaixo',
+  },
+
   pick: {
     tpl_title: '🧩 Escolha um modelo', tpl_hint: 'Mude o estilo de todo o site de uma vez. O seu texto e cores são mantidos.', tpl_recommended: 'Recomendado', tpl_browse: 'Ver todos os modelos', tpl_count_suffix: 'modelos',
     font_title: '🔤 Fontes', font_hint: 'Troque a tipografia. Os tamanhos e o layout permanecem.',
