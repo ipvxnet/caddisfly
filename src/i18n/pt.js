@@ -1050,7 +1050,7 @@ export const pt = {
     f_tags: 'Tags (selos)', tags_ph: 'Confiável, Experiente, Atendimento personalizado', tags_hint: 'Separadas por vírgula — aparecem no layout de hero com “tags”.', button_text: 'Texto do botão', button_link: 'Link do botão',
     bg_image: 'Imagem de fundo', click_upload: '📸 Clique para enviar uma imagem', img_formats: 'JPG, PNG, WebP (máx. 5 MB)',
     section_heading: 'Título da seção', your_story: 'A sua história', story_hint: 'Conte a sua história (2-3 frases)', image: 'Imagem',
-    ph_optional: 'opcional', cat_filter: 'Mostrar categoria', cat_all: 'Todos os itens', cat_filter_hint: 'Esta seção mostra apenas os itens da categoria escolhida — adicione uma seção de catálogo por categoria para dividi-los entre páginas.',
+    ph_optional: 'opcional', cat_filter: 'Mostrar categoria', cat_all: 'Todos os itens', cat_filter_hint: 'Esta seção mostra apenas os itens da categoria escolhida — adicione uma seção de catálogo por categoria para dividi-los entre páginas.', cat_exclude: 'Excluir categorias', cat_exclude_hint: 'Ao mostrar “Todos os itens”, oculta estas categorias (ex.: garantia). Ignorado se você escolher uma única categoria acima.',
     team_members: 'Membros da equipe', add_member: '＋ Adicionar membro', item_member: 'Membro', f_bio: 'Bio',
     milestones: 'Marcos', add_milestone: '＋ Adicionar marco', item_milestone: 'Marco', f_year: 'Ano',
     founder_name: 'Nome do fundador', founder_role: 'Cargo do fundador',

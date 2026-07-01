@@ -1057,7 +1057,7 @@ export const en = {
     f_tags: 'Tags (pills)', tags_ph: 'Trusted, Experienced, Personalized', tags_hint: 'Comma-separated pills — shown on the “tags” hero layout.', button_text: 'Button Text', button_link: 'Button Link',
     bg_image: 'Background Image', click_upload: '📸 Click to upload image', img_formats: 'JPG, PNG, WebP (max 5MB)',
     section_heading: 'Section Heading', your_story: 'Your Story', story_hint: 'Tell your story (2-3 sentences)', image: 'Image',
-    ph_optional: 'optional', cat_filter: 'Show category', cat_all: 'All items', cat_filter_hint: 'This section shows only items in the chosen category — add a catalogue section per category to split them across pages.',
+    ph_optional: 'optional', cat_filter: 'Show category', cat_all: 'All items', cat_filter_hint: 'This section shows only items in the chosen category — add a catalogue section per category to split them across pages.', cat_exclude: 'Exclude categories', cat_exclude_hint: 'When showing “All items”, hide these categories (e.g. warranty). Ignored if a single category is chosen above.',
     team_members: 'Team members', add_member: '＋ Add member', item_member: 'Member', f_bio: 'Bio',
     milestones: 'Milestones', add_milestone: '＋ Add milestone', item_milestone: 'Milestone', f_year: 'Year',
     founder_name: 'Founder name', founder_role: 'Founder role',

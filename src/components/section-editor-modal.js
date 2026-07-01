@@ -520,6 +520,15 @@ async function saveSectionChanges(event) {
   const navShow = form.querySelector('input[name="_nav_show"]');
   if (navShow) content._nav_hidden = !navShow.checked;
 
+  // Catalogue "Exclude categories" — gather the checked boxes explicitly so
+  // unchecking all of them actually clears the list (FormData omits unchecked).
+  const exCats = form.querySelectorAll('input[data-exclude-cat]');
+  if (exCats.length) {
+    const arr = [];
+    exCats.forEach((cb) => { if (cb.checked) arr.push(cb.value); });
+    content.exclude_categories = arr;
+  }
+
   // Contact optional form-fields: serialize the catalog checkboxes explicitly
   // into [{key,required}] (FormData omits unchecked boxes, so an uncheck must
   // actively clear; these controls carry no name attr to avoid stray keys).
@@ -974,6 +983,17 @@ function generateCatalogueFields(content, tr, catCategories) {
   const options = [`<option value="">${escapeHtml(tr('sed.cat_all'))}</option>`]
     .concat(cats.map((c) => `<option value="${escapeHtml(c)}"${c === sel ? ' selected' : ''}>${escapeHtml(c)}</option>`))
     .join('');
+  // Exclude list — only meaningful when showing "All items". Lets the owner keep
+  // every category but a few (e.g. hide "warranty" from the catalogue grid).
+  const exclude = Array.isArray(content.exclude_categories) ? content.exclude_categories : [];
+  const excludeUI = cats.length ? `
+    <div class="form-group">
+      <label>${tr('sed.cat_exclude')}</label>
+      <div class="cat-exclude-list" style="display:flex;flex-direction:column;gap:.3rem">
+        ${cats.map((c) => `<label class="sed-check"><input type="checkbox" data-exclude-cat value="${escapeHtml(c)}"${exclude.includes(c) ? ' checked' : ''}> ${escapeHtml(c)}</label>`).join('')}
+      </div>
+      <small>${tr('sed.cat_exclude_hint')}</small>
+    </div>` : '';
   return `
     <div class="form-group">
       <label for="heading">${tr('sed.section_heading')}</label>
@@ -988,6 +1008,7 @@ function generateCatalogueFields(content, tr, catCategories) {
       <select id="category" name="category">${options}</select>
       <small>${tr('sed.cat_filter_hint')}</small>
     </div>
+    ${excludeUI}
   `;
 }
 

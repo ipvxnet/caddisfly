@@ -50,7 +50,10 @@ export function catalogueTilesTemplate(data, config) {
 
   // One section = one category (multi-section-per-page). Empty category → all items.
   const category = (data.category || '').trim();
-  const items = category ? all.filter((p) => (p.category || '') === category) : all;
+  const exclude = Array.isArray(data.exclude_categories) ? data.exclude_categories : [];
+  let items = category ? all.filter((p) => (p.category || '') === category) : all;
+  // "All items" view can still hide specific categories (e.g. warranty).
+  if (!category && exclude.length) items = items.filter((p) => !exclude.includes(p.category || ''));
   const heading = data.heading || category || tr.heading;
 
   const styles = `
@@ -153,7 +156,10 @@ export function catalogueShowcaseTemplate(data, config) {
   const embedSuffix = config.embed ? '?embed=1' : '';
   const published = !!config.trackId;
   const category = (data.category || '').trim();
-  const items = category ? all.filter((p) => (p.category || '') === category) : all;
+  const exclude = Array.isArray(data.exclude_categories) ? data.exclude_categories : [];
+  let items = category ? all.filter((p) => (p.category || '') === category) : all;
+  // "All items" view can still hide specific categories (e.g. warranty).
+  if (!category && exclude.length) items = items.filter((p) => !exclude.includes(p.category || ''));
   const heading = data.heading || category || tr.heading;
 
   const styles = `
