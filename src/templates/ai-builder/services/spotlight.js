@@ -32,13 +32,16 @@ export function servicesSpotlightTemplate(data, config) {
   const rows = list
     .map((s) => {
       // Media: single image, a collage of the primary + extra images, or the icon.
+      // Per-row image fit: '' / 'cover' = fill the box (may crop); 'contain' = show
+      // the whole image uncropped on a white tile (good for product graphics).
       const imgs = [s.image_url, ...lines(s.images)].map((u) => String(u || '').trim()).filter(Boolean).slice(0, 6);
+      const fit = String(s.img_fit || '').toLowerCase() === 'contain' ? ' fit-contain' : '';
       let media;
       if (imgs.length >= 2) {
         media = `<div class="svc-spot-media svc-spot-collage" data-n="${imgs.length}">${imgs
           .map((u) => `<img src="${escAttr(u)}" alt="${escAttr(s.title || '')}" loading="lazy">`).join('')}</div>`;
       } else if (imgs.length === 1) {
-        media = `<div class="svc-spot-media"><img src="${escAttr(imgs[0])}" alt="${escAttr(s.title || '')}" width="1200" height="750" loading="lazy"></div>`;
+        media = `<div class="svc-spot-media${fit}"><img src="${escAttr(imgs[0])}" alt="${escAttr(s.title || '')}" width="1200" height="750" loading="lazy"></div>`;
       } else {
         media = `<div class="svc-spot-media svc-spot-media--icon" style="background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});">${escHtml(s.icon || '✨')}</div>`;
       }
@@ -117,6 +120,9 @@ button.svc-spot-row { cursor: pointer; }
 .svc-spot-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
 .svc-spot-row:hover .svc-spot-media img { transform: scale(1.04); }
 .svc-spot-media--icon { display: flex; align-items: center; justify-content: center; font-size: 3.5rem; }
+/* Per-row "Show whole image": single image uncropped on a white tile. */
+.svc-spot-media.fit-contain { background: #ffffff; }
+.svc-spot-media.fit-contain img { object-fit: contain; padding: 1rem; }
 /* Collage: a loose grid of the row's images. */
 .svc-spot-collage { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; background: none; box-shadow: none; aspect-ratio: 16 / 10; }
 .svc-spot-collage img { border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,0.10); background: #fff; object-fit: contain; padding: .35rem; }
