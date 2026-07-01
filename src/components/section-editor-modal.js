@@ -45,6 +45,10 @@ export function generateSectionEditorModal(section, projectId, lang = 'en', link
 
           ${['header', 'footer'].includes(section.section_type) ? '' : `
           <div class="form-group">
+            <label class="sed-check"><input type="checkbox" name="_nav_show" value="1"${content._nav_hidden ? '' : ' checked'}> ${tr('sed.nav_show')}</label>
+            <small>${tr('sed.nav_show_hint')}</small>
+          </div>
+          <div class="form-group">
             <label for="sed-nav-label">${tr('sed.nav_label')}</label>
             <input type="text" id="sed-nav-label" name="_nav_label" value="${escapeHtml(content._nav_label || '')}" placeholder="${escapeHtml(tr('sed.nav_label_ph'))}">
             <small>${tr('sed.nav_label_hint')}</small>
@@ -510,6 +514,11 @@ async function saveSectionChanges(event) {
   // otherwise). Only when the control is present (entitled owners).
   const moCheck = form.querySelector('input[name="_members_only"]');
   if (moCheck) content._members_only = moCheck.checked;
+
+  // "Show in menu" — the checkbox is positive (show), stored as the inverse
+  // (_nav_hidden). FormData omits an unchecked box, so set it explicitly.
+  const navShow = form.querySelector('input[name="_nav_show"]');
+  if (navShow) content._nav_hidden = !navShow.checked;
 
   // Contact optional form-fields: serialize the catalog checkboxes explicitly
   // into [{key,required}] (FormData omits unchecked boxes, so an uncheck must
